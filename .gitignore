@@ -2,5 +2,11 @@
 .idea/
 *.log
 *.tmp
-DataSet/*
+DataSet/sim/
+
+DataSet/exp/case_02
+DataSet/exp/case_03
+DataSet/exp/case_04
+
 results/*
+*.pyc
