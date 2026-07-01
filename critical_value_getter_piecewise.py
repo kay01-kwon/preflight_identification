@@ -12,6 +12,9 @@ Usage
 -----
 python critical_value_getter_piecewise.py DataSet/exp/Mx
 python critical_value_getter_piecewise.py DataSet/exp/My --mass 3.066 --save-fig
+
+# Use raw IMU angular velocity (/mavros/imu/data_raw) instead of odom:
+python critical_value_getter_piecewise.py DataSet/exp/My --omega-source imu
 """
 
 import argparse
@@ -176,6 +179,7 @@ def extract_piecewise(
     C_T: float = 1.3175e-7,
     arm_length: float = 0.265,
     threshold: float = 0.01,
+    omega_source: str = 'odom',
 ) -> CriticalValueResult:
     """
     Extract critical values using piecewise onset detection.
@@ -185,13 +189,31 @@ def extract_piecewise(
       2. Excitation window [|M|>0.01, max|M|]
       3. Piecewise fit on ω in window
       4. onset = argmin total residual
+
+    Parameters
+    ----------
+    omega_source : 'odom' → ω from /mavros/local_position/odom (default)
+                   'imu'  → ω from /mavros/imu/data_raw
+
+    The global time reference (t0) stays odom.t[0] regardless of source, so
+    onset_time and the downstream mocap pivot estimation remain consistent.
     """
     t0_ref = bag.odom.t[0]
-    t = bag.odom.t - t0_ref
-    t_rpm = bag.rpm.t - t0_ref
-
     axis_idx = 0 if axis == 'x' else 1
-    omega = bag.odom.angular_vel[:, axis_idx]
+
+    if omega_source == 'imu':
+        if bag.imu is None:
+            raise ValueError(
+                f"{bag.name}: --omega-source imu requested but "
+                f"/mavros/imu/data_raw is not present in this bag."
+            )
+        t = bag.imu.t - t0_ref
+        omega = bag.imu.angular_vel[:, axis_idx]
+    else:
+        t = bag.odom.t - t0_ref
+        omega = bag.odom.angular_vel[:, axis_idx]
+
+    t_rpm = bag.rpm.t - t0_ref
 
     f_col_raw = math_tools.collective_thrust_vectorized(C_T, bag.rpm.rpm)
     moments_raw = math_tools.rpm_to_moments_vectorized(
@@ -784,6 +806,12 @@ def parse_args():
     p = argparse.ArgumentParser(description="Moment Excitation — Piecewise Onset + Pivot")
     p.add_argument('data_dir', type=str)
     p.add_argument('--axis', type=str, default=None, choices=['x','y'])
+    p.add_argument(
+        '--omega-source', type=str, default='odom', choices=['odom', 'imu'],
+        help="Angular velocity source for onset detection: "
+             "'odom' (/mavros/local_position/odom, default) or "
+             "'imu' (/mavros/imu/data_raw).",
+    )
     p.add_argument('--mass', type=float, default=None)
     p.add_argument('--output-dir', type=str, default=None)
     p.add_argument('--no-plot', action='store_true')
@@ -803,14 +831,19 @@ def main():
     # 2. Axis
     axis = args.axis if args.axis else detect_axis(dataset_dir, bags)
     offset_label = 'y_off' if axis == 'x' else 'x_off'
+    omega_topic = ('/mavros/imu/data_raw' if args.omega_source == 'imu'
+                   else '/mavros/local_position/odom')
     print(f'Axis        : {axis} ({"roll" if axis=="x" else "pitch"})')
     print(f'Detection   : Piecewise quadratic fit')
+    print(f'ω source    : {args.omega_source} ({omega_topic})')
     if args.mass: print(f'Known mass  : {args.mass} kg')
     print()
 
     # 3. Piecewise onset
     print("── Piecewise Onset Detection ──")
-    critical_results, pw_fits = extract_piecewise_batch(bags, axis=axis)
+    critical_results, pw_fits = extract_piecewise_batch(
+        bags, axis=axis, omega_source=args.omega_source,
+    )
 
     # 4. CSV (critical values)
     print("\n── Critical Value CSV ──")
