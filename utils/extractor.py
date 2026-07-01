@@ -70,6 +70,24 @@ class PoseData:
 
 
 @dataclass
+class ImuData:
+    """Vectorized sensor_msgs/msg/Imu (e.g. /mavros/imu/data_raw)"""
+    t: np.ndarray           # (N,) absolute time [s]
+    angular_vel: np.ndarray # (N,3) [wx, wy, wz] [rad/s] body frame
+    linear_acc: np.ndarray  # (N,3) [ax, ay, az] [m/s²] body frame
+    quaternion: np.ndarray  # (N,4) [qw, qx, qy, qz] (may be all-zero for data_raw)
+    frame_id: str
+
+    @property
+    def N(self) -> int:
+        return len(self.t)
+
+    def t_rel(self, t0: float) -> np.ndarray:
+        """Time relative to a global reference t0."""
+        return self.t - t0
+
+
+@dataclass
 class HexaRpmData:
     """Vectorized ros2_libcanard_msgs/msg/HexaActualRpm"""
     t: np.ndarray       # (N,) [s]
@@ -87,7 +105,7 @@ class HexaRpmData:
 
 
 # Type alias for any data container
-TopicData = Union[OdometryData, PoseData, HexaRpmData]
+TopicData = Union[OdometryData, PoseData, HexaRpmData, ImuData]
 
 # ===============================================
 # Message -> dictionary converters
@@ -120,6 +138,19 @@ def _convert_pose(msg) -> dict:
     )
 
 
+def _convert_imu(msg) -> dict:
+    w = msg.angular_velocity
+    a = msg.linear_acceleration
+    q = msg.orientation
+    return dict(
+        t=stamp_to_sec(msg.header.stamp),
+        frame_id=msg.header.frame_id,
+        wx=w.x, wy=w.y, wz=w.z,
+        ax=a.x, ay=a.y, az=a.z,
+        qw=q.w, qx=q.x, qy=q.y, qz=q.z,
+    )
+
+
 def _convert_hexa_rpm(msg) -> dict:
     rpms = np.array(msg.rpm[:6], dtype=np.int32)
     accs = np.array(msg.acceleration[:6], dtype=np.int32)
@@ -134,6 +165,7 @@ def _convert_hexa_rpm(msg) -> dict:
 _TYPE_CONVERTERS = {
     "nav_msgs/msg/Odometry":                _convert_odometry,
     "geometry_msgs/msg/PoseStamped":        _convert_pose,
+    "sensor_msgs/msg/Imu":                  _convert_imu,
     "ros2_libcanard_msgs/msg/HexaActualRpm": _convert_hexa_rpm,
 }
 
@@ -269,6 +301,18 @@ class RosBagExtractor:
             frame_id=msgs[0]["frame_id"],
         )
 
+    def get_imu(self, topic: str) -> ImuData:
+        msgs = self._read_converted(topic)
+        if not msgs:
+            raise ValueError(f"No messages on '{topic}'")
+        return ImuData(
+            t=np.array([m["t"] for m in msgs]),
+            angular_vel=np.array([[m["wx"], m["wy"], m["wz"]] for m in msgs]),
+            linear_acc=np.array([[m["ax"], m["ay"], m["az"]] for m in msgs]),
+            quaternion=np.array([[m["qw"], m["qx"], m["qy"], m["qz"]] for m in msgs]),
+            frame_id=msgs[0]["frame_id"],
+        )
+
     def get_hexa_rpm(self, topic: str) -> HexaRpmData:
         msgs = self._read_converted(topic)
         if not msgs:
@@ -297,6 +341,8 @@ class RosBagExtractor:
                     result[name] = self.get_odometry(name)
                 elif mtype == "geometry_msgs/msg/PoseStamped":
                     result[name] = self.get_pose(name)
+                elif mtype == "sensor_msgs/msg/Imu":
+                    result[name] = self.get_imu(name)
                 elif mtype == "ros2_libcanard_msgs/msg/HexaActualRpm":
                     result[name] = self.get_hexa_rpm(name)
             except Exception as e:
@@ -335,11 +381,13 @@ class BagData:
     odom       : OdometryData  EKF2 fused odometry
     pose       : PoseData      mocap pose (/S550/pose)
     rpm        : HexaRpmData   actual per-motor RPM
+    imu        : ImuData | None  raw IMU (/mavros/imu/data_raw), optional
     """
     name: str
     odom: OdometryData
     pose: PoseData
     rpm: HexaRpmData
+    imu: Optional[ImuData] = None
 
     @property
     def t0(self) -> float:
@@ -423,6 +471,7 @@ def load_excitation_dataset(
         odom = topics.get("/mavros/local_position/odom")
         pose = topics.get("/S550/pose")
         rpm  = topics.get("/uav/actual_rpm")
+        imu  = topics.get("/mavros/imu/data_raw")
 
         if odom is None:
             print(f"  [WARN] {bag_name}: missing /mavros/local_position/odom, skipping")
@@ -433,12 +482,16 @@ def load_excitation_dataset(
         if rpm is None:
             print(f"  [WARN] {bag_name}: missing /uav/actual_rpm, skipping")
             continue
+        if imu is None:
+            print(f"  [INFO] {bag_name}: no /mavros/imu/data_raw "
+                  f"(IMU-based onset detection unavailable for this bag)")
 
         result.append(BagData(
             name=bag_name,
             odom=odom,
             pose=pose,
             rpm=rpm,
+            imu=imu,
         ))
 
     return result
