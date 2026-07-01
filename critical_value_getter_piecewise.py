@@ -15,6 +15,9 @@ python critical_value_getter_piecewise.py DataSet/exp/My --mass 3.066 --save-fig
 
 # Use raw IMU angular velocity (/mavros/imu/data_raw) instead of odom:
 python critical_value_getter_piecewise.py DataSet/exp/My --omega-source imu
+
+# Raw IMU + 15 Hz low-pass filter to suppress propeller vibration:
+python critical_value_getter_piecewise.py DataSet/exp/My --omega-source imu --lpf-cutoff 15
 """
 
 import argparse
@@ -76,6 +79,48 @@ def bag_name_to_title(bag_name: str) -> str:
         return bag_name
 
     return r'$\dot{M}_' + ax + ' = ' + sign + ramp + r'$ Nm/s'
+
+
+# ═════════════════════════════════════════════════════════════
+#  Low-pass filter (for noisy IMU angular velocity)
+# ═════════════════════════════════════════════════════════════
+
+def lowpass_filter(
+    t: np.ndarray,
+    x: np.ndarray,
+    cutoff_hz: float,
+    order: int = 4,
+) -> np.ndarray:
+    """
+    Zero-phase Butterworth low-pass filter.
+
+    Sampling rate is estimated from the median time step of `t`. Useful for
+    the raw IMU angular velocity (/mavros/imu/data_raw), which carries heavy
+    propeller vibration well above the tip-over dynamics.
+
+    Parameters
+    ----------
+    t         : (N,) time array [s]
+    x         : (N,) signal to filter
+    cutoff_hz : cutoff frequency [Hz]
+    order     : Butterworth order (applied twice by filtfilt)
+
+    Returns
+    -------
+    (N,) filtered signal (zero phase lag).
+    """
+    from scipy.signal import butter, filtfilt  # lazy: optional dependency
+
+    dt = np.median(np.diff(t))
+    fs = 1.0 / dt
+    nyq = 0.5 * fs
+    if cutoff_hz >= nyq:
+        raise ValueError(
+            f"cutoff {cutoff_hz} Hz must be below Nyquist {nyq:.1f} Hz "
+            f"(sample rate {fs:.1f} Hz)."
+        )
+    b, a = butter(order, cutoff_hz, btype='low', fs=fs)
+    return filtfilt(b, a, x)
 
 
 # ═════════════════════════════════════════════════════════════
@@ -180,6 +225,8 @@ def extract_piecewise(
     arm_length: float = 0.265,
     threshold: float = 0.01,
     omega_source: str = 'odom',
+    lpf_cutoff: Optional[float] = None,
+    lpf_order: int = 4,
 ) -> CriticalValueResult:
     """
     Extract critical values using piecewise onset detection.
@@ -194,6 +241,11 @@ def extract_piecewise(
     ----------
     omega_source : 'odom' → ω from /mavros/local_position/odom (default)
                    'imu'  → ω from /mavros/imu/data_raw
+    lpf_cutoff   : if set, apply a zero-phase Butterworth low-pass filter at
+                   this cutoff [Hz] to ω before window detection and the
+                   piecewise fit. Recommended for the raw IMU source, which is
+                   dominated by propeller vibration (e.g. 15.0). None = off.
+    lpf_order    : Butterworth order for the low-pass filter.
 
     The global time reference (t0) stays odom.t[0] regardless of source, so
     onset_time and the downstream mocap pivot estimation remain consistent.
@@ -212,6 +264,10 @@ def extract_piecewise(
     else:
         t = bag.odom.t - t0_ref
         omega = bag.odom.angular_vel[:, axis_idx]
+
+    # Optional low-pass filter (suppress IMU vibration before onset fit)
+    if lpf_cutoff is not None:
+        omega = lowpass_filter(t, omega, lpf_cutoff, order=lpf_order)
 
     t_rpm = bag.rpm.t - t0_ref
 
@@ -812,6 +868,16 @@ def parse_args():
              "'odom' (/mavros/local_position/odom, default) or "
              "'imu' (/mavros/imu/data_raw).",
     )
+    p.add_argument(
+        '--lpf-cutoff', type=float, default=None,
+        help="Butterworth low-pass cutoff [Hz] applied to ω before onset "
+             "detection (e.g. 15). Recommended with --omega-source imu to "
+             "suppress propeller vibration. Off if omitted.",
+    )
+    p.add_argument(
+        '--lpf-order', type=int, default=4,
+        help="Butterworth order for --lpf-cutoff (default 4).",
+    )
     p.add_argument('--mass', type=float, default=None)
     p.add_argument('--output-dir', type=str, default=None)
     p.add_argument('--no-plot', action='store_true')
@@ -836,6 +902,8 @@ def main():
     print(f'Axis        : {axis} ({"roll" if axis=="x" else "pitch"})')
     print(f'Detection   : Piecewise quadratic fit')
     print(f'ω source    : {args.omega_source} ({omega_topic})')
+    if args.lpf_cutoff is not None:
+        print(f'LPF         : Butterworth {args.lpf_cutoff:g} Hz (order {args.lpf_order})')
     if args.mass: print(f'Known mass  : {args.mass} kg')
     print()
 
@@ -843,6 +911,7 @@ def main():
     print("── Piecewise Onset Detection ──")
     critical_results, pw_fits = extract_piecewise_batch(
         bags, axis=axis, omega_source=args.omega_source,
+        lpf_cutoff=args.lpf_cutoff, lpf_order=args.lpf_order,
     )
 
     # 4. CSV (critical values)
