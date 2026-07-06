@@ -152,36 +152,50 @@ def _huber_cost(r: np.ndarray, delta: float) -> float:
                                  delta * (a - 0.5 * delta))))
 
 
-def _fit_segments_robust(t, omega, j, delta, n_irls=5):
+def _fit_segments_robust(t, omega, j, delta, n_irls=5, sides='pre'):
     """
-    Robustly fit (c, α) for split index j via Huber IRLS, returning the
-    total Huber cost used to compare candidate onsets.
+    Fit (c, α) for split index j and return the total cost used to compare
+    candidate onsets.
 
-      left  : ω = c            → robust weighted mean
-      right : ω = α·(t-t0)²+c  → robust weighted LS on the (t-t0)² basis
+      left  : ω = c            (should be flat → deviations are vibration)
+      right : ω = α·(t-t0)²+c  (real tip-over rise)
+
+    sides
+    -----
+    'pre'  : Huber IRLS on the LEFT segment only (reject pre-onset vibration
+             outliers), ordinary least squares on the RIGHT segment so the
+             genuine tip-over dynamics are not down-weighted.
+    'both' : Huber IRLS on both segments.
+
+    Costs are kept in consistent (½·squared) scale so the mixed objective is
+    comparable across candidate split points.
     """
     left = omega[:j]
     right = omega[j:]
     dt2 = (t[j:] - t[j]) ** 2
 
-    # Left constant (init robust median → Huber IRLS)
+    # Left constant: robust (Huber IRLS) — down-weight vibration outliers
     c = np.median(left)
     for _ in range(n_irls):
         w = _huber_weights(left - c, delta)
         c = np.sum(w * left) / np.sum(w)
+    left_cost = _huber_cost(left - c, delta)
 
-    # Right α given c (init L2 → Huber IRLS)
+    # Right α given c
     den0 = np.sum(dt2 * dt2)
     alpha = np.sum(dt2 * (right - c)) / den0 if den0 > 1e-30 else 0.0
-    for _ in range(n_irls):
-        w = _huber_weights(right - (alpha * dt2 + c), delta)
-        den = np.sum(w * dt2 * dt2)
-        if den < 1e-30:
-            break
-        alpha = np.sum(w * dt2 * (right - c)) / den
+    if sides == 'both':
+        for _ in range(n_irls):
+            w = _huber_weights(right - (alpha * dt2 + c), delta)
+            den = np.sum(w * dt2 * dt2)
+            if den < 1e-30:
+                break
+            alpha = np.sum(w * dt2 * (right - c)) / den
+        right_cost = _huber_cost(right - (alpha * dt2 + c), delta)
+    else:  # 'pre': keep ordinary least squares on the rise
+        right_cost = 0.5 * np.sum((right - (alpha * dt2 + c)) ** 2)
 
-    cost = _huber_cost(left - c, delta) + _huber_cost(right - (alpha * dt2 + c), delta)
-    return c, alpha, cost
+    return c, alpha, left_cost + right_cost
 
 
 # ═════════════════════════════════════════════════════════════
@@ -195,6 +209,7 @@ def piecewise_onset_fit(
     robust: bool = False,
     huber_k: float = 1.345,
     n_irls: int = 5,
+    robust_sides: str = 'pre',
 ) -> dict:
     """
     Fit piecewise model to angular velocity:
@@ -212,13 +227,15 @@ def piecewise_onset_fit(
     t       : (N,) time array
     omega   : (N,) angular velocity
     min_seg : minimum segment length
-    robust  : if True, fit with Huber IRLS instead of ordinary least squares
-              so pre-onset spikes / outliers are down-weighted. The onset is
-              chosen by minimum total Huber loss.
+    robust  : if True, robustify the fit so pre-onset vibration outliers are
+              down-weighted (Huber IRLS). Onset = argmin total cost.
     huber_k : Huber threshold in units of the robust noise scale (MAD-based);
               1.345 gives 95% Gaussian efficiency. Residuals beyond huber_k·σ
               are treated as outliers and down-weighted.
     n_irls  : IRLS iterations per segment fit.
+    robust_sides : 'pre'  → Huber on the pre-onset (flat) segment only, plain
+                            LS on the rise so tip-over dynamics are preserved
+                            (recommended). 'both' → Huber on both segments.
 
     Returns
     -------
@@ -270,7 +287,8 @@ def piecewise_onset_fit(
         for j in range(min_seg, N - min_seg):
             if len(t[j:]) < 2:
                 continue
-            c_j, a_j, cost = _fit_segments_robust(t, omega, j, huber_delta, n_irls)
+            c_j, a_j, cost = _fit_segments_robust(
+                t, omega, j, huber_delta, n_irls, sides=robust_sides)
             if cost < best_cost:
                 best_cost = cost
                 best_idx = j
@@ -322,6 +340,7 @@ def extract_piecewise(
     lpf_order: int = 4,
     robust: bool = False,
     huber_k: float = 1.345,
+    robust_sides: str = 'pre',
 ) -> CriticalValueResult:
     """
     Extract critical values using piecewise onset detection.
@@ -341,10 +360,10 @@ def extract_piecewise(
                    piecewise fit. Recommended for the raw IMU source, which is
                    dominated by propeller vibration (e.g. 15.0). None = off.
     lpf_order    : Butterworth order for the low-pass filter.
-    robust       : if True, use Huber IRLS for the piecewise fit so pre-onset
-                   spikes / outliers are down-weighted (onset = argmin Huber
-                   loss) instead of ordinary least squares.
+    robust       : if True, robustify the piecewise fit so pre-onset vibration
+                   outliers are down-weighted (Huber IRLS).
     huber_k      : Huber threshold in units of the robust noise scale.
+    robust_sides : 'pre' (Huber on pre-onset only, recommended) or 'both'.
 
     The global time reference (t0) stays odom.t[0] regardless of source, so
     onset_time and the downstream mocap pivot estimation remain consistent.
@@ -384,7 +403,8 @@ def extract_piecewise(
     win = slice(idx_start, idx_end + 1)
 
     # Piecewise fit
-    pw = piecewise_onset_fit(t[win], omega[win], robust=robust, huber_k=huber_k)
+    pw = piecewise_onset_fit(t[win], omega[win], robust=robust, huber_k=huber_k,
+                             robust_sides=robust_sides)
     onset_idx = idx_start + pw['onset_idx']
 
     # Score: use negative residual as "score" (for compatibility)
@@ -979,8 +999,13 @@ def parse_args():
     )
     p.add_argument(
         '--robust', action='store_true',
-        help="Use Huber IRLS for the piecewise onset fit to down-weight "
-             "pre-onset spikes / outliers (default: ordinary least squares).",
+        help="Robustify the piecewise onset fit (Huber IRLS) to down-weight "
+             "pre-onset vibration outliers (default: ordinary least squares).",
+    )
+    p.add_argument(
+        '--robust-sides', type=str, default='pre', choices=['pre', 'both'],
+        help="Where to apply Huber: 'pre' (pre-onset flat segment only, "
+             "keeps the rise as plain LS; recommended) or 'both'.",
     )
     p.add_argument(
         '--huber-k', type=float, default=1.345,
@@ -1014,7 +1039,7 @@ def main():
     if args.lpf_cutoff is not None:
         print(f'LPF         : Butterworth {args.lpf_cutoff:g} Hz (order {args.lpf_order})')
     if args.robust:
-        print(f'Fit         : robust Huber IRLS (k={args.huber_k:g})')
+        print(f'Fit         : robust Huber IRLS (k={args.huber_k:g}, sides={args.robust_sides})')
     if args.mass: print(f'Known mass  : {args.mass} kg')
     print()
 
@@ -1023,7 +1048,7 @@ def main():
     critical_results, pw_fits = extract_piecewise_batch(
         bags, axis=axis, omega_source=args.omega_source,
         lpf_cutoff=args.lpf_cutoff, lpf_order=args.lpf_order,
-        robust=args.robust, huber_k=args.huber_k,
+        robust=args.robust, huber_k=args.huber_k, robust_sides=args.robust_sides,
     )
 
     # 4. CSV (critical values)
