@@ -18,6 +18,9 @@ python critical_value_getter_piecewise.py DataSet/exp/My --omega-source imu
 
 # Raw IMU + 15 Hz low-pass filter to suppress propeller vibration:
 python critical_value_getter_piecewise.py DataSet/exp/My --omega-source imu --lpf-cutoff 15
+
+# Robust (Huber) onset fit to reject pre-onset spikes/outliers:
+python critical_value_getter_piecewise.py DataSet/exp/My --omega-source imu --lpf-cutoff 15 --robust
 """
 
 import argparse
@@ -124,6 +127,64 @@ def lowpass_filter(
 
 
 # ═════════════════════════════════════════════════════════════
+#  Robust (Huber) helpers
+# ═════════════════════════════════════════════════════════════
+
+def _mad_scale(r: np.ndarray) -> float:
+    """Robust noise scale via MAD (normalized to std for Gaussian)."""
+    med = np.median(r)
+    return 1.4826 * np.median(np.abs(r - med)) + 1e-12
+
+
+def _huber_weights(r: np.ndarray, delta: float) -> np.ndarray:
+    """Huber IRLS weights: 1 for |r|<=delta, delta/|r| beyond (outliers)."""
+    a = np.abs(r)
+    w = np.ones_like(a)
+    m = a > delta
+    w[m] = delta / a[m]
+    return w
+
+
+def _huber_cost(r: np.ndarray, delta: float) -> float:
+    """Huber loss: quadratic within delta, linear (outlier-robust) beyond."""
+    a = np.abs(r)
+    return float(np.sum(np.where(a <= delta, 0.5 * r ** 2,
+                                 delta * (a - 0.5 * delta))))
+
+
+def _fit_segments_robust(t, omega, j, delta, n_irls=5):
+    """
+    Robustly fit (c, α) for split index j via Huber IRLS, returning the
+    total Huber cost used to compare candidate onsets.
+
+      left  : ω = c            → robust weighted mean
+      right : ω = α·(t-t0)²+c  → robust weighted LS on the (t-t0)² basis
+    """
+    left = omega[:j]
+    right = omega[j:]
+    dt2 = (t[j:] - t[j]) ** 2
+
+    # Left constant (init robust median → Huber IRLS)
+    c = np.median(left)
+    for _ in range(n_irls):
+        w = _huber_weights(left - c, delta)
+        c = np.sum(w * left) / np.sum(w)
+
+    # Right α given c (init L2 → Huber IRLS)
+    den0 = np.sum(dt2 * dt2)
+    alpha = np.sum(dt2 * (right - c)) / den0 if den0 > 1e-30 else 0.0
+    for _ in range(n_irls):
+        w = _huber_weights(right - (alpha * dt2 + c), delta)
+        den = np.sum(w * dt2 * dt2)
+        if den < 1e-30:
+            break
+        alpha = np.sum(w * dt2 * (right - c)) / den
+
+    cost = _huber_cost(left - c, delta) + _huber_cost(right - (alpha * dt2 + c), delta)
+    return c, alpha, cost
+
+
+# ═════════════════════════════════════════════════════════════
 #  Piecewise Onset Detection
 # ═════════════════════════════════════════════════════════════
 
@@ -131,6 +192,9 @@ def piecewise_onset_fit(
     t: np.ndarray,
     omega: np.ndarray,
     min_seg: int = 5,
+    robust: bool = False,
+    huber_k: float = 1.345,
+    n_irls: int = 5,
 ) -> dict:
     """
     Fit piecewise model to angular velocity:
@@ -141,18 +205,25 @@ def piecewise_onset_fit(
     ω̇ ∝ (t - t0) → ω ∝ (t - t0)²
 
     Sweep t0 over all candidates in [min_seg, N-min_seg],
-    solve (c, α) via least squares at each candidate,
-    pick t0* = argmin total_residual.
+    solve (c, α) at each candidate, pick t0* = argmin total_residual.
 
     Parameters
     ----------
-    t     : (N,) time array
-    omega : (N,) angular velocity
+    t       : (N,) time array
+    omega   : (N,) angular velocity
     min_seg : minimum segment length
+    robust  : if True, fit with Huber IRLS instead of ordinary least squares
+              so pre-onset spikes / outliers are down-weighted. The onset is
+              chosen by minimum total Huber loss.
+    huber_k : Huber threshold in units of the robust noise scale (MAD-based);
+              1.345 gives 95% Gaussian efficiency. Residuals beyond huber_k·σ
+              are treated as outliers and down-weighted.
+    n_irls  : IRLS iterations per segment fit.
 
     Returns
     -------
     dict with: onset_idx, c, alpha, total_residual, omega_pred, rmse
+               (robust mode also adds huber_delta)
     """
     N = len(t)
     best_res = np.inf
@@ -185,6 +256,27 @@ def piecewise_onset_fit(
             best_idx = j
             best_params = (c, alpha)
 
+    huber_delta = None
+    if robust:
+        # Global noise scale from the (outlier-robust) MAD of L2 residuals,
+        # so the Huber threshold and cost are comparable across candidates.
+        c0, a0 = best_params
+        pred0 = np.full_like(omega, c0)
+        aft0 = t >= t[best_idx]
+        pred0[aft0] = a0 * (t[aft0] - t[best_idx]) ** 2 + c0
+        huber_delta = huber_k * _mad_scale(omega - pred0)
+
+        best_cost = np.inf
+        for j in range(min_seg, N - min_seg):
+            if len(t[j:]) < 2:
+                continue
+            c_j, a_j, cost = _fit_segments_robust(t, omega, j, huber_delta, n_irls)
+            if cost < best_cost:
+                best_cost = cost
+                best_idx = j
+                best_params = (c_j, a_j)
+        best_res = best_cost
+
     # Build full prediction
     c, alpha = best_params
     omega_pred = np.full_like(omega, c)
@@ -201,6 +293,7 @@ def piecewise_onset_fit(
         total_residual=best_res,
         omega_pred=omega_pred,
         rmse=rmse,
+        huber_delta=huber_delta,
     )
 
 
@@ -227,6 +320,8 @@ def extract_piecewise(
     omega_source: str = 'odom',
     lpf_cutoff: Optional[float] = None,
     lpf_order: int = 4,
+    robust: bool = False,
+    huber_k: float = 1.345,
 ) -> CriticalValueResult:
     """
     Extract critical values using piecewise onset detection.
@@ -246,6 +341,10 @@ def extract_piecewise(
                    piecewise fit. Recommended for the raw IMU source, which is
                    dominated by propeller vibration (e.g. 15.0). None = off.
     lpf_order    : Butterworth order for the low-pass filter.
+    robust       : if True, use Huber IRLS for the piecewise fit so pre-onset
+                   spikes / outliers are down-weighted (onset = argmin Huber
+                   loss) instead of ordinary least squares.
+    huber_k      : Huber threshold in units of the robust noise scale.
 
     The global time reference (t0) stays odom.t[0] regardless of source, so
     onset_time and the downstream mocap pivot estimation remain consistent.
@@ -285,7 +384,7 @@ def extract_piecewise(
     win = slice(idx_start, idx_end + 1)
 
     # Piecewise fit
-    pw = piecewise_onset_fit(t[win], omega[win])
+    pw = piecewise_onset_fit(t[win], omega[win], robust=robust, huber_k=huber_k)
     onset_idx = idx_start + pw['onset_idx']
 
     # Score: use negative residual as "score" (for compatibility)
@@ -878,6 +977,16 @@ def parse_args():
         '--lpf-order', type=int, default=4,
         help="Butterworth order for --lpf-cutoff (default 4).",
     )
+    p.add_argument(
+        '--robust', action='store_true',
+        help="Use Huber IRLS for the piecewise onset fit to down-weight "
+             "pre-onset spikes / outliers (default: ordinary least squares).",
+    )
+    p.add_argument(
+        '--huber-k', type=float, default=1.345,
+        help="Huber threshold in robust noise-scale units (default 1.345, "
+             "= 95%% Gaussian efficiency). Only used with --robust.",
+    )
     p.add_argument('--mass', type=float, default=None)
     p.add_argument('--output-dir', type=str, default=None)
     p.add_argument('--no-plot', action='store_true')
@@ -904,6 +1013,8 @@ def main():
     print(f'ω source    : {args.omega_source} ({omega_topic})')
     if args.lpf_cutoff is not None:
         print(f'LPF         : Butterworth {args.lpf_cutoff:g} Hz (order {args.lpf_order})')
+    if args.robust:
+        print(f'Fit         : robust Huber IRLS (k={args.huber_k:g})')
     if args.mass: print(f'Known mass  : {args.mass} kg')
     print()
 
@@ -912,6 +1023,7 @@ def main():
     critical_results, pw_fits = extract_piecewise_batch(
         bags, axis=axis, omega_source=args.omega_source,
         lpf_cutoff=args.lpf_cutoff, lpf_order=args.lpf_order,
+        robust=args.robust, huber_k=args.huber_k,
     )
 
     # 4. CSV (critical values)
