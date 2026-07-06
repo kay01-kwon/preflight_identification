@@ -793,7 +793,24 @@ def plot_piecewise_fits(
         ax.plot(t_w, pred, 'b-', lw=2, alpha=0.5, label=omega_pred_label)
         ax.axvline(t0, color='red', ls='--', lw=1, alpha=0.7)
         ax.plot(t0, crit.onset_omega, 'r.', ms=4, zorder=5)
-        ax.fill_between(t_w, omega_w, pred, alpha=0.1, color='red')
+
+        # Residual band. In robust mode the fit minimises the Huber-processed
+        # residual, so show that instead of the raw one: pre-onset residuals
+        # are clipped to ±δ (Huber influence ψ), the rise is kept as-is.
+        huber_delta = pw.get('huber_delta')
+        resid = omega_w - pred
+        if huber_delta is not None:
+            resid_h = resid.copy()
+            pre = np.arange(len(resid)) < pw['onset_idx']
+            resid_h[pre] = np.clip(resid[pre], -huber_delta, huber_delta)
+            ax.fill_between(t_w, pred, pred + resid_h, alpha=0.12, color='red',
+                            label=r'Huber residual ($|r|_{pre}\leq\delta$)')
+            outl = pre & (np.abs(resid) > huber_delta)
+            if np.any(outl):
+                ax.plot(t_w[outl], omega_w[outl], 'x', color='darkorange',
+                        ms=5, mew=1.2, zorder=6, label='down-weighted outlier')
+        else:
+            ax.fill_between(t_w, omega_w, pred, alpha=0.1, color='red')
 
         ax2 = ax.twinx()
         ax2.plot(t_w, moment[win], 'tab:green', lw=1.5, alpha=0.7)
