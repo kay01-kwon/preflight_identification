@@ -9,5 +9,7 @@ DataSet/sim/
 # DataSet/exp/case_04
 
 results/*
+results_imu/*
+results_imu_huber/*
 __pycache__/
 *.pyc
