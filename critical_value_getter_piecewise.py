@@ -131,13 +131,16 @@ def lowpass_filter(
 # ═════════════════════════════════════════════════════════════
 
 def _mad_scale(r: np.ndarray) -> float:
-    """Robust noise scale via MAD (normalized to std for Gaussian)."""
+    """Robust noise scale via MAD = Median Absolute Deviation
+    (normalized by 1.4826 so it matches the standard deviation for Gaussian
+    data)."""
     med = np.median(r)
     return 1.4826 * np.median(np.abs(r - med)) + 1e-12
 
 
 def _huber_weights(r: np.ndarray, delta: float) -> np.ndarray:
-    """Huber IRLS weights: 1 for |r|<=delta, delta/|r| beyond (outliers)."""
+    """Huber IRLS (Iteratively Reweighted Least Squares) weights:
+    1 for |r|<=delta, delta/|r| beyond (outliers)."""
     a = np.abs(r)
     w = np.ones_like(a)
     m = a > delta
@@ -155,7 +158,9 @@ def _huber_cost(r: np.ndarray, delta: float) -> float:
 def _fit_segments_robust(t, omega, j, delta, n_irls=5, sides='pre'):
     """
     Fit (c, α) for split index j and return the total cost used to compare
-    candidate onsets.
+    candidate onsets. Robust segments use Huber IRLS
+    (Iteratively Reweighted Least Squares); n_irls = number of reweighting
+    iterations.
 
       left  : ω = c            (should be flat → deviations are vibration)
       right : ω = α·(t-t0)²+c  (real tip-over rise)
@@ -174,7 +179,8 @@ def _fit_segments_robust(t, omega, j, delta, n_irls=5, sides='pre'):
     right = omega[j:]
     dt2 = (t[j:] - t[j]) ** 2
 
-    # Left constant: robust (Huber IRLS) — down-weight vibration outliers
+    # Left constant: robust Huber IRLS (Iteratively Reweighted Least Squares)
+    # — down-weight vibration outliers
     c = np.median(left)
     for _ in range(n_irls):
         w = _huber_weights(left - c, delta)
@@ -228,11 +234,14 @@ def piecewise_onset_fit(
     omega   : (N,) angular velocity
     min_seg : minimum segment length
     robust  : if True, robustify the fit so pre-onset vibration outliers are
-              down-weighted (Huber IRLS). Onset = argmin total cost.
-    huber_k : Huber threshold in units of the robust noise scale (MAD-based);
-              1.345 gives 95% Gaussian efficiency. Residuals beyond huber_k·σ
-              are treated as outliers and down-weighted.
-    n_irls  : IRLS iterations per segment fit.
+              down-weighted (Huber IRLS = Iteratively Reweighted Least
+              Squares). Onset = argmin total cost.
+    huber_k : Huber threshold in units of the robust noise scale
+              (MAD = Median Absolute Deviation based); 1.345 gives 95%
+              Gaussian efficiency. Residuals beyond huber_k·σ are treated as
+              outliers and down-weighted.
+    n_irls  : number of IRLS (Iteratively Reweighted Least Squares) iterations
+              per segment fit.
     robust_sides : 'pre'  → Huber on the pre-onset (flat) segment only, plain
                             LS on the rise so tip-over dynamics are preserved
                             (recommended). 'both' → Huber on both segments.
@@ -275,8 +284,9 @@ def piecewise_onset_fit(
 
     huber_delta = None
     if robust:
-        # Global noise scale from the (outlier-robust) MAD of L2 residuals,
-        # so the Huber threshold and cost are comparable across candidates.
+        # Global noise scale from the (outlier-robust) MAD = Median Absolute
+        # Deviation of the L2 residuals, so the Huber threshold and cost are
+        # comparable across candidates.
         c0, a0 = best_params
         pred0 = np.full_like(omega, c0)
         aft0 = t >= t[best_idx]
@@ -361,7 +371,8 @@ def extract_piecewise(
                    dominated by propeller vibration (e.g. 15.0). None = off.
     lpf_order    : Butterworth order for the low-pass filter.
     robust       : if True, robustify the piecewise fit so pre-onset vibration
-                   outliers are down-weighted (Huber IRLS).
+                   outliers are down-weighted (Huber IRLS = Iteratively
+                   Reweighted Least Squares).
     huber_k      : Huber threshold in units of the robust noise scale.
     robust_sides : 'pre' (Huber on pre-onset only, recommended) or 'both'.
 
@@ -1016,8 +1027,9 @@ def parse_args():
     )
     p.add_argument(
         '--robust', action='store_true',
-        help="Robustify the piecewise onset fit (Huber IRLS) to down-weight "
-             "pre-onset vibration outliers (default: ordinary least squares).",
+        help="Robustify the piecewise onset fit (Huber IRLS = Iteratively "
+             "Reweighted Least Squares) to down-weight pre-onset vibration "
+             "outliers (default: ordinary least squares).",
     )
     p.add_argument(
         '--robust-sides', type=str, default='pre', choices=['pre', 'both'],
@@ -1056,7 +1068,8 @@ def main():
     if args.lpf_cutoff is not None:
         print(f'LPF         : Butterworth {args.lpf_cutoff:g} Hz (order {args.lpf_order})')
     if args.robust:
-        print(f'Fit         : robust Huber IRLS (k={args.huber_k:g}, sides={args.robust_sides})')
+        print(f'Fit         : robust Huber IRLS [Iteratively Reweighted Least Squares] '
+              f'(k={args.huber_k:g}, sides={args.robust_sides})')
     if args.mass: print(f'Known mass  : {args.mass} kg')
     print()
 
