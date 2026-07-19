@@ -21,6 +21,9 @@ python critical_value_getter_piecewise.py DataSet/exp/My --omega-source imu --lp
 
 # Robust (Huber) onset fit to reject pre-onset spikes/outliers:
 python critical_value_getter_piecewise.py DataSet/exp/My --omega-source imu --lpf-cutoff 15 --robust
+
+# RK4 dynamics-ODE onset model on the (filtered) odom rate:
+python critical_value_getter_piecewise.py DataSet/exp/My --model ode
 """
 
 import argparse
@@ -325,6 +328,118 @@ def piecewise_onset_fit(
     )
 
 
+# ═════════════════════════════════════════════════════════════
+#  Dynamics (RK4 ODE) onset model
+# ═════════════════════════════════════════════════════════════
+
+def _rk4_simulate(t, M_interp, f_interp, params):
+    """
+    Integrate the tip-over rotational dynamics with RK4:
+        φ̇ = ω
+        ω̇ = a·M(t) + b·f(t) + c·cos φ + d·sin φ
+    from rest (φ = ω = 0 at t[0]). Returns simulated ω on the grid t.
+    M_interp, f_interp are callables giving M(t), f(t) at arbitrary t
+    (needed at the RK4 half-steps).
+    """
+    a, b, c, d = params
+    n = len(t)
+    w = np.zeros(n)
+    y = np.array([0.0, 0.0])  # [φ, ω]
+
+    def dv(s, yy):
+        return np.array([yy[1],
+                         a * M_interp(s) + b * f_interp(s)
+                         + c * np.cos(yy[0]) + d * np.sin(yy[0])])
+
+    for i in range(n - 1):
+        h = t[i + 1] - t[i]
+        tt = t[i]
+        k1 = dv(tt, y)
+        k2 = dv(tt + h / 2, y + h / 2 * k1)
+        k3 = dv(tt + h / 2, y + h / 2 * k2)
+        k4 = dv(tt + h, y + h * k3)
+        y = y + h / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
+        w[i + 1] = y[1]
+    return w
+
+
+def ode_onset_fit(t, omega, moment, f_col, onset_guess,
+                  sweep_back_s=0.4, sweep_ahead_s=0.3, step_s=0.02):
+    """
+    Dynamics-based onset detection: replaces the time-quadratic PLS model
+    with the tip-over rotational dynamics, integrated by RK4.
+
+        φ̇ = ω,   ω̇ = a·M(t) + b·f(t) + c·cos φ + d·sin φ
+
+    For each candidate onset the model is integrated forward from rest
+    (φ = ω = 0) with the measured M(t), f(t) as inputs; the parameters
+    (a, b, c, d) are fit by nonlinear least squares to the measured ω, and the
+    onset that minimises the total residual is selected. The critical moment
+    is M at that onset. ω is obtained by *integration*, so no noisy
+    differentiation of ω is needed.
+
+    Parameters
+    ----------
+    t, omega, moment, f_col : (N,) window arrays (window = excitation ramp)
+    onset_guess : local index used to centre the sweep (e.g. the PLS onset).
+                  The sweep is kept tight around this reliable estimate: a
+                  free/wide sweep is degenerate for weak tip-overs (an early
+                  onset with small driving moment predicts a near-flat ω that
+                  spuriously matches the pre-onset baseline).
+    sweep_back_s / sweep_ahead_s / step_s : sweep range and stride [seconds],
+                  made rate-independent (converted to samples via median dt).
+
+    Returns
+    -------
+    dict with the same core keys as piecewise_onset_fit
+    (onset_idx, c, alpha, total_residual, omega_pred, rmse) plus
+    'params' = (a, b, c, d) and model='ode'. Here 'alpha' carries the moment
+    coefficient a for CSV compatibility.
+    """
+    from scipy.optimize import least_squares  # lazy: optional dependency
+
+    N = len(t)
+    M_interp = lambda s: np.interp(s, t, moment)
+    f_interp = lambda s: np.interp(s, t, f_col)
+
+    dt = float(np.median(np.diff(t)))
+    sweep_back = int(round(sweep_back_s / dt))
+    sweep_ahead = int(round(sweep_ahead_s / dt))
+    step = max(1, int(round(step_s / dt)))
+    lo = max(1, onset_guess - sweep_back)
+    hi = min(N - 20, onset_guess + sweep_ahead)
+    best = (np.inf, onset_guess, np.zeros(4))
+    x0 = np.zeros(4)
+    for j in range(lo, max(lo + 1, hi), step):
+        wm = omega[j:]
+        r = least_squares(
+            lambda p: _rk4_simulate(t[j:], M_interp, f_interp, p) - wm,
+            x0, method='lm', max_nfev=150,
+        )
+        x0 = r.x
+        pre = np.sum((omega[:j] - np.median(omega[:j])) ** 2) if j > 0 else 0.0
+        cost = 2 * r.cost + pre  # r.cost = 0.5·SSE
+        if cost < best[0]:
+            best = (cost, j, r.x)
+
+    cost, j_star, params = best
+    c0 = float(np.median(omega[:j_star])) if j_star > 0 else 0.0
+    omega_pred = np.full(N, c0)
+    omega_pred[j_star:] = _rk4_simulate(t[j_star:], M_interp, f_interp, params)
+    rmse = float(np.sqrt(np.mean((omega - omega_pred) ** 2)))
+
+    return dict(
+        onset_idx=j_star,
+        c=c0, alpha=float(params[0]),
+        total_residual=float(cost),
+        omega_pred=omega_pred,
+        rmse=rmse,
+        huber_delta=None,
+        params=tuple(float(x) for x in params),
+        model='ode',
+    )
+
+
 def detect_excitation_window(
     moment: np.ndarray,
     threshold: float = 0.01,
@@ -351,6 +466,7 @@ def extract_piecewise(
     robust: bool = False,
     huber_k: float = 1.345,
     robust_sides: str = 'pre',
+    model: str = 'piecewise',
 ) -> CriticalValueResult:
     """
     Extract critical values using piecewise onset detection.
@@ -358,11 +474,15 @@ def extract_piecewise(
     Pipeline:
       1. Prepare signals (ω, f_col, moment)
       2. Excitation window [|M|>0.01, max|M|]
-      3. Piecewise fit on ω in window
+      3. Onset fit on ω in window (time-quadratic PLS or RK4 dynamics ODE)
       4. onset = argmin total residual
 
     Parameters
     ----------
+    model        : 'piecewise' → time-quadratic PLS onset (default)
+                   'ode'       → RK4 forward-simulation of the tip-over
+                                 dynamics ω̇ = a·M + b·f + c·cosφ + d·sinφ
+                                 (φ̇ = ω), onset swept for the critical moment.
     omega_source : 'odom' → ω from /mavros/local_position/odom (default)
                    'imu'  → ω from /mavros/imu/data_raw
     lpf_cutoff   : if set, apply a zero-phase Butterworth low-pass filter at
@@ -413,9 +533,14 @@ def extract_piecewise(
     idx_start, idx_end = detect_excitation_window(moment, threshold)
     win = slice(idx_start, idx_end + 1)
 
-    # Piecewise fit
-    pw = piecewise_onset_fit(t[win], omega[win], robust=robust, huber_k=huber_k,
-                             robust_sides=robust_sides)
+    # Onset fit: time-quadratic PLS or RK4 dynamics ODE
+    if model == 'ode':
+        guess = piecewise_onset_fit(t[win], omega[win])['onset_idx']
+        pw = ode_onset_fit(t[win], omega[win], moment[win], f_col[win],
+                           onset_guess=guess)
+    else:
+        pw = piecewise_onset_fit(t[win], omega[win], robust=robust,
+                                 huber_k=huber_k, robust_sides=robust_sides)
     onset_idx = idx_start + pw['onset_idx']
 
     # Score: use negative residual as "score" (for compatibility)
@@ -781,13 +906,19 @@ def plot_piecewise_fits(
         win = slice(idx_start, idx_end + 1)
         t_w = t[win]; omega_w = crit.omega[win]
 
-        # Prediction in window
-        cc, alpha = pw['c'], pw['alpha']
+        # Prediction in window. Use the stored prediction when it is
+        # window-aligned (covers the RK4 ODE model, whose ω_pred is not a
+        # time-quadratic); otherwise rebuild the quadratic from (c, α).
         t0 = t_w[pw['onset_idx']]
-        pred = np.full_like(omega_w, cc)
-        after = t_w >= t0
-        dt = t_w[after] - t0
-        pred[after] = alpha * dt**2 + cc
+        stored = pw.get('omega_pred')
+        if stored is not None and len(stored) == len(omega_w):
+            pred = np.asarray(stored)
+        else:
+            cc, alpha = pw['c'], pw['alpha']
+            pred = np.full_like(omega_w, cc)
+            after = t_w >= t0
+            dt = t_w[after] - t0
+            pred[after] = alpha * dt**2 + cc
 
         # Onset moment label based on bag name
         _name = bag.name.lower()
@@ -1026,6 +1157,11 @@ def parse_args():
         help="Butterworth order for --lpf-cutoff (default 4).",
     )
     p.add_argument(
+        '--model', type=str, default='piecewise', choices=['piecewise', 'ode'],
+        help="Onset model: 'piecewise' (time-quadratic PLS, default) or "
+             "'ode' (RK4 forward-sim of ω̇=a·M+b·f+c·cosφ+d·sinφ, φ̇=ω).",
+    )
+    p.add_argument(
         '--robust', action='store_true',
         help="Robustify the piecewise onset fit (Huber IRLS = Iteratively "
              "Reweighted Least Squares) to down-weight pre-onset vibration "
@@ -1063,7 +1199,9 @@ def main():
     omega_topic = ('/mavros/imu/data_raw' if args.omega_source == 'imu'
                    else '/mavros/local_position/odom')
     print(f'Axis        : {axis} ({"roll" if axis=="x" else "pitch"})')
-    print(f'Detection   : Piecewise quadratic fit')
+    _mdl = ('RK4 dynamics ODE (ω̇=a·M+b·f+c·cosφ+d·sinφ)'
+            if args.model == 'ode' else 'Piecewise quadratic fit')
+    print(f'Detection   : {_mdl}')
     print(f'ω source    : {args.omega_source} ({omega_topic})')
     if args.lpf_cutoff is not None:
         print(f'LPF         : Butterworth {args.lpf_cutoff:g} Hz (order {args.lpf_order})')
@@ -1079,6 +1217,7 @@ def main():
         bags, axis=axis, omega_source=args.omega_source,
         lpf_cutoff=args.lpf_cutoff, lpf_order=args.lpf_order,
         robust=args.robust, huber_k=args.huber_k, robust_sides=args.robust_sides,
+        model=args.model,
     )
 
     # 4. CSV (critical values)
