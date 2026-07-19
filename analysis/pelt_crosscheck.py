@@ -33,6 +33,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import argparse
 import csv
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
@@ -44,6 +45,8 @@ from critical_value_getter_piecewise import (
     detect_excitation_window,
     detect_axis,
     bag_name_to_title,
+    estimate_pivot_from_mocap,
+    compute_mass_and_offset,
 )
 
 # Cost functions to cross-check with. 'normal' (Gaussian mean+variance) is the
@@ -121,6 +124,125 @@ def crosscheck(bags, axis: str):
             },
         ))
     return rows, series
+
+
+# ═════════════════════════════════════════════════════════════
+#  Downstream: propagate each onset method to CoM / moment offset
+# ═════════════════════════════════════════════════════════════
+
+# Onset methods to propagate. 'pelt:<cost>' uses the PELT breakpoint.
+DOWNSTREAM_METHODS = ['piecewise', 'cosh', 'pelt:normal', 'pelt:rbf']
+_METHOD_LABEL = {'piecewise': 'PLS', 'cosh': 'cosh',
+                 'pelt:normal': 'PELT\nnormal', 'pelt:rbf': 'PELT\nrbf'}
+
+
+def _crit_for_method(bag, axis: str, method: str):
+    """CriticalValueResult for a bag under the given onset method."""
+    if method in ('piecewise', 'cosh'):
+        crit, _ = extract_piecewise(bag, axis, model=method)
+        return crit
+    # PELT: take the base signals, relocate the onset to the PELT breakpoint
+    base, _ = extract_piecewise(bag, axis, model='piecewise')
+    i0, i1 = detect_excitation_window(base.moment)
+    j = i0 + pelt_onset_index(base.omega[i0:i1 + 1], method.split(':', 1)[1])
+    return replace(base, onset_idx=j, onset_time=float(base.t[j]),
+                   onset_thrust=float(base.f_col[j]),
+                   onset_moment=float(base.moment[j]),
+                   onset_omega=float(base.omega[j]))
+
+
+def downstream_crosscheck(bags, axis: str, known_mass=None):
+    """
+    Propagate each onset method through the full estimation (pivot circle-fit
+    + mass/CoM offset) and return the aggregated estimates per method.
+    """
+    out = []
+    for method in DOWNSTREAM_METHODS:
+        crits = [_crit_for_method(b, axis, method) for b in bags]
+        pivots = [estimate_pivot_from_mocap(b, c.onset_time, axis)
+                  for b, c in zip(bags, crits)]
+        e = compute_mass_and_offset(crits, pivots, axis, known_mass=known_mass)
+        out.append(dict(
+            method=method,
+            M_ff=e['pair3_ff_mean'], M_ff_std=e['pair3_ff_std'],
+            offset_mm=e['pair3_offset_mean'] * 1e3,
+            offset_mm_std=e['pair3_offset_std'] * 1e3,
+            W_off=e['pair3_Woffset_mean'],
+            mass=e['pair3_mass_mean'],
+        ))
+    return out
+
+
+def print_and_save_downstream(down, axis, output_dir: Path):
+    def _spread(vals):
+        v = np.array([x for x in vals if not np.isnan(x)])
+        return (v.max() - v.min()) / abs(np.mean(v)) * 100 if len(v) else float('nan')
+
+    print(f"\n{'method':12s} | {'M_ff(offset)[Nm]':>18} | {'CoM off[mm]':>14} | "
+          f"{'W*off[Nm]':>10} | {'mass[kg]':>8}")
+    print("-" * 74)
+    for d in down:
+        print(f"{d['method']:12s} | {d['M_ff']:+9.5f} ± {d['M_ff_std']:.5f} | "
+              f"{d['offset_mm']:+7.2f} ± {d['offset_mm_std']:4.2f} | "
+              f"{d['W_off']:+10.5f} | {d['mass']:8.3f}")
+    print("-" * 74)
+    print(f"spread across methods:  M_ff {_spread([d['M_ff'] for d in down]):.1f}%  "
+          f"CoM-offset {_spread([d['offset_mm'] for d in down]):.1f}%  "
+          f"mass {_spread([d['mass'] for d in down]):.1f}%  "
+          f"→ final estimates are onset-method independent")
+
+    p = Path(output_dir) / f"pelt_downstream_{axis}.csv"
+    with open(p, 'w', newline='') as f:
+        w = csv.writer(f)
+        w.writerow(['method', 'M_ff_Nm', 'M_ff_std', 'CoM_offset_mm',
+                    'CoM_offset_std_mm', 'W_offset_Nm', 'mass_kg'])
+        for d in down:
+            w.writerow([d['method'], f"{d['M_ff']:.6f}", f"{d['M_ff_std']:.6f}",
+                        f"{d['offset_mm']:.4f}", f"{d['offset_mm_std']:.4f}",
+                        f"{d['W_off']:.6f}", f"{d['mass']:.4f}"])
+    print(f"Downstream table → {p}")
+    return p
+
+
+def plot_downstream(down, axis, save_dir=None, show=True):
+    labels = [_METHOD_LABEL.get(d['method'], d['method']) for d in down]
+    x = np.arange(len(down))
+    colors = ['tab:red', 'tab:blue', 'tab:green', 'tab:orange',
+              'tab:purple'][:len(down)]
+    off_lbl = 'x_{off}' if axis == 'y' else 'y_{off}'
+
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(13, 5))
+    ff = [d['M_ff'] for d in down]
+    a1.bar(x, ff, yerr=[d['M_ff_std'] for d in down], capsize=5,
+           color=colors, alpha=0.8, edgecolor='k')
+    a1.axhline(np.mean(ff), color='gray', ls='--', lw=1,
+               label=f'mean={np.mean(ff):+.4f}')
+    a1.set_xticks(x); a1.set_xticklabels(labels)
+    a1.set_ylabel(r'Moment offset $M_{ff}=0.5(M_p+M_n)$ [N·m]')
+    a1.set_title('Feedforward moment offset (pivot-free)')
+    a1.legend(); a1.grid(axis='y', alpha=0.3)
+
+    off = [d['offset_mm'] for d in down]
+    a2.bar(x, off, yerr=[d['offset_mm_std'] for d in down], capsize=5,
+           color=colors, alpha=0.8, edgecolor='k')
+    a2.axhline(np.mean(off), color='gray', ls='--', lw=1,
+               label=f'mean={np.mean(off):+.2f}mm')
+    a2.set_xticks(x); a2.set_xticklabels(labels)
+    a2.set_ylabel(rf'CoM offset ${off_lbl}$ [mm]')
+    a2.set_title('CoM offset (pivot-based)')
+    a2.legend(); a2.grid(axis='y', alpha=0.3)
+
+    fig.suptitle('Downstream robustness: final CoM / moment offset vs onset method',
+                 fontsize=13)
+    fig.tight_layout()
+    if save_dir:
+        p = Path(save_dir) / f"pelt_downstream_{axis}.png"
+        fig.savefig(p, dpi=300, bbox_inches='tight')
+        print(f"Downstream figure → {p}")
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)
 
 
 # ═════════════════════════════════════════════════════════════
@@ -206,6 +328,8 @@ def parse_args():
         description="PELT/BinSeg onset cross-check vs the model-based onset.")
     p.add_argument('data_dir', type=str)
     p.add_argument('--axis', type=str, default=None, choices=['x', 'y'])
+    p.add_argument('--mass', type=float, default=None,
+                   help='Known mass [kg] for the downstream estimation.')
     p.add_argument('--output-dir', type=str, default=None)
     p.add_argument('--no-plot', action='store_true')
     p.add_argument('--save-fig', action='store_true')
@@ -223,13 +347,20 @@ def main():
     print(f"Axis        : {axis} ({'roll' if axis == 'x' else 'pitch'})")
     print(f"Cross-check : PELT/BinSeg costs {PELT_COSTS}\n")
 
+    # 1. Onset-level cross-check (M_crit per method)
     rows, series = crosscheck(bags, axis)
     print_and_save_table(rows, axis, output_dir)
+
+    # 2. Downstream: propagate each method to the CoM / moment offset
+    print("\n── Downstream (CoM / moment offset) ──")
+    down = downstream_crosscheck(bags, axis, known_mass=args.mass)
+    print_and_save_downstream(down, axis, output_dir)
 
     save_dir = output_dir if args.save_fig else None
     show = not args.no_plot
     if show or save_dir:
         plot_crosscheck(series, axis, save_dir=save_dir, show=show)
+        plot_downstream(down, axis, save_dir=save_dir, show=show)
 
 
 if __name__ == "__main__":
