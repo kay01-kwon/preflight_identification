@@ -708,6 +708,98 @@ def compute_mass_and_offset(
 
 
 # ═════════════════════════════════════════════════════════════
+#  95% Confidence intervals
+# ═════════════════════════════════════════════════════════════
+
+def compute_confidence_intervals(
+    critical_results, pivot_results, axis,
+    known_mass=None, n_boot=10000, seed=0, alpha=0.05,
+):
+    """
+    95% confidence intervals for the identified quantities.
+
+    The N_pos × N_neg combinations are NOT independent samples — they are
+    built from N_pos + N_neg measurements (each trial is reused across
+    combinations), so treating them as n = N_pos·N_neg overstates the
+    precision (pseudo-replication). Two honest interval estimates are given:
+
+      * moment offset M_ff = 0.5(Mp+Mn): analytic propagation from the
+        positive/negative critical-moment means, with a Welch–Satterthwaite
+        t multiplier — the small-sample-robust, defensible interval.
+
+      * all quantities: bootstrap over TRIALS — the positive and negative
+        trials are resampled with replacement (respecting the pos/neg
+        structure), the full estimation is recomputed, and the 2.5/97.5
+        percentiles are taken. This propagates pseudo-replication correctly,
+        but for a very small number of trials the percentile interval tends
+        to be optimistic (undercovers); prefer the analytic t interval then.
+
+    Returns a dict with point estimates and (lo, hi) CIs; offsets in metres.
+    """
+    from scipy import stats  # lazy: optional dependency
+
+    pos = [(r, p) for r, p in zip(critical_results, pivot_results)
+           if 'pos' in r.bag_name.lower()]
+    neg = [(r, p) for r, p in zip(critical_results, pivot_results)
+           if 'neg' in r.bag_name.lower()]
+    n_p, n_n = len(pos), len(neg)
+    Mp = np.array([r.onset_moment for r, _ in pos])
+    Mn = np.array([r.onset_moment for r, _ in neg])
+    sign = -1.0 if axis == 'y' else 1.0
+
+    # ── Analytic CI for the feedforward moment offset (linear in Mp, Mn) ──
+    ff_mean = sign * 0.5 * (Mp.mean() + Mn.mean())
+    sp = Mp.std(ddof=1) if n_p > 1 else 0.0
+    sn = Mn.std(ddof=1) if n_n > 1 else 0.0
+    var = 0.25 * (sp ** 2 / n_p + sn ** 2 / n_n)
+    se = float(np.sqrt(var))
+    # Welch–Satterthwaite effective degrees of freedom
+    num = (sp ** 2 / n_p + sn ** 2 / n_n) ** 2
+    den = 0.0
+    if n_p > 1:
+        den += (sp ** 2 / n_p) ** 2 / (n_p - 1)
+    if n_n > 1:
+        den += (sn ** 2 / n_n) ** 2 / (n_n - 1)
+    df = num / den if den > 0 else max(n_p + n_n - 2, 1)
+    t = float(stats.t.ppf(1 - alpha / 2, df))
+    ff_ci_analytic = (ff_mean - t * se, ff_mean + t * se)
+
+    # ── Bootstrap over trials (resample pos & neg independently) ──
+    rng = np.random.default_rng(seed)
+    pc, pp = [r for r, _ in pos], [p for _, p in pos]
+    nc, npv = [r for r, _ in neg], [p for _, p in neg]
+    keys = ['comb9_ff_mean', 'comb9_offset_mean',
+            'comb9_Woffset_mean', 'comb9_mass_mean']
+    boot = {k: [] for k in keys}
+    for _ in range(n_boot):
+        pi = rng.integers(0, n_p, n_p)
+        ni = rng.integers(0, n_n, n_n)
+        crits = [pc[i] for i in pi] + [nc[i] for i in ni]
+        pivs = [pp[i] for i in pi] + [npv[i] for i in ni]
+        e = compute_mass_and_offset(crits, pivs, axis, known_mass)
+        for k in keys:
+            boot[k].append(e[k])
+
+    def _pct(vals):
+        a = np.array(vals, dtype=float)
+        a = a[~np.isnan(a)]
+        if len(a) == 0:
+            return (np.nan, np.nan)
+        return (float(np.percentile(a, 100 * alpha / 2)),
+                float(np.percentile(a, 100 * (1 - alpha / 2))))
+
+    return dict(
+        n_pos=n_p, n_neg=n_n, n_boot=n_boot, df=df,
+        ff_mean=ff_mean, ff_se=se,
+        ff_ci_analytic=ff_ci_analytic,
+        ff_ci_boot=_pct(boot['comb9_ff_mean']),
+        offset_ci_boot=_pct(boot['comb9_offset_mean']),   # metres
+        Woffset_ci_boot=_pct(boot['comb9_Woffset_mean']),
+        mass_ci_boot=_pct(boot['comb9_mass_mean']),
+    )
+
+
+# ═════════════════════════════════════════════════════════════
 #  CSV Export
 # ═════════════════════════════════════════════════════════════
 
@@ -1147,6 +1239,11 @@ def parse_args():
              "= 95%% Gaussian efficiency). Only used with --robust.",
     )
     p.add_argument('--mass', type=float, default=None)
+    p.add_argument(
+        '--ci', action='store_true',
+        help="Report 95%% confidence intervals (analytic propagation for the "
+             "moment offset + bootstrap over trials for CoM offset / mass).",
+    )
     p.add_argument('--output-dir', type=str, default=None)
     p.add_argument('--no-plot', action='store_true')
     p.add_argument('--save-fig', action='store_true')
@@ -1207,6 +1304,29 @@ def main():
     # 6. Mass & CoM
     print("\n── Mass & CoM Offset ──")
     est = compute_mass_and_offset(critical_results, pivot_results, axis=axis, known_mass=args.mass)
+
+    # 6a. 95% confidence intervals
+    if args.ci:
+        print("\n── 95% Confidence Intervals ──")
+        ci = compute_confidence_intervals(
+            critical_results, pivot_results, axis=axis, known_mass=args.mass)
+        off_lbl = 'x_off' if axis == 'y' else 'y_off'
+        print(f"  [n = {ci['n_pos']} pos + {ci['n_neg']} neg trials — "
+              f"the {ci['n_pos']*ci['n_neg']} combinations are NOT independent]")
+        print(f"  Moment offset M_ff = {ci['ff_mean']:+.5f} N·m")
+        print(f"    analytic (Welch t, df={ci['df']:.1f}) : "
+              f"[{ci['ff_ci_analytic'][0]:+.5f}, {ci['ff_ci_analytic'][1]:+.5f}]  (defensible)")
+        print(f"    bootstrap (B={ci['n_boot']})            : "
+              f"[{ci['ff_ci_boot'][0]:+.5f}, {ci['ff_ci_boot'][1]:+.5f}]")
+        o = ci['offset_ci_boot']
+        print(f"  CoM {off_lbl}  bootstrap 95% CI : "
+              f"[{o[0]*1e3:+.2f}, {o[1]*1e3:+.2f}] mm")
+        w = ci['Woffset_ci_boot']
+        print(f"  W·offset   bootstrap 95% CI : [{w[0]:+.5f}, {w[1]:+.5f}] N·m")
+        m = ci['mass_ci_boot']
+        print(f"  mass       bootstrap 95% CI : [{m[0]:.3f}, {m[1]:.3f}] kg")
+        print("  (small n: the analytic t interval is conservative; bootstrap "
+              "may undercover — report the analytic one.)")
 
     # 6b. CSV
     print("\n── Estimation CSV ──")
