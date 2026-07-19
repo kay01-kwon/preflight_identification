@@ -188,8 +188,9 @@ def print_and_save_downstream(down, axis, output_dir: Path):
     print("-" * 74)
     print(f"spread across methods:  M_ff {_spread([d['M_ff'] for d in down]):.1f}%  "
           f"CoM-offset {_spread([d['offset_mm'] for d in down]):.1f}%  "
-          f"mass {_spread([d['mass'] for d in down]):.1f}%  "
-          f"→ final estimates are onset-method independent")
+          f"mass {_spread([d['mass'] for d in down]):.1f}%")
+    print("(a large spread flags an outlier detector — inspect the per-method "
+          "rows; kernel/RBF cost can mislocate a weak-case onset)")
 
     p = Path(output_dir) / f"pelt_downstream_{axis}.csv"
     with open(p, 'w', newline='') as f:
