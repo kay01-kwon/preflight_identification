@@ -22,8 +22,8 @@ python critical_value_getter_piecewise.py DataSet/exp/My --omega-source imu --lp
 # Robust (Huber) onset fit to reject pre-onset spikes/outliers:
 python critical_value_getter_piecewise.py DataSet/exp/My --omega-source imu --lpf-cutoff 15 --robust
 
-# RK4 dynamics-ODE onset model on the (filtered) odom rate:
-python critical_value_getter_piecewise.py DataSet/exp/My --model ode
+# Closed-form unstable tip-over model ω=C1(cosh(C2τ)-1)+C on the odom rate:
+python critical_value_getter_piecewise.py DataSet/exp/My --model cosh
 """
 
 import argparse
@@ -477,6 +477,78 @@ def ode_onset_fit(t, omega, moment, f_col, onset_guess, phi=None,
     )
 
 
+def cosh_onset_fit(t, omega, moment, onset_guess,
+                   sweep_back_s=0.4, sweep_ahead_s=0.3, step_s=0.02):
+    """
+    Onset detection with the closed-form tip-over solution.
+
+    Linearising the dynamics (sinφ≈φ, cosφ≈1) gives φ̈ − dφ = G(t). Because
+    the tip-over past the balance point is UNSTABLE (d > 0, positive
+    feedback), the eigenvalues are real (±√d) and the exact solution is
+    hyperbolic. With the physical onset conditions ω(t_crit)=0 and α(t_crit)=0
+    (critical = boundary of static equilibrium) it collapses to
+
+        ω(τ) = C₁·(cosh(C₂·τ) − 1) + C,   τ = t − t_crit,  C₂ = √d
+
+    which is monotonic (no spurious oscillation), reduces to the PLS quadratic
+    (C₂τ)²/2 for small τ, and grows exponentially for large τ. A constant
+    moment rate Ṁ enters only through the amplitude C₁ = a·Ṁ/d, so no explicit
+    polynomial term is needed (it is already the leading term of cosh−1).
+
+    The onset t_crit is swept (tight around onset_guess); the critical moment
+    is M at the best onset. Fit is 3-parameter (C₁, C₂, C), well conditioned.
+
+    Returns the same core keys as piecewise_onset_fit; 'alpha' carries C₂
+    (the instability rate √d) and 'c' the baseline for CSV compatibility.
+    """
+    from scipy.optimize import least_squares  # lazy: optional dependency
+
+    N = len(t)
+    dt = float(np.median(np.diff(t)))
+    lo = max(1, onset_guess - int(round(sweep_back_s / dt)))
+    hi = min(N - 20, onset_guess + int(round(sweep_ahead_s / dt)))
+    step = max(1, int(round(step_s / dt)))
+
+    # tip-over direction (sign of ω at the window tail vs baseline) to init C₁
+    base0 = float(np.median(omega[:max(1, onset_guess)]))
+    sgn = 1.0 if float(np.mean(omega[int(0.85 * N):])) >= base0 else -1.0
+
+    def model(p, tau):
+        C1, C2, C = p
+        return C1 * (np.cosh(np.clip(C2 * tau, 0, 30)) - 1) + C
+
+    best = (np.inf, onset_guess, np.array([sgn * 1e-3, 3.0, base0]))
+    for j in range(lo, max(lo + 1, hi), step):
+        tau = t[j:] - t[j]
+        y = omega[j:]
+        C0 = float(np.median(omega[:j])) if j > 0 else 0.0
+        r = least_squares(lambda p: model(p, tau) - y,
+                          [sgn * 1e-3, 3.0, C0], method='trf',
+                          bounds=([-5.0, 0.05, -2.0], [5.0, 30.0, 2.0]),
+                          max_nfev=300)
+        pre = np.sum((omega[:j] - C0) ** 2) if j > 0 else 0.0
+        cost = float(np.sum(r.fun ** 2) + pre)
+        if cost < best[0]:
+            best = (cost, j, r.x)
+
+    cost, j_star, params = best
+    C1, C2, C = params
+    omega_pred = np.full(N, float(C))
+    omega_pred[j_star:] = model(params, t[j_star:] - t[j_star])
+    rmse = float(np.sqrt(np.mean((omega - omega_pred) ** 2)))
+
+    return dict(
+        onset_idx=j_star,
+        c=float(C), alpha=float(C2),
+        total_residual=float(cost),
+        omega_pred=omega_pred,
+        rmse=rmse,
+        huber_delta=None,
+        params=tuple(float(x) for x in params),
+        model='cosh',
+    )
+
+
 def detect_excitation_window(
     moment: np.ndarray,
     threshold: float = 0.01,
@@ -517,6 +589,9 @@ def extract_piecewise(
     Parameters
     ----------
     model        : 'piecewise' → time-quadratic PLS onset (default)
+                   'cosh'      → closed-form unstable tip-over solution
+                                 ω(τ) = C₁(cosh(C₂τ)−1) + C (monotonic;
+                                 quadratic→exponential; C₂=√d instability rate)
                    'ode'       → tip-over dynamics onset model
                                  ω̇ = a·M + b·f + c·cosφ + d·sinφ, with the
                                  measured tilt φ (roll/pitch from odom
@@ -573,8 +648,11 @@ def extract_piecewise(
     idx_start, idx_end = detect_excitation_window(moment, threshold)
     win = slice(idx_start, idx_end + 1)
 
-    # Onset fit: time-quadratic PLS or RK4 dynamics ODE
-    if model == 'ode':
+    # Onset fit: PLS quadratic, cosh closed-form, or RK4 dynamics ODE
+    if model == 'cosh':
+        guess = piecewise_onset_fit(t[win], omega[win])['onset_idx']
+        pw = cosh_onset_fit(t[win], omega[win], moment[win], onset_guess=guess)
+    elif model == 'ode':
         # Measured tilt angle φ from odom orientation (roll for x, pitch for y),
         # referenced to the pre-excitation attitude. Supplying the measured φ
         # makes the dynamics fit linear-in-parameters (see ode_onset_fit).
@@ -943,10 +1021,14 @@ def plot_piecewise_fits(
     n = len(bags)
     cols = min(n, 3); rows = (n + cols - 1) // cols
     fig, axes = plt.subplots(rows, cols, figsize=(7*cols, 5*rows), squeeze=False)
-    is_ode = any(pw.get('model') == 'ode' for pw in pw_fits)
-    _model_name = 'Dynamics ODE' if is_ode else 'Piecewise'
+    _models = set(pw.get('model', 'piecewise') for pw in pw_fits)
+    if 'ode' in _models:
+        _model_name, _sub = 'Dynamics ODE', 'sim'
+    elif 'cosh' in _models:
+        _model_name, _sub = 'Hyperbolic (cosh)', 'fit'
+    else:
+        _model_name, _sub = 'Piecewise', 'pred'
     omega_label = r'$\omega_{x,act}$' if axis == 'x' else r'$\omega_{y,act}$'
-    _sub = 'sim' if is_ode else 'pred'
     omega_pred_label = (r'$\omega_{x,' + _sub + r'}$' if axis == 'x'
                         else r'$\omega_{y,' + _sub + r'}$')
 
@@ -1211,8 +1293,10 @@ def parse_args():
         help="Butterworth order for --lpf-cutoff (default 4).",
     )
     p.add_argument(
-        '--model', type=str, default='piecewise', choices=['piecewise', 'ode'],
-        help="Onset model: 'piecewise' (time-quadratic PLS, default) or "
+        '--model', type=str, default='piecewise',
+        choices=['piecewise', 'cosh', 'ode'],
+        help="Onset model: 'piecewise' (time-quadratic PLS, default), "
+             "'cosh' (closed-form unstable tip-over ω=C1(cosh(C2τ)-1)+C), or "
              "'ode' (RK4 forward-sim of ω̇=a·M+b·f+c·cosφ+d·sinφ, φ̇=ω).",
     )
     p.add_argument(
@@ -1253,8 +1337,9 @@ def main():
     omega_topic = ('/mavros/imu/data_raw' if args.omega_source == 'imu'
                    else '/mavros/local_position/odom')
     print(f'Axis        : {axis} ({"roll" if axis=="x" else "pitch"})')
-    _mdl = ('RK4 dynamics ODE (ω̇=a·M+b·f+c·cosφ+d·sinφ)'
-            if args.model == 'ode' else 'Piecewise quadratic fit')
+    _mdl = {'ode': 'RK4 dynamics ODE (ω̇=a·M+b·f+c·cosφ+d·sinφ)',
+            'cosh': 'Closed-form cosh: ω=C1(cosh(C2τ)-1)+C',
+            'piecewise': 'Piecewise quadratic fit'}[args.model]
     print(f'Detection   : {_mdl}')
     print(f'ω source    : {args.omega_source} ({omega_topic})')
     if args.lpf_cutoff is not None:
