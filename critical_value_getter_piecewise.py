@@ -328,153 +328,6 @@ def piecewise_onset_fit(
     )
 
 
-# ═════════════════════════════════════════════════════════════
-#  Dynamics (RK4 ODE) onset model
-# ═════════════════════════════════════════════════════════════
-
-def _rk4_simulate(t, M_interp, f_interp, params):
-    """
-    Integrate the tip-over rotational dynamics with RK4:
-        φ̇ = ω
-        ω̇ = a·M(t) + b·f(t) + c·cos φ + d·sin φ
-    from rest (φ = ω = 0 at t[0]). Returns simulated ω on the grid t.
-    M_interp, f_interp are callables giving M(t), f(t) at arbitrary t
-    (needed at the RK4 half-steps).
-    """
-    a, b, c, d = params
-    n = len(t)
-    w = np.zeros(n)
-    y = np.array([0.0, 0.0])  # [φ, ω]
-
-    def dv(s, yy):
-        return np.array([yy[1],
-                         a * M_interp(s) + b * f_interp(s)
-                         + c * np.cos(yy[0]) + d * np.sin(yy[0])])
-
-    for i in range(n - 1):
-        h = t[i + 1] - t[i]
-        tt = t[i]
-        k1 = dv(tt, y)
-        k2 = dv(tt + h / 2, y + h / 2 * k1)
-        k3 = dv(tt + h / 2, y + h / 2 * k2)
-        k4 = dv(tt + h, y + h * k3)
-        y = y + h / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
-        w[i + 1] = y[1]
-    return w
-
-
-def _cumint(y, x):
-    """Cumulative trapezoidal integral of y over x, starting at 0."""
-    out = np.zeros(len(y), dtype=float)
-    out[1:] = np.cumsum(0.5 * (y[1:] + y[:-1]) * np.diff(x))
-    return out
-
-
-def ode_onset_fit(t, omega, moment, f_col, onset_guess, phi=None,
-                  sweep_back_s=0.4, sweep_ahead_s=0.3, step_s=0.02):
-    """
-    Dynamics-based onset detection: replaces the time-quadratic PLS model
-    with the tip-over rotational dynamics
-
-        φ̇ = ω,   ω̇ = a·M(t) + b·f(t) + c·cos φ + d·sin φ
-
-    For each candidate onset the model is integrated forward from rest
-    (ω = 0 at the onset) with the measured M(t), f(t) as inputs; the onset
-    minimising the ω residual is selected and the critical moment is M there.
-    ω is obtained by *integration*, so no noisy differentiation of ω is needed.
-
-    The tilt angle φ can be supplied two ways:
-
-      phi is not None (recommended) : φ is the MEASURED tilt (roll/pitch from
-        the orientation, initial value removed). The RHS is then linear in
-        (a,b,c,d): ω(t) = a·∫M + b·∫f + c·∫cosφ + d·∫sinφ, so each candidate
-        is a closed-form linear least squares — fast, no local minima, and it
-        uses the real tilt (no integration drift).
-
-      phi is None : φ is co-integrated with ω inside an RK4 solve
-        (φ̇ = ω), giving a self-contained forward simulation. The parameter
-        fit is then nonlinear (scipy least_squares).
-
-    Both give essentially the same critical moment (verified <0.5% apart).
-
-    Parameters
-    ----------
-    t, omega, moment, f_col : (N,) window arrays (window = excitation ramp)
-    phi        : (N,) measured tilt angle [rad], initial value removed; or None
-    onset_guess: local index used to centre the sweep (e.g. the PLS onset).
-                 The sweep is kept tight around this reliable estimate: a
-                 free/wide sweep is degenerate for weak tip-overs (an early
-                 onset with small moment predicts a near-flat ω that spuriously
-                 matches the pre-onset baseline).
-    sweep_back_s / sweep_ahead_s / step_s : sweep range and stride [seconds],
-                 made rate-independent (converted to samples via median dt).
-
-    Returns
-    -------
-    dict with the same core keys as piecewise_onset_fit plus
-    'params' = (a, b, c, d) and model='ode'. 'alpha' carries the moment
-    coefficient a for CSV compatibility.
-    """
-    N = len(t)
-    dt = float(np.median(np.diff(t)))
-    sweep_back = int(round(sweep_back_s / dt))
-    sweep_ahead = int(round(sweep_ahead_s / dt))
-    step = max(1, int(round(step_s / dt)))
-    lo = max(1, onset_guess - sweep_back)
-    hi = min(N - 20, onset_guess + sweep_ahead)
-
-    def _sim(j, params):
-        """Simulated ω on t[j:] for given params (measured-φ or RK4)."""
-        if phi is not None:
-            a, b, c, d = params
-            sl = slice(j, N)
-            return (a * _cumint(moment[sl], t[sl]) + b * _cumint(f_col[sl], t[sl])
-                    + c * _cumint(np.cos(phi[sl]), t[sl])
-                    + d * _cumint(np.sin(phi[sl]), t[sl]))
-        return _rk4_simulate(t[j:], lambda s: np.interp(s, t, moment),
-                             lambda s: np.interp(s, t, f_col), params)
-
-    best = (np.inf, onset_guess, np.zeros(4))
-    if phi is not None:
-        # Linear-in-parameters: closed-form least squares per candidate.
-        cosB, sinB = np.cos(phi), np.sin(phi)
-        for j in range(lo, max(lo + 1, hi), step):
-            sl = slice(j, N)
-            A = np.column_stack([_cumint(moment[sl], t[sl]), _cumint(f_col[sl], t[sl]),
-                                 _cumint(cosB[sl], t[sl]), _cumint(sinB[sl], t[sl])])
-            coef, *_ = np.linalg.lstsq(A, omega[sl], rcond=None)
-            pre = np.sum((omega[:j] - np.median(omega[:j])) ** 2) if j > 0 else 0.0
-            cost = float(np.sum((A @ coef - omega[sl]) ** 2) + pre)
-            if cost < best[0]:
-                best = (cost, j, coef)
-    else:
-        from scipy.optimize import least_squares  # lazy: optional dependency
-        x0 = np.zeros(4)
-        for j in range(lo, max(lo + 1, hi), step):
-            r = least_squares(lambda p: _sim(j, p) - omega[j:], x0,
-                              method='lm', max_nfev=150)
-            x0 = r.x
-            pre = np.sum((omega[:j] - np.median(omega[:j])) ** 2) if j > 0 else 0.0
-            cost = 2 * r.cost + pre
-            if cost < best[0]:
-                best = (cost, j, r.x)
-
-    cost, j_star, params = best
-    c0 = float(np.median(omega[:j_star])) if j_star > 0 else 0.0
-    omega_pred = np.full(N, c0)
-    omega_pred[j_star:] = _sim(j_star, params)
-    rmse = float(np.sqrt(np.mean((omega - omega_pred) ** 2)))
-
-    return dict(
-        onset_idx=j_star,
-        c=c0, alpha=float(params[0]),
-        total_residual=float(cost),
-        omega_pred=omega_pred,
-        rmse=rmse,
-        huber_delta=None,
-        params=tuple(float(x) for x in params),
-        model='ode',
-    )
 
 
 def cosh_onset_fit(t, omega, moment, onset_guess,
@@ -583,7 +436,7 @@ def extract_piecewise(
     Pipeline:
       1. Prepare signals (ω, f_col, moment)
       2. Excitation window [|M|>0.01, max|M|]
-      3. Onset fit on ω in window (time-quadratic PLS or RK4 dynamics ODE)
+      3. Onset fit on ω in window (time-quadratic PLS or cosh closed-form)
       4. onset = argmin total residual
 
     Parameters
@@ -592,12 +445,6 @@ def extract_piecewise(
                    'cosh'      → closed-form unstable tip-over solution
                                  ω(τ) = C₁(cosh(C₂τ)−1) + C (monotonic;
                                  quadratic→exponential; C₂=√d instability rate)
-                   'ode'       → tip-over dynamics onset model
-                                 ω̇ = a·M + b·f + c·cosφ + d·sinφ, with the
-                                 measured tilt φ (roll/pitch from odom
-                                 orientation, initial value removed) so the fit
-                                 is linear-in-parameters; onset is swept and
-                                 the critical moment is M at the best onset.
     omega_source : 'odom' → ω from /mavros/local_position/odom (default)
                    'imu'  → ω from /mavros/imu/data_raw
     lpf_cutoff   : if set, apply a zero-phase Butterworth low-pass filter at
@@ -648,23 +495,10 @@ def extract_piecewise(
     idx_start, idx_end = detect_excitation_window(moment, threshold)
     win = slice(idx_start, idx_end + 1)
 
-    # Onset fit: PLS quadratic, cosh closed-form, or RK4 dynamics ODE
+    # Onset fit: PLS quadratic or cosh closed-form
     if model == 'cosh':
         guess = piecewise_onset_fit(t[win], omega[win])['onset_idx']
         pw = cosh_onset_fit(t[win], omega[win], moment[win], onset_guess=guess)
-    elif model == 'ode':
-        # Measured tilt angle φ from odom orientation (roll for x, pitch for y),
-        # referenced to the pre-excitation attitude. Supplying the measured φ
-        # makes the dynamics fit linear-in-parameters (see ode_onset_fit).
-        roll, pitch = math_tools.quaternion_to_euler_vectorized(bag.odom.quaternion)
-        ang = roll if axis == 'x' else pitch
-        t_odom = bag.odom.t - t0_ref
-        idle = t_odom < t[idx_start]
-        ang0 = float(np.mean(ang[idle])) if np.any(idle) else float(ang[0])
-        phi = np.interp(t, t_odom, ang - ang0)
-        guess = piecewise_onset_fit(t[win], omega[win])['onset_idx']
-        pw = ode_onset_fit(t[win], omega[win], moment[win], f_col[win],
-                           onset_guess=guess, phi=phi[win])
     else:
         pw = piecewise_onset_fit(t[win], omega[win], robust=robust,
                                  huber_k=huber_k, robust_sides=robust_sides)
@@ -1022,9 +856,7 @@ def plot_piecewise_fits(
     cols = min(n, 3); rows = (n + cols - 1) // cols
     fig, axes = plt.subplots(rows, cols, figsize=(7*cols, 5*rows), squeeze=False)
     _models = set(pw.get('model', 'piecewise') for pw in pw_fits)
-    if 'ode' in _models:
-        _model_name, _sub = 'Dynamics ODE', 'sim'
-    elif 'cosh' in _models:
+    if 'cosh' in _models:
         _model_name, _sub = 'Hyperbolic (cosh)', 'fit'
     else:
         _model_name, _sub = 'Piecewise', 'pred'
@@ -1042,7 +874,7 @@ def plot_piecewise_fits(
         t_w = t[win]; omega_w = crit.omega[win]
 
         # Prediction in window. Use the stored prediction when it is
-        # window-aligned (covers the RK4 ODE model, whose ω_pred is not a
+        # window-aligned (covers the cosh model, whose ω_pred is not a
         # time-quadratic); otherwise rebuild the quadratic from (c, α).
         t0 = t_w[pw['onset_idx']]
         stored = pw.get('omega_pred')
@@ -1294,10 +1126,9 @@ def parse_args():
     )
     p.add_argument(
         '--model', type=str, default='piecewise',
-        choices=['piecewise', 'cosh', 'ode'],
-        help="Onset model: 'piecewise' (time-quadratic PLS, default), "
-             "'cosh' (closed-form unstable tip-over ω=C1(cosh(C2τ)-1)+C), or "
-             "'ode' (RK4 forward-sim of ω̇=a·M+b·f+c·cosφ+d·sinφ, φ̇=ω).",
+        choices=['piecewise', 'cosh'],
+        help="Onset model: 'piecewise' (time-quadratic PLS, default) or "
+             "'cosh' (closed-form unstable tip-over ω=C1(cosh(C2τ)-1)+C).",
     )
     p.add_argument(
         '--robust', action='store_true',
@@ -1337,8 +1168,7 @@ def main():
     omega_topic = ('/mavros/imu/data_raw' if args.omega_source == 'imu'
                    else '/mavros/local_position/odom')
     print(f'Axis        : {axis} ({"roll" if axis=="x" else "pitch"})')
-    _mdl = {'ode': 'RK4 dynamics ODE (ω̇=a·M+b·f+c·cosφ+d·sinφ)',
-            'cosh': 'Closed-form cosh: ω=C1(cosh(C2τ)-1)+C',
+    _mdl = {'cosh': 'Closed-form cosh: ω=C1(cosh(C2τ)-1)+C',
             'piecewise': 'Piecewise quadratic fit'}[args.model]
     print(f'Detection   : {_mdl}')
     print(f'ω source    : {args.omega_source} ({omega_topic})')
