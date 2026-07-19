@@ -939,12 +939,16 @@ def plot_piecewise_fits(
     bags, critical_results, pw_fits, axis,
     save_dir=None, show=True,
 ):
-    """Plot ω actual vs piecewise fit for all bags."""
+    """Plot ω actual vs onset-model fit for all bags."""
     n = len(bags)
     cols = min(n, 3); rows = (n + cols - 1) // cols
     fig, axes = plt.subplots(rows, cols, figsize=(7*cols, 5*rows), squeeze=False)
+    is_ode = any(pw.get('model') == 'ode' for pw in pw_fits)
+    _model_name = 'Dynamics ODE' if is_ode else 'Piecewise'
     omega_label = r'$\omega_{x,act}$' if axis == 'x' else r'$\omega_{y,act}$'
-    omega_pred_label = r'$\omega_{x,pred}$' if axis == 'x' else r'$\omega_{y,pred}$'
+    _sub = 'sim' if is_ode else 'pred'
+    omega_pred_label = (r'$\omega_{x,' + _sub + r'}$' if axis == 'x'
+                        else r'$\omega_{y,' + _sub + r'}$')
 
     for idx, (bag, crit, pw) in enumerate(zip(bags, critical_results, pw_fits)):
         r, c = divmod(idx, cols); ax = axes[r][c]
@@ -1024,7 +1028,8 @@ def plot_piecewise_fits(
         r, c = divmod(idx, cols); axes[r][c].set_visible(False)
 
     _ax = 'x' if axis == 'x' else 'y'
-    fig.suptitle(r'Piecewise Onset Fit: $\omega_{' + _ax + r',act}$ vs $\omega_{' + _ax + r',pred}$', fontsize=14)
+    fig.suptitle(_model_name + r' Onset Fit: $\omega_{' + _ax + r',act}$ vs $\omega_{'
+                 + _ax + ',' + _sub + r'}$', fontsize=14)
     fig.tight_layout()
     if save_dir:
         fig.savefig(Path(save_dir) / f"piecewise_fit_{axis}.png", dpi=600, bbox_inches='tight')
