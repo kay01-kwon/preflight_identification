@@ -8,8 +8,6 @@ The identification locates the tip-over onset with the closed-form solution
 of the unstable dynamics (``cosh`` model). This script benchmarks that onset
 against classic change-point / onset detectors:
 
-  * LLR         — variance-change generalized log-likelihood ratio
-                  (single change-point; the classic likelihood-ratio test)
   * PELT normal — Binary Segmentation, Gaussian (mean+variance) cost (ruptures)
   * PELT rbf    — Binary Segmentation, RBF-kernel cost (nonparametric)
   * CUSUM       — tabular cumulative-sum sequential detector
@@ -56,13 +54,13 @@ from critical_value_getter_piecewise import (
 )
 
 # Proposed model = 'cosh'. Classic detectors benchmarked against it:
-CLASSIC = ['llr', 'pelt_normal', 'pelt_rbf', 'cusum']
+CLASSIC = ['pelt_normal', 'pelt_rbf', 'cusum']
 ALL_METHODS = ['cosh'] + CLASSIC
-_LABEL = {'cosh': 'cosh (proposed)', 'llr': 'LLR', 'pelt_normal': 'PELT normal',
+_LABEL = {'cosh': 'cosh (proposed)', 'pelt_normal': 'PELT normal',
           'pelt_rbf': 'PELT rbf', 'cusum': 'CUSUM'}
-_SHORT = {'cosh': 'cosh', 'llr': 'LLR', 'pelt_normal': 'PELTnorm',
+_SHORT = {'cosh': 'cosh', 'pelt_normal': 'PELTnorm',
           'pelt_rbf': 'PELTrbf', 'cusum': 'CUSUM'}
-_COLOR = {'cosh': 'tab:blue', 'llr': 'tab:green', 'pelt_normal': 'tab:orange',
+_COLOR = {'cosh': 'tab:blue', 'pelt_normal': 'tab:orange',
           'pelt_rbf': 'tab:purple', 'cusum': 'tab:brown'}
 
 
@@ -79,31 +77,6 @@ def pelt_onset_index(omega_win, cost, min_size=5):
     bkps = rpt.Binseg(model=cost, min_size=min_size).fit(
         np.asarray(omega_win).reshape(-1, 1)).predict(n_bkps=1)
     return int(min(bkps[0], len(omega_win) - 1))
-
-
-def llr_onset_index(omega_win, min_seg=5):
-    """
-    Variance-change generalized log-likelihood ratio, single change-point:
-        S(j) = N·log σ²_tot − j·log σ²_L − (N−j)·log σ²_R,   onset = argmax S.
-    """
-    x = np.abs(np.asarray(omega_win, dtype=float))
-    N = len(x)
-    tot = np.var(x)
-    if tot < 1e-15 or N < 2 * min_seg:
-        return N // 2
-    cs = np.cumsum(x)
-    cs2 = np.cumsum(x ** 2)
-    best, bj = -np.inf, N // 2
-    for j in range(min_seg, N - min_seg):
-        ml = cs[j - 1] / j
-        vl = max(cs2[j - 1] / j - ml ** 2, 1e-15)
-        nr = N - j
-        mr = (cs[-1] - cs[j - 1]) / nr
-        vr = max((cs2[-1] - cs2[j - 1]) / nr - mr ** 2, 1e-15)
-        s = N * np.log(tot) - j * np.log(vl) - nr * np.log(vr)
-        if s > best:
-            best, bj = s, j
-    return int(bj)
 
 
 def cusum_onset_index(omega_win, guess, direction, k=2.0, h=5.0):
@@ -128,8 +101,6 @@ def cusum_onset_index(omega_win, guess, direction, k=2.0, h=5.0):
 
 
 def classic_onset_index(name, omega_win, guess, direction):
-    if name == 'llr':
-        return llr_onset_index(omega_win)
     if name.startswith('pelt_'):
         return pelt_onset_index(omega_win, name.split('_', 1)[1])
     if name == 'cusum':
@@ -300,7 +271,7 @@ def plot_crosscheck(series, axis, save_dir=None, show=True):
         r, c = divmod(idx, cols)
         axes[r][c].set_visible(False)
     fig.suptitle('Onset benchmark: cosh (proposed) vs classic change-point '
-                 'detectors (LLR / PELT / CUSUM)', fontsize=14)
+                 'detectors (PELT / CUSUM)', fontsize=14)
     fig.tight_layout()
     if save_dir:
         p = Path(save_dir) / f"onset_benchmark_{axis}.png"
