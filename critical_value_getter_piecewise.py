@@ -1,29 +1,30 @@
 #!/usr/bin/env python3
 """
-Moment Excitation Analysis — Piecewise Onset Detection + Pivot Estimation
+Moment Excitation Analysis — Onset Detection + Pivot Estimation
 
-Onset detection via piecewise quadratic fit on ω:
-    ω(t) = c                            for t < t0  (ground contact)
-    ω(t) = a·(t-t0)² + b·(t-t0) + c    for t ≥ t0  (tip-over)
+Onset detection (default) via the closed-form solution of the linearised,
+UNSTABLE tip-over dynamics (φ̈ − dφ = G, d = W·z_CoM/J_P > 0):
 
-t0* = argmin Σ residuals²  (sweep all candidate t0 in excitation window)
+    ω(τ) = C₁·(cosh(C₂·τ) − 1) + C,   τ = t − t0,  C₂ = √d
+
+Exact over the excitation segment; monotonic; quadratic (C₂τ)²/2 near onset,
+exponential runaway far from it. The onset t0 is swept over the window.
+The time-quadratic fit is only the small-angle limit of this form (its error
+grows with tilt) and is kept as a comparison baseline (--model piecewise).
 
 Usage
 -----
 python critical_value_getter_piecewise.py DataSet/exp/Mx
 python critical_value_getter_piecewise.py DataSet/exp/My --mass 3.066 --save-fig
 
-# Use raw IMU angular velocity (/mavros/imu/data_raw) instead of odom:
-python critical_value_getter_piecewise.py DataSet/exp/My --omega-source imu
+# 95% confidence intervals for the identified quantities:
+python critical_value_getter_piecewise.py DataSet/exp/My --ci
 
-# Raw IMU + 15 Hz low-pass filter to suppress propeller vibration:
+# Use raw IMU angular velocity (/mavros/imu/data_raw) instead of odom:
 python critical_value_getter_piecewise.py DataSet/exp/My --omega-source imu --lpf-cutoff 15
 
-# Robust (Huber) onset fit to reject pre-onset spikes/outliers:
-python critical_value_getter_piecewise.py DataSet/exp/My --omega-source imu --lpf-cutoff 15 --robust
-
-# Closed-form unstable tip-over model ω=C1(cosh(C2τ)-1)+C on the odom rate:
-python critical_value_getter_piecewise.py DataSet/exp/My --model cosh
+# Comparison baseline only — time-quadratic (small-angle limit):
+python critical_value_getter_piecewise.py DataSet/exp/My --model piecewise
 """
 
 import argparse
@@ -428,10 +429,10 @@ def extract_piecewise(
     robust: bool = False,
     huber_k: float = 1.345,
     robust_sides: str = 'pre',
-    model: str = 'piecewise',
+    model: str = 'cosh',
 ) -> CriticalValueResult:
     """
-    Extract critical values using piecewise onset detection.
+    Extract critical values using onset detection.
 
     Pipeline:
       1. Prepare signals (ω, f_col, moment)
@@ -441,10 +442,15 @@ def extract_piecewise(
 
     Parameters
     ----------
-    model        : 'piecewise' → time-quadratic PLS onset (default)
-                   'cosh'      → closed-form unstable tip-over solution
-                                 ω(τ) = C₁(cosh(C₂τ)−1) + C (monotonic;
-                                 quadratic→exponential; C₂=√d instability rate)
+    model        : 'cosh'      → closed-form unstable tip-over solution
+                                 ω(τ) = C₁(cosh(C₂τ)−1) + C (default;
+                                 exact solution of the linearised dynamics,
+                                 C₂=√d instability rate). Reported method.
+                   'piecewise' → time-quadratic onset. This is only the
+                                 small-angle (Taylor) limit of the cosh form
+                                 and its error grows with tilt; kept as a
+                                 comparison baseline / sweep seed, not for
+                                 identification.
     omega_source : 'odom' → ω from /mavros/local_position/odom (default)
                    'imu'  → ω from /mavros/imu/data_raw
     lpf_cutoff   : if set, apply a zero-phase Butterworth low-pass filter at
@@ -1217,10 +1223,11 @@ def parse_args():
         help="Butterworth order for --lpf-cutoff (default 4).",
     )
     p.add_argument(
-        '--model', type=str, default='piecewise',
-        choices=['piecewise', 'cosh'],
-        help="Onset model: 'piecewise' (time-quadratic PLS, default) or "
-             "'cosh' (closed-form unstable tip-over ω=C1(cosh(C2τ)-1)+C).",
+        '--model', type=str, default='cosh',
+        choices=['cosh', 'piecewise'],
+        help="Onset model: 'cosh' (closed-form unstable tip-over "
+             "ω=C1(cosh(C2τ)-1)+C, default/reported) or 'piecewise' "
+             "(time-quadratic — small-angle limit only, comparison baseline).",
     )
     p.add_argument(
         '--robust', action='store_true',
