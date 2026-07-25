@@ -15,3 +15,7 @@ results_imu/*
 results_imu_huber/*
 __pycache__/
 *.pyc
+
+# generated benchmark artifacts (regenerable via analysis/pelt_crosscheck.py)
+onset_benchmark_*.csv
+onset_benchmark_*.png
