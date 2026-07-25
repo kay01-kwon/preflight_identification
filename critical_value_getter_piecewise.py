@@ -334,7 +334,7 @@ def piecewise_onset_fit(
 def cosh_onset_fit(t, omega, moment, onset_guess,
                    sweep_back_s=0.10, sweep_ahead_s=0.30, step_s=0.01,
                    c2_bounds=(3.0, 8.0), moment_floor=0.30, c2_fixed=None,
-                   moment_floor_abs=None):
+                   moment_floor_abs=None, ramp_gain=None, ramp_rate=None):
     """
     Onset detection with the closed-form tip-over solution.
 
@@ -406,6 +406,46 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
     # tip-over direction (sign of ω at the window tail vs baseline) to init C₁
     base0 = float(np.median(omega[:max(1, onset_guess)]))
     sgn = 1.0 if float(np.mean(omega[int(0.85 * N):])) >= base0 else -1.0
+
+    # ── Fully constrained mode: no free shape parameter ──────────────
+    # At the onset the net moment vanishes (M = M_crit ⇒ α = 0), and the
+    # linearised dynamics J_P·α = Ṁ·τ + W·z_CoM·φ integrate to
+    #     ω(τ) = [Ṁ/(J_P·d)]·(cosh(C₂τ) − 1),   d = W·z_CoM/J_P = C₂²
+    # so the amplitude is NOT free: J_P·d = W·z_CoM gives
+    #     C₁ = Ṁ / (W·z_CoM) = ramp_gain · Ṁ .
+    # With C₂ (rig constant) pinned, Ṁ measured, and ω continuous at the onset
+    # (C = pre-onset baseline), every parameter is determined and only the onset
+    # index is searched. This removes the amplitude↔onset trade-off that makes
+    # the free fit drift early and SNR-dependent on weakly excited runs.
+    if (ramp_gain is not None and ramp_rate is not None
+            and c2_fixed is not None):
+        c2_val = float(c2_fixed)
+        C1_fix = float(ramp_gain) * float(ramp_rate)
+        best = (np.inf, onset_guess, None)
+        for j in range(lo, max(lo + 1, hi), step):
+            tau = t[j:] - t[j]
+            gfun = np.cosh(np.clip(c2_val * tau, 0, 30)) - 1
+            C0 = float(np.median(omega[:j])) if j > 0 else 0.0
+            post = np.sum((omega[j:] - (C1_fix * gfun + C0)) ** 2)
+            pre = np.sum((omega[:j] - C0) ** 2) if j > 0 else 0.0
+            cost = float(post + pre)
+            if cost < best[0]:
+                best = (cost, j, (C1_fix, c2_val, C0))
+        cost, j_star, params = best
+        C1, C2, C = params
+        tau = t[j_star:] - t[j_star]
+        omega_pred = np.full(N, float(C))
+        omega_pred[j_star:] = C1 * (np.cosh(np.clip(C2 * tau, 0, 30)) - 1) + C
+        return dict(
+            onset_idx=j_star,
+            c=float(C), alpha=float(C2),
+            total_residual=float(cost),
+            omega_pred=omega_pred,
+            rmse=float(np.sqrt(np.mean((omega - omega_pred) ** 2))),
+            huber_delta=None,
+            params=tuple(float(x) for x in params),
+            model='cosh',
+        )
 
     if c2_fixed is not None:
         # C₂ pinned to the shared rig constant: fit only (C₁, C) per bag.
@@ -492,6 +532,51 @@ def estimate_shared_c2(bags, axis, min_post=45, c2_bounds=(3.0, 8.0), **kwargs):
     return float(np.clip(np.median(vals), c2_bounds[0], c2_bounds[1]))
 
 
+def estimate_ramp_gain(bags, axis, c2, k_grid=None, **kwargs):
+    """
+    Estimate the shared ramp gain K = 1/(W·z_CoM) [rad/(s·N·m)] for a rig.
+
+    The onset conditions (net moment zero ⇒ α = 0) fix the closed-form
+    amplitude to C₁ = Ṁ/(W·z_CoM) = K·Ṁ, so K — like C₂ — is a property of the
+    rig, not of the individual run. It is estimated once by choosing the K that
+    minimises the total two-segment residual over the whole dataset (each bag
+    contributes its own measured ramp rate Ṁ), then pinned for every bag.
+
+    K and C₂ are not independent: together they imply W·z_CoM = 1/K and
+    J_P = W·z_CoM/C₂², which is a useful physical sanity check on the fit.
+    """
+    if k_grid is None:
+        k_grid = np.arange(0.04, 0.60, 0.01)
+    prepared = []
+    for bag in bags:
+        try:
+            crit, _ = extract_piecewise(bag, axis, model='piecewise', **kwargs)
+        except Exception:
+            continue
+        i0, i1 = detect_excitation_window(crit.moment)
+        win = slice(i0, i1 + 1)
+        t, om, M = crit.t[win], crit.omega[win], crit.moment[win]
+        if len(t) < 12:
+            continue
+        guess = piecewise_onset_fit(t, om)['onset_idx']
+        m_dot = float(np.polyfit(t, M, 1)[0])
+        prepared.append((t, om, guess, m_dot))
+    if not prepared:
+        return None
+
+    best = (np.inf, float(k_grid[0]))
+    for K in k_grid:
+        total = 0.0
+        for t, om, guess, m_dot in prepared:
+            pw = cosh_onset_fit(t, om, np.zeros_like(t), onset_guess=guess,
+                                c2_fixed=c2, moment_floor=0.0,
+                                ramp_gain=float(K), ramp_rate=m_dot)
+            total += pw['total_residual']
+        if total < best[0]:
+            best = (total, float(K))
+    return best[1]
+
+
 def detect_excitation_window(
     moment: np.ndarray,
     threshold: float = 0.01,
@@ -522,6 +607,7 @@ def extract_piecewise(
     cosh_c2: Optional[float] = None,
     c2_bounds: tuple = (3.0, 8.0),
     moment_floor_abs: Optional[float] = None,
+    ramp_gain: Optional[float] = None,
 ) -> CriticalValueResult:
     """
     Extract critical values using onset detection.
@@ -600,9 +686,13 @@ def extract_piecewise(
         # reported honestly rather than masked. A floor can still be re-enabled
         # by passing moment_floor_abs explicitly.
         guess = piecewise_onset_fit(t[win], omega[win])['onset_idx']
+        # measured moment ramp rate Ṁ over the excitation window (linear ramp);
+        # with the shared gain K it fixes the amplitude C₁ = K·Ṁ (no free param)
+        m_dot = float(np.polyfit(t[win], moment[win], 1)[0])
         pw = cosh_onset_fit(t[win], omega[win], moment[win], onset_guess=guess,
                             c2_bounds=c2_bounds, c2_fixed=cosh_c2,
-                            moment_floor=0.0, moment_floor_abs=moment_floor_abs)
+                            moment_floor=0.0, moment_floor_abs=moment_floor_abs,
+                            ramp_gain=ramp_gain, ramp_rate=m_dot)
     else:
         pw = piecewise_onset_fit(t[win], omega[win], robust=robust,
                                  huber_k=huber_k, robust_sides=robust_sides)
@@ -642,12 +732,24 @@ def extract_piecewise_batch(
     reliable long-window bags and pinned for every bag (unless the caller
     already passed ``cosh_c2``), so the instability rate stays consistent.
     """
-    if kwargs.get('model', 'cosh') == 'cosh' and kwargs.get('cosh_c2') is None:
-        c2_kwargs = {k: kwargs[k] for k in ('omega_source', 'lpf_cutoff',
-                     'lpf_order', 'C_T', 'arm_length', 'threshold', 'c2_bounds')
-                     if k in kwargs}
-        kwargs['cosh_c2'] = estimate_shared_c2(bags, axis, **c2_kwargs)
-        print(f"  Shared C₂ (√d, rig constant) = {kwargs['cosh_c2']:.3f} rad/s")
+    if kwargs.get('model', 'cosh') == 'cosh':
+        sig_kwargs = {k: kwargs[k] for k in ('omega_source', 'lpf_cutoff',
+                      'lpf_order', 'C_T', 'arm_length', 'threshold')
+                      if k in kwargs}
+        if kwargs.get('cosh_c2') is None:
+            c2_kwargs = dict(sig_kwargs)
+            if 'c2_bounds' in kwargs:
+                c2_kwargs['c2_bounds'] = kwargs['c2_bounds']
+            kwargs['cosh_c2'] = estimate_shared_c2(bags, axis, **c2_kwargs)
+            print(f"  Shared C₂ (√d, rig constant) = {kwargs['cosh_c2']:.3f} rad/s")
+        if kwargs.get('ramp_gain') is None and kwargs.get('cosh_c2'):
+            kwargs['ramp_gain'] = estimate_ramp_gain(
+                bags, axis, kwargs['cosh_c2'], **sig_kwargs)
+            if kwargs['ramp_gain']:
+                wz = 1.0 / kwargs['ramp_gain']
+                print(f"  Shared K (=1/(W·z_CoM))  = {kwargs['ramp_gain']:.3f} "
+                      f"→ W·z_CoM={wz:.2f} N·m, "
+                      f"J_P={wz / kwargs['cosh_c2'] ** 2:.3f} kg·m²")
 
     results = []
     pw_fits = []

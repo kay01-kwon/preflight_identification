@@ -47,6 +47,7 @@ from utils.extractor import load_excitation_dataset
 from critical_value_getter_piecewise import (
     extract_piecewise,
     estimate_shared_c2,
+    estimate_ramp_gain,
     detect_excitation_window,
     detect_axis,
     bag_name_to_title,
@@ -123,12 +124,12 @@ def _window(bag, axis):
 #  Onset-level benchmark
 # ═════════════════════════════════════════════════════════════
 
-def crosscheck(bags, axis, cosh_c2=None):
+def crosscheck(bags, axis, cosh_c2=None, ramp_gain=None):
     """cosh onset moment vs every classic detector, per bag."""
     rows, series = [], []
     for bag in bags:
-        crit, _ = extract_piecewise(bag, axis, model='cosh',
-                                    cosh_c2=cosh_c2)  # proposed
+        crit, _ = extract_piecewise(bag, axis, model='cosh', cosh_c2=cosh_c2,
+                                    ramp_gain=ramp_gain)  # proposed
         base, i0, i1, win, guess, direction = _window(bag, axis)
         t_win, omega_win, M_win = base.t[win], base.omega[win], base.moment[win]
 
@@ -153,10 +154,11 @@ def crosscheck(bags, axis, cosh_c2=None):
 #  Downstream: propagate each detector to CoM / moment offset
 # ═════════════════════════════════════════════════════════════
 
-def _crit_for_method(bag, axis, name, cosh_c2=None):
+def _crit_for_method(bag, axis, name, cosh_c2=None, ramp_gain=None):
     """CriticalValueResult for a bag under the given detector."""
     if name == 'cosh':
-        crit, _ = extract_piecewise(bag, axis, model='cosh', cosh_c2=cosh_c2)
+        crit, _ = extract_piecewise(bag, axis, model='cosh', cosh_c2=cosh_c2,
+                                    ramp_gain=ramp_gain)
         return crit
     base, i0, i1, win, guess, direction = _window(bag, axis)
     j = i0 + classic_onset_index(name, base.omega[win], guess, direction)
@@ -166,10 +168,12 @@ def _crit_for_method(bag, axis, name, cosh_c2=None):
                    onset_omega=float(base.omega[j]))
 
 
-def downstream_crosscheck(bags, axis, known_mass=None, cosh_c2=None):
+def downstream_crosscheck(bags, axis, known_mass=None, cosh_c2=None,
+                          ramp_gain=None):
     out = []
     for name in ALL_METHODS:
-        crits = [_crit_for_method(b, axis, name, cosh_c2=cosh_c2) for b in bags]
+        crits = [_crit_for_method(b, axis, name, cosh_c2=cosh_c2,
+                                  ramp_gain=ramp_gain) for b in bags]
         pivots = [estimate_pivot_from_mocap(b, c.onset_time, axis)
                   for b, c in zip(bags, crits)]
         e = compute_mass_and_offset(crits, pivots, axis, known_mass=known_mass)
@@ -346,14 +350,21 @@ def main():
 
     # C₂=√d is a rig constant: estimate once, pin for every cosh fit.
     cosh_c2 = estimate_shared_c2(bags, axis)
-    print(f"Shared C₂   : {cosh_c2:.3f} rad/s (√d, pinned across all bags)\n")
+    print(f"Shared C₂   : {cosh_c2:.3f} rad/s (√d, pinned across all bags)")
+    ramp_gain = estimate_ramp_gain(bags, axis, cosh_c2)
+    if ramp_gain:
+        wz = 1.0 / ramp_gain
+        print(f"Shared K    : {ramp_gain:.3f} (=1/(W·z_CoM)) → W·z_CoM={wz:.2f} N·m, "
+              f"J_P={wz / cosh_c2 ** 2:.3f} kg·m²")
+    print()
 
     print("── Onset moment (M_crit) ──")
-    rows, series = crosscheck(bags, axis, cosh_c2=cosh_c2)
+    rows, series = crosscheck(bags, axis, cosh_c2=cosh_c2, ramp_gain=ramp_gain)
     print_and_save_table(rows, axis, output_dir)
 
     print("\n── Downstream (CoM / moment offset) ──")
-    down = downstream_crosscheck(bags, axis, known_mass=args.mass, cosh_c2=cosh_c2)
+    down = downstream_crosscheck(bags, axis, known_mass=args.mass,
+                                 cosh_c2=cosh_c2, ramp_gain=ramp_gain)
     print_and_save_downstream(down, axis, output_dir)
 
     save_dir = output_dir if args.save_fig else None
