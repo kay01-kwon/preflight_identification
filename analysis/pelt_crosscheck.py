@@ -46,8 +46,7 @@ import matplotlib.pyplot as plt
 from utils.extractor import load_excitation_dataset
 from critical_value_getter_piecewise import (
     extract_piecewise,
-    estimate_shared_c2,
-    estimate_ramp_gain,
+    estimate_rig_constants,
     detect_excitation_window,
     detect_axis,
     bag_name_to_title,
@@ -349,9 +348,8 @@ def main():
     print(f"Benchmark   : cosh (proposed) vs {CLASSIC}")
 
     # C₂=√d is a rig constant: estimate once, pin for every cosh fit.
-    cosh_c2 = estimate_shared_c2(bags, axis)
+    cosh_c2, ramp_gain = estimate_rig_constants(bags, axis)
     print(f"Shared C₂   : {cosh_c2:.3f} rad/s (√d, pinned across all bags)")
-    ramp_gain = estimate_ramp_gain(bags, axis, cosh_c2)
     if ramp_gain:
         wz = 1.0 / ramp_gain
         print(f"Shared K    : {ramp_gain:.3f} (=1/(W·z_CoM)) → W·z_CoM={wz:.2f} N·m, "

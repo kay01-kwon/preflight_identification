@@ -385,6 +385,10 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
 
     N = len(t)
     dt = float(np.median(np.diff(t)))
+    full_sweep = onset_guess is None
+    if full_sweep:
+        # no seed supplied: only used below for the baseline/sign heuristics
+        onset_guess = N // 2
     lo = max(1, onset_guess - int(round(sweep_back_s / dt)))
     hi = min(N - 8, onset_guess + int(round(sweep_ahead_s / dt)))
     step = max(1, int(round(step_s / dt)))
@@ -421,7 +425,13 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
             and c2_fixed is not None):
         c2_val = float(c2_fixed)
         C1_fix = float(ramp_gain) * float(ramp_rate)
-        best = (np.inf, onset_guess, None)
+        # With no free shape parameter the cost at each candidate onset is a
+        # plain arithmetic evaluation — no optimiser, no initial guess — so the
+        # WHOLE window is swept exhaustively and no seed is needed. This keeps
+        # the pipeline free of the quadratic (small-angle) model entirely.
+        if full_sweep:
+            lo, hi = 8, max(9, N - 8)
+        best = (np.inf, lo, None)
         for j in range(lo, max(lo + 1, hi), step):
             tau = t[j:] - t[j]
             gfun = np.cosh(np.clip(c2_val * tau, 0, 30)) - 1
@@ -577,6 +587,77 @@ def estimate_ramp_gain(bags, axis, c2, k_grid=None, **kwargs):
     return best[1]
 
 
+def estimate_rig_constants(bags, axis, c2_grid=None, k_grid=None, stride=3,
+                           **kwargs):
+    """
+    Estimate (C₂, K) for a rig using ONLY the closed-form model.
+
+    Both are rig constants: C₂ = √(W·z_CoM/J_P) and K = 1/(W·z_CoM). They are
+    selected on a 2-D grid, and the selection criterion is *physical
+    self-consistency* rather than total residual:
+
+        M_crit is a STATIC tip-over threshold, so it must not depend on how
+        fast the moment was ramped. We therefore pick the (C₂, K) that make the
+        identified M_crit most repeatable across ramp rates, scored as the sum
+        over tip directions of the coefficient of variation std|M|/|mean M|.
+
+    Total-residual minimisation cannot be used here: with the onset swept over
+    the whole window, a smaller amplitude with an earlier onset trades off
+    against a larger amplitude with a later one, so the residual is degenerate
+    along a ridge in (C₂, K). The ramp-rate invariance of M_crit breaks that
+    degeneracy using physics rather than an auxiliary (small-angle) model.
+
+    Returns (c2, k). Note the two constants are individually only loosely
+    determined (the ridge is flat); the identified onset is nevertheless robust
+    along it, so W·z_CoM = 1/K and J_P = 1/(K·C₂²) should be read as
+    order-of-magnitude sanity checks, not precision measurements.
+    """
+    if c2_grid is None:
+        c2_grid = np.arange(3.0, 8.01, 0.5)
+    if k_grid is None:
+        k_grid = np.arange(0.10, 0.52, 0.04)
+
+    prepared = []
+    for bag in bags:
+        try:
+            crit = prepare_signals(bag, axis, **kwargs)
+        except Exception:
+            continue
+        i0, i1 = detect_excitation_window(crit['moment'])
+        win = slice(i0, i1 + 1)
+        t, om, M = crit['t'][win], crit['omega'][win], crit['moment'][win]
+        if len(t) < 24:
+            continue
+        side = 'neg' if bag.name.lower().startswith('neg') else 'pos'
+        prepared.append((side, t - t[0], om, M, float(np.polyfit(t, M, 1)[0])))
+    if not prepared:
+        return None, None
+
+    def onset_moment(t, om, M, c2, k, m_dot, strd):
+        pw = cosh_onset_fit(t, om, np.zeros_like(t), onset_guess=None,
+                            c2_fixed=float(c2), moment_floor=0.0,
+                            ramp_gain=float(k), ramp_rate=m_dot,
+                            step_s=strd * float(np.median(np.diff(t))))
+        return float(M[pw['onset_idx']])
+
+    best = (np.inf, None, None)
+    for c2 in c2_grid:
+        for k in k_grid:
+            groups = {}
+            for side, t, om, M, m_dot in prepared:
+                groups.setdefault(side, []).append(
+                    onset_moment(t, om, M, c2, k, m_dot, stride))
+            score = 0.0
+            for vals in groups.values():
+                if len(vals) < 2:
+                    continue
+                mu = abs(float(np.mean(vals)))
+                score += float(np.std(vals)) / mu if mu > 1e-9 else np.inf
+            if score < best[0]:
+                best = (score, float(c2), float(k))
+    return best[1], best[2]
+
+
 def detect_excitation_window(
     moment: np.ndarray,
     threshold: float = 0.01,
@@ -589,6 +670,54 @@ def detect_excitation_window(
     if len(above) > 0 and above[0] < idx_end:
         return int(above[0]), idx_end
     return 0, idx_end
+
+
+def prepare_signals(
+    bag: BagData,
+    axis: str,
+    C_T: float = 1.3175e-7,
+    arm_length: float = 0.265,
+    omega_source: str = 'odom',
+    lpf_cutoff: Optional[float] = None,
+    lpf_order: int = 4,
+) -> dict:
+    """
+    Time-aligned signals for one bag: ω, collective thrust and axis moment.
+
+    Pure signal preparation — no onset model of any kind is fitted here, so
+    callers that must stay free of a particular onset model (e.g. the rig
+    constant estimation) can obtain the raw traces without one. The global time
+    reference is odom.t[0] regardless of ``omega_source``.
+    """
+    t0_ref = bag.odom.t[0]
+    axis_idx = 0 if axis == 'x' else 1
+
+    if omega_source == 'imu':
+        if bag.imu is None:
+            raise ValueError(
+                f"{bag.name}: --omega-source imu requested but "
+                f"/mavros/imu/data_raw is not present in this bag."
+            )
+        t = bag.imu.t - t0_ref
+        omega = bag.imu.angular_vel[:, axis_idx]
+    else:
+        t = bag.odom.t - t0_ref
+        omega = bag.odom.angular_vel[:, axis_idx]
+
+    if lpf_cutoff is not None:
+        omega = lowpass_filter(t, omega, lpf_cutoff, order=lpf_order)
+
+    t_rpm = bag.rpm.t - t0_ref
+    f_col_raw = math_tools.collective_thrust_vectorized(C_T, bag.rpm.rpm)
+    moments_raw = math_tools.rpm_to_moments_vectorized(
+        C_T, bag.rpm.rpm, arm_length=arm_length,
+    )
+    return dict(
+        t=t,
+        omega=omega,
+        f_col=np.interp(t, t_rpm, f_col_raw),
+        moment=np.interp(t, t_rpm, moments_raw[:, axis_idx]),
+    )
 
 
 def extract_piecewise(
@@ -645,35 +774,11 @@ def extract_piecewise(
     The global time reference (t0) stays odom.t[0] regardless of source, so
     onset_time and the downstream mocap pivot estimation remain consistent.
     """
-    t0_ref = bag.odom.t[0]
-    axis_idx = 0 if axis == 'x' else 1
-
-    if omega_source == 'imu':
-        if bag.imu is None:
-            raise ValueError(
-                f"{bag.name}: --omega-source imu requested but "
-                f"/mavros/imu/data_raw is not present in this bag."
-            )
-        t = bag.imu.t - t0_ref
-        omega = bag.imu.angular_vel[:, axis_idx]
-    else:
-        t = bag.odom.t - t0_ref
-        omega = bag.odom.angular_vel[:, axis_idx]
-
-    # Optional low-pass filter (suppress IMU vibration before onset fit)
-    if lpf_cutoff is not None:
-        omega = lowpass_filter(t, omega, lpf_cutoff, order=lpf_order)
-
-    t_rpm = bag.rpm.t - t0_ref
-
-    f_col_raw = math_tools.collective_thrust_vectorized(C_T, bag.rpm.rpm)
-    moments_raw = math_tools.rpm_to_moments_vectorized(
-        C_T, bag.rpm.rpm, arm_length=arm_length,
-    )
-    moment_raw = moments_raw[:, axis_idx]
-
-    f_col = np.interp(t, t_rpm, f_col_raw)
-    moment = np.interp(t, t_rpm, moment_raw)
+    sig = prepare_signals(bag, axis, C_T=C_T, arm_length=arm_length,
+                          omega_source=omega_source, lpf_cutoff=lpf_cutoff,
+                          lpf_order=lpf_order)
+    t, omega, f_col, moment = (sig['t'], sig['omega'],
+                               sig['f_col'], sig['moment'])
 
     # Excitation window
     idx_start, idx_end = detect_excitation_window(moment, threshold)
@@ -685,10 +790,16 @@ def extract_piecewise(
         # fast-ramp behaviour (where the quasi-static assumption breaks down) is
         # reported honestly rather than masked. A floor can still be re-enabled
         # by passing moment_floor_abs explicitly.
-        guess = piecewise_onset_fit(t[win], omega[win])['onset_idx']
         # measured moment ramp rate Ṁ over the excitation window (linear ramp);
         # with the shared gain K it fixes the amplitude C₁ = K·Ṁ (no free param)
         m_dot = float(np.polyfit(t[win], moment[win], 1)[0])
+        # Fully constrained → no seed needed: the whole window is swept, so the
+        # quadratic (small-angle) model is not used anywhere in this path.
+        # Otherwise fall back to the quadratic seed for the free/bounded fit.
+        if ramp_gain is not None and cosh_c2 is not None:
+            guess = None
+        else:
+            guess = piecewise_onset_fit(t[win], omega[win])['onset_idx']
         pw = cosh_onset_fit(t[win], omega[win], moment[win], onset_guess=guess,
                             c2_bounds=c2_bounds, c2_fixed=cosh_c2,
                             moment_floor=0.0, moment_floor_abs=moment_floor_abs,
@@ -734,20 +845,17 @@ def extract_piecewise_batch(
     """
     if kwargs.get('model', 'cosh') == 'cosh':
         sig_kwargs = {k: kwargs[k] for k in ('omega_source', 'lpf_cutoff',
-                      'lpf_order', 'C_T', 'arm_length', 'threshold')
-                      if k in kwargs}
-        if kwargs.get('cosh_c2') is None:
-            c2_kwargs = dict(sig_kwargs)
-            if 'c2_bounds' in kwargs:
-                c2_kwargs['c2_bounds'] = kwargs['c2_bounds']
-            kwargs['cosh_c2'] = estimate_shared_c2(bags, axis, **c2_kwargs)
-            print(f"  Shared C₂ (√d, rig constant) = {kwargs['cosh_c2']:.3f} rad/s")
-        if kwargs.get('ramp_gain') is None and kwargs.get('cosh_c2'):
-            kwargs['ramp_gain'] = estimate_ramp_gain(
-                bags, axis, kwargs['cosh_c2'], **sig_kwargs)
-            if kwargs['ramp_gain']:
+                      'lpf_order', 'C_T', 'arm_length') if k in kwargs}
+        if kwargs.get('cosh_c2') is None or kwargs.get('ramp_gain') is None:
+            c2, k_gain = estimate_rig_constants(bags, axis, **sig_kwargs)
+            kwargs.setdefault('cosh_c2', None)
+            kwargs['cosh_c2'] = kwargs['cosh_c2'] or c2
+            kwargs['ramp_gain'] = kwargs.get('ramp_gain') or k_gain
+            if kwargs['cosh_c2'] and kwargs['ramp_gain']:
                 wz = 1.0 / kwargs['ramp_gain']
-                print(f"  Shared K (=1/(W·z_CoM))  = {kwargs['ramp_gain']:.3f} "
+                print(f"  Rig constants (closed-form only): "
+                      f"C₂={kwargs['cosh_c2']:.3f} rad/s, "
+                      f"K={kwargs['ramp_gain']:.3f} "
                       f"→ W·z_CoM={wz:.2f} N·m, "
                       f"J_P={wz / kwargs['cosh_c2'] ** 2:.3f} kg·m²")
 
