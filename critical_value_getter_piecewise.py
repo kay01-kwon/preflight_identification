@@ -332,7 +332,8 @@ def piecewise_onset_fit(
 
 
 def cosh_onset_fit(t, omega, moment, onset_guess,
-                   sweep_back_s=0.4, sweep_ahead_s=0.3, step_s=0.02):
+                   sweep_back_s=0.10, sweep_ahead_s=0.30, step_s=0.01,
+                   c2_bounds=(3.0, 8.0), moment_floor=0.30, c2_fixed=None):
     """
     Onset detection with the closed-form tip-over solution.
 
@@ -349,8 +350,26 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
     moment rate Ṁ enters only through the amplitude C₁ = a·Ṁ/d, so no explicit
     polynomial term is needed (it is already the leading term of cosh−1).
 
-    The onset t_crit is swept (tight around onset_guess); the critical moment
-    is M at the best onset. Fit is 3-parameter (C₁, C₂, C), well conditioned.
+    Robustness at high moment-ramp rate (short post-onset window)
+    ------------------------------------------------------------
+    Three constraints keep the joint-residual sweep well-posed when the
+    excitation is fast (few post-onset samples), where the plain fit
+    otherwise degenerates and places the onset far too early:
+
+      * C₂ = √(W·z_CoM/J) is a *physical, ramp-independent rig constant*. The
+        preferred use is to estimate it ONCE for the rig (``estimate_shared_c2``)
+        and pass it as ``c2_fixed`` — then only (C₁, C) are fit per bag, which is
+        well conditioned even on short windows and keeps C₂ consistent across
+        trials (per-bag C₂ otherwise scatters and saturates the bounds). If
+        ``c2_fixed`` is None, C₂ is fit per bag but bounded to ``c2_bounds``
+        (default [3, 8] rad/s); leaving it wide open lets a huge C₂ mimic
+        "flat-then-spike", fitting a late rise from an arbitrarily early split.
+      * a tip-over cannot begin at ~zero moment, so the onset search is floored
+        to where |M| has grown past ``moment_floor``·max|M| — this rejects the
+        pre-excitation ω transient that would otherwise capture the onset.
+
+    The sweep is forward-biased (small ``sweep_back_s``) so it refines the
+    reliable seed rather than escaping backward into that transient.
 
     Returns the same core keys as piecewise_onset_fit; 'alpha' carries C₂
     (the instability rate √d) and 'c' the baseline for CSV compatibility.
@@ -360,35 +379,62 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
     N = len(t)
     dt = float(np.median(np.diff(t)))
     lo = max(1, onset_guess - int(round(sweep_back_s / dt)))
-    hi = min(N - 20, onset_guess + int(round(sweep_ahead_s / dt)))
+    hi = min(N - 8, onset_guess + int(round(sweep_ahead_s / dt)))
     step = max(1, int(round(step_s / dt)))
+
+    # a tip-over cannot start at ~zero moment: floor the search to where |M|
+    # has grown past a fraction of its peak (rejects the pre-onset ω transient)
+    if moment_floor > 0.0 and len(moment) == N:
+        peak = float(np.max(np.abs(moment)))
+        above = np.where(np.abs(moment) >= moment_floor * peak)[0]
+        if len(above):
+            lo = max(lo, int(above[0]))
 
     # tip-over direction (sign of ω at the window tail vs baseline) to init C₁
     base0 = float(np.median(omega[:max(1, onset_guess)]))
     sgn = 1.0 if float(np.mean(omega[int(0.85 * N):])) >= base0 else -1.0
 
-    def model(p, tau):
-        C1, C2, C = p
-        return C1 * (np.cosh(np.clip(C2 * tau, 0, 30)) - 1) + C
+    if c2_fixed is not None:
+        # C₂ pinned to the shared rig constant: fit only (C₁, C) per bag.
+        c2_val = float(c2_fixed)
 
-    best = (np.inf, onset_guess, np.array([sgn * 1e-3, 3.0, base0]))
+        def model(p, tau):
+            C1, C = p
+            return C1 * (np.cosh(np.clip(c2_val * tau, 0, 30)) - 1) + C
+
+        p0 = lambda C0: [sgn * 1e-3, C0]
+        bounds = ([-5.0, -2.0], [5.0, 2.0])
+        expand = lambda x: (float(x[0]), c2_val, float(x[1]))
+    else:
+        # C₂ fit per bag but tightly bounded to the physical band.
+        c2_0 = float(np.clip(4.9, c2_bounds[0], c2_bounds[1]))
+
+        def model(p, tau):
+            C1, C2, C = p
+            return C1 * (np.cosh(np.clip(C2 * tau, 0, 30)) - 1) + C
+
+        p0 = lambda C0: [sgn * 1e-3, c2_0, C0]
+        bounds = ([-5.0, c2_bounds[0], -2.0], [5.0, c2_bounds[1], 2.0])
+        expand = lambda x: (float(x[0]), float(x[1]), float(x[2]))
+
+    best = (np.inf, onset_guess, None)
     for j in range(lo, max(lo + 1, hi), step):
         tau = t[j:] - t[j]
         y = omega[j:]
         C0 = float(np.median(omega[:j])) if j > 0 else 0.0
         r = least_squares(lambda p: model(p, tau) - y,
-                          [sgn * 1e-3, 3.0, C0], method='trf',
-                          bounds=([-5.0, 0.05, -2.0], [5.0, 30.0, 2.0]),
-                          max_nfev=300)
+                          p0(C0), method='trf', bounds=bounds, max_nfev=300)
         pre = np.sum((omega[:j] - C0) ** 2) if j > 0 else 0.0
         cost = float(np.sum(r.fun ** 2) + pre)
         if cost < best[0]:
             best = (cost, j, r.x)
 
-    cost, j_star, params = best
+    cost, j_star, x_star = best
+    params = expand(x_star)
     C1, C2, C = params
+    tau = t[j_star:] - t[j_star]
     omega_pred = np.full(N, float(C))
-    omega_pred[j_star:] = model(params, t[j_star:] - t[j_star])
+    omega_pred[j_star:] = C1 * (np.cosh(np.clip(C2 * tau, 0, 30)) - 1) + C
     rmse = float(np.sqrt(np.mean((omega - omega_pred) ** 2)))
 
     return dict(
@@ -401,6 +447,36 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
         params=tuple(float(x) for x in params),
         model='cosh',
     )
+
+
+def estimate_shared_c2(bags, axis, min_post=45, c2_bounds=(3.0, 8.0), **kwargs):
+    """
+    Estimate the shared instability rate C₂ = √(W·z_CoM/J) for a rig.
+
+    C₂ is a physical constant of the test rig (weight, CoM height, inertia), so
+    it is the SAME for every bag of one configuration — it does not depend on
+    the excitation ramp rate or tip direction. Fitting it independently per bag
+    lets it scatter (and saturate the bounds) on short/fast windows, which is
+    unphysical. Instead we fit it per bag ONLY on the reliable long-window bags
+    (≥ ``min_post`` post-onset samples) and take the robust median; the caller
+    then pins every bag to this single value (``c2_fixed``).
+
+    Returns the median C₂ (float), clipped to ``c2_bounds``. Falls back to the
+    band centre if no bag has a long enough window.
+    """
+    vals = []
+    for bag in bags:
+        try:
+            crit, pw = extract_piecewise(bag, axis, model='cosh',
+                                         c2_bounds=c2_bounds, **kwargs)
+        except Exception:
+            continue
+        i0, i1 = detect_excitation_window(crit.moment)
+        if (i1 - crit.onset_idx) >= min_post and pw.get('alpha') is not None:
+            vals.append(float(pw['alpha']))
+    if not vals:
+        return float(0.5 * (c2_bounds[0] + c2_bounds[1]))
+    return float(np.clip(np.median(vals), c2_bounds[0], c2_bounds[1]))
 
 
 def detect_excitation_window(
@@ -430,6 +506,8 @@ def extract_piecewise(
     huber_k: float = 1.345,
     robust_sides: str = 'pre',
     model: str = 'cosh',
+    cosh_c2: Optional[float] = None,
+    c2_bounds: tuple = (3.0, 8.0),
 ) -> CriticalValueResult:
     """
     Extract critical values using onset detection.
@@ -504,7 +582,8 @@ def extract_piecewise(
     # Onset fit: PLS quadratic or cosh closed-form
     if model == 'cosh':
         guess = piecewise_onset_fit(t[win], omega[win])['onset_idx']
-        pw = cosh_onset_fit(t[win], omega[win], moment[win], onset_guess=guess)
+        pw = cosh_onset_fit(t[win], omega[win], moment[win], onset_guess=guess,
+                            c2_bounds=c2_bounds, c2_fixed=cosh_c2)
     else:
         pw = piecewise_onset_fit(t[win], omega[win], robust=robust,
                                  huber_k=huber_k, robust_sides=robust_sides)
@@ -538,7 +617,19 @@ def extract_piecewise_batch(
     axis: str,
     **kwargs,
 ) -> tuple[list[CriticalValueResult], list[dict]]:
-    """Run piecewise extraction on every bag."""
+    """Run piecewise extraction on every bag.
+
+    For the cosh model, C₂ is a rig constant: it is estimated once from the
+    reliable long-window bags and pinned for every bag (unless the caller
+    already passed ``cosh_c2``), so the instability rate stays consistent.
+    """
+    if kwargs.get('model', 'cosh') == 'cosh' and kwargs.get('cosh_c2') is None:
+        c2_kwargs = {k: kwargs[k] for k in ('omega_source', 'lpf_cutoff',
+                     'lpf_order', 'C_T', 'arm_length', 'threshold', 'c2_bounds')
+                     if k in kwargs}
+        kwargs['cosh_c2'] = estimate_shared_c2(bags, axis, **c2_kwargs)
+        print(f"  Shared C₂ (√d, rig constant) = {kwargs['cosh_c2']:.3f} rad/s")
+
     results = []
     pw_fits = []
     for bag in bags:

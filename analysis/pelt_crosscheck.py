@@ -46,6 +46,7 @@ import matplotlib.pyplot as plt
 from utils.extractor import load_excitation_dataset
 from critical_value_getter_piecewise import (
     extract_piecewise,
+    estimate_shared_c2,
     detect_excitation_window,
     detect_axis,
     bag_name_to_title,
@@ -122,11 +123,12 @@ def _window(bag, axis):
 #  Onset-level benchmark
 # ═════════════════════════════════════════════════════════════
 
-def crosscheck(bags, axis):
+def crosscheck(bags, axis, cosh_c2=None):
     """cosh onset moment vs every classic detector, per bag."""
     rows, series = [], []
     for bag in bags:
-        crit, _ = extract_piecewise(bag, axis, model='cosh')  # proposed
+        crit, _ = extract_piecewise(bag, axis, model='cosh',
+                                    cosh_c2=cosh_c2)  # proposed
         base, i0, i1, win, guess, direction = _window(bag, axis)
         t_win, omega_win, M_win = base.t[win], base.omega[win], base.moment[win]
 
@@ -151,10 +153,10 @@ def crosscheck(bags, axis):
 #  Downstream: propagate each detector to CoM / moment offset
 # ═════════════════════════════════════════════════════════════
 
-def _crit_for_method(bag, axis, name):
+def _crit_for_method(bag, axis, name, cosh_c2=None):
     """CriticalValueResult for a bag under the given detector."""
     if name == 'cosh':
-        crit, _ = extract_piecewise(bag, axis, model='cosh')
+        crit, _ = extract_piecewise(bag, axis, model='cosh', cosh_c2=cosh_c2)
         return crit
     base, i0, i1, win, guess, direction = _window(bag, axis)
     j = i0 + classic_onset_index(name, base.omega[win], guess, direction)
@@ -164,10 +166,10 @@ def _crit_for_method(bag, axis, name):
                    onset_omega=float(base.omega[j]))
 
 
-def downstream_crosscheck(bags, axis, known_mass=None):
+def downstream_crosscheck(bags, axis, known_mass=None, cosh_c2=None):
     out = []
     for name in ALL_METHODS:
-        crits = [_crit_for_method(b, axis, name) for b in bags]
+        crits = [_crit_for_method(b, axis, name, cosh_c2=cosh_c2) for b in bags]
         pivots = [estimate_pivot_from_mocap(b, c.onset_time, axis)
                   for b, c in zip(bags, crits)]
         e = compute_mass_and_offset(crits, pivots, axis, known_mass=known_mass)
@@ -340,14 +342,18 @@ def main():
     print(f"Loaded {len(bags)} bags: {[b.name for b in bags]}\n")
     axis = args.axis if args.axis else detect_axis(dataset_dir, bags)
     print(f"Axis        : {axis} ({'roll' if axis == 'x' else 'pitch'})")
-    print(f"Benchmark   : cosh (proposed) vs {CLASSIC}\n")
+    print(f"Benchmark   : cosh (proposed) vs {CLASSIC}")
+
+    # C₂=√d is a rig constant: estimate once, pin for every cosh fit.
+    cosh_c2 = estimate_shared_c2(bags, axis)
+    print(f"Shared C₂   : {cosh_c2:.3f} rad/s (√d, pinned across all bags)\n")
 
     print("── Onset moment (M_crit) ──")
-    rows, series = crosscheck(bags, axis)
+    rows, series = crosscheck(bags, axis, cosh_c2=cosh_c2)
     print_and_save_table(rows, axis, output_dir)
 
     print("\n── Downstream (CoM / moment offset) ──")
-    down = downstream_crosscheck(bags, axis, known_mass=args.mass)
+    down = downstream_crosscheck(bags, axis, known_mass=args.mass, cosh_c2=cosh_c2)
     print_and_save_downstream(down, axis, output_dir)
 
     save_dir = output_dir if args.save_fig else None
