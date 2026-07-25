@@ -333,7 +333,8 @@ def piecewise_onset_fit(
 
 def cosh_onset_fit(t, omega, moment, onset_guess,
                    sweep_back_s=0.10, sweep_ahead_s=0.30, step_s=0.01,
-                   c2_bounds=(3.0, 8.0), moment_floor=0.30, c2_fixed=None):
+                   c2_bounds=(3.0, 8.0), moment_floor=0.30, c2_fixed=None,
+                   moment_floor_abs=None):
     """
     Onset detection with the closed-form tip-over solution.
 
@@ -364,9 +365,15 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
         ``c2_fixed`` is None, C₂ is fit per bag but bounded to ``c2_bounds``
         (default [3, 8] rad/s); leaving it wide open lets a huge C₂ mimic
         "flat-then-spike", fitting a late rise from an arbitrarily early split.
-      * a tip-over cannot begin at ~zero moment, so the onset search is floored
-        to where |M| has grown past ``moment_floor``·max|M| — this rejects the
-        pre-excitation ω transient that would otherwise capture the onset.
+      * a tip-over cannot begin below the static tip-over threshold, so the
+        onset search is floored in moment. ``moment_floor_abs`` (absolute, N·m)
+        is preferred: the critical moment is a physical constant with a known
+        lower bound per axis (e.g. |M_y|≳0.4, |M_x|≳0.7 N·m for this rig), and
+        an absolute floor is peak-independent — it cannot be under-cut on a
+        fast ramp the way a fraction-of-peak floor can. If ``moment_floor_abs``
+        is None, fall back to the relative floor ``moment_floor``·max|M|. Either
+        way this rejects the pre-excitation ω transient (which sits at near-zero
+        moment) that would otherwise capture the onset.
 
     The sweep is forward-biased (small ``sweep_back_s``) so it refines the
     reliable seed rather than escaping backward into that transient.
@@ -382,11 +389,17 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
     hi = min(N - 8, onset_guess + int(round(sweep_ahead_s / dt)))
     step = max(1, int(round(step_s / dt)))
 
-    # a tip-over cannot start at ~zero moment: floor the search to where |M|
-    # has grown past a fraction of its peak (rejects the pre-onset ω transient)
-    if moment_floor > 0.0 and len(moment) == N:
-        peak = float(np.max(np.abs(moment)))
-        above = np.where(np.abs(moment) >= moment_floor * peak)[0]
+    # a tip-over cannot begin below the static threshold: floor the onset search
+    # in moment (absolute floor preferred; peak-fraction fallback). Rejects the
+    # pre-onset ω transient, which sits at near-zero moment.
+    if len(moment) == N:
+        if moment_floor_abs is not None:
+            above = np.where(np.abs(moment) >= float(moment_floor_abs))[0]
+        elif moment_floor > 0.0:
+            peak = float(np.max(np.abs(moment)))
+            above = np.where(np.abs(moment) >= moment_floor * peak)[0]
+        else:
+            above = np.array([], dtype=int)
         if len(above):
             lo = max(lo, int(above[0]))
 
@@ -508,6 +521,7 @@ def extract_piecewise(
     model: str = 'cosh',
     cosh_c2: Optional[float] = None,
     c2_bounds: tuple = (3.0, 8.0),
+    moment_floor_abs: Optional[float] = None,
 ) -> CriticalValueResult:
     """
     Extract critical values using onset detection.
@@ -581,9 +595,15 @@ def extract_piecewise(
 
     # Onset fit: PLS quadratic or cosh closed-form
     if model == 'cosh':
+        # absolute moment floor: physical lower bound of the tip-over threshold
+        # per axis (peak-independent). |M_x|≳0.7, |M_y|≳0.4 N·m for this rig.
+        floor_abs = moment_floor_abs
+        if floor_abs is None:
+            floor_abs = {'x': 0.7, 'y': 0.4}.get(axis)
         guess = piecewise_onset_fit(t[win], omega[win])['onset_idx']
         pw = cosh_onset_fit(t[win], omega[win], moment[win], onset_guess=guess,
-                            c2_bounds=c2_bounds, c2_fixed=cosh_c2)
+                            c2_bounds=c2_bounds, c2_fixed=cosh_c2,
+                            moment_floor_abs=floor_abs)
     else:
         pw = piecewise_onset_fit(t[win], omega[win], robust=robust,
                                  huber_k=huber_k, robust_sides=robust_sides)
