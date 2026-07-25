@@ -332,7 +332,8 @@ def piecewise_onset_fit(
 
 
 def cosh_onset_fit(t, omega, moment, onset_guess,
-                   sweep_back_s=0.4, sweep_ahead_s=0.3, step_s=0.02):
+                   sweep_back_s=0.10, sweep_ahead_s=0.30, step_s=0.01,
+                   c2_bounds=(3.0, 8.0), moment_floor=0.30):
     """
     Onset detection with the closed-form tip-over solution.
 
@@ -349,8 +350,22 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
     moment rate Ṁ enters only through the amplitude C₁ = a·Ṁ/d, so no explicit
     polynomial term is needed (it is already the leading term of cosh−1).
 
-    The onset t_crit is swept (tight around onset_guess); the critical moment
-    is M at the best onset. Fit is 3-parameter (C₁, C₂, C), well conditioned.
+    Robustness at high moment-ramp rate (short post-onset window)
+    ------------------------------------------------------------
+    Two constraints keep the joint-residual sweep well-posed when the
+    excitation is fast (few post-onset samples), where the plain fit
+    otherwise degenerates and places the onset far too early:
+
+      * C₂ = √(W·z_CoM/J) is a *physical, ramp-independent rig constant*, so it
+        is bounded to a tight plausible band (``c2_bounds``, default [3, 8]
+        rad/s). Leaving it wide open lets a huge C₂ mimic "flat-then-spike",
+        which fits a late rise from an arbitrarily early split point.
+      * a tip-over cannot begin at ~zero moment, so the onset search is floored
+        to where |M| has grown past ``moment_floor``·max|M| — this rejects the
+        pre-excitation ω transient that would otherwise capture the onset.
+
+    The sweep is forward-biased (small ``sweep_back_s``) so it refines the
+    reliable seed rather than escaping backward into that transient.
 
     Returns the same core keys as piecewise_onset_fit; 'alpha' carries C₂
     (the instability rate √d) and 'c' the baseline for CSV compatibility.
@@ -360,25 +375,35 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
     N = len(t)
     dt = float(np.median(np.diff(t)))
     lo = max(1, onset_guess - int(round(sweep_back_s / dt)))
-    hi = min(N - 20, onset_guess + int(round(sweep_ahead_s / dt)))
+    hi = min(N - 8, onset_guess + int(round(sweep_ahead_s / dt)))
     step = max(1, int(round(step_s / dt)))
+
+    # a tip-over cannot start at ~zero moment: floor the search to where |M|
+    # has grown past a fraction of its peak (rejects the pre-onset ω transient)
+    if moment_floor > 0.0 and len(moment) == N:
+        peak = float(np.max(np.abs(moment)))
+        above = np.where(np.abs(moment) >= moment_floor * peak)[0]
+        if len(above):
+            lo = max(lo, int(above[0]))
 
     # tip-over direction (sign of ω at the window tail vs baseline) to init C₁
     base0 = float(np.median(omega[:max(1, onset_guess)]))
     sgn = 1.0 if float(np.mean(omega[int(0.85 * N):])) >= base0 else -1.0
+    c2_0 = float(np.clip(4.9, c2_bounds[0], c2_bounds[1]))
 
     def model(p, tau):
         C1, C2, C = p
         return C1 * (np.cosh(np.clip(C2 * tau, 0, 30)) - 1) + C
 
-    best = (np.inf, onset_guess, np.array([sgn * 1e-3, 3.0, base0]))
+    best = (np.inf, onset_guess, np.array([sgn * 1e-3, c2_0, base0]))
     for j in range(lo, max(lo + 1, hi), step):
         tau = t[j:] - t[j]
         y = omega[j:]
         C0 = float(np.median(omega[:j])) if j > 0 else 0.0
         r = least_squares(lambda p: model(p, tau) - y,
-                          [sgn * 1e-3, 3.0, C0], method='trf',
-                          bounds=([-5.0, 0.05, -2.0], [5.0, 30.0, 2.0]),
+                          [sgn * 1e-3, c2_0, C0], method='trf',
+                          bounds=([-5.0, c2_bounds[0], -2.0],
+                                  [5.0, c2_bounds[1], 2.0]),
                           max_nfev=300)
         pre = np.sum((omega[:j] - C0) ** 2) if j > 0 else 0.0
         cost = float(np.sum(r.fun ** 2) + pre)
