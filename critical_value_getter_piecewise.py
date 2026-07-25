@@ -588,7 +588,8 @@ def estimate_ramp_gain(bags, axis, c2, k_grid=None, **kwargs):
 
 
 def estimate_rig_constants(bags, axis, c2_grid=None, k_grid=None, stride=3,
-                           **kwargs):
+                           method='grid', c2_range=(3.0, 8.0),
+                           k_range=(0.05, 0.70), seed=0, **kwargs):
     """
     Estimate (C₂, K) for a rig using ONLY the closed-form model.
 
@@ -640,22 +641,52 @@ def estimate_rig_constants(bags, axis, c2_grid=None, k_grid=None, stride=3,
                             step_s=strd * float(np.median(np.diff(t))))
         return float(M[pw['onset_idx']])
 
-    best = (np.inf, None, None)
-    for c2 in c2_grid:
-        for k in k_grid:
-            groups = {}
-            for side, t, om, M, m_dot in prepared:
-                groups.setdefault(side, []).append(
-                    onset_moment(t, om, M, c2, k, m_dot, stride))
-            score = 0.0
-            for vals in groups.values():
-                if len(vals) < 2:
-                    continue
-                mu = abs(float(np.mean(vals)))
-                score += float(np.std(vals)) / mu if mu > 1e-9 else np.inf
-            if score < best[0]:
-                best = (score, float(c2), float(k))
-    return best[1], best[2]
+    def score_of(c2, k, strd):
+        groups = {}
+        for side, t, om, M, m_dot in prepared:
+            groups.setdefault(side, []).append(
+                onset_moment(t, om, M, c2, k, m_dot, strd))
+        score = 0.0
+        for vals in groups.values():
+            if len(vals) < 2:
+                continue
+            mu = abs(float(np.mean(vals)))
+            score += float(np.std(vals)) / mu if mu > 1e-9 else np.inf
+        return score
+
+    if method == 'de':
+        # The objective is piecewise CONSTANT in (C₂, K): the onset is an
+        # integer index, so small parameter changes leave it (and therefore
+        # M_crit) unchanged. Gradient-based and simplex methods stall on such a
+        # staircase, so use a population-based derivative-free global search.
+        from scipy.optimize import differential_evolution
+        res = differential_evolution(
+            lambda p: score_of(float(p[0]), float(p[1]), stride),
+            bounds=[tuple(c2_range), tuple(k_range)],
+            popsize=10, maxiter=25, tol=0.0, mutation=(0.3, 0.9),
+            recombination=0.8, polish=False, seed=seed, init='sobol')
+        return float(res.x[0]), float(res.x[1])
+
+    def scan(c2s, ks):
+        best = (np.inf, None, None)
+        for c2 in c2s:
+            for k in ks:
+                score = score_of(float(c2), float(k), stride)
+                if score < best[0]:
+                    best = (score, float(c2), float(k))
+        return best
+
+    # coarse scan, then one refinement pass around the winner so the reported
+    # constants are not quantised to the coarse step. The objective is flat
+    # along a (C₂, K) ridge, so this converges immediately — a full global
+    # optimiser (method='de') costs ~4x more for no measurable gain.
+    _, c2_b, k_b = scan(c2_grid, k_grid)
+    dc2 = float(np.diff(c2_grid)[0]) if len(c2_grid) > 1 else 0.5
+    dk = float(np.diff(k_grid)[0]) if len(k_grid) > 1 else 0.04
+    c2_fine = np.clip(np.linspace(c2_b - dc2, c2_b + dc2, 9), *c2_range)
+    k_fine = np.clip(np.linspace(k_b - dk, k_b + dk, 9), *k_range)
+    _, c2_b, k_b = scan(c2_fine, k_fine)
+    return c2_b, k_b
 
 
 def detect_excitation_window(
