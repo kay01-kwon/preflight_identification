@@ -595,15 +595,14 @@ def extract_piecewise(
 
     # Onset fit: PLS quadratic or cosh closed-form
     if model == 'cosh':
-        # absolute moment floor: physical lower bound of the tip-over threshold
-        # per axis (peak-independent). |M_x|≳0.7, |M_y|≳0.4 N·m for this rig.
-        floor_abs = moment_floor_abs
-        if floor_abs is None:
-            floor_abs = {'x': 0.7, 'y': 0.4}.get(axis)
+        # No moment floor by default: the plain closed-form cosh onset, so the
+        # fast-ramp behaviour (where the quasi-static assumption breaks down) is
+        # reported honestly rather than masked. A floor can still be re-enabled
+        # by passing moment_floor_abs explicitly.
         guess = piecewise_onset_fit(t[win], omega[win])['onset_idx']
         pw = cosh_onset_fit(t[win], omega[win], moment[win], onset_guess=guess,
                             c2_bounds=c2_bounds, c2_fixed=cosh_c2,
-                            moment_floor_abs=floor_abs)
+                            moment_floor=0.0, moment_floor_abs=moment_floor_abs)
     else:
         pw = piecewise_onset_fit(t[win], omega[win], robust=robust,
                                  huber_k=huber_k, robust_sides=robust_sides)
