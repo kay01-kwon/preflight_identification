@@ -667,6 +667,69 @@ def extract_piecewise_batch(
 
 
 # ═════════════════════════════════════════════════════════════
+#  Ramp-tracking quality  (commanded vs actual moment ramp rate)
+# ═════════════════════════════════════════════════════════════
+
+def commanded_ramp_rate(bag_name: str,
+                        table: Optional[dict] = None) -> Optional[float]:
+    """
+    Commanded moment ramp rate [N·m/s] parsed from the bag name.
+
+    The trailing token encodes the set rate in centi-units: '045'→0.45,
+    '065'→0.65, '090'→0.90, '120'→1.20. Returns None for bags without a
+    ramp-rate token (e.g. '01'/'02'/'03'), or looks it up in ``table`` if given.
+    """
+    tok = bag_name.split('_')[-1]
+    if table is not None and tok in table:
+        return float(table[tok])
+    if tok.isdigit() and len(tok) == 3:
+        return int(tok) / 100.0
+    return None
+
+
+def assess_ramp_quality(crit: CriticalValueResult,
+                        commanded_rate: float) -> Optional[dict]:
+    """
+    Post-onset moment-ramp tracking quality.
+
+    Over the post-onset segment [onset, peak|M|] the applied moment is a linear
+    ramp. This fits that segment and compares it with the commanded rate:
+
+      * ``actual_rate``    — |slope| of the least-squares line through M(t)
+      * ``slope_error_pct``— (actual − commanded)/commanded, in %
+      * ``linearity_rmse`` — RMSE of M(t) about its own best-fit line
+                             (how straight the applied ramp is)
+      * ``tracking_rmse``  — RMSE of M(t) about the *commanded* ramp line
+                             M(t_crit)+Ṁ_cmd·τ (how well it tracks the command)
+
+    Low slope error + low RMSE ⇒ the ramp excitation was executed as commanded,
+    which supports the constant-Ṁ assumption behind the closed-form onset model
+    (C₁ = a·Ṁ/d). Returns None if the segment is too short.
+    """
+    i0, i1 = detect_excitation_window(crit.moment)
+    j = crit.onset_idx
+    t = crit.t[j:i1 + 1]
+    M = crit.moment[j:i1 + 1]
+    if len(t) < 3 or not commanded_rate:
+        return None
+    sgn = 1.0 if crit.onset_moment >= 0 else -1.0
+    tau = t - t[0]
+    slope, intercept = np.polyfit(tau, M, 1)
+    actual_rate = abs(float(slope))
+    lin_rmse = float(np.sqrt(np.mean((M - (slope * tau + intercept)) ** 2)))
+    m_cmd = M[0] + sgn * commanded_rate * tau
+    track_rmse = float(np.sqrt(np.mean((M - m_cmd) ** 2)))
+    return dict(
+        commanded_rate=float(commanded_rate),
+        actual_rate=actual_rate,
+        slope_error_pct=(actual_rate - commanded_rate) / commanded_rate * 100.0,
+        linearity_rmse=lin_rmse,
+        tracking_rmse=track_rmse,
+        n_post=int(len(t)),
+    )
+
+
+# ═════════════════════════════════════════════════════════════
 #  Pivot Estimation via Mocap Circle Fit
 # ═════════════════════════════════════════════════════════════
 
