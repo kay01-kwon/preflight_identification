@@ -988,14 +988,88 @@ def fit_circle_cz_fixed(xy: np.ndarray, z: np.ndarray, cz: float = 0.0):
     return cx, R, float(np.std(residuals))
 
 
+def _tilt_deg(quat: np.ndarray) -> np.ndarray:
+    """Total tilt angle [deg] from a (N,4) wxyz quaternion array."""
+    w, x, y, z = quat.T
+    roll = np.arctan2(2 * (w * x + y * z), 1 - 2 * (x * x + y * y))
+    pitch = np.arcsin(np.clip(2 * (w * y - z * x), -1, 1))
+    return np.degrees(np.sqrt(roll ** 2 + pitch ** 2))
+
+
+def _tilt_departure(t: np.ndarray, tilt: np.ndarray,
+                    thresh_deg: float = 1.0, persist: int = 10) -> Optional[float]:
+    """Time at which the tilt persistently departs from its initial baseline."""
+    n0 = max(10, int(0.1 * len(t)))
+    base = float(np.median(tilt[:n0]))
+    dev = np.abs(tilt - base) > thresh_deg
+    run = 0
+    for i in range(len(dev)):
+        run = run + 1 if dev[i] else 0
+        if run >= persist:
+            return float(t[i - persist + 1])
+    return None
+
+
+def align_mocap_time(bag: BagData, desync_threshold_s: float = 100.0) -> np.ndarray:
+    """Mocap pose time re-expressed on the odometry clock (relative to t0).
+
+    When the mocap bridge loses network time sync its header stamps carry a
+    large CONSTANT clock offset (observed: ~4.4e6 s on the affected runs) while
+    remaining monotonic at the correct rate. The offset is recovered by
+    matching the tilt DEPARTURE time — the moment the tilt leaves its resting
+    baseline, which both streams observe. Departure matching stays robust even
+    on runs whose total excursion is small (~3°), where a plain least-squares
+    correlation of the tilt traces locks onto the flat baseline instead.
+
+    Runs whose apparent offset is below ``desync_threshold_s`` are returned
+    unchanged, so well-synchronised data is never touched.
+    """
+    t0 = bag.odom.t[0]
+    t_mc = bag.pose.t - t0
+    t_od = bag.odom.t - t0
+
+    if abs(t_mc[0] - t_od[0]) < desync_threshold_s:
+        return t_mc
+
+    tilt_mc = _tilt_deg(bag.pose.quaternion)
+    tilt_od = _tilt_deg(bag.odom.quaternion)
+
+    dep_mc = _tilt_departure(t_mc, tilt_mc)
+    dep_od = _tilt_departure(t_od, tilt_od)
+    if dep_mc is None or dep_od is None:
+        # last resort: assume both topics started recording together
+        return t_mc - (t_mc[0] - t_od[0])
+    delta = dep_mc - dep_od
+
+    # fine refinement: correlate the tilt traces over ±0.3 s around the match
+    dt = 0.01
+    grid = np.arange(t_od[0], t_od[-1], dt)
+    ref = np.interp(grid, t_od, tilt_od)
+
+    def cost(d):
+        cand = np.interp(grid, t_mc - d, tilt_mc, left=np.nan, right=np.nan)
+        ok = ~np.isnan(cand)
+        if ok.sum() < 50:
+            return np.inf
+        r = cand[ok] - ref[ok]
+        return float(r @ r) / ok.sum()
+
+    fine = np.arange(delta - 0.3, delta + 0.3, 0.005)
+    delta = float(fine[int(np.argmin([cost(d) for d in fine]))])
+    return t_mc - delta
+
+
 def estimate_pivot_from_mocap(
     bag: BagData,
     onset_time: float,
     axis: str,
     cz: float = 0.0,
+    max_window_s: float = 4.0,
+    apex_patience: int = 12,
+    tilt_cap_deg: float = 10.0,
+    motion_min_mm: float = 5.0,
 ) -> dict:
-    t0 = bag.odom.t[0]
-    t_mc = bag.pose.t - t0
+    t_mc = align_mocap_time(bag)
     px = bag.pose.position[:, 0]
     py = bag.pose.position[:, 1]
     pz = bag.pose.position[:, 2]
@@ -1020,8 +1094,33 @@ def estimate_pivot_from_mocap(
         return dict(pivot_abs=np.nan, R=np.nan, residual=np.nan,
                     N=0, xy_fit=None, z_fit=None, cx=np.nan)
 
-    mc_max_idx = mc_onset_idx + np.argmax(np.abs(d_horiz[mc_onset_idx:]))
-    sl = slice(mc_onset_idx, mc_max_idx + 1)
+    # Bound the fit window to the clean pivoting phase. Three guards:
+    #   * horizon: at most ``max_window_s`` after the onset;
+    #   * tilt cap: stop once the tilt exceeds ``tilt_cap_deg`` — on fast runs
+    #     the vehicle tips far past the small-rotation regime (observed up to
+    #     ~57°), where gear compliance/slip pulls the marker off the rigid
+    #     pivot circle and inflates the residual to ~10 mm;
+    #   * apex: a persistent decrease of |d| ends the window (post-excitation
+    #     sliding/handling is not on the circle). Decreases only count once the
+    #     motion is real (|d| above ``motion_min_mm``), so a noise peak in the
+    #     flat pre-motion stretch cannot truncate the window.
+    horizon = int(np.searchsorted(t_mc, onset_time + max_window_s))
+    tilt = _tilt_deg(bag.pose.quaternion)
+    a = np.abs(d_horiz[mc_onset_idx:max(horizon, mc_onset_idx + 6)])
+    tw = tilt[mc_onset_idx:max(horizon, mc_onset_idx + 6)]
+    motion_min = motion_min_mm * 1e-3
+    apex, run, peak = len(a) - 1, 0, -np.inf
+    for i in range(len(a)):
+        if tw[i] > tilt_cap_deg:
+            apex = i
+            break
+        if a[i] >= peak:
+            peak, apex, run = a[i], i, 0
+        elif peak > motion_min:
+            run += 1
+            if run >= apex_patience:
+                break
+    sl = slice(mc_onset_idx, mc_onset_idx + apex + 1)
 
     xy_fit = d_horiz[sl] * 1e3
     z_fit = pz[sl] * 1e3
