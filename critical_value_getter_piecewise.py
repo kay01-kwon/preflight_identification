@@ -874,14 +874,44 @@ def extract_piecewise(
 def extract_piecewise_batch(
     bags: list[BagData],
     axis: str,
+    ramp_gate_pct: Optional[float] = 3.0,
     **kwargs,
 ) -> tuple[list[CriticalValueResult], list[dict]]:
     """Run piecewise extraction on every bag.
+
+    Run-level ramp-quality gate (``ramp_gate_pct``, default 3%): runs whose
+    full-window ramp-rate error |Ṁ_meas − Ṁ_cmd|/Ṁ_cmd exceeds the gate are
+    excluded BEFORE the rig constants are estimated, so a poorly executed ramp
+    cannot contaminate the dataset-coupled amplitude constraint C₁ = K·Ṁ. The
+    threshold is conservative by construction: a 3% Ṁ error perturbs C₁ by 3%,
+    ~7× below the ±20% level the sensitivity analysis shows to be harmless.
+    Runs without a parseable commanded rate are never gated; None disables.
 
     For the cosh model, C₂ is a rig constant: it is estimated once from the
     reliable long-window bags and pinned for every bag (unless the caller
     already passed ``cosh_c2``), so the instability rate stays consistent.
     """
+    if ramp_gate_pct is not None:
+        sig_kwargs = {k: kwargs[k] for k in ('omega_source', 'lpf_cutoff',
+                      'lpf_order', 'C_T', 'arm_length') if k in kwargs}
+        kept = []
+        for bag in bags:
+            cmd = commanded_ramp_rate(bag.name)
+            if cmd:
+                sig = prepare_signals(bag, axis, **sig_kwargs)
+                i0, i1 = detect_excitation_window(sig['moment'])
+                win = slice(i0, i1 + 1)
+                if i1 - i0 >= 11:
+                    slope = abs(float(np.polyfit(sig['t'][win],
+                                                 sig['moment'][win], 1)[0]))
+                    eps = (slope - cmd) / cmd * 100.0
+                    if abs(eps) > ramp_gate_pct:
+                        print(f"  [gate] {bag.name}: ramp-rate error "
+                              f"{eps:+.2f}% > {ramp_gate_pct:.0f}% — excluded")
+                        continue
+            kept.append(bag)
+        bags = kept
+
     if kwargs.get('model', 'cosh') == 'cosh':
         sig_kwargs = {k: kwargs[k] for k in ('omega_source', 'lpf_cutoff',
                       'lpf_order', 'C_T', 'arm_length') if k in kwargs}
@@ -925,15 +955,20 @@ def commanded_ramp_rate(bag_name: str,
     Commanded moment ramp rate [N·m/s] parsed from the bag name.
 
     The trailing token encodes the set rate in centi-units: '045'→0.45,
-    '065'→0.65, '090'→0.90, '120'→1.20. Returns None for bags without a
-    ramp-rate token (e.g. '01'/'02'/'03'), or looks it up in ``table`` if given.
+    '065'→0.65, '090'→0.90, '120'→1.20. The legacy slow-run tokens
+    '01'/'02'/'03' map to 0.10/0.20/0.30 N·m/s. ``table`` overrides both.
     """
     tok = bag_name.split('_')[-1]
     if table is not None and tok in table:
         return float(table[tok])
+    if tok in _SLOW_RATE_TOKENS:
+        return _SLOW_RATE_TOKENS[tok]
     if tok.isdigit() and len(tok) == 3:
         return int(tok) / 100.0
     return None
+
+
+_SLOW_RATE_TOKENS = {'01': 0.10, '02': 0.20, '03': 0.30}
 
 
 def assess_ramp_quality(crit: CriticalValueResult,
