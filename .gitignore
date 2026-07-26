@@ -19,3 +19,6 @@ __pycache__/
 # generated benchmark artifacts (regenerable via analysis/pelt_crosscheck.py)
 onset_benchmark_*.csv
 onset_benchmark_*.png
+# generated ramp-quality artifacts (regenerable via analysis/ramp_quality.py)
+ramp_quality_*.csv
+ramp_quality_*.png
