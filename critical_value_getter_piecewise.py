@@ -694,12 +694,20 @@ def detect_excitation_window(
     threshold: float = 0.01,
 ) -> tuple[int, int]:
     """
-    Find excitation window: [first |M|>threshold, max|M|].
+    Find excitation window: [start of the ramp leading to the peak, max|M|].
+
+    The start is the LAST sub-threshold sample before the peak (walking
+    backwards from max|M|), not the first supra-threshold sample. The two are
+    identical when |M| grows monotonically, but the backward definition is
+    robust to small |M| blips before the actual ramp — e.g. the rotor spin-up
+    transient during arming, which on one run crossed the threshold ~1.6 s
+    early and pulled a flat idle stretch into the window, corrupting the
+    measured ramp rate by −31%.
     """
     idx_end = int(np.argmax(np.abs(moment)))
-    above = np.where(np.abs(moment) > threshold)[0]
-    if len(above) > 0 and above[0] < idx_end:
-        return int(above[0]), idx_end
+    below = np.where(np.abs(moment[:idx_end]) <= threshold)[0]
+    if len(below) > 0:
+        return int(min(below[-1] + 1, idx_end)), idx_end
     return 0, idx_end
 
 
