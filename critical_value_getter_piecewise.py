@@ -1458,7 +1458,7 @@ def plot_piecewise_fits(
                  + _ax + ',' + _sub + r'}$', fontsize=14)
     fig.tight_layout()
     if save_dir:
-        fig.savefig(Path(save_dir) / f"piecewise_fit_{axis}.png", dpi=600, bbox_inches='tight')
+        fig.savefig(Path(save_dir) / f"piecewise_fit_{axis}.png", dpi=300, bbox_inches='tight')
         print(f"  PW fit plot → {Path(save_dir) / f'piecewise_fit_{axis}.png'}")
     if show: plt.show()
     else: plt.close(fig)
@@ -1516,7 +1516,7 @@ def plot_pivot_fits(bags, critical_results, pivot_results, axis, save_dir=None, 
     fig.suptitle('Mocap Circle Fit (cz=0, onset→max|d|)', fontsize=14)
     fig.tight_layout(rect=[0, 0, 0.92, 1])
     if save_dir:
-        fig.savefig(Path(save_dir) / f"pivot_circle_fit_{axis}.png", dpi=600, bbox_inches='tight')
+        fig.savefig(Path(save_dir) / f"pivot_circle_fit_{axis}.png", dpi=300, bbox_inches='tight')
         print(f"  Pivot plot  → {Path(save_dir) / f'pivot_circle_fit_{axis}.png'}")
     if show: plt.show()
     else: plt.close(fig)
