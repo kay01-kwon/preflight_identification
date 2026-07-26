@@ -120,6 +120,10 @@ def main():
     p.add_argument('--stride', type=int, default=2,
                    help="onset sweep stride in samples (2 ≈ 0.02 s at 100 Hz)")
     p.add_argument('--mass', type=float, default=None)
+    p.add_argument('--truth-com', type=float, default=None,
+                   help="ground-truth CoM offset [mm] (e.g. load-cell value); "
+                        "adds an |error| heatmap panel and reports where on "
+                        "the grid the error is smallest")
     p.add_argument('--output-dir', default=None)
     p.add_argument('--save-fig', action='store_true')
     args = p.parse_args()
@@ -204,16 +208,38 @@ def main():
         w.writerows(grid_rows)
     print(f"Grid table → {fp}")
 
+    if args.truth_com is not None:
+        err = np.abs(com - args.truth_com)
+        i_best = int(np.argmin(err))
+        r_best = grid_rows[i_best]
+        i_ref = int(np.argmin([abs(r['c2'] - c2_ref) + abs(r['k'] - k_ref)
+                               for r in grid_rows]))
+        print(f"\n── vs ground truth {args.truth_com:+.2f} mm ──")
+        print(f"  |error| range over grid : {err.min():.2f} … {err.max():.2f} mm")
+        print(f"  best grid point         : C₂={r_best['c2']:.2f} "
+              f"K={r_best['k']:.2f} → CoM {r_best['com_mm']:+.2f} "
+              f"(err {err[i_best]:.2f})")
+        print(f"  at the reference        : CoM {ref['com_mm']:+.2f} "
+              f"(err {abs(ref['com_mm'] - args.truth_com):.2f})")
+        print(f"  → detector/constant choice moves the error by at most "
+              f"{err.max() - err.min():.2f} mm across the whole box")
+
     if args.save_fig:
         import matplotlib
         matplotlib.use('Agg')
         import matplotlib.pyplot as plt
         FF = ff.reshape(len(c2s), len(ks))
         CM = com.reshape(len(c2s), len(ks))
-        fig, axes = plt.subplots(1, 2, figsize=(12, 5))
-        for ax, Z, title in ((axes[0], FF, r'$M_{ff}$ [N·m]'),
-                             (axes[1], CM, 'CoM offset [mm]')):
-            im = ax.imshow(Z, origin='lower', aspect='auto', cmap='viridis',
+        panels = [(FF, r'$M_{ff}$ [N·m]', 'viridis'),
+                  (CM, 'CoM offset [mm]', 'viridis')]
+        if args.truth_com is not None:
+            panels.append((np.abs(CM - args.truth_com),
+                           f'|CoM − truth({args.truth_com:+.2f})| [mm]',
+                           'magma_r'))
+        fig, axes = plt.subplots(1, len(panels), figsize=(6 * len(panels), 5))
+        axes = np.atleast_1d(axes)
+        for ax, (Z, title, cmap) in zip(axes, panels):
+            im = ax.imshow(Z, origin='lower', aspect='auto', cmap=cmap,
                            extent=[ks[0], ks[-1], c2s[0], c2s[-1]])
             ax.plot(k_ref, c2_ref, 'r*', ms=14, label='reference')
             ax.set_xlabel('K'); ax.set_ylabel(r'$C_2$ [rad/s]')
