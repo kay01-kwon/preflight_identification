@@ -19,7 +19,12 @@ extract_piecewise_batch:
   * N_full ≥ 38 — realized window sample count; a necessary condition
     independent of where the onset falls (30 pre-onset + 8 post-onset search
     minimum), the hardware counterpart of the a priori screening bound
-    N̂_pre = M_crit^min/(Ṁ·T_s) ≥ 30.
+    N̂_pre = M_crit^min/(Ṁ·T_s) ≥ 30;
+  * linearity RMSE ≤ 30 mN·m — a fault detector for qualitative ramp failures
+    (aborted/stepped/double ramps): ~10× the rate-independent execution noise
+    floor (~3 mN·m, hence an absolute rather than normalized bound), above the
+    healthy-run maximum (22 mN·m) and far below the one observed genuine
+    fault (162 mN·m).
 
 Outputs (in --output-dir):
   ramp_quality_runs.csv      per-run metrics
@@ -94,6 +99,10 @@ def main():
     p.add_argument('--nmin', type=int, default=38,
                    help="minimum realized window sample count N_full "
                         "(default 38 = 30 pre + 8 post onset-search minimum)")
+    p.add_argument('--linmax', type=float, default=0.030,
+                   help="max linearity RMSE [N·m] — fault detector for "
+                        "qualitative ramp failures (default 0.030 = ~10x the "
+                        "execution noise floor)")
     p.add_argument('--output-dir', default=None)
     p.add_argument('--save-fig', action='store_true')
     args = p.parse_args()
@@ -123,7 +132,9 @@ def main():
         w.writerows(rows)
 
     def ok(r):
-        return abs(r['slope_error_pct']) <= args.gate and r['n_win'] >= args.nmin
+        return (abs(r['slope_error_pct']) <= args.gate
+                and r['n_win'] >= args.nmin
+                and r['linearity_rmse'] <= args.linmax)
     passing = [r for r in rows if ok(r)]
     excluded = [r for r in rows if not ok(r)]
 
@@ -134,7 +145,7 @@ def main():
     for r in rows:
         n_tot[r['cmd_rate']] += 1
 
-    print(f"\n── ramp quality by commanded rate (gate |ε| ≤ {args.gate:.0f}%, N_full ≥ {args.nmin}) ──")
+    print(f"\n── ramp quality by commanded rate (gate |ε| ≤ {args.gate:.0f}%, N_full ≥ {args.nmin}, linRMSE ≤ {args.linmax*1e3:.0f} mN·m) ──")
     hdr = (f"{'rate':>5} {'pass/total':>10} | {'mean|ε|%':>9} {'max|ε|%':>8} "
            f"{'meanε%':>8} | {'linRMSE':>9}")
     print(hdr)

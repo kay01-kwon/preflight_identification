@@ -876,6 +876,7 @@ def extract_piecewise_batch(
     axis: str,
     ramp_gate_pct: Optional[float] = 3.0,
     n_full_min: Optional[int] = 38,
+    lin_rmse_max: Optional[float] = 0.030,
     **kwargs,
 ) -> tuple[list[CriticalValueResult], list[dict]]:
     """Run piecewise extraction on every bag.
@@ -896,14 +897,22 @@ def extract_piecewise_batch(
       sweep minimum) plus 8 post-onset samples the onset search requires. This
       is the hardware counterpart of the a priori screening bound
       N̂_pre = M_crit^min/(Ṁ·T_s) ≥ 30 — planned vs realized sample support.
+    * ``lin_rmse_max`` (default 0.030 N·m): linearity RMSE of M(t) about its
+      own best-fit line — a FAULT detector for qualitative ramp failures
+      (aborted/stepped/double ramps), not a fine-quality criterion. The
+      threshold sits at ~10× the execution noise floor (~3 mN·m, rate
+      independent — hence an absolute rather than normalized bound), above the
+      maximum observed on healthy runs (22 mN·m) and far below the one
+      observed genuine fault (162 mN·m).
 
-    None disables either gate.
+    None disables any gate.
 
     For the cosh model, C₂ is a rig constant: it is estimated once from the
     reliable long-window bags and pinned for every bag (unless the caller
     already passed ``cosh_c2``), so the instability rate stays consistent.
     """
-    if ramp_gate_pct is not None or n_full_min is not None:
+    if (ramp_gate_pct is not None or n_full_min is not None
+            or lin_rmse_max is not None):
         sig_kwargs = {k: kwargs[k] for k in ('omega_source', 'lpf_cutoff',
                       'lpf_order', 'C_T', 'arm_length') if k in kwargs}
         kept = []
@@ -915,16 +924,26 @@ def extract_piecewise_batch(
                 print(f"  [gate] {bag.name}: N_full={n_full} < {n_full_min} "
                       f"— window too short for onset identification, excluded")
                 continue
-            cmd = commanded_ramp_rate(bag.name)
-            if ramp_gate_pct is not None and cmd and n_full >= 12:
+            if n_full >= 12 and (ramp_gate_pct is not None
+                                 or lin_rmse_max is not None):
                 win = slice(i0, i1 + 1)
-                slope = abs(float(np.polyfit(sig['t'][win],
-                                             sig['moment'][win], 1)[0]))
-                eps = (slope - cmd) / cmd * 100.0
-                if abs(eps) > ramp_gate_pct:
-                    print(f"  [gate] {bag.name}: ramp-rate error "
-                          f"{eps:+.2f}% > {ramp_gate_pct:.0f}% — excluded")
-                    continue
+                t_w, m_w = sig['t'][win], sig['moment'][win]
+                a, b = np.polyfit(t_w, m_w, 1)
+                if lin_rmse_max is not None:
+                    lin = float(np.std(m_w - (a * t_w + b)))
+                    if lin > lin_rmse_max:
+                        print(f"  [gate] {bag.name}: linearity RMSE "
+                              f"{lin * 1e3:.1f} mN·m > "
+                              f"{lin_rmse_max * 1e3:.0f} — ramp execution "
+                              f"fault, excluded")
+                        continue
+                cmd = commanded_ramp_rate(bag.name)
+                if ramp_gate_pct is not None and cmd:
+                    eps = (abs(float(a)) - cmd) / cmd * 100.0
+                    if abs(eps) > ramp_gate_pct:
+                        print(f"  [gate] {bag.name}: ramp-rate error "
+                              f"{eps:+.2f}% > {ramp_gate_pct:.0f}% — excluded")
+                        continue
             kept.append(bag)
         bags = kept
 
