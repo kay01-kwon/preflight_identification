@@ -128,6 +128,74 @@ the closed form has no free shape parameter and needs no robustification.
 `com_estimation_pairs_<axis>.csv`, `com_estimation_combs_<axis>.csv`,
 `com_estimation_result_<axis>.csv`, plus figures with `--save-fig`.
 
+**Run-level quality gates.** Before the rig constants are estimated, the batch
+pipeline excludes runs whose executed ramp fails any of three onset-free
+criteria, all evaluated on the measured moment trace alone (see
+`extract_piecewise_batch`):
+
+| Gate | Threshold | Rationale |
+|---|---|---|
+| slope error \|ε\| | ≤ 3 % | a 3 % Ṁ error perturbs C₁ = K·Ṁ by 3 %, ~7× below the ±20 % level the sensitivity analysis shows harmless |
+| window samples N_full | ≥ 38 | necessary condition for any onset position: 30 pre-onset (baseline + sweep minimum) + 8 post-onset samples |
+| linearity RMSE | ≤ 30 mN·m | fault detector for aborted/stepped ramps: ~10× the execution noise floor, above the healthy-run maximum |
+
+Pass `ramp_gate_pct=None`, `n_full_min=None` or `lin_rmse_max=None` to disable
+individually. On the reference dataset only the slope-error gate ever fires
+(8/140 runs), and gating changes the identified CoM by < 0.05 mm.
+
+### Ramp-execution quality
+
+Grades every run's executed ramp against its commanded rate — the same window
+and least-squares slope the identification consumes for C₁ = K·Ṁ, so the
+metric scores exactly what the model depends on. Signal-level only (no onset
+model), hence fast and free of circularity:
+
+```bash
+python analysis/ramp_quality.py DataSet/exp --save-fig      # all cases, both axes
+python analysis/ramp_quality.py DataSet/exp --cases case_05 # one case
+python analysis/ramp_quality.py DataSet/exp/case_05/My      # single directory
+```
+
+| Option | Default | Meaning |
+|---|---|---|
+| `--gate` | 3 | run-level \|slope error\| gate [%] |
+| `--nmin` | 38 | minimum realized window sample count N_full |
+| `--linmax` | 0.030 | maximum linearity RMSE [N·m] (fault detector) |
+| `--cases` | all | restrict to specific case names |
+| `--save-fig` | off | two-panel figure: ε and linearity RMSE vs rate |
+
+Writes `ramp_quality_runs.csv` (per run), `ramp_quality_by_rate.csv`
+(aggregate over passing runs), `ramp_quality_excluded.csv` and, with
+`--save-fig`, `ramp_quality_vs_rate.png`.
+
+### Sensitivity to the rig constants
+
+Quantifies how much the deliverables (M_crit, M_ff, pivot-based CoM offset,
+mass) move when the rig constants (C₂, K) move — one-at-a-time scaling around
+the reference plus a full 2-D grid over the physically admissible box:
+
+```bash
+python analysis/sensitivity.py DataSet/exp/case_05/My --axis y --save-fig
+python analysis/sensitivity.py DataSet/exp/case_05/My --axis y \
+    --truth-com -10.89 --save-fig        # adds a |CoM − truth| error heatmap
+python analysis/sensitivity.py DataSet/exp/case_05/My --axis y --c2 6.4 --k 0.19
+```
+
+| Option | Default | Meaning |
+|---|---|---|
+| `--axis {x,y}` | required | excitation axis |
+| `--c2`, `--k` | estimated | pin the reference constants instead of estimating |
+| `--scales` | 0.8…1.2 | one-at-a-time scale factors |
+| `--c2-grid`, `--k-grid` | 3–8 / 0.1–0.5 | MIN MAX STEP of the 2-D grid |
+| `--truth-com` | — | ground-truth CoM [mm]; adds the error heatmap panel |
+| `--stride` | 2 | onset sweep stride (speed/accuracy trade-off) |
+
+Writes `sensitivity_oat_<axis>.csv`, `sensitivity_grid_<axis>.csv` and, with
+`--save-fig`, `sensitivity_grid_<axis>.png` (M_ff and CoM maps over (C₂, K),
+plus the error map when `--truth-com` is given). On the reference dataset a
+±20 % mis-specification of either constant moves the CoM by < 0.9 mm, and the
+constant choice moves the ground-truth error by < 0.9 mm over the whole box.
+
 ### Change-point benchmark
 
 Validates that the identified onset does not depend on the detection method,
