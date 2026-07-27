@@ -875,40 +875,56 @@ def extract_piecewise_batch(
     bags: list[BagData],
     axis: str,
     ramp_gate_pct: Optional[float] = 3.0,
+    n_full_min: Optional[int] = 38,
     **kwargs,
 ) -> tuple[list[CriticalValueResult], list[dict]]:
     """Run piecewise extraction on every bag.
 
-    Run-level ramp-quality gate (``ramp_gate_pct``, default 3%): runs whose
-    full-window ramp-rate error |Ṁ_meas − Ṁ_cmd|/Ṁ_cmd exceeds the gate are
-    excluded BEFORE the rig constants are estimated, so a poorly executed ramp
-    cannot contaminate the dataset-coupled amplitude constraint C₁ = K·Ṁ. The
-    threshold is conservative by construction: a 3% Ṁ error perturbs C₁ by 3%,
-    ~7× below the ±20% level the sensitivity analysis shows to be harmless.
-    Runs without a parseable commanded rate are never gated; None disables.
+    Run-level ramp-quality gates, both evaluated on the measured moment trace
+    alone (onset-free, hence no circularity), applied BEFORE the rig constants
+    are estimated so a poorly executed ramp cannot contaminate the
+    dataset-coupled amplitude constraint C₁ = K·Ṁ:
+
+    * ``ramp_gate_pct`` (default 3%): full-window ramp-rate error
+      |Ṁ_meas − Ṁ_cmd|/Ṁ_cmd. Conservative by construction — a 3% Ṁ error
+      perturbs C₁ by 3%, ~7× below the ±20% level the sensitivity analysis
+      shows to be harmless. Runs without a parseable commanded rate are never
+      gated on this criterion.
+    * ``n_full_min`` (default 38): realized excitation-window sample count
+      N_full. A necessary condition independent of where the onset falls: no
+      window shorter than 38 samples can furnish the 30 pre-onset (baseline +
+      sweep minimum) plus 8 post-onset samples the onset search requires. This
+      is the hardware counterpart of the a priori screening bound
+      N̂_pre = M_crit^min/(Ṁ·T_s) ≥ 30 — planned vs realized sample support.
+
+    None disables either gate.
 
     For the cosh model, C₂ is a rig constant: it is estimated once from the
     reliable long-window bags and pinned for every bag (unless the caller
     already passed ``cosh_c2``), so the instability rate stays consistent.
     """
-    if ramp_gate_pct is not None:
+    if ramp_gate_pct is not None or n_full_min is not None:
         sig_kwargs = {k: kwargs[k] for k in ('omega_source', 'lpf_cutoff',
                       'lpf_order', 'C_T', 'arm_length') if k in kwargs}
         kept = []
         for bag in bags:
+            sig = prepare_signals(bag, axis, **sig_kwargs)
+            i0, i1 = detect_excitation_window(sig['moment'])
+            n_full = i1 - i0 + 1
+            if n_full_min is not None and n_full < n_full_min:
+                print(f"  [gate] {bag.name}: N_full={n_full} < {n_full_min} "
+                      f"— window too short for onset identification, excluded")
+                continue
             cmd = commanded_ramp_rate(bag.name)
-            if cmd:
-                sig = prepare_signals(bag, axis, **sig_kwargs)
-                i0, i1 = detect_excitation_window(sig['moment'])
+            if ramp_gate_pct is not None and cmd and n_full >= 12:
                 win = slice(i0, i1 + 1)
-                if i1 - i0 >= 11:
-                    slope = abs(float(np.polyfit(sig['t'][win],
-                                                 sig['moment'][win], 1)[0]))
-                    eps = (slope - cmd) / cmd * 100.0
-                    if abs(eps) > ramp_gate_pct:
-                        print(f"  [gate] {bag.name}: ramp-rate error "
-                              f"{eps:+.2f}% > {ramp_gate_pct:.0f}% — excluded")
-                        continue
+                slope = abs(float(np.polyfit(sig['t'][win],
+                                             sig['moment'][win], 1)[0]))
+                eps = (slope - cmd) / cmd * 100.0
+                if abs(eps) > ramp_gate_pct:
+                    print(f"  [gate] {bag.name}: ramp-rate error "
+                          f"{eps:+.2f}% > {ramp_gate_pct:.0f}% — excluded")
+                    continue
             kept.append(bag)
         bags = kept
 
