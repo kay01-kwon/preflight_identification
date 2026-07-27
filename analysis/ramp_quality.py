@@ -12,10 +12,14 @@ Per run:
   * slope error  ε = (|Ṁ_meas| − Ṁ_cmd)/Ṁ_cmd  [%]   (full excitation window)
   * linearity RMSE — residual of M(t) about its own best-fit line [N·m]
 
-Run-level gate (default |ε| ≤ 3%): the threshold is conservative by
-construction — a 3% Ṁ error perturbs C₁ by 3%, ~7× below the ±20% level the
-sensitivity analysis shows to be harmless to the identified CoM (<0.9 mm).
-The same gate is applied automatically inside extract_piecewise_batch.
+Run-level gates (both onset-free), the same pair applied automatically inside
+extract_piecewise_batch:
+  * |ε| ≤ 3% — conservative by construction: a 3% Ṁ error perturbs C₁ by 3%,
+    ~7× below the ±20% level the sensitivity analysis shows harmless (<0.9 mm);
+  * N_full ≥ 38 — realized window sample count; a necessary condition
+    independent of where the onset falls (30 pre-onset + 8 post-onset search
+    minimum), the hardware counterpart of the a priori screening bound
+    N̂_pre = M_crit^min/(Ṁ·T_s) ≥ 30.
 
 Outputs (in --output-dir):
   ramp_quality_runs.csv      per-run metrics
@@ -87,6 +91,9 @@ def main():
                    help="restrict to these case names (default: all case_*)")
     p.add_argument('--gate', type=float, default=3.0,
                    help="run-level |slope error| gate in %% (default 3)")
+    p.add_argument('--nmin', type=int, default=38,
+                   help="minimum realized window sample count N_full "
+                        "(default 38 = 30 pre + 8 post onset-search minimum)")
     p.add_argument('--output-dir', default=None)
     p.add_argument('--save-fig', action='store_true')
     args = p.parse_args()
@@ -115,8 +122,10 @@ def main():
         w.writeheader()
         w.writerows(rows)
 
-    passing = [r for r in rows if abs(r['slope_error_pct']) <= args.gate]
-    excluded = [r for r in rows if abs(r['slope_error_pct']) > args.gate]
+    def ok(r):
+        return abs(r['slope_error_pct']) <= args.gate and r['n_win'] >= args.nmin
+    passing = [r for r in rows if ok(r)]
+    excluded = [r for r in rows if not ok(r)]
 
     by = defaultdict(list)
     for r in passing:
@@ -125,7 +134,7 @@ def main():
     for r in rows:
         n_tot[r['cmd_rate']] += 1
 
-    print(f"\n── ramp quality by commanded rate (gate |ε| ≤ {args.gate:.0f}%) ──")
+    print(f"\n── ramp quality by commanded rate (gate |ε| ≤ {args.gate:.0f}%, N_full ≥ {args.nmin}) ──")
     hdr = (f"{'rate':>5} {'pass/total':>10} | {'mean|ε|%':>9} {'max|ε|%':>8} "
            f"{'meanε%':>8} | {'linRMSE':>9}")
     print(hdr)
