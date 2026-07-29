@@ -196,6 +196,26 @@ plus the error map when `--truth-com` is given). On the reference dataset a
 ±20 % mis-specification of either constant moves the CoM by < 0.9 mm, and the
 constant choice moves the ground-truth error by < 0.9 mm over the whole box.
 
+### Model-fidelity analysis
+
+Certifies that the post-onset response stays in the cosh family — every
+modeled effect (gravity nonlinearity, ground effect) only renames the
+effective constants (C₂, K) that the calibration estimates, and the residual
+forcing outside the estimator's absorbable span {1, τ, δφ} is measured to be
+below the execution-noise floor. One script per link of the chain, all taking
+the dataset root (e.g. `DataSet/exp`):
+
+| Script | What it certifies |
+|---|---|
+| `analysis/ge_linearity.py` | exact IGE model is linear in tilt over the measured range (closed-form k_GE; no dataset needed) |
+| `analysis/ge_trajectory.py` | exact GE moment along measured trajectories: slope ≈ 1% of Ṁ (rate-invariant → absorbed by K), projection residual ≤ ~2 mN·m |
+| `analysis/small_angle_trajectory.py` | out-of-span small-angle residual along measured trajectories (vs the a-priori Lagrange bound) |
+| `analysis/tilt_range.py` | measured tilt range (onset / window edge) that all bounds are evaluated over |
+| `analysis/postonset_linearity.py` | ramp linearity over the fit segment (vs the full-window gate value) |
+| `analysis/cosh_fidelity.py` | zero-free-parameter fit residual: NRMSE flat across ramp rates = the empirical shape certificate |
+| `analysis/tiltcap_ablation.py` | identification repeated with a 3° relative tilt cap — result insensitive to the window extent |
+| `analysis/alpha_at_peak.py` | signal level (angular acceleration at the moment peak) against which error bounds are compared |
+
 ### Change-point benchmark
 
 Validates that the identified onset does not depend on the detection method,

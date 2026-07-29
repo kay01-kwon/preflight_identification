@@ -22,3 +22,11 @@ onset_benchmark_*.png
 # generated ramp-quality artifacts (regenerable via analysis/ramp_quality.py)
 ramp_quality_*.csv
 ramp_quality_*.png
+# generated model-fidelity artifacts (regenerable via analysis/*.py)
+ge_trajectory_runs.csv
+small_angle_runs.csv
+tilt_range_runs.csv
+cosh_fidelity_runs.csv
+postonset_linearity_runs.csv
+tiltcap_mcrit.csv
+alpha_at_peak_runs.csv
