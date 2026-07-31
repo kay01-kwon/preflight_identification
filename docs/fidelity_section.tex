@@ -1,12 +1,18 @@
 % =====================================================================
-% Model-fidelity section (final draft) — "Why the Response Remains of
-% the Closed Form: Proposition, Bound, and Verification"
+% Model-fidelity section (final draft, ideal-first structure) —
+% "Why the Response Remains of the Closed Form"
 % ---------------------------------------------------------------------
 % Drop-in LaTeX for the revised manuscript. Requires in the preamble:
 %   \newtheorem{proposition}{Proposition}
 % Replace [\emph{ref}] with the Duhamel-integral reference (e.g.
 % Clough & Penzien, Dynamics of Structures; or Meirovitch) and fix the
 % cross-reference labels to match the manuscript numbering.
+%
+% Structure: the analysis is developed first in the IDEAL level
+% configuration (phi* = 0), where the onset and small-angle expansions
+% coincide and every statement is clean; the sloped experimental
+% configuration is then reached by an explicitly bounded transfer
+% (Sec. fid-transfer), and the measured certificates close the claim.
 %
 % Every quantitative figure is reproducible from this repository:
 %   eta(0)=1.03%, GE linearity, k_GE ....... analysis/ge_linearity.py
@@ -40,8 +46,7 @@ contact read (the pitch case is analogous)
   \label{eq:exact-dyn}
 \end{equation}
 with $M_{x,P} = M_x + f\,l_p$ and, conservatively, $l_{p,\phi}=0.140$~m,
-$l_{p,\theta}=0.110$~m. Two structural facts constrain the
-perturbations. First, the ground-contact phase is a one-degree-of-freedom
+$l_{p,\theta}=0.110$~m. The ground-contact phase is a one-degree-of-freedom
 rigid rotation about the gear line, so every rotor height is an exact
 trigonometric function of the single angle $\phi$; in the level
 configuration all heights coincide, yielding the exact identity
@@ -59,26 +64,28 @@ the standard rotor model gives $\eta(0)=1.03\%$, independent of $l_p$,
 with $\eta \in [0.7,1.03]\%$ over the tilt range and a departure from
 linearity in $\phi$ of at most $2.0$~mN\,m (roll) / $1.5$~mN\,m (pitch)
 — for \emph{any} thrust-proportional, smooth height-dependent
-ground-effect model. Second, the tilt range over which all bounds are
-evaluated is \emph{measured}: over all $140$ runs the onset occurs at
-an absolute tilt $\le 2.6^\circ$ (median $1.7^\circ$) and the excursion
-over the fit window reaches at most $9.4^\circ$ (median $6.1^\circ$).
+ground-effect model.
 
 % ==================================================================
-\subsubsection{The deviation equation and its solution family}
-\label{sec:fid-prop}
+\subsubsection{Ideal configuration: the cosh family and its escape channel}
+\label{sec:fid-ideal}
 
-Linearizing \eqref{eq:exact-dyn} about the single operating point
-$(\tau,\phi,T)=(0,\phi^*,T^*)$ — the onset instant, whose coordinates
-are the measured attitude and thrust at the detected onset index —
-collects every perturbation into three absorbable channels plus a
-remainder. Constants are absorbed by the onset anchoring; terms
-$\propto \dot M\tau$ (including the thrust-ramp channel of
-\eqref{eq:ge-identity}, whose coefficient $\eta^*$ is rate-independent)
-are absorbed by the ramp-invariance calibration of $K$; terms
-$\propto \delta\phi$ (the gravity slope and $\eta'M_P^*$) are absorbed
-by the calibrated stiffness $C_2$. What remains is the second-order
-Taylor remainder in Lagrange form,
+Consider first the ideal level configuration: the vehicle rests at
+$\phi = 0$, so the onset — defined dynamically by zero net moment,
+$\omega(0)=\dot\omega(0)=0$ — occurs \emph{at} $\phi=0$, and the
+operating point $(\tau,\phi,T)=(0,0,T^*)$ makes the onset expansion
+and the textbook small-angle expansion one and the same. The tilt
+variable and the excursion coincide, $\delta\phi = \phi$.
+
+Linearizing \eqref{eq:exact-dyn} about this point collects every
+perturbation into three absorbable channels plus a remainder: constants
+are absorbed by the onset anchoring; terms $\propto \dot M\tau$
+(including the thrust-ramp channel of \eqref{eq:ge-identity}, whose
+coefficient $\eta^*$ is rate-independent) are absorbed by the
+ramp-invariance calibration of $K$; terms $\propto \delta\phi$ (the
+gravity slope $W z_{\mathrm{CoM}}$ — exactly the textbook stiffness
+here — and $\eta' M_P^*$) are absorbed by the calibrated $C_2$. What
+remains is the second-order Taylor remainder in Lagrange form,
 \begin{equation}
   \rho \;=\; \tfrac12\,G''(\xi)\,\delta\phi^2 + \dots,
   \qquad
@@ -86,12 +93,10 @@ Taylor remainder in Lagrange form,
              - W z_{\mathrm{CoM}}\sin\xi ,
   \label{eq:lagrange}
 \end{equation}
-with $\xi$ between $\phi^*$ and $\phi$. Note that about the onset
-point the sine term enters at second order \emph{with a negative sign}
-and is dropped conservatively, $|G''| \le W(l_p+\lambda_{\mathrm{off}})$;
-the separate cubic term of the textbook $\phi=0$ expansion arises only
-in the unconditional envelope. At the $5^\circ$ excursion this bound
-evaluates to $19.2$~mN\,m (roll) / $15.6$~mN\,m (pitch).
+with $\xi$ between $0$ and $\phi$: the sine term enters at second
+order \emph{with a negative sign} and is dropped conservatively,
+$|G''| \le W(l_p+\lambda_{\mathrm{off}})$. At the $5^\circ$ excursion
+this bound evaluates to $19.2$~mN\,m (roll) / $15.6$~mN\,m (pitch).
 
 \begin{proposition}
 Under (i) maintained pivot contact, (ii) gate-passing ramp execution,
@@ -116,10 +121,7 @@ therefore move the system \emph{within} the two-parameter cosh family;
 the only escape channel is $\rho$.
 \end{proposition}
 
-% ==================================================================
-\subsubsection{Impulse response and the propagated bound}
-\label{sec:fid-bound}
-
+\paragraph{Impulse response and the propagated bound.}
 The response of \eqref{eq:deviation} to a unit moment impulse
 $\rho=\delta(\tau)$ follows from the momentum jump
 $J_P[\dot e_\phi(0^+)-\dot e_\phi(0^-)]=1$ (the position cannot jump)
@@ -141,18 +143,101 @@ window-edge signal, the finite monotone envelope
 \end{equation}
 with $\rho_{\max} \triangleq \sup_{[0,\tau_{\mathrm{end}}]}|\rho|$,
 attaining $(C_2\rho_{\max}/\dot M)\coth(C_2\tau_{\mathrm{end}}/2)$ at
-the edge. Table~\ref{tab:rho} lists the components of $\rho$ with
-their provenance; the measured values, on which the claims rest, lie
-consistently below their a priori counterparts.
+the edge. Three points sharpen the bound.
+(a)~\emph{Kernel--forcing separation.} The onset conditions give the
+coherent forcing a sixth-order zero at the anchor
+($\omega_{\mathrm{nom}} \sim \tau^2$, hence
+$\delta\phi \sim \tau^3$ and $\rho \sim \delta\phi^2 \sim \tau^6$,
+leading order for $C_2\tau \lesssim 1$), which is exactly where the
+unstable kernel amplifies most; conversely the forcing reaches
+$\rho_{\max}$ only at the window edge, where the kernel is unity. At
+the window midpoint the forcing is below $1\%$ of its edge value, so
+propagating the actual profile through \eqref{eq:duhamel-bound}
+tightens the uniform bound by a factor $25$--$96$.
+(b)~\emph{State dependence.} A priori the remainder is evaluated along
+the nominal trajectory; the small-gain closure with
+$L = \max|d\rho/d\phi| \approx 0.95$~N\,m/rad
+$\ll W z_{\mathrm{CoM}}$ costs a factor
+$(1-L/Wz_{\mathrm{CoM}})^{-1} \le 1.11$. (Along the measured
+trajectory, Sec.~\ref{sec:fid-transfer}, the bound is unconditional.)
+(c)~\emph{Window length.} Since
+$\delta\phi(\tau) = (C_1/C_2)(\sinh C_2\tau - C_2\tau)$ is strictly
+monotone ($d\delta\phi/d\tau = \omega_{\mathrm{nom}} > 0$), the angle
+threshold determines $\tau_{\mathrm{end}}$ bijectively:
+$C_2\tau_{\mathrm{end}} \in [2.1,3.9]$ over the candidate rates, hence
+$\coth(C_2\tau_{\mathrm{end}}/2) \in [1.04,1.28]$ and the bound is
+effectively time-free,
+$|\delta\omega/\omega| \le 1.3\,C_2\rho_{\max}/\dot M$.
+
+\paragraph{Design consequence: the excitation cutoff and rate set.}
+Because the propagated deviation is a computable function of the ramp
+rate and the excursion cap alone, the ideal analysis \emph{selects}
+the excitation design. The systematic deviation grows with the cap and
+is worst at the slowest rate, crossing $1\%$ at $4.8^\circ$ for
+$0.10$~N\,m/s and only at $8.9^\circ$ for $1.20$~N\,m/s; conversely
+the noise-limited residual floor falls with the cap ($13\%$ at
+$3^\circ$, $8\%$ at $5^\circ$) and the post-onset sample count exceeds
+$40$ everywhere. The $5^\circ$ attitude cutoff is therefore the
+largest common cap that keeps the coherent deviation at the $1\%$
+level for every candidate rate, the binding constraint being the
+slowest ramp. In absolute terms the propagated deviation is
+$3.1$--$5.2$~mrad/s at the $5^\circ$ cap and at most $23$~mrad/s at
+$9$--$10^\circ$ — an order of magnitude below the in-motion gyro noise
+($\approx 35$~mrad/s RMS).
+
+% ==================================================================
+\subsubsection{Transfer to the experimental configuration}
+\label{sec:fid-transfer}
+
+The experiment departs from the ideal configuration in one respect:
+the sloped test surface places the rest attitude — and hence the onset,
+since the vehicle does not rotate before it — at
+$\phi^* \le 2.6^\circ$ (median $1.7^\circ$, measured over all $140$
+runs). The correct operating point is $(0,\phi^*,T^*)$, the expansion
+variable becomes the excursion $\delta\phi = \phi - \phi^*$ (measured:
+at most $9.4^\circ$ over the fit window, median $6.1^\circ$), and
+every operating-point effect transfers with an explicit bound:
+\begin{itemize}
+\item the effective stiffness shifts from the textbook
+$W z_{\mathrm{CoM}}$ to
+$W z_{\mathrm{CoM}}\cos\phi^* + W(l_p{+}\lambda_{\mathrm{off}})\sin\phi^*$
+— at most $+2.3\%$, absorbed by the calibrated $C_2$;
+\item the onset-instant small-angle bias grows from zero to
+$\tfrac12 W(l_p{+}\lambda_{\mathrm{off}})\phi^{*2} \le 5.4$~mN\,m per
+direction — common to both tip directions, which start from the same
+rest attitude, hence cancelling in $M_{\mathrm{ff}}$;
+\item the Lagrange remainder is in fact \emph{smaller} at the tilted
+point ($18.0$ vs.\ $19.2$~mN\,m at the $5^\circ$ excursion), the
+restoring term subtracting from the curvature; the design tables,
+functions of the excursion alone, apply unchanged.
+\end{itemize}
+The slope's genuine effect is geometric, not modelling: it renders the
+two pitch directions asymmetric in runway ($\approx 3^\circ$ vs.\
+$7^\circ$ to the absolute cutoff), lowering the SNR of the
+negative-pitch runs — precisely the regime for which the
+physics-constrained detector is needed.
+
+On the experimental side every component of $\rho$ is also
+\emph{measured}: the recorded attitude and rotor speeds are evaluated
+through the exact expressions and projected out of the estimator span
+$\{1,\tau,\delta\phi\}$ — an algebraic identity, these being the
+estimator's exact per-run degrees of freedom. Table~\ref{tab:rho}
+compares the ideal-theory bounds with the measured values; the
+measured residuals, on which the claims rest, lie consistently below
+their a priori counterparts. The full chain of reductions is
+$85 \to 28 \to 12.3 \to 1.2$~mN\,m: the unconditional $\phi{=}0$
+envelope at the largest absolute tilt ($10^\circ$), the onset-anchored
+Lagrange bound at the median measured excursion, the measured
+pointwise maximum after projection, and the measured window RMS.
 
 \begin{table}[t]
 \centering
 \caption{Components of the residual forcing $\rho$ over the fit window.
-``A priori'' bounds use vehicle constants and the measured tilt range;
+``A priori'' bounds are the ideal-configuration values of
+Sec.~\ref{sec:fid-ideal} evaluated at the measured tilt range;
 ``measured'' values are evaluated along the recorded trajectories and
-projected out of the estimator span $\{1,\tau,\delta\phi\}$ — an
-algebraic identity, these being the estimator's exact per-run degrees
-of freedom. All values in mN\,m.}
+projected out of the estimator span $\{1,\tau,\delta\phi\}$. All
+values in mN\,m.}
 \label{tab:rho}
 \begin{tabular}{lccc}
 \hline
@@ -167,81 +252,6 @@ segment) & incoherent (noise-like) \\
 \hline
 \end{tabular}
 \end{table}
-
-Four technical points close the argument.
-(a)~\emph{Order of operations.} The remainder must be decomposed
-against the absorbable span \emph{before} propagation: the raw
-$\phi{=}0$ remainder is nonzero at the onset — the point of maximum
-kernel gain — and propagating it directly would overstate the
-deviation severalfold. Anchoring at the onset places the zero of the
-coherent forcing ($\rho \sim \delta\phi^2 \sim \tau^6$) exactly where
-the unstable kernel amplifies most; equivalently, the least-squares
-projection realizes the optimal decomposition, tightening the chain
-$85 \to 28 \to 12.3 \to 1.2$~mN\,m ($\phi{=}0$ envelope at
-$10^\circ$ $\to$ onset expansion $\to$ measured pointwise maximum
-$\to$ measured RMS).
-(b)~\emph{State dependence.} Along the measured trajectory the bound
-is unconditional; along the nominal trajectory the small-gain closure
-with $L = \max|d\rho/d\phi| \approx 0.95$~N\,m/rad
-$\ll W z_{\mathrm{CoM}}$ costs a factor
-$(1-L/Wz_{\mathrm{CoM}})^{-1} \le 1.11$.
-(c)~\emph{Window length.} Since
-$\delta\phi(\tau) = (C_1/C_2)(\sinh C_2\tau - C_2\tau)$ is strictly
-monotone ($d\delta\phi/d\tau = \omega_{\mathrm{nom}} > 0$), the angle
-threshold determines $\tau_{\mathrm{end}}$ bijectively:
-$C_2\tau_{\mathrm{end}} \in [2.1,3.9]$ over the candidate rates, hence
-$\coth(C_2\tau_{\mathrm{end}}/2) \in [1.04,1.28]$ and the bound is
-effectively time-free, $|\delta\omega/\omega| \le 1.3\,
-C_2\rho_{\max}/\dot M$ with the coherent
-$\rho_{\max} \le 15$~mN\,m (pointwise, edge-attained; run-median RMS
-$1.4$~mN\,m — measured).
-(d)~\emph{Profile tightening.} Propagating the actual edge-concentrated
-profile through \eqref{eq:duhamel-bound} tightens the uniform bound by
-a factor $25$–$96$, leaving a systematic shape deviation below $1\%$
-for the median run and $\le 2\%$ at the largest excursion; in absolute
-terms, $3.1$–$5.2$~mrad/s at the $5^\circ$ cap and at most
-$23$~mrad/s at $9$–$10^\circ$ — an order of magnitude below the
-in-motion gyro noise ($\approx 35$~mrad/s RMS).
-
-% ==================================================================
-\subsubsection{Design consequence: the excitation cutoff and rate set}
-\label{sec:fid-design}
-
-Because the propagated deviation is a computable function of the ramp
-rate and the excursion cap alone, the analysis \emph{selects} the
-excitation design. The systematic deviation grows with the cap and is
-worst at the slowest rate, crossing $1\%$ at $4.8^\circ$ for
-$0.10$~N\,m/s and only at $8.9^\circ$ for $1.20$~N\,m/s; conversely
-the noise-limited residual floor falls with the cap ($13\%$ at
-$3^\circ$, $8\%$ at $5^\circ$) and the post-onset sample count exceeds
-$40$ everywhere. The $5^\circ$ attitude cutoff is therefore the
-largest common cap that keeps the coherent deviation at the $1\%$
-level for every candidate rate, the binding constraint being the
-slowest ramp.
-
-% ==================================================================
-\subsubsection{Ideal versus experimental operating point}
-\label{sec:fid-ideal}
-
-The theory above is cleanest at the ideal level configuration
-($\phi^*=0$), where the onset and small-angle expansions coincide, the
-onset-instant bias terms vanish identically, and all rotor heights are
-equal so that \eqref{eq:ge-identity} is exact at the operating point.
-The experiment operates at a slightly tilted rest attitude
-($\phi^* \le 2.6^\circ$, measured), and every operating-point effect
-transfers with an explicit bound: the effective stiffness shifts by at
-most $2.3\%$ (absorbed by the calibrated $C_2$), the onset-instant
-small-angle bias grows from zero to at most $5.4$~mN\,m per direction
-— common to both tip directions, hence cancelling in
-$M_{\mathrm{ff}}$ — and the Lagrange remainder is in fact
-\emph{smaller} at the tilted point ($18.0$ vs.\ $19.2$~mN\,m at
-$5^\circ$), the restoring term subtracting from the curvature. The
-design tables, functions of the excursion alone, apply to both
-configurations unchanged. The slope's genuine effect is geometric, not
-modelling: it renders the two pitch directions asymmetric in runway
-($\approx 3^\circ$ vs.\ $7^\circ$), lowering the SNR of the
-negative-pitch runs — precisely the regime for which the
-physics-constrained detector is needed.
 
 % ==================================================================
 \subsubsection{Empirical verification: a prediction test, not a fit}
