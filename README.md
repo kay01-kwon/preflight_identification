@@ -215,6 +215,13 @@ the dataset root (e.g. `DataSet/exp`):
 | `analysis/cosh_fidelity.py` | zero-free-parameter fit residual: NRMSE flat across ramp rates = the empirical shape certificate |
 | `analysis/tiltcap_ablation.py` | identification repeated with a 3° relative tilt cap — result insensitive to the window extent |
 | `analysis/alpha_at_peak.py` | signal level (angular acceleration at the moment peak) against which error bounds are compared |
+| `analysis/excitation_angle_design.py` | theoretical design tables: systematic shape deviation vs ramp rate × excursion cap (Duhamel propagation of the a-priori remainder along the nominal trajectory; no dataset needed) — shows the 5° cutoff is the largest common cap keeping the deviation ≤1% at the slowest rate |
+
+The full argument — proposition, Lagrange remainder, Duhamel bound, design
+consequence, ideal-vs-experimental operating point, and the four measured
+certificates — is written up as a drop-in manuscript section in
+`docs/fidelity_section.tex`, whose header maps every quoted number to the
+script that reproduces it.
 
 ### Change-point benchmark
 
