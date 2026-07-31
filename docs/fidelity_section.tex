@@ -151,9 +151,28 @@ $\delta\phi \sim \tau^3$ and $\rho \sim \delta\phi^2 \sim \tau^6$,
 leading order for $C_2\tau \lesssim 1$), which is exactly where the
 unstable kernel amplifies most; conversely the forcing reaches
 $\rho_{\max}$ only at the window edge, where the kernel is unity. At
-the window midpoint the forcing is below $1\%$ of its edge value, so
-propagating the actual profile through \eqref{eq:duhamel-bound}
-tightens the uniform bound by a factor $25$--$96$.
+the window midpoint the forcing is below $1\%$ of its edge value.
+The quoted deviations are therefore \emph{not} obtained from the
+uniform bound: the exact nominal remainder profile,
+\begin{equation}
+  \rho(s) = \tfrac12\,G_2\,
+  \Bigl[\tfrac{C_1}{C_2}\bigl(\sinh C_2 s - C_2 s\bigr)\Bigr]^2,
+  \qquad
+  G_2 = W(l_p+\lambda_{\mathrm{off}})\,(1+5\%_{\mathrm{GE}}),
+  \label{eq:rho-profile}
+\end{equation}
+is convolved with the kernel by direct numerical quadrature of
+\eqref{eq:duhamel-bound} — no series truncation; the $\tau^6$ law is
+only the small-argument limit, and the exact profile is in fact
+\emph{more} edge-concentrated than the power law, its tail growing
+exponentially. This exact propagation tightens the uniform bound by a
+factor $25$--$96$; a hand-derivable version splits the window at its
+midpoint, where the early half carries less than $1/128$ of the
+forcing mass while the late-half kernel stays below
+$\cosh(C_2\tau_{\mathrm{end}}/2)$, squeezing the convolution between
+$1$ and ${\approx}2.2$ times the plain integral of $\rho$. Since
+\eqref{eq:rho-profile} enters \emph{without} first removing its
+span-absorbable part, the result is doubly conservative.
 (b)~\emph{State dependence.} A priori the remainder is evaluated along
 the nominal trajectory; the small-gain closure with
 $L = \max|d\rho/d\phi| \approx 0.95$~N\,m/rad
