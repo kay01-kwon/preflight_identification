@@ -59,12 +59,25 @@ where $\bar\gamma$ denotes the rotor-common thrust factor. The identity
 is \emph{independent of the CoM position} — $\lambda_{\mathrm{off}}$
 enters \eqref{eq:exact-dyn} only through the gravity arm — so ground
 effect biases the identified critical moment identically for every CoM
-configuration. With the measured geometry ($h=0.315$~m, $R=0.127$~m)
-the standard rotor model gives $\eta(0)=1.03\%$, independent of $l_p$,
-with $\eta \in [0.7,1.03]\%$ over the tilt range and a departure from
-linearity in $\phi$ of at most $2.0$~mN\,m (roll) / $1.5$~mN\,m (pitch)
-— for \emph{any} thrust-proportional, smooth height-dependent
-ground-effect model.
+configuration. The magnitude is evaluated with two models forming a
+bracket. The per-rotor superposition of the single-rotor
+Cheeseman--Bennett result (lower bound; neglects rotor--rotor
+interference) gives, at the measured geometry ($h=0.315$~m,
+$R=0.127$~m), $\eta(0) = 1.03\%$ independent of $l_p$. The upper bound
+is an attitude-dependent adaptation of the co-planar hexarotor model of
+Garofano-Soldado \emph{et al.}~[RA-L 9(2), 2024] — characterized on a
+\emph{static test bench}, i.e.\ in the same quasi-static, zero-airspeed
+regime as the contact-phase excitation — with the rotor-interference
+sum evaluated at the tilted rotor heights and the fountain-driven body
+lift included; it yields a moment-proportional coefficient
+$b = \bar\gamma - 1 = 4.2\%$ and a thrust-channel gain of $11.7\%$ of
+$f\,l_p$ (its empirical constants are transferred from the authors'
+vehicle, an informed estimate rather than a measurement). In both
+models the decomposition $\Delta M_{\mathrm{GE},P} = a(\phi) +
+b(\phi)\,M_x$, the restoring sign of the height-asymmetry moment, and
+the channel structure below are identical — they follow from
+thrust-proportionality and smooth height dependence alone; only the
+magnitudes differ, by a factor of about four.
 
 % ==================================================================
 \subsubsection{Ideal configuration: the cosh family and its escape channel}
@@ -243,7 +256,25 @@ $\{1,\tau,\delta\phi\}$ — an algebraic identity, these being the
 estimator's exact per-run degrees of freedom. Table~\ref{tab:rho}
 compares the ideal-theory bounds with the measured values; the
 measured residuals, on which the claims rest, lie consistently below
-their a priori counterparts. The full chain of reductions is
+their a priori counterparts. For the ground effect the projection is
+evaluated under both bracket models: the measured slope ratio is
+$+0.99\%$ of $\dot M$ (single-rotor evaluation) and $+3.85\%$
+(hexarotor-adapted evaluation, IQR $[3.75, 3.98]\%$), \emph{both}
+rate-invariant across the twelvefold rate range — the property the
+$K$-calibration absorption requires — and the out-of-span residual
+grows from $2.3$ to at most $22$~mN\,m (median RMS $1.7$) under the
+upper model while remaining edge-concentrated, so the propagated shape
+deviation stays at the few-percent level, below the noise-dominated
+residual. The channel fates are model-independent: the thrust channel
+(rotor-common and body lift alike) acts through the arm $l_p$ exactly,
+is antisymmetric between tip directions, and cancels in
+$M_{\mathrm{ff}}$ regardless of its magnitude; the moment coefficient
+leaves a relative bias on $M_{\mathrm{ff}}$ bracketed between $-1.0\%$
+and $-4.2\%$ ($3$--$14$~mN\,m, $0.10$--$0.43$~mm of CoM offset) —
+below the validation scatter ($52$~mN\,m RMS), which is dominated by
+the genuine contact asymmetries the pivot-free average is designed to
+capture, and present identically at lift-off, where $M_{\mathrm{ff}}$
+compensates it by design. The full chain of reductions is
 $85 \to 28 \to 12.3 \to 1.2$~mN\,m: the unconditional $\phi{=}0$
 envelope at the largest absolute tilt ($10^\circ$), the onset-anchored
 Lagrange bound at the median measured excursion, the measured
@@ -264,8 +295,9 @@ Component & A priori & Measured (RMS / max) & Character \\
 \hline
 Small-angle curvature & $19.2$ at $5^\circ$ ($\approx 28$ at the
 median excursion) & $1.2\;/\;12.3$ & coherent, edge-concentrated \\
-Ground effect & $2.0$ (exact model) & $0.16\;/\;2.3$ & coherent,
-edge-concentrated \\
+Ground effect (single-rotor / hexarotor-adapted) & $2.8\;/\;9.5$
+(tangent deviation, full range) & $0.16\,/\,2.3$ \;--\; $1.7\,/\,22$
+& coherent, edge-concentrated \\
 Ramp nonlinearity & $30$ (gate, full window) & $1.6\;/\;6.2$ (fit
 segment) & incoherent (noise-like) \\
 \hline
@@ -292,13 +324,14 @@ grow with amplitude, and none does. The residual sits at $2.2\times$
 the quiet pre-onset gyro floor — motion- and thrust-induced
 measurement noise — while the predicted systematic deviation
 ($\le 1\%$) lies below it.
-\item \emph{Trajectory-evaluated forcing.} The ground-effect and
-small-angle forcings deviate from the absorbable span by at most
-$2.3$ and $12.3$~mN\,m (median RMS $0.16$ and $1.2$), the latter
-edge-concentrated where the kernel provides no amplification; the
-measured ground-effect slope ratio, $+0.99\%$ of $\dot M$
-(IQR $[0.96,1.01]\%$, rate-independent), reproduces the model value
-$\eta^* \approx 1.0\%$ in situ.
+\item \emph{Trajectory-evaluated forcing.} The small-angle forcing
+deviates from the absorbable span by at most $12.3$~mN\,m (median RMS
+$1.2$), edge-concentrated where the kernel provides no amplification;
+the ground-effect forcing by $2.3$ to $22$~mN\,m across the bracket
+models. The measured slope ratios, $+0.99\%$ of $\dot M$
+(single-rotor) and $+3.85\%$ (hexarotor-adapted), reproduce each
+model's coefficient in situ and are rate-independent in both cases —
+the property on which the $K$-calibration absorption rests.
 \item \emph{Window ablation.} Truncating the window at a $3^\circ$
 relative excursion — where the small-angle model is unimpeachable —
 changes the per-direction critical moments by $\le 0.022$~N\,m
