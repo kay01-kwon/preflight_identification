@@ -53,11 +53,20 @@ def main():
     p = argparse.ArgumentParser(
         description="Exact GE moment along measured trajectories.")
     p.add_argument('root', help="dataset root (e.g. DataSet/exp)")
+    p.add_argument('--model', choices=['single', 'garofano'], default='single',
+                   help="single = per-rotor Cheeseman superposition (lower "
+                        "bound); garofano = attitude-dependent adaptation of "
+                        "the Garofano-Soldado et al. (RA-L 2024) co-planar "
+                        "hexarotor model incl. interference + body lift "
+                        "(upper bound)")
     p.add_argument('--arm', type=float, default=0.265)
     p.add_argument('--radius', type=float, default=0.127)
     p.add_argument('--hub-height', type=float, default=0.315)
     p.add_argument('--lp-roll', type=float, default=0.140)
     p.add_argument('--lp-pitch', type=float, default=0.110)
+    p.add_argument('--frame-width', type=float, default=0.22)
+    p.add_argument('--jk', type=float, default=2.2)
+    p.add_argument('--k-cal', type=float, default=0.9647)
     p.add_argument('--c-t', type=float, default=1.3175e-7)
     p.add_argument('--output-dir', default=None)
     args = p.parse_args()
@@ -109,8 +118,28 @@ def main():
                     + np.outer(r33[:n], pP[2]))
             if np.any(h_it[win] <= R / 4 + 0.01):
                 continue
-            dT = Ti[:n] * R**2 / (16 * h_it**2 - R**2)
-            dtau = dT @ arm
+            if args.model == 'single':
+                dT = Ti[:n] * R**2 / (16 * h_it**2 - R**2)
+                dtau = dT @ arm
+            else:
+                # attitude-dependent Garofano-Soldado adaptation: pairwise
+                # interference at the measured tilted heights + body lift
+                d2 = ((pP[0][:, None] - pP[0][None, :]) ** 2
+                      + (pP[1][:, None] - pP[1][None, :]) ** 2)
+                Z = h_it[:, :, None] + h_it[:, None, :]
+                srot = (R**2 / 4) * np.sum(Z / (d2 + Z**2) ** 1.5, axis=2)
+                g1 = 1.0 / (1.0 - args.k_cal * srot) - 1.0
+                dT = g1 * Ti[:n]
+                lp_signed = arm[0] - (LY[0] if axis == 'x' else -LX[0])
+                cx = 0.0 if axis == 'x' else -lp_signed
+                cy = lp_signed if axis == 'x' else 0.0
+                zc = r31[:n] * cx + r32[:n] * cy + r33[:n] * H
+                rd = 2 * args.arm - args.frame_width
+                sf = 2 * R**2 * args.jk * zc / (rd**2 + 4 * zc**2) ** 1.5
+                ksb = args.k_cal * np.mean(srot, axis=1)
+                fc_t = sig['f_col'][:n]
+                dFb = (1.0 / (1.0 - ksb - sf) - 1.0 / (1.0 - ksb)) * fc_t
+                dtau = dT @ arm + dFb * lp_signed
 
             # steady-collective portion only (excludes throttle-up transient)
             fcw = sig['f_col'][win]
@@ -144,7 +173,8 @@ def main():
         print(f"  assessed {d} ({len(rows)} runs)")
 
     out.mkdir(parents=True, exist_ok=True)
-    with open(out / 'ge_trajectory_runs.csv', 'w', newline='') as f:
+    with open(out / f'ge_trajectory_runs_{args.model}.csv', 'w',
+              newline='') as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
         w.writeheader()
         w.writerows(rows)
