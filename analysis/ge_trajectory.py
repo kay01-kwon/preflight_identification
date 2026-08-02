@@ -122,24 +122,37 @@ def main():
                 dT = Ti[:n] * R**2 / (16 * h_it**2 - R**2)
                 dtau = dT @ arm
             else:
-                # attitude-dependent Garofano-Soldado adaptation: pairwise
-                # interference at the measured tilted heights + body lift
+                # attitude-dependent Garofano-Soldado adaptation, Eq. (2)
+                # mapping: interference gains act through the body-centre
+                # arms; the fountain-inclusive gain enters only the total
+                # vertical force, transferred to the pivot by l_p.
                 d2 = ((pP[0][:, None] - pP[0][None, :]) ** 2
                       + (pP[1][:, None] - pP[1][None, :]) ** 2)
                 Z = h_it[:, :, None] + h_it[:, None, :]
                 srot = (R**2 / 4) * np.sum(Z / (d2 + Z**2) ** 1.5, axis=2)
-                g1 = 1.0 / (1.0 - args.k_cal * srot) - 1.0
-                dT = g1 * Ti[:n]
                 lp_signed = arm[0] - (LY[0] if axis == 'x' else -LX[0])
                 cx = 0.0 if axis == 'x' else -lp_signed
                 cy = lp_signed if axis == 'x' else 0.0
                 zc = r31[:n] * cx + r32[:n] * cy + r33[:n] * H
+                L = args.arm
+                dists2 = np.array([0.0, L**2, L**2, 3*L**2, 3*L**2,
+                                   4*L**2])
+                s_lvl = (R**2 / 4) * np.sum(
+                    2 * zc[:, None]
+                    / (dists2[None, :] + 4 * zc[:, None]**2) ** 1.5, axis=1)
+                s9 = (R**2 * zc / (L**2/4 + 4*zc**2)**1.5
+                      + (R**2/2) * zc / (21*L**2/4 + 4*zc**2)**1.5
+                      + R**2 * zc / (13*L**2/4 + 4*zc**2)**1.5
+                      + (R**2/2) * zc / (7*L**2/4 + 4*zc**2)**1.5)
+                kz = (s9 / s_lvl)[:, None]
                 rd = 2 * args.arm - args.frame_width
-                sf = 2 * R**2 * args.jk * zc / (rd**2 + 4 * zc**2) ** 1.5
-                ksb = args.k_cal * np.mean(srot, axis=1)
-                fc_t = sig['f_col'][:n]
-                dFb = (1.0 / (1.0 - ksb - sf) - 1.0 / (1.0 - ksb)) * fc_t
-                dtau = dT @ arm + dFb * lp_signed
+                sf = (2 * R**2 * args.jk * zc
+                      / (rd**2 + 4 * zc**2) ** 1.5)[:, None]
+                g_rot = 1.0 / (1.0 - kz * srot) - 1.0
+                g_full = 1.0 / (1.0 - kz * srot - sf) - 1.0
+                arm_c = LY if axis == 'x' else -LX
+                dtau = ((g_rot * Ti[:n]) @ arm_c
+                        + np.sum(g_full * Ti[:n], axis=1) * lp_signed)
 
             # steady-collective portion only (excludes throttle-up transient)
             fcw = sig['f_col'][win]

@@ -64,17 +64,48 @@ bracket. The per-rotor superposition of the single-rotor
 Cheeseman--Bennett result (lower bound; neglects rotor--rotor
 interference) gives, at the measured geometry ($h=0.315$~m,
 $R=0.127$~m), $\eta(0) = 1.03\%$ independent of $l_p$. The upper bound
-is an attitude-dependent adaptation of the co-planar hexarotor model of
-Garofano-Soldado \emph{et al.}~[RA-L 9(2), 2024] — characterized on a
-\emph{static test bench}, i.e.\ in the same quasi-static, zero-airspeed
-regime as the contact-phase excitation — with the rotor-interference
-sum evaluated at the tilted rotor heights and the fountain-driven body
-lift included; it yields a moment-proportional coefficient
-$b = \bar\gamma - 1 = 4.2\%$ and a thrust-channel gain of $11.7\%$ of
-$f\,l_p$ (its empirical constants are transferred from the authors'
-vehicle, an informed estimate rather than a measurement). In both
-models the decomposition $\Delta M_{\mathrm{GE},P} = a(\phi) +
-b(\phi)\,M_x$, the restoring sign of the height-asymmetry moment, and
+is derived from first principles by the image method: each rotor is a
+three-dimensional potential source of strength $R^2 v_\infty/4$, the
+ground plane is enforced by mirror images, and only the vertical
+projection of each image-induced velocity reduces the downwash, giving
+the per-rotor interference sum
+$\delta v_i/v_\infty = (R^2/4)\sum_j (z_i{+}z_j)/[d_{ij}^2 +
+(z_i{+}z_j)^2]^{3/2}$ evaluated at each rotor's \emph{own} tilted
+height $z_i = h\cos\phi + s_i\sin\phi$ — no averaging enters, and the
+attitude dependence of the model resides entirely in this term. The
+fountain-driven body lift of Garofano-Soldado
+\emph{et al.}~[RA-L 9(2), 2024] — whose hexarotor characterization was
+performed on a \emph{static test bench}, i.e.\ in the same
+quasi-static, zero-airspeed regime as the contact-phase excitation —
+acts at the body centre and therefore contributes no moment about it,
+entering the pivot moment only through the parallel-axis transfer
+$F\,l_p$:
+\begin{equation}
+  \Delta M_{\mathrm{GE}}
+  = \sum_i b_i\,(\gamma_i^{\mathrm{rot}}-1)\,T_i
+  \;+\; \Bigl[\sum_i (\gamma_i^{\mathrm{full}}-1)\,T_i\Bigr] l_p ,
+  \label{eq:ge-mapping}
+\end{equation}
+with $b_i$ the body-centre arms, $\gamma_i^{\mathrm{rot}}$ the
+interference-only gain and $\gamma_i^{\mathrm{full}}$ the
+fountain-inclusive gain; the matching constant $k(z_c)$ that joins the
+rotor-centre construction to the published model is re-evaluated at
+the body-centre height of each attitude (changing the moment by less
+than $0.1\%$). Under constant total thrust the result is affine in the
+commanded moment, $\Delta M_{\mathrm{GE}} = a(\phi) + b(\phi)
+M_{\mathrm{cmd}}$, with fitted coefficients
+$a/(f l_p)\,[\%] = 11.59 - 0.153\,\phi$ and
+$b\,[\%] = 4.12 - 0.061\,\phi$ ($\phi$ in degrees): the constant
+channel carries the fountain contribution, while $b$ reflects
+rotor-to-rotor interference alone, since the body lift does not scale
+with the commanded moment. The boundary between the derived and the
+fitted layer is explicit — the image method captures the interference
+and its attitude dependence analytically, while wake recirculation is
+represented by the single empirical constant $J_k$ transferred from
+the authors' vehicle; an alternative distribution of the body lift
+(applying $\gamma^{\mathrm{full}}$ per rotor) brackets the fountain
+placement and is reported alongside. In both bracket models the affine
+decomposition, the restoring sign of the height-asymmetry moment, and
 the channel structure below are identical — they follow from
 thrust-proportionality and smooth height dependence alone; only the
 magnitudes differ, by a factor of about four.
@@ -258,7 +289,7 @@ compares the ideal-theory bounds with the measured values; the
 measured residuals, on which the claims rest, lie consistently below
 their a priori counterparts. For the ground effect the projection is
 evaluated under both bracket models: the measured slope ratio is
-$+0.99\%$ of $\dot M$ (single-rotor evaluation) and $+3.85\%$
+$+0.99\%$ of $\dot M$ (single-rotor evaluation) and $+3.84\%$
 (hexarotor-adapted evaluation, IQR $[3.75, 3.98]\%$), \emph{both}
 rate-invariant across the twelvefold rate range — the property the
 $K$-calibration absorption requires — and the out-of-span residual
@@ -295,7 +326,7 @@ Component & A priori & Measured (RMS / max) & Character \\
 \hline
 Small-angle curvature & $19.2$ at $5^\circ$ ($\approx 28$ at the
 median excursion) & $1.2\;/\;12.3$ & coherent, edge-concentrated \\
-Ground effect (single-rotor / hexarotor-adapted) & $2.8\;/\;9.5$
+Ground effect (single-rotor / hexarotor-adapted) & $3.2\;/\;11.8$
 (tangent deviation, full range) & $0.16\,/\,2.3$ \;--\; $1.7\,/\,22$
 & coherent, edge-concentrated \\
 Ramp nonlinearity & $30$ (gate, full window) & $1.6\;/\;6.2$ (fit
@@ -329,7 +360,7 @@ deviates from the absorbable span by at most $12.3$~mN\,m (median RMS
 $1.2$), edge-concentrated where the kernel provides no amplification;
 the ground-effect forcing by $2.3$ to $22$~mN\,m across the bracket
 models. The measured slope ratios, $+0.99\%$ of $\dot M$
-(single-rotor) and $+3.85\%$ (hexarotor-adapted), reproduce each
+(single-rotor) and $+3.84\%$ (hexarotor-adapted), reproduce each
 model's coefficient in situ and are rate-independent in both cases —
 the property on which the $K$-calibration absorption rests.
 \item \emph{Window ablation.} Truncating the window at a $3^\circ$
