@@ -87,38 +87,58 @@ def main():
     st = np.deg2rad(args.phi_star)
     rd = 2 * args.arm - args.frame_width
 
-    def channels(phi, lat, lp):
-        """Return (a, b) of Delta M_GE,P = a + b*Mx at tilt phi."""
-        s = lat + lp
-        z = h * np.cos(phi) + s * np.sin(phi)      # interior side rises
+    def k_of_z(z):
+        """Matching constant k(z): Garofano-Soldado Eq. (9) rotor sum over
+        the level rotor-centre sum, both at clearance z."""
+        d = args.arm
+        s9 = (R**2 * z / (d**2/4 + 4*z**2)**1.5
+              + (R**2/2) * z / (21*d**2/4 + 4*z**2)**1.5
+              + R**2 * z / (13*d**2/4 + 4*z**2)**1.5
+              + (R**2/2) * z / (7*d**2/4 + 4*z**2)**1.5)
+        slevel = srot_matrix(np.full(6, z), pxy, R)[0]
+        return s9 / slevel
+
+    def channels(phi, s_h, lp, arm_c, tm):
+        """(a, b) of Delta M_GE = a + b*M_cmd at tilt phi.
+
+        s_h   : height coefficients, z_i = h cos(phi) + s_h,i sin(phi)
+                (roll: l_y+l_p; pitch: l_p-l_x — interior side rises)
+        arm_c : body-centre moment arms b_i (l_y or -l_x) — the fountain
+                force acts at the centre and enters only via the
+                parallel-axis transfer F*l_p.
+        tm    : allocation column dT_i/dM_cmd.
+        """
+        z = h * np.cos(phi) + s_h * np.sin(phi)
         if args.model == 'single':
             g1 = R**2 / (16 * z**2 - R**2)
-            gbar = float(np.mean(g1))              # uniform T weighting
-            a_rot = gbar * f * lp + np.sum(s * (g1 - gbar)) * f / 6
-            return a_rot, gbar
-        srot = srot_matrix(z, pxy, R)
-        g1 = 1.0 / (1.0 - args.k_cal * srot) - 1.0
-        gbar = float(np.mean(g1))
+            a = np.sum(arm_c * g1) * f / 6 + lp * np.sum(g1) * f / 6
+            b = float(np.sum((arm_c + lp) * g1 * tm))
+            return a, b
         zc = h * np.cos(phi) + lp * np.sin(phi)
+        k = k_of_z(zc)                             # re-evaluated per attitude
+        srot = srot_matrix(z, pxy, R)
+        g_rot = 1.0 / (1.0 - k * srot) - 1.0
         sf = 2 * R**2 * args.jk * zc / (rd**2 + 4 * zc**2) ** 1.5
-        ksb = args.k_cal * float(np.mean(srot))
-        dFb = (1.0 / (1.0 - ksb - sf) - 1.0 / (1.0 - ksb)) * f
-        a = gbar * f * lp + np.sum(s * (g1 - gbar)) * f / 6 + dFb * lp
-        return a, gbar
+        g_full = 1.0 / (1.0 - k * srot - sf) - 1.0
+        # Eq. (2) of the derivation: interference through the centre arms,
+        # fountain-inclusive gain only in the total vertical force
+        a = (np.sum(arm_c * g_rot) + lp * np.sum(g_full)) * f / 6
+        b = float(np.sum((arm_c * g_rot + lp * g_full) * tm))
+        return a, b
 
     print(f"model = {args.model}"
           + ("" if args.model == 'single' else
-             f"  (k={args.k_cal}, J_k={args.jk}, r_d={rd:.3f} m — empirical "
-               f"constants transferred from Garofano-Soldado et al. 2024)"))
-    for name, lp, lat, Mx in (('roll', args.lp_roll, LY, args.mx),
-                              ('pitch', args.lp_pitch, LX, args.mx)):
-        a0, b0 = channels(0.0, lat, lp)
+             f"  (J_k={args.jk}, r_d={rd:.3f} m — J_k transferred from "
+               f"Garofano-Soldado et al. 2024; k(z_c) matched per attitude)"))
+    for name, lp, s_h, arm_c, Mx in (
+            ('roll', args.lp_roll, LY + args.lp_roll, LY, args.mx),
+            ('pitch', args.lp_pitch, args.lp_pitch - LX, -LX, args.mx)):
+        tm = arm_c / np.sum(arm_c**2)              # allocation column
+        ch = lambda x: channels(x, s_h, lp, arm_c, tm)
+        a0, b0 = ch(0.0)
         eps = 1e-6
-        ap, bp_ = channels(st + eps, lat, lp)
-        am, bm = channels(st - eps, lat, lp)
-        ka = (ap - am) / (2 * eps)
-        kb = (bp_ - bm) / (2 * eps)
-        k_tot = ka + kb * Mx
+        (ap, bp_), (am, bm) = ch(st + eps), ch(st - eps)
+        k_tot = (ap - am) / (2 * eps) + (bp_ - bm) / (2 * eps) * Mx
         print(f"\n=== {name} (l_p={lp:.3f} m, Mx={Mx:g} N.m) ===")
         print(f"  a(0) = {a0*1e3:7.1f} mN.m   a/(f*lp) = {100*a0/(f*lp):6.2f} %")
         print(f"  b(0) = {100*b0:6.3f} %      total(0) = {(a0+b0*Mx)*1e3:7.1f} mN.m")
@@ -126,9 +146,9 @@ def main():
               f"({100*abs(k_tot)/Wz:.2f}% of Wz)")
         for pmax in (5.0, args.phi_max):
             ps = np.linspace(0, np.deg2rad(pmax), 301)
-            tot = np.array([channels(x, lat, lp) for x in ps])
+            tot = np.array([ch(x) for x in ps])
             tv = tot[:, 0] + tot[:, 1] * Mx
-            a_st, b_st = channels(st, lat, lp)
+            a_st, b_st = ch(st)
             lin = (a_st + b_st * Mx) + k_tot * (ps - st)
             dev = float(np.max(np.abs(tv - lin)))
             print(f"  [0,{pmax:4.1f} deg]: GE change {(tv[-1]-tv[0])*1e3:7.2f} "
@@ -136,8 +156,7 @@ def main():
         if args.per_degree:
             print(f"  {'phi':>4} {'a/(f*lp)%':>10} {'b%':>7} {'total[mN.m]':>12}")
             for pd in range(0, int(np.ceil(args.phi_max)) + 1):
-                x = np.deg2rad(pd)
-                a, b = channels(x, lat, lp)
+                a, b = ch(np.deg2rad(pd))
                 print(f"  {pd:4d} {100*a/(f*lp):10.2f} {100*b:7.3f} "
                       f"{(a+b*Mx)*1e3:12.1f}")
 

@@ -29,19 +29,31 @@ models:
    rotor–rotor interference is neglected. Moment-proportional
    coefficient $b = \bar\gamma - 1 = 1.0\%$.
 
-2. **Upper bound — attitude-dependent adaptation of Garofano-Soldado
-   *et al.*, IEEE RA-L 9(2):1907–1914, 2024.** Their co-planar
-   hexarotor model — characterized on a **static test bench**, i.e. in
-   the same quasi-static, zero-airspeed regime as our contact-phase
-   excitation, free of the translational-inflow effects present in
-   in-flight characterizations — is evaluated with the rotor
-   interference sum at the tilted rotor heights (exact pairwise
-   distances) and the fountain-driven body lift of their Eq. (8),
-   calibrated at the level configuration to their Eq. (9) for our
-   geometry. This gives $b = 4.2\%$ and a thrust-channel gain of
-   $11.7\%$ of $f\,l_p$. Its empirical constants are transferred from
-   the authors' vehicle — an informed estimate rather than a
-   measurement, which is why we present the two models as a bracket.
+2. **Upper bound — attitude-dependent extension of Garofano-Soldado
+   *et al.*, IEEE RA-L 9(2):1907–1914, 2024, derived from first
+   principles.** Each rotor is a 3-D potential source; the ground
+   plane is enforced by mirror images; only the vertical projection of
+   each image-induced velocity reduces the downwash, giving the
+   interference sum evaluated at each rotor's *own* tilted height (no
+   averaging — the attitude dependence resides entirely in this term).
+   The fountain-driven body lift of their Eq. (8) — characterized on a
+   **static test bench**, i.e. in the same quasi-static, zero-airspeed
+   regime as our contact-phase excitation, free of the
+   translational-inflow effects present in in-flight
+   characterizations — acts at the body centre and hence contributes
+   no moment about it, entering the pivot moment only through the
+   parallel-axis transfer $F\,l_p$; the matching constant $k(z_c)$ is
+   re-evaluated at the body-centre height of each attitude (a
+   $<0.1\%$ effect on the moment). Under constant total thrust the
+   result is affine in the commanded moment with fitted coefficients
+   $a/(f l_p)\,[\%] = 11.59 - 0.153\,\phi$ and
+   $b\,[\%] = 4.12 - 0.061\,\phi$ ($\phi$ in deg). The boundary
+   between the derived and the fitted layer is explicit: the image
+   method captures interference and its attitude dependence
+   analytically, while wake recirculation is represented by the single
+   empirical constant $J_k$ transferred from the authors' vehicle —
+   which is why we present the two models as a bracket, and report an
+   alternative per-rotor distribution of the body lift alongside.
 
 **Angle-resolved decomposition (new Fig./Table [—]).** In both models
 the pivot moment decomposes identically,
@@ -57,7 +69,7 @@ has a definite fate in the identification:
 - **Moment coefficient $b$**: its ramp component is proportional to the
   commanded rate with a rate-independent coefficient — confirmed *in
   situ* by evaluating the exact models along all 140 measured
-  trajectories: slope ratios $+0.99\%$ (lower) and $+3.85\%$ (upper,
+  trajectories: slope ratios $+0.99\%$ (lower) and $+3.84\%$ (upper,
   IQR $[3.75, 3.98]\%$), flat from 0.10 to 1.20 N·m/s — and is
   therefore absorbed by the ramp-invariance calibration of $K$. The
   onset-instant part leaves a relative bias on $M_{\mathrm{ff}}$
