@@ -30,3 +30,6 @@ cosh_fidelity_runs.csv
 postonset_linearity_runs.csv
 tiltcap_mcrit.csv
 alpha_at_peak_runs.csv
+*.aux
+*.out
+*.toc
