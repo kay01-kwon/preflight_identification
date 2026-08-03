@@ -188,7 +188,15 @@ shrink in magnitude by up to $30$~mN\,m, precisely the leak mechanism
 above, while the ramp-invariance CV is essentially unchanged. The
 pivot-free offset $M_{\mathrm{ff}}$ moves by at most $4.2$~mN\,m
 ($0.13$~mm), well below the run-to-run scatter — the median removes a
-systematic bias and tunes nothing. \emph{Sweep margin.} The margin
+systematic bias and tunes nothing. A second ablation pins $C = 0$, the
+ideal-sensor value implied by the onset conditions: the measured
+pre-onset baseline is in fact nonzero (gyro bias plus residual spin-up
+motion; $|C|$ median $3.1$, p90 $14.2$, max $30.6$~mrad/s), yet the
+estimate barely moves ($71/132$ onsets identical,
+$M_{\mathrm{ff}}$ shift $\le 1.3$~mN\,m). The estimated baseline is
+therefore not load-bearing on this dataset; it is kept because it makes
+the sweep invariant to the gyro bias — a rig- and temperature-dependent
+quantity that need not stay this small — at zero parameter cost. \emph{Sweep margin.} The margin
 $N_{\mathrm{seg}} = 8$, applied at both window ends, guarantees every
 candidate split leaves at least $N_{\mathrm{seg}}$ samples in each
 segment; it excises only degenerate candidates: near
