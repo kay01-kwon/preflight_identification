@@ -1,0 +1,250 @@
+\documentclass[10pt]{article}
+\usepackage[a4paper,margin=25mm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{booktabs}
+\usepackage[colorlinks=true,linkcolor=blue]{hyperref}
+
+\newtheorem{remark}{Remark}
+
+\title{\textbf{COSH: Closed-Form Onset Search via Hyperbolic Response}\\[2mm]
+\large Methodology for pre-flight critical-moment identification of a
+multirotor from ground-contact tip-over excitation}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\vspace{-10mm}
+
+\noindent
+This document specifies the complete identification methodology, from raw
+signals to the take-off feed-forward moment. Every stage mirrors the
+implementation in \texttt{critical\_value\_getter\_piecewise.py}; the
+companion analyses (model-fidelity bounds, excitation design, ground-effect
+bracket) are documented in \texttt{fidelity\_section.tex} and are only
+referenced here.
+
+\section{Problem setting and notation}
+
+A multirotor rests on its landing gear. Ramping the commanded roll (pitch)
+moment tilts the vehicle until it begins to rotate about the landing-gear
+contact line — the \emph{pivot}. The applied moment at that \emph{rotation
+onset} is the critical moment $M_{\mathrm{crit}}$; comparing the two tip
+directions yields the CoM offset and the feed-forward moment
+$M_{\mathrm{ff}}$ that compensates take-off. No rig, no motion capture and
+no stable in-flight data are used.
+
+\begin{table}[h]\centering\small
+\begin{tabular}{llll}
+\toprule
+Symbol & Meaning & Value & Provenance \\
+\midrule
+$W$, $z_{\mathrm{CoM}}$ & weight, CoM height & $31.59$~N, $\sim$0.3~m & measured / conservative \\
+$l_{p,\phi},\,l_{p,\theta}$ & pivot offsets (roll, pitch) & $0.140$, $0.110$~m & conservative geometry \\
+$J_P$ & inertia about the pivot line & — & never used numerically \\
+$C_T$ & thrust map, $T_i = C_T\Omega_i^2$ & $1.3175\times10^{-7}$ & bench calibration \\
+$M_{\mathrm{thr}}$ & window threshold & $0.01$~N\,m & noise floor \\
+$M_{\mathrm{cap}}$ & allocator caps $(x,y)$ & $2.37$, $2.74$~N\,m & allocation feasibility \\
+$\varepsilon_{\max}$ & ramp-slope gate & $3\%$ & sensitivity chain (Sec.~\ref{sec:gates}) \\
+$N_{\min}$ & window-sample gate & $38$ & $30$ pre $+\,8$ post \\
+$e_{\mathrm{lin,max}}$ & linearity-RMSE gate & $30$~mN\,m & $10\times$ noise floor \\
+$N_{\mathrm{pre}},\,N_{\mathrm{post}}$ & sweep margins & $30$, $8$ & baseline / fit minima \\
+\bottomrule
+\end{tabular}
+\caption{Design constants. $(C_2, K)$ are \emph{calibrated}, not set
+(Sec.~\ref{sec:calibration}).}
+\end{table}
+
+\section{Contact-phase dynamics and the closed form}
+\label{sec:closedform}
+
+About the active pivot line, with the small-angle attitude dependence
+retained ($\cos\varphi \approx 1$, $\sin\varphi \approx \varphi$), the
+roll/pitch dynamics read
+\begin{equation}
+J_P\,\dot\omega
+ = M(t) + f\,l_p - W\,(l_p + \lambda_{\mathrm{off}}) + W z_{\mathrm{CoM}}\,\varphi ,
+\label{eq:dyn}
+\end{equation}
+where $M$ is the commanded body moment, $f$ the collective thrust and
+$\lambda_{\mathrm{off}}$ the CoM offset along the excited axis. Below the
+critical value the vehicle is static. At the onset the net moment
+vanishes, which supplies \emph{two} anchoring conditions,
+\begin{equation}
+\omega(t_{\mathrm{crit}}) = 0, \qquad \dot\omega(t_{\mathrm{crit}}) = 0 .
+\label{eq:onset-cond}
+\end{equation}
+Past the onset gravity feeds back positively: the linearized dynamics have
+\emph{real} eigenvalues $\pm C_2$ and, with the measured moment ramp
+$M(t) = M_{\mathrm{crit}} + \dot M\,\tau$ in onset-relative time
+$\tau = t - t_{\mathrm{crit}}$, the exact solution of
+\eqref{eq:dyn}--\eqref{eq:onset-cond} collapses to the hyperbolic
+closed form
+\begin{equation}
+\boxed{\;\omega(\tau) = C_1\bigl(\cosh(C_2\tau) - 1\bigr), \qquad
+C_1 = K\dot M,\quad K = \frac{1}{W z_{\mathrm{CoM}}},\quad
+C_2 = \sqrt{\frac{W z_{\mathrm{CoM}}}{J_P}} \; }
+\label{eq:cosh}
+\end{equation}
+for $\tau \ge 0$ (and $\omega = 0$ for $\tau < 0$). Because
+$J_P C_2^2 = W z_{\mathrm{CoM}}$, the amplitude $C_1$ is \emph{fixed} by
+the measured ramp rate: with $(C_2, K)$ pinned as rig constants and the
+baseline fixed by continuity, \textbf{no shape parameter is free per run}.
+The time-quadratic model of the original submission is the $C_2 \to 0$
+limit of \eqref{eq:cosh} — it discards the gravity term that creates the
+instability, with $14$--$75\%$ truncation error over the windows actually
+used — and is retained only as a baseline.
+
+\section{Signals and excitation window}
+\label{sec:window}
+
+Per run, the moment is reconstructed from the measured rotor speeds,
+$M(t) = C_T \sum_i b_{a,i}\,\Omega_i^2(t)$, and $\omega(t)$ is taken from
+the odometry rate. The window end is
+$i_{\mathrm{end}} = \arg\max_t |M|$, \emph{truncated at the first sample
+exceeding the allocator cap} $M_{\mathrm{cap}}$: past it the thrust
+allocation saturates, the executed ramp is no longer linear, and the cosh
+family does not apply. (On the reference dataset the cap never binds;
+peak $|M| \le 1.7$~N\,m.) The window start is the \emph{last}
+sub-threshold sample before the peak, walking backwards — robust to
+spin-up blips that cross the threshold long before the actual ramp.
+
+\section{Onset-free run gates}
+\label{sec:gates}
+
+Before any onset is estimated, each run must pass three gates evaluated on
+the measured moment trace alone (hence free of circularity):
+\begin{enumerate}
+\item \textbf{Ramp-slope error} $|\varepsilon| \le 3\%$, with
+$\varepsilon = (|\dot M| - \dot M_{\mathrm{cmd}})/\dot M_{\mathrm{cmd}}$
+and $\dot M$ the least-squares slope over the window. A $3\%$ error in
+$\dot M$ perturbs $C_1 = K\dot M$ by $3\%$ — about $7\times$ below the
+$\pm20\%$ level the sensitivity analysis shows harmless.
+\item \textbf{Window samples} $N_{\mathrm{full}} \ge 38$: a necessary
+condition for any onset position ($30$ pre-onset for the baseline and
+sweep, $8$ post-onset for the fit).
+\item \textbf{Linearity RMSE} $\le 30$~mN\,m about the run's own best-fit
+line: a fault detector for aborted/stepped ramps, set at $10\times$ the
+execution noise floor and above the healthy-run maximum.
+\end{enumerate}
+The gates run \emph{before} calibration so a poorly executed ramp cannot
+contaminate the dataset-coupled constraint $C_1 = K\dot M$.
+
+\section{Onset detection}
+\label{sec:algorithm}
+
+With $(C_2, K)$ pinned, detection reduces to an exhaustive sweep of the
+single remaining unknown — the onset index. Each candidate is a plain
+arithmetic evaluation: no optimizer, no initial guess, no seed model.
+
+\begin{algorithm}[h]
+\caption{COSH onset detection (single run)}
+\label{alg:cosh}
+\begin{algorithmic}[1]
+\Require windowed samples $\{(t_i,\omega_i)\}_{i=1}^{N}$; moment $M(t)$;
+  calibrated $(C_2, K)$; measured ramp slope $\dot M$
+\Ensure onset index $j^\ast$; critical moment $M_{\mathrm{crit}}$
+\State $C_1 \gets K\dot M$
+  \Comment{onset conditions \eqref{eq:onset-cond} fix the amplitude}
+\For{$j = N_{\mathrm{pre}}, \dots, N - N_{\mathrm{post}}$}
+  \Comment{exhaustive sweep of the single unknown}
+  \State $C \gets \operatorname{median}\{\omega_i : i < j\}$
+    \Comment{baseline by continuity}
+  \State $\mathrm{cost}(j) \gets \sum_{i<j}(\omega_i - C)^2
+    + \sum_{i\ge j}\bigl(\omega_i - [\,C_1(\cosh C_2 (t_i - t_j) - 1)
+    + C\,]\bigr)^2$
+\EndFor
+\State $j^\ast \gets \arg\min_j \mathrm{cost}(j)$;\quad
+  $M_{\mathrm{crit}} \gets M(t_{j^\ast})$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{remark}
+Because the model curve is fully determined before the post-onset data
+are seen, goodness of fit is a \emph{prediction test}, not flexibility:
+across all gate-passing runs the normalized post-onset residual is
+$\approx 6\%$ (gyro-noise dominated) and invariant over the twelvefold
+ramp-rate range — the empirical certificate that the response stays in
+the cosh family.
+\end{remark}
+
+\section{Rig-constant calibration}
+\label{sec:calibration}
+
+Algorithm~\ref{alg:cosh} presupposes $(C_2, K)$. Although both have
+geometric expressions \eqref{eq:cosh}, they are \emph{not} computed from
+geometry: $z_{\mathrm{CoM}}$ and especially $J_P$ are not precisely known
+a priori, and — more importantly — the constants that make
+\eqref{eq:cosh} reproduce the measured response are \emph{effective}
+values that absorb the state-linear contributions of the unmodeled
+effects (the local slope of the gravity nonlinearity and the
+ground-effect spring). Both are calibrated once per dataset.
+
+Joint residual minimization is not a usable criterion: in the cost of
+Algorithm~\ref{alg:cosh}, an earlier onset with a smaller amplitude
+trades off against a later onset with a larger one, so the summed
+residual is nearly degenerate along a ridge in the $(C_2,K)$ plane and
+its minimizer is not physically meaningful. We calibrate instead by
+\emph{physical self-consistency}: a static threshold must not depend on
+how fast it was approached. With runs at ramp rates
+$r \in \{0.10,\dots,1.20\}$~N\,m/s,
+\begin{equation}
+\mathrm{score}(C_2, K) \;=\; \sum_{\mathrm{dir}\in\{+,-\}}
+\mathrm{CV}\Bigl(\bigl\{ M_{\mathrm{crit}}^{(r)}(C_2, K)\bigr\}_{r}\Bigr),
+\qquad \mathrm{CV} = \mathrm{std}/|\mathrm{mean}| ,
+\label{eq:score}
+\end{equation}
+where $M_{\mathrm{crit}}^{(r)}$ is the output of
+Algorithm~\ref{alg:cosh} on the run with commanded rate $r$. The pair is
+selected by an exhaustive coarse scan over the physically admissible box
+($C_2 \in [3,8]$~rad/s, $K \in [0.05, 0.7]$~(N\,m)$^{-1}$) followed by a
+local grid refinement about the coarse minimizer; each evaluation is an
+arithmetic sweep, so no iterative optimizer is involved anywhere in the
+pipeline.
+
+\begin{remark}
+The objective \eqref{eq:score} retains a shallow valley, so the
+individual constants are only loosely determined:
+$W z_{\mathrm{CoM}} = 1/K$ and $J_P = 1/(K C_2^2)$ are
+order-of-magnitude sanity checks, not precision measurements. What the
+criterion pins down — by construction — is the identified onset:
+$M_{\mathrm{crit}}$ is robust along the valley, and a $\pm 20\%$
+mis-specification of either constant moves the identified CoM by less
+than $0.9$~mm.
+\end{remark}
+
+\section{Aggregation and deliverables}
+\label{sec:aggregation}
+
+Directional means over the gated runs give $\bar M_{+}$ and
+$\bar M_{-}$. The take-off feed-forward moment is the \emph{pivot-free
+average}
+\begin{equation}
+M_{\mathrm{ff}} = \tfrac12\,(\bar M_{+} + \bar M_{-}) ,
+\label{eq:mff}
+\end{equation}
+in which the pivot-arm terms $\pm(W - f)\,l_p$ — and any
+thrust-proportional contamination acting through the arm $l_p$, ground
+effect included — cancel by antisymmetry, while landing-gear asymmetry
+is deliberately \emph{retained}: the same contact-phase moment acts at
+lift-off, where $M_{\mathrm{ff}}$ compensates it. The CoM offset follows
+from the moment-to-offset conversion of $M_{\mathrm{ff}}$ and is used
+for validation against load-cell ground truth only; $M_{\mathrm{ff}}$
+itself is the quantity applied in flight.
+
+\section{Reproducibility}
+
+Every number in this document is reproducible from the repository:
+\texttt{critical\_value\_getter\_piecewise.py} (pipeline, gates, caps,
+calibration, Algorithm~\ref{alg:cosh});
+\texttt{analysis/ramp\_quality.py} (gates);
+\texttt{analysis/sensitivity.py} ($\pm20\%$ robustness);
+\texttt{analysis/cosh\_fidelity.py} (prediction-test residuals);
+\texttt{analysis/excitation\_angle\_design.py} (rate/cutoff design);
+\texttt{analysis/ge\_linearity.py}, \texttt{ge\_trajectory.py}
+(ground-effect bracket); \texttt{analysis/tiltcap\_ablation.py} (window
+ablation).
+
+\end{document}
