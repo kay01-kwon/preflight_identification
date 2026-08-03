@@ -333,14 +333,17 @@ def piecewise_onset_fit(
 
 # Pre-onset baseline statistic for the onset sweep. 'median' (default) is
 # robust to the heavy-tailed gyro noise and to the cosh rise leaking into the
-# pre-segment when a candidate onset overshoots; 'mean' is the LS-optimal
-# constant and is kept only for the ablation (analysis/baseline_stat_ablation).
+# pre-segment when a candidate onset overshoots; 'mean' (LS-optimal constant)
+# and 'zero' (the ideal-sensor value implied by the onset conditions) are kept
+# only for the ablation (analysis/baseline_stat_ablation.py).
 BASELINE_STAT = 'median'
 
 
 def _baseline_of(x: np.ndarray) -> float:
     if BASELINE_STAT == 'mean':
         return float(np.mean(x))
+    if BASELINE_STAT == 'zero':
+        return 0.0
     return float(np.median(x))
 
 
