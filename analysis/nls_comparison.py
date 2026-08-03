@@ -36,7 +36,19 @@ from utils.extractor import load_excitation_dataset
 
 ROOT = Path(__file__).resolve().parents[1] / 'DataSet' / 'exp'
 OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('.')
-W_N = 31.59  # vehicle weight [N]
+
+G = 9.81
+MASS_KG = {'case_01': 3.066, 'case_02': 3.220, 'case_03': 3.220,
+           'case_04': 3.220, 'case_05': 3.220}   # manuscript Table 7
+# Load-cell ground truth [mm] (manuscript Table 7).  A roll excitation (Mx)
+# senses the y-offset with M_ff,x = +W*y_off; a pitch excitation (My) senses
+# the x-offset with M_ff,y = -W*x_off.
+TRUTH_MM = {('case_01', 'Mx'): -2.90,  ('case_01', 'My'): -11.45,
+            ('case_02', 'Mx'): -14.29, ('case_02', 'My'): -9.90,
+            ('case_03', 'Mx'): -5.26,  ('case_03', 'My'): 3.14,
+            ('case_04', 'Mx'): 6.67,   ('case_04', 'My'): 2.40,
+            ('case_05', 'Mx'): 10.91,  ('case_05', 'My'): -10.89}
+SIGN = {'Mx': +1.0, 'My': -1.0}
 
 rows = []
 for d in sorted(ROOT.glob('case_*/M[xy]')):
@@ -71,7 +83,8 @@ with open(OUT / 'nls_comparison_runs.csv', 'w', newline='') as f:
     w.writerows(rows)
 
 print(f"\n{'case':8} {'ax':3} {'method':6} {'mean_neg':>9} {'mean_pos':>9} "
-      f"{'CV_neg':>7} {'CV_pos':>7} {'M_ff':>8} {'offset_mm':>9}")
+      f"{'CV_neg':>7} {'CV_pos':>7} {'M_ff':>8} {'offset_mm':>9} "
+      f"{'truth_mm':>8} {'err_mm':>7}")
 agg = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
 for r in rows:
     for m in ('cosh', 'nls'):
@@ -88,13 +101,19 @@ for key in sorted(agg):
         cvn = np.std(g['neg'], ddof=1) / abs(mn)
         cvp_ = np.std(g['pos'], ddof=1) / abs(mp)
         mff = 0.5 * (mp + mn)
-        off = 1e3 * mff / W_N
+        off = SIGN[key[1]] * 1e3 * mff / (MASS_KG[key[0]] * G)
+        truth = TRUTH_MM.get(key)
+        err = off - truth if truth is not None else None
         summary.append(dict(case=key[0], axis=key[1], method=m,
                             mean_neg=f"{mn:.4f}", mean_pos=f"{mp:.4f}",
                             cv_neg=f"{cvn:.4f}", cv_pos=f"{cvp_:.4f}",
-                            M_ff=f"{mff:+.4f}", offset_mm=f"{off:+.3f}"))
+                            M_ff=f"{mff:+.4f}", offset_mm=f"{off:+.3f}",
+                            truth_mm=(f"{truth:+.2f}" if truth is not None
+                                      else ''),
+                            err_mm=(f"{err:+.3f}" if err is not None else '')))
         print(f"{key[0]:8} {key[1]:3} {m:6} {mn:>9.4f} {mp:>9.4f} "
-              f"{cvn:>7.4f} {cvp_:>7.4f} {mff:>+8.4f} {off:>+9.3f}")
+              f"{cvn:>7.4f} {cvp_:>7.4f} {mff:>+8.4f} {off:>+9.3f} "
+              f"{truth:>+8.2f} {err:>+7.3f}")
 
 with open(OUT / 'nls_comparison_summary.csv', 'w', newline='') as f:
     w = csv.DictWriter(f, fieldnames=list(summary[0].keys()))
@@ -120,3 +139,9 @@ cc = [v['cosh'] for v in cv_pairs.values() if 'cosh' in v and 'nls' in v]
 cn = [v['nls'] for v in cv_pairs.values() if 'cosh' in v and 'nls' in v]
 print(f"directional CV: COSH lower in {wins}/{tot}; "
       f"median CV COSH {np.median(cc):.4f} vs NLS {np.median(cn):.4f}")
+for m in ('cosh', 'nls'):
+    e = np.array([float(s['err_mm']) for s in summary
+                  if s['method'] == m and s['err_mm']])
+    print(f"|CoM error| vs load-cell truth, {m}: median "
+          f"{np.median(np.abs(e)):.2f} mm, RMS "
+          f"{np.sqrt(np.mean(e**2)):.2f} mm, max {np.max(np.abs(e)):.2f} mm")
