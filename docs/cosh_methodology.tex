@@ -197,12 +197,40 @@ $r \in \{0.10,\dots,1.20\}$~N\,m/s,
 \label{eq:score}
 \end{equation}
 where $M_{\mathrm{crit}}^{(r)}$ is the output of
-Algorithm~\ref{alg:cosh} on the run with commanded rate $r$. The pair is
-selected by an exhaustive coarse scan over the physically admissible box
-($C_2 \in [3,8]$~rad/s, $K \in [0.05, 0.7]$~(N\,m)$^{-1}$) followed by a
-local grid refinement about the coarse minimizer; each evaluation is an
-arithmetic sweep, so no iterative optimizer is involved anywhere in the
-pipeline.
+Algorithm~\ref{alg:cosh} on the run with commanded rate $r$.
+
+\paragraph{Search ranges.} The admissible box is set so that it covers
+every physically plausible constant with margin. For
+$K = 1/(W z_{\mathrm{CoM}})$, the coarse range
+$K \in [0.10, 0.50]$~(N\,m)$^{-1}$ corresponds to
+$z_{\mathrm{CoM}} \in [0.06, 0.32]$~m at the vehicle weight — bracketing
+the plausible CoM heights — with the refinement allowed to move within
+the wider clip box $[0.05, 0.70]$ ($z_{\mathrm{CoM}}$ up to
+$0.63$~m). For $C_2 \in [3, 8]$~rad/s, the implied pivot inertia
+$J_P = 1/(K C_2^2)$ spans roughly $[0.03, 1.1]$~kg\,m$^2$, bracketing
+the parallel-axis estimate
+$J + m z_{\mathrm{CoM}}^2 \approx 0.2$--$0.35$~kg\,m$^2$ by a factor of
+several on both sides.
+
+\paragraph{Coarse-to-fine procedure.} The coarse scan evaluates
+\eqref{eq:score} on an $11 \times 11$ grid
+($\Delta C_2 = 0.5$~rad/s, $\Delta K = 0.04$~(N\,m)$^{-1}$;
+$121$ evaluations). A single refinement pass then re-scans a
+$9 \times 9$ uniform grid spanning $\pm$ one coarse step about the
+coarse minimizer ($\pm 0.5$~rad/s, $\pm 0.04$~(N\,m)$^{-1}$, clipped to
+the box), i.e.\ final resolutions of $0.125$~rad/s and
+$0.01$~(N\,m)$^{-1}$ — so the reported constants are not quantized to
+the coarse step. One pass suffices because the objective is flat along
+the $(C_2, K)$ ridge; it is also \emph{piecewise constant} (the onset
+is an integer index, so small parameter changes leave
+$M_{\mathrm{crit}}$ unchanged), which is why gradient-based or simplex
+optimizers stall on it, and a population-based global search
+(differential evolution) was found to cost about $4\times$ more for no
+measurable gain. During calibration the onset sweep of
+Algorithm~\ref{alg:cosh} is subsampled by a stride of $3$ samples for
+speed; the final identification runs at full resolution with the
+selected pair. Each evaluation is an arithmetic sweep, so no iterative
+optimizer is involved anywhere in the pipeline.
 
 \begin{remark}
 The objective \eqref{eq:score} retains a shallow valley, so the
