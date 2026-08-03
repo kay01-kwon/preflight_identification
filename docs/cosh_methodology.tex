@@ -445,50 +445,78 @@ buys, both estimators were run on \emph{identical} inputs — same
 signals, excitation windows, allocator caps and onset-free gates (the
 gated run set is method-independent because the gates use the moment
 trace only), $132$ runs in total
-(\texttt{analysis/nls\_comparison.py}). Table~\ref{tab:nls} reports,
-per case and axis, the directional means and coefficients of variation
-of $M_{\mathrm{crit}}$, the pivot-free offset \eqref{eq:mff}, and the
-CoM offset against the load-cell ground truth.
+(\texttt{analysis/nls\_comparison.py}). Table~\ref{tab:nls} compares
+the deliverables — the pivot-free offset \eqref{eq:mff} and the CoM
+offset — against the load-cell ground truth;
+Table~\ref{tab:nls-disp} compares the directional critical-moment
+means and their ramp-rate dispersion.
 
 \begin{table}[t]
 \centering
 \small
-\setlength{\tabcolsep}{4.5pt}
-\begin{tabular}{cclrrrrrrrr}
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{cc r rrr rrr}
 \toprule
-case & axis & method & $\bar M_{-}$ & $\bar M_{+}$ &
-$\mathrm{CV}_{-}$ & $\mathrm{CV}_{+}$ & $M_{\mathrm{ff}}$ &
-$\hat\lambda$ & $\lambda_{\mathrm{truth}}$ & err \\
- & & & [N\,m] & [N\,m] & [\%] & [\%] & [N\,m] & [mm] & [mm] & [mm] \\
+ & & $\lambda_{\mathrm{truth}}$ &
+\multicolumn{3}{c}{COSH} & \multicolumn{3}{c}{NLS} \\
+\cmidrule(lr){4-6} \cmidrule(lr){7-9}
+case & axis & [mm] & $M_{\mathrm{ff}}$ [N\,m] & $\hat\lambda$ [mm] &
+$|\mathrm{err}|$ & $M_{\mathrm{ff}}$ [N\,m] & $\hat\lambda$ [mm] &
+$|\mathrm{err}|$ \\
 \midrule
-1 & x & COSH & $-1.054$ & $0.950$ & $3.8$ & $5.7$ & $-0.052$ & $-1.73$ & $-2.90$ & $+1.17$ \\
-1 & x & NLS  & $-1.018$ & $0.894$ & $6.4$ & $7.7$ & $-0.062$ & $-2.05$ & $-2.90$ & $+0.85$ \\
-1 & y & COSH & $-0.422$ & $1.079$ & $2.4$ & $2.2$ & $+0.329$ & $-10.93$ & $-11.45$ & $+0.52$ \\
-1 & y & NLS  & $-0.399$ & $1.056$ & $8.8$ & $7.2$ & $+0.328$ & $-10.91$ & $-11.45$ & $+0.54$ \\
-2 & x & COSH & $-1.829$ & $0.867$ & $1.2$ & $1.5$ & $-0.481$ & $-15.22$ & $-14.29$ & $-0.93$ \\
-2 & x & NLS  & $-1.792$ & $0.848$ & $2.5$ & $4.2$ & $-0.472$ & $-14.95$ & $-14.29$ & $-0.66$ \\
-2 & y & COSH & $-0.666$ & $1.320$ & $1.2$ & $1.6$ & $+0.327$ & $-10.36$ & $-9.90$ & $-0.46$ \\
-2 & y & NLS  & $-0.637$ & $1.248$ & $4.9$ & $5.8$ & $+0.306$ & $-9.67$ & $-9.90$ & $+0.23$ \\
-3 & x & COSH & $-1.542$ & $0.997$ & $1.7$ & $2.4$ & $-0.272$ & $-8.62$ & $-5.26$ & $-3.36$ \\
-3 & x & NLS  & $-1.573$ & $1.033$ & $2.4$ & $4.1$ & $-0.270$ & $-8.54$ & $-5.26$ & $-3.28$ \\
-3 & y & COSH & $-0.983$ & $0.937$ & $1.7$ & $2.6$ & $-0.023$ & $+0.73$ & $+3.14$ & $-2.41$ \\
-3 & y & NLS  & $-0.990$ & $0.923$ & $3.2$ & $7.0$ & $-0.033$ & $+1.06$ & $+3.14$ & $-2.08$ \\
-4 & x & COSH & $-1.136$ & $1.468$ & $3.4$ & $2.2$ & $+0.166$ & $+5.26$ & $+6.67$ & $-1.41$ \\
-4 & x & NLS  & $-1.151$ & $1.463$ & $3.8$ & $3.5$ & $+0.156$ & $+4.94$ & $+6.67$ & $-1.73$ \\
-4 & y & COSH & $-0.998$ & $0.988$ & $2.9$ & $3.7$ & $-0.005$ & $+0.16$ & $+2.40$ & $-2.24$ \\
-4 & y & NLS  & $-0.928$ & $0.969$ & $10.3$ & $6.1$ & $+0.020$ & $-0.64$ & $+2.40$ & $-3.04$ \\
-5 & x & COSH & $-1.019$ & $1.695$ & $3.9$ & $2.1$ & $+0.338$ & $+10.70$ & $+10.91$ & $-0.21$ \\
-5 & x & NLS  & $-0.989$ & $1.624$ & $7.2$ & $2.6$ & $+0.317$ & $+10.05$ & $+10.91$ & $-0.86$ \\
-5 & y & COSH & $-0.635$ & $1.310$ & $6.5$ & $2.9$ & $+0.338$ & $-10.70$ & $-10.89$ & $+0.19$ \\
-5 & y & NLS  & $-0.577$ & $1.241$ & $15.2$ & $5.4$ & $+0.332$ & $-10.50$ & $-10.89$ & $+0.39$ \\
+1 & x & $-2.90$  & $-0.052$ & $-1.73$  & $1.17$ & $-0.062$ & $-2.05$  & $0.85$ \\
+1 & y & $-11.45$ & $+0.329$ & $-10.93$ & $0.52$ & $+0.328$ & $-10.91$ & $0.54$ \\
+2 & x & $-14.29$ & $-0.481$ & $-15.22$ & $0.93$ & $-0.472$ & $-14.95$ & $0.66$ \\
+2 & y & $-9.90$  & $+0.327$ & $-10.36$ & $0.46$ & $+0.306$ & $-9.67$  & $0.23$ \\
+3 & x & $-5.26$  & $-0.272$ & $-8.62$  & $3.36$ & $-0.270$ & $-8.54$  & $3.28$ \\
+3 & y & $+3.14$  & $-0.023$ & $+0.73$  & $2.41$ & $-0.033$ & $+1.06$  & $2.08$ \\
+4 & x & $+6.67$  & $+0.166$ & $+5.26$  & $1.41$ & $+0.156$ & $+4.94$  & $1.73$ \\
+4 & y & $+2.40$  & $-0.005$ & $+0.16$  & $2.24$ & $+0.020$ & $-0.64$  & $3.04$ \\
+5 & x & $+10.91$ & $+0.338$ & $+10.70$ & $0.21$ & $+0.317$ & $+10.05$ & $0.86$ \\
+5 & y & $-10.89$ & $+0.338$ & $-10.70$ & $0.19$ & $+0.332$ & $-10.50$ & $0.39$ \\
+\midrule
+\multicolumn{3}{r}{median / RMS / max $|\mathrm{err}|$ [mm]} &
+\multicolumn{3}{c}{$1.05$ / $1.64$ / $3.36$} &
+\multicolumn{3}{c}{$0.86$ / $1.72$ / $3.28$} \\
 \bottomrule
 \end{tabular}
-\caption{Dataset-calibrated COSH vs.\ per-run nonlinear least squares
-(NLS) on identical inputs. $\hat\lambda$ is the CoM offset from
-\eqref{eq:mff} with the per-case weight ($3.066$~kg for case~1,
-$3.220$~kg otherwise); $\lambda_{\mathrm{truth}}$ is the load-cell
-measurement (manuscript Table~7).}
+\caption{Deliverables against the load-cell ground truth
+(manuscript Table~7): pivot-free offset \eqref{eq:mff} and the CoM
+offset $\hat\lambda$, per-case weight ($3.066$~kg for case~1,
+$3.220$~kg otherwise). One row per case--axis; the two estimators sit
+side by side.}
 \label{tab:nls}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{cc rrrr rrrr}
+\toprule
+ & & \multicolumn{4}{c}{COSH} & \multicolumn{4}{c}{NLS} \\
+\cmidrule(lr){3-6} \cmidrule(lr){7-10}
+case & axis & $\bar M_{-}$ & $\bar M_{+}$ & $\mathrm{CV}_{-}$ &
+$\mathrm{CV}_{+}$ & $\bar M_{-}$ & $\bar M_{+}$ & $\mathrm{CV}_{-}$ &
+$\mathrm{CV}_{+}$ \\
+ & & [N\,m] & [N\,m] & [\%] & [\%] & [N\,m] & [N\,m] & [\%] & [\%] \\
+\midrule
+1 & x & $-1.054$ & $0.950$ & $\mathbf{3.8}$ & $\mathbf{5.7}$ & $-1.018$ & $0.894$ & $6.4$ & $7.7$ \\
+1 & y & $-0.422$ & $1.079$ & $\mathbf{2.4}$ & $\mathbf{2.2}$ & $-0.399$ & $1.056$ & $8.8$ & $7.2$ \\
+2 & x & $-1.829$ & $0.867$ & $\mathbf{1.2}$ & $\mathbf{1.5}$ & $-1.792$ & $0.848$ & $2.5$ & $4.2$ \\
+2 & y & $-0.666$ & $1.320$ & $\mathbf{1.2}$ & $\mathbf{1.6}$ & $-0.637$ & $1.248$ & $4.9$ & $5.8$ \\
+3 & x & $-1.542$ & $0.997$ & $\mathbf{1.7}$ & $\mathbf{2.4}$ & $-1.573$ & $1.033$ & $2.4$ & $4.1$ \\
+3 & y & $-0.983$ & $0.937$ & $\mathbf{1.7}$ & $\mathbf{2.6}$ & $-0.990$ & $0.923$ & $3.2$ & $7.0$ \\
+4 & x & $-1.136$ & $1.468$ & $\mathbf{3.4}$ & $\mathbf{2.2}$ & $-1.151$ & $1.463$ & $3.8$ & $3.5$ \\
+4 & y & $-0.998$ & $0.988$ & $\mathbf{2.9}$ & $\mathbf{3.7}$ & $-0.928$ & $0.969$ & $10.3$ & $6.1$ \\
+5 & x & $-1.019$ & $1.695$ & $\mathbf{3.9}$ & $\mathbf{2.1}$ & $-0.989$ & $1.624$ & $7.2$ & $2.6$ \\
+5 & y & $-0.635$ & $1.310$ & $\mathbf{6.5}$ & $\mathbf{2.9}$ & $-0.577$ & $1.241$ & $15.2$ & $5.4$ \\
+\bottomrule
+\end{tabular}
+\caption{Directional critical-moment means and their ramp-rate
+dispersion. Bold marks the lower CV of each pair — COSH in all
+$20/20$ groups.}
+\label{tab:nls-disp}
 \end{table}
 
 Three observations. \emph{(i) Run-level robustness is where the
