@@ -50,7 +50,7 @@ $M_{\mathrm{cap}}$ & allocator caps $(x,y)$ & $2.37$, $2.74$~N\,m & allocation f
 $\varepsilon_{\max}$ & ramp-slope gate & $3\%$ & sensitivity chain (Sec.~\ref{sec:gates}) \\
 $N_{\min}$ & window-sample gate & $38$ & $30$ pre $+\,8$ post \\
 $e_{\mathrm{lin,max}}$ & linearity-RMSE gate & $30$~mN\,m & $10\times$ noise floor \\
-$N_{\mathrm{pre}},\,N_{\mathrm{post}}$ & sweep margins & $30$, $8$ & baseline / fit minima \\
+$N_{\mathrm{pre}},\,N_{\mathrm{post}}$ & sweep margins & $8$, $8$ & degenerate-candidate guards \\
 \bottomrule
 \end{tabular}
 \caption{Design constants. $(C_2, K)$ are \emph{calibrated}, not set
@@ -123,8 +123,12 @@ and $\dot M$ the least-squares slope over the window. A $3\%$ error in
 $\dot M$ perturbs $C_1 = K\dot M$ by $3\%$ — about $7\times$ below the
 $\pm20\%$ level the sensitivity analysis shows harmless.
 \item \textbf{Window samples} $N_{\mathrm{full}} \ge 38$: a necessary
-condition for any onset position ($30$ pre-onset for the baseline and
-sweep, $8$ post-onset for the fit).
+condition for any onset position. Because the window opens at
+$|M| = 10$~mN\,m while $M_{\mathrm{crit}} \gtrsim 0.4$~N\,m, the onset
+cannot occur earlier than
+$\hat N_{\mathrm{pre}} = M_{\mathrm{crit}}^{\min}/(\dot M\,T_s) \ge 30$
+samples into the window even at the fastest ramp; adding the $8$-sample
+post-onset fit minimum gives $38$.
 \item \textbf{Linearity RMSE} $\le 30$~mN\,m about the run's own best-fit
 line: a fault detector for aborted/stepped ramps, set at $10\times$ the
 execution noise floor and above the healthy-run maximum.
@@ -160,6 +164,25 @@ arithmetic evaluation: no optimizer, no initial guess, no seed model.
   $M_{\mathrm{crit}} \gets M(t_{j^\ast})$
 \end{algorithmic}
 \end{algorithm}
+
+Two implementation details. \emph{Baseline by median.} The pre-onset
+gyro trace is heavy-tailed (propeller vibration, spin-up spikes), and —
+more importantly — when a candidate $j$ overshoots the true onset, the
+pre-segment tail contains the beginning of the hyperbolic rise. A mean
+baseline drifts with that leaked rise and partially cancels the residual
+it should expose, flattening the cost landscape; the median stays at the
+rest level until half the segment is contaminated, so misplaced
+candidates are penalized sharply and the minimum stays well defined. It
+is also a one-shot, seedless statistic, consistent with the
+no-optimizer design. \emph{Sweep margins.} The margins
+$N_{\mathrm{pre}} = N_{\mathrm{post}} = 8$ excise only degenerate
+candidates: near $j = 1$ the baseline would be estimated from a handful
+of samples, and near $j = N$ the post-onset arc is too short for the
+cosh branch to be falsifiable (at $j = N$ its cost is an empty sum).
+Since physically feasible onsets lie at least
+$\hat N_{\mathrm{pre}} \ge 30$ samples inside the window
+(Sec.~\ref{sec:gates}) and the window closes only after the response is
+well developed, the sweep remains exhaustive over every feasible onset.
 
 \begin{remark}
 Because the model curve is fully determined before the post-onset data
