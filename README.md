@@ -223,6 +223,31 @@ certificates — is written up as a drop-in manuscript section in
 `docs/fidelity_section.tex`, whose header maps every quoted number to the
 script that reproduces it.
 
+### Estimator benchmark (COSH vs NLS / PELT / CUSUM)
+
+Five onset estimators on identical inputs (windows, caps, gates), compared on
+the deliverable (CoM offset vs load-cell truth, Table 7) and on run-level
+dispersion; figures carry Welch-t 95 % confidence intervals.
+
+```bash
+python analysis/nls_comparison.py <outdir>          # runs all 5 estimators → CSVs
+python analysis/estimator_ci_figure.py <outdir>     # Fig: forest plot (offset + CI vs truth)
+python analysis/estimator_error_figure.py <outdir>  # Fig: per-case error, 1×5 subplots
+```
+
+| Script | What it shows |
+|---|---|
+| `analysis/nls_comparison.py` | per-run M_crit for cosh / TRF-NLS / PELT (normal, rbf) / CUSUM; directional means, CVs, M_ff, CoM offset vs truth (`nls_comparison_runs.csv`, `nls_comparison_summary.csv`) |
+| `analysis/estimator_ci_figure.py` | forest plot `docs/fig_estimator_ci.pdf`: offset ± CI₉₅ per method vs truth, per case–axis; also prints the LaTeX table cells |
+| `analysis/estimator_error_figure.py` | `docs/fig_estimator_err.pdf`: offset error ± CI₉₅ folded about the truth, 1×5 case subplots, x/y components |
+| `analysis/baseline_stat_ablation.py` | onset-sweep baseline statistic ablation (median vs mean vs pinned zero), full recalibration included |
+| `analysis/bias_drift.py` | in-window pre-onset baseline drift (bounds the constant-baseline assumption) |
+
+Both figure scripts read `nls_comparison_runs.csv` from `<outdir>` (produced by
+`nls_comparison.py`) and write the figures into `docs/`. The comparison is
+written up in `docs/cosh_methodology.pdf`, Sec. "Comparison with per-run
+estimators".
+
 ### Change-point benchmark
 
 Validates that the identified onset does not depend on the detection method,
