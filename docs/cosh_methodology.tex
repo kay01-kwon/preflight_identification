@@ -281,7 +281,16 @@ $\partial\omega/\partial t_{\mathrm{on}} \propto \sinh(C_2\tau)$ become
 parallel on the tail, so the Gauss--Newton Hessian of the summed
 residual is nearly singular along $\delta C_1/C_1 = C_2\,\delta t$ —
 a \emph{shallow ridge} in the $(C_2, K)$ plane whose minimizer is set
-by noise, not physics.
+by noise, not physics. This is an ill-conditioning statement, not a
+non-identifiability one: in the noiseless limit the post-onset shape
+determines all three parameters uniquely. Under gyro noise, however,
+the information along \eqref{eq:ridge} is exponentially small, so
+per-run estimates — and with them the detected critical moments —
+scatter along the ridge. The calibration should therefore be read as
+\emph{variance suppression}: choosing $(C_2, K)$ once per dataset to
+minimize the dispersion of $M_{\mathrm{crit}}$ across ramp rates
+removes precisely that scatter, which is where the practical strength
+of the method lies.
 
 The ridge is invisible to the residual but not to the deliverable.
 Moving along \eqref{eq:ridge} shifts every detected onset by the same
