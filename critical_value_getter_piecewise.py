@@ -689,9 +689,17 @@ def estimate_rig_constants(bags, axis, c2_grid=None, k_grid=None, stride=3,
     return c2_b, k_b
 
 
+# Allocator feasibility limits per axis [N.m]: past these commanded moments
+# the thrust allocation saturates, the executed ramp is no longer linear and
+# the closed-form (cosh-family) model no longer applies — the window is
+# truncated where |M| first exceeds the cap.
+MOMENT_CAP = {'x': 2.37, 'y': 2.74}
+
+
 def detect_excitation_window(
     moment: np.ndarray,
     threshold: float = 0.01,
+    moment_cap: Optional[float] = None,
 ) -> tuple[int, int]:
     """
     Find excitation window: [start of the ramp leading to the peak, max|M|].
@@ -703,8 +711,17 @@ def detect_excitation_window(
     transient during arming, which on one run crossed the threshold ~1.6 s
     early and pulled a flat idle stretch into the window, corrupting the
     measured ramp rate by −31%.
+
+    ``moment_cap`` truncates the window where |M| first exceeds the allocator
+    feasibility limit (see ``MOMENT_CAP``): beyond it the allocation
+    saturates, the ramp is no longer linear and the cosh family does not
+    apply. On the reference dataset the cap never binds (peak |M| ≤ 1.7 N·m).
     """
     idx_end = int(np.argmax(np.abs(moment)))
+    if moment_cap is not None:
+        over = np.where(np.abs(moment) > float(moment_cap))[0]
+        if len(over) > 0 and over[0] <= idx_end:
+            idx_end = max(1, int(over[0]) - 1)
     below = np.where(np.abs(moment[:idx_end]) <= threshold)[0]
     if len(below) > 0:
         return int(min(below[-1] + 1, idx_end)), idx_end
@@ -819,8 +836,10 @@ def extract_piecewise(
     t, omega, f_col, moment = (sig['t'], sig['omega'],
                                sig['f_col'], sig['moment'])
 
-    # Excitation window
-    idx_start, idx_end = detect_excitation_window(moment, threshold)
+    # Excitation window, truncated at the allocator feasibility limit —
+    # past it the allocation saturates and the cosh family does not apply
+    idx_start, idx_end = detect_excitation_window(
+        moment, threshold, moment_cap=MOMENT_CAP.get(axis))
     win = slice(idx_start, idx_end + 1)
 
     # Onset fit: PLS quadratic or cosh closed-form
@@ -918,7 +937,8 @@ def extract_piecewise_batch(
         kept = []
         for bag in bags:
             sig = prepare_signals(bag, axis, **sig_kwargs)
-            i0, i1 = detect_excitation_window(sig['moment'])
+            i0, i1 = detect_excitation_window(
+                sig['moment'], moment_cap=MOMENT_CAP.get(axis))
             n_full = i1 - i0 + 1
             if n_full_min is not None and n_full < n_full_min:
                 print(f"  [gate] {bag.name}: N_full={n_full} < {n_full_min} "
