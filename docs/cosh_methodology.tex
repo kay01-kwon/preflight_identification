@@ -477,6 +477,19 @@ shapes duplicate the color coding.}
 \label{fig:forest}
 \end{figure}
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{fig_estimator_err.pdf}
+\caption{The same data folded about the truth: CoM offset \emph{error}
+(estimate $-$ truth) with $95\%$ confidence intervals, grouped by
+component within each case ($x_{\mathrm{off}}$ from the pitch
+excitation, $y_{\mathrm{off}}$ from the roll excitation). The residual
+biases of cases~3 and~4 are \emph{common to all five estimators} — a
+rig/contact asymmetry, not a detection artifact — while the
+estimator-to-estimator differences stay within about $\pm1$~mm.}
+\label{fig:err}
+\end{figure}
+
 \begin{table}[t]
 \centering
 \footnotesize
@@ -615,7 +628,10 @@ $1.6$--$1.8$~mm (Table~\ref{tab:nls}, bottom rows) — the pivot-free
 average \eqref{eq:mff} cancels each method's largely common-mode onset
 bias between the $+$ and $-$ directions, and $5$--$7$ runs per
 direction average the rest. That the final CoM offset does not depend
-on the detection methodology is itself a validation certificate.
+on the detection methodology is itself a validation certificate — and
+Fig.~\ref{fig:err} sharpens it: the residual errors that do remain
+(cases~3--4) are shared by all five estimators, placing them in the
+rig/contact geometry rather than in any onset detector.
 \emph{(ii) Run-level robustness is where the methods separate:} COSH
 has the lowest CV in $16/20$ direction groups (PELT$_{\mathrm{N}}$
 takes the other $4$), median $2.4\%$ against $3.9$--$7.1\%$, and its
