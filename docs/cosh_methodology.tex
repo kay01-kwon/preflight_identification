@@ -427,19 +427,205 @@ is deliberately \emph{retained}: the same contact-phase moment acts at
 lift-off, where $M_{\mathrm{ff}}$ compensates it. The CoM offset follows
 from the moment-to-offset conversion of $M_{\mathrm{ff}}$ and is used
 for validation against load-cell ground truth only; $M_{\mathrm{ff}}$
-itself is the quantity applied in flight.
+itself is the quantity applied in flight. A roll excitation ($M_x$)
+senses the $y$-offset via $M_{\mathrm{ff},x} = +W y_{\mathrm{off}}$; a
+pitch excitation ($M_y$) senses the $x$-offset via
+$M_{\mathrm{ff},y} = -W x_{\mathrm{off}}$.
+
+\section{Comparison with per-run estimators: NLS, PELT, CUSUM}
+\label{sec:nls}
+
+Four per-run alternatives were run on \emph{identical} inputs — same
+signals, excitation windows, allocator caps and onset-free gates (the
+gated run set is method-independent because the gates use the moment
+trace only), $132$ runs in total
+(\texttt{analysis/nls\_comparison.py}):
+\begin{itemize}
+\item \textbf{NLS} — the predecessor of Algorithm~\ref{alg:cosh}:
+per-run nonlinear least squares (\textsc{scipy}
+\texttt{least\_squares}, trust-region reflective), free
+$(C_1, C_2, C)$ with $C_2$ bounded to $[3, 8]$~rad/s, onset swept
+locally around a quadratic-model seed;
+\item \textbf{PELT$_{\mathrm{N}}$ / PELT$_{\mathrm{R}}$} —
+change-point detection (binary segmentation, \texttt{ruptures}) with
+Gaussian mean+variance and RBF-kernel costs;
+\item \textbf{CUSUM} — the tabular sequential detector with allowance
+$k = 2\sigma$ against the pre-onset vibration.
+\end{itemize}
+Table~\ref{tab:nls} compares the deliverable — the CoM offset from the
+pivot-free average \eqref{eq:mff} — against the load-cell ground
+truth; Table~\ref{tab:nls-mom} lists the underlying directional
+critical-moment means and pivot-free offsets; and
+Table~\ref{tab:nls-disp} compares the ramp-rate dispersion of the
+directional critical moments.
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{5.5pt}
+\begin{tabular}{cc r rrrrr}
+\toprule
+ & & $\lambda_{\mathrm{truth}}$ &
+\multicolumn{5}{c}{estimated CoM offset $\hat\lambda$ [mm]} \\
+\cmidrule(lr){4-8}
+case & axis & [mm] & COSH & NLS & PELT$_{\mathrm{N}}$ &
+PELT$_{\mathrm{R}}$ & CUSUM \\
+\midrule
+1 & x & $-2.90$ & $-1.73$ & $-2.05$ & $-1.46$ & $-1.20$ & $-1.15$ \\
+1 & y & $-11.45$ & $-10.93$ & $-10.91$ & $-11.06$ & $-10.90$ & $-9.53$ \\
+2 & x & $-14.29$ & $-15.22$ & $-14.95$ & $-15.13$ & $-14.42$ & $-14.99$ \\
+2 & y & $-9.90$ & $-10.36$ & $-9.67$ & $-9.98$ & $-9.69$ & $-8.61$ \\
+3 & x & $-5.26$ & $-8.62$ & $-8.54$ & $-8.11$ & $-4.63$ & $-8.45$ \\
+3 & y & $+3.14$ & $+0.73$ & $+1.06$ & $+0.71$ & $+0.94$ & $+1.12$ \\
+4 & x & $+6.67$ & $+5.26$ & $+4.94$ & $+5.57$ & $+3.58$ & $+5.01$ \\
+4 & y & $+2.40$ & $+0.16$ & $-0.64$ & $-0.66$ & $-0.60$ & $-0.22$ \\
+5 & x & $+10.91$ & $+10.70$ & $+10.05$ & $+10.29$ & $+11.16$ & $+10.25$ \\
+5 & y & $-10.89$ & $-10.70$ & $-10.50$ & $-10.95$ & $-11.14$ & $-11.00$ \\
+\midrule
+\multicolumn{3}{r}{median $|\mathrm{err}|$ [mm]} &
+$1.05$ & $0.86$ & $0.97$ & $0.59$ & $1.70$ \\
+\multicolumn{3}{r}{RMS $|\mathrm{err}|$ [mm]} &
+$1.64$ & $1.72$ & $1.67$ & $1.65$ & $1.82$ \\
+\multicolumn{3}{r}{max $|\mathrm{err}|$ [mm]} &
+$3.36$ & $3.28$ & $3.06$ & $3.09$ & $3.19$ \\
+\bottomrule
+\end{tabular}
+\caption{CoM offset from the pivot-free average \eqref{eq:mff} against
+the load-cell ground truth (manuscript Table~7; per-case weight
+$3.066$~kg for case~1, $3.220$~kg otherwise), for the five onset
+estimators on identical inputs. $M_{\mathrm{ff}} = \pm W\hat\lambda$
+per the axis mapping of Sec.~\ref{sec:aggregation}.}
+\label{tab:nls}
+\end{table}
+
+\begin{table}[t]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3.2pt}
+\begin{tabular}{ll rrrrrrrrrr}
+\toprule
+method & & 1x & 1y & 2x & 2y & 3x & 3y & 4x & 4y & 5x & 5y \\
+\midrule
+COSH & $\bar M_-$ & $-1.054$ & $-0.422$ & $-1.829$ & $-0.666$ & $-1.542$ & $-0.983$ & $-1.136$ & $-0.998$ & $-1.019$ & $-0.635$ \\
+ & $\bar M_+$ & $+0.950$ & $+1.079$ & $+0.867$ & $+1.320$ & $+0.997$ & $+0.937$ & $+1.468$ & $+0.988$ & $+1.695$ & $+1.310$ \\
+ & $M_{\mathrm{ff}}$ & $-0.052$ & $+0.329$ & $-0.481$ & $+0.327$ & $-0.272$ & $-0.023$ & $+0.166$ & $-0.005$ & $+0.338$ & $+0.338$ \\
+\midrule
+NLS & $\bar M_-$ & $-1.018$ & $-0.399$ & $-1.792$ & $-0.637$ & $-1.573$ & $-0.990$ & $-1.151$ & $-0.928$ & $-0.989$ & $-0.577$ \\
+ & $\bar M_+$ & $+0.894$ & $+1.056$ & $+0.848$ & $+1.248$ & $+1.033$ & $+0.923$ & $+1.463$ & $+0.969$ & $+1.624$ & $+1.241$ \\
+ & $M_{\mathrm{ff}}$ & $-0.062$ & $+0.328$ & $-0.472$ & $+0.306$ & $-0.270$ & $-0.033$ & $+0.156$ & $+0.020$ & $+0.317$ & $+0.332$ \\
+\midrule
+PELT$_{\mathrm{N}}$ & $\bar M_-$ & $-1.048$ & $-0.464$ & $-1.852$ & $-0.703$ & $-1.573$ & $-1.059$ & $-1.164$ & $-1.005$ & $-1.033$ & $-0.640$ \\
+ & $\bar M_+$ & $+0.960$ & $+1.130$ & $+0.896$ & $+1.333$ & $+1.061$ & $+1.014$ & $+1.516$ & $+1.047$ & $+1.683$ & $+1.332$ \\
+ & $M_{\mathrm{ff}}$ & $-0.044$ & $+0.333$ & $-0.478$ & $+0.315$ & $-0.256$ & $-0.022$ & $+0.176$ & $+0.021$ & $+0.325$ & $+0.346$ \\
+\midrule
+PELT$_{\mathrm{R}}$ & $\bar M_-$ & $-1.023$ & $-0.449$ & $-1.680$ & $-0.702$ & $-1.339$ & $-1.055$ & $-1.179$ & $-0.986$ & $-0.932$ & $-0.625$ \\
+ & $\bar M_+$ & $+0.950$ & $+1.105$ & $+0.769$ & $+1.314$ & $+1.046$ & $+0.995$ & $+1.406$ & $+1.024$ & $+1.637$ & $+1.328$ \\
+ & $M_{\mathrm{ff}}$ & $-0.036$ & $+0.328$ & $-0.455$ & $+0.306$ & $-0.146$ & $-0.030$ & $+0.113$ & $+0.019$ & $+0.353$ & $+0.352$ \\
+\midrule
+CUSUM & $\bar M_-$ & $-1.046$ & $-0.480$ & $-1.861$ & $-0.710$ & $-1.608$ & $-1.029$ & $-1.181$ & $-1.044$ & $-1.048$ & $-0.656$ \\
+ & $\bar M_+$ & $+0.977$ & $+1.054$ & $+0.914$ & $+1.254$ & $+1.075$ & $+0.958$ & $+1.498$ & $+1.058$ & $+1.695$ & $+1.351$ \\
+ & $M_{\mathrm{ff}}$ & $-0.035$ & $+0.287$ & $-0.473$ & $+0.272$ & $-0.267$ & $-0.035$ & $+0.158$ & $+0.007$ & $+0.324$ & $+0.347$ \\
+\bottomrule
+\end{tabular}
+\caption{Directional critical-moment means $\bar M_{\pm}$ and
+pivot-free offset $M_{\mathrm{ff}}$ [N\,m] per estimator. Columns are
+case--axis pairs (e.g.\ 1x $=$ case~1, roll). Note the signed
+signatures relative to COSH: NLS magnitudes sit low (early onsets),
+PELT$_{\mathrm{N}}$/CUSUM high (detection lag), while
+$M_{\mathrm{ff}}$ stays nearly method-invariant.}
+\label{tab:nls-mom}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{3.6pt}
+\begin{tabular}{cc rr rr rr rr rr}
+\toprule
+ & & \multicolumn{2}{c}{COSH} & \multicolumn{2}{c}{NLS} &
+\multicolumn{2}{c}{PELT$_{\mathrm{N}}$} &
+\multicolumn{2}{c}{PELT$_{\mathrm{R}}$} &
+\multicolumn{2}{c}{CUSUM} \\
+\cmidrule(lr){3-4} \cmidrule(lr){5-6} \cmidrule(lr){7-8}
+\cmidrule(lr){9-10} \cmidrule(lr){11-12}
+case & axis & $\mathrm{CV}_{-}$ & $\mathrm{CV}_{+}$ &
+$\mathrm{CV}_{-}$ & $\mathrm{CV}_{+}$ &
+$\mathrm{CV}_{-}$ & $\mathrm{CV}_{+}$ &
+$\mathrm{CV}_{-}$ & $\mathrm{CV}_{+}$ &
+$\mathrm{CV}_{-}$ & $\mathrm{CV}_{+}$ \\
+\midrule
+1 & x & $\mathbf{3.8}$ & $\mathbf{5.7}$ & $6.4$ & $7.7$ & $4.4$ & $6.1$ & $7.3$ & $8.6$ & $5.9$ & $6.7$ \\
+1 & y & $2.4$ & $\mathbf{2.2}$ & $8.8$ & $7.2$ & $\mathbf{1.8}$ & $3.3$ & $5.2$ & $4.4$ & $5.2$ & $24.0$ \\
+2 & x & $\mathbf{1.2}$ & $\mathbf{1.5}$ & $2.5$ & $4.2$ & $2.5$ & $2.4$ & $15.5$ & $23.6$ & $1.8$ & $2.6$ \\
+2 & y & $\mathbf{1.2}$ & $\mathbf{1.6}$ & $4.9$ & $5.8$ & $2.8$ & $2.5$ & $3.1$ & $2.0$ & $3.1$ & $21.9$ \\
+3 & x & $\mathbf{1.7}$ & $\mathbf{2.4}$ & $2.4$ & $4.1$ & $4.9$ & $4.2$ & $23.9$ & $8.5$ & $3.1$ & $4.7$ \\
+3 & y & $\mathbf{1.7}$ & $\mathbf{2.6}$ & $3.2$ & $7.0$ & $4.4$ & $4.1$ & $4.4$ & $6.0$ & $12.4$ & $22.8$ \\
+4 & x & $\mathbf{3.4}$ & $2.2$ & $3.8$ & $3.5$ & $4.0$ & $\mathbf{1.6}$ & $5.6$ & $10.3$ & $3.9$ & $3.5$ \\
+4 & y & $\mathbf{2.9}$ & $\mathbf{3.7}$ & $10.3$ & $6.1$ & $7.5$ & $7.2$ & $7.8$ & $6.9$ & $6.7$ & $7.3$ \\
+5 & x & $3.9$ & $2.1$ & $7.2$ & $2.6$ & $\mathbf{3.6}$ & $\mathbf{2.0}$ & $27.4$ & $3.0$ & $4.0$ & $2.3$ \\
+5 & y & $\mathbf{6.5}$ & $\mathbf{2.9}$ & $15.2$ & $5.4$ & $10.1$ & $3.8$ & $9.5$ & $3.8$ & $9.3$ & $4.0$ \\
+\midrule
+\multicolumn{2}{r}{median / worst [\%]} &
+\multicolumn{2}{c}{$\mathbf{2.4}$ / $\mathbf{6.5}$} &
+\multicolumn{2}{c}{$5.6$ / $15.2$} &
+\multicolumn{2}{c}{$3.9$ / $10.1$} &
+\multicolumn{2}{c}{$7.1$ / $27.4$} &
+\multicolumn{2}{c}{$4.9$ / $24.0$} \\
+\bottomrule
+\end{tabular}
+\caption{Ramp-rate dispersion (CV [\%]) of the directional critical
+moments under the five estimators. Bold marks the lowest CV in each
+of the $20$ direction groups: COSH in $16$, PELT$_{\mathrm{N}}$ in
+$4$, the rest in none. The underlying directional means are in
+Table~\ref{tab:nls-mom}.}
+\label{tab:nls-disp}
+\end{table}
+
+Three observations. \emph{(i) The deliverable is detector-agnostic:}
+against the load-cell truth all five estimators land at RMS
+$1.6$--$1.8$~mm (Table~\ref{tab:nls}, bottom rows) — the pivot-free
+average \eqref{eq:mff} cancels each method's largely common-mode onset
+bias between the $+$ and $-$ directions, and $5$--$7$ runs per
+direction average the rest. That the final CoM offset does not depend
+on the detection methodology is itself a validation certificate.
+\emph{(ii) Run-level robustness is where the methods separate:} COSH
+has the lowest CV in $16/20$ direction groups (PELT$_{\mathrm{N}}$
+takes the other $4$), median $2.4\%$ against $3.9$--$7.1\%$, and its
+worst group is $6.5\%$ where the alternatives reach
+$15$--$27\%$ — the nonparametric detectors (PELT$_{\mathrm{R}}$,
+CUSUM) occasionally misplace the onset badly on short fast-ramp
+windows. The paired per-run critical moments (NLS vs.\ COSH) differ by
+$27.6$~mN\,m at the median but up to $217$~mN\,m — the ridge of
+Sec.~\ref{sec:calibration} realized run by run. \emph{(iii) The biases
+carry signatures:} NLS sits $2.6\%$ \emph{low} in mean $|M|$ (the
+early-onset drift of the free amplitude--onset fit), while
+PELT$_{\mathrm{N}}$ and CUSUM sit $3.2\%$ and $3.1\%$ \emph{high} —
+detection lag, since a distribution change must accumulate post-onset
+evidence before it is declared; both signatures largely cancel in
+\eqref{eq:mff}. COSH needs no per-run tuning (CUSUM's allowance $k$,
+PELT's minimum segment) and a \emph{single} run already sits within a
+few percent of its directional mean — which is what enables run-count
+reduction and per-run gating diagnostics.
 
 \section{Reproducibility}
 
 Every number in this document is reproducible from the repository:
-\texttt{critical\_value\_getter\_piecewise.py} (pipeline, gates, caps,
-calibration, Algorithm~\ref{alg:cosh});
-\texttt{analysis/ramp\_quality.py} (gates);
-\texttt{analysis/sensitivity.py} ($\pm20\%$ robustness);
-\texttt{analysis/cosh\_fidelity.py} (prediction-test residuals);
-\texttt{analysis/excitation\_angle\_design.py} (rate/cutoff design);
-\texttt{analysis/ge\_linearity.py}, \texttt{ge\_trajectory.py}
-(ground-effect bracket); \texttt{analysis/tiltcap\_ablation.py} (window
-ablation).
+\begin{itemize}
+\item \texttt{critical\_value\_getter\_piecewise.py} — pipeline,
+gates, caps, calibration, Algorithm~\ref{alg:cosh};
+\item \texttt{analysis/ramp\_quality.py} — gates;
+\item \texttt{analysis/sensitivity.py} — $\pm20\%$ robustness;
+\item \texttt{analysis/cosh\_fidelity.py} — prediction-test residuals;
+\item \texttt{analysis/excitation\_angle\_design.py} — rate/cutoff
+design;
+\item \texttt{analysis/ge\_linearity.py},
+\texttt{analysis/ge\_trajectory.py} — ground-effect bracket;
+\item \texttt{analysis/tiltcap\_ablation.py} — window ablation;
+\item \texttt{analysis/baseline\_stat\_ablation.py} —
+median/mean/zero baseline;
+\item \texttt{analysis/bias\_drift.py} — in-window baseline drift;
+\item \texttt{analysis/nls\_comparison.py} —
+Tables~\ref{tab:nls}--\ref{tab:nls-disp}.
+\end{itemize}
 
 \end{document}
