@@ -50,7 +50,7 @@ $M_{\mathrm{cap}}$ & allocator caps $(x,y)$ & $2.37$, $2.74$~N\,m & allocation f
 $\varepsilon_{\max}$ & ramp-slope gate & $3\%$ & sensitivity chain (Sec.~\ref{sec:gates}) \\
 $N_{\min}$ & window-sample gate & $38$ & $30$ pre $+\,8$ post \\
 $e_{\mathrm{lin,max}}$ & linearity-RMSE gate & $30$~mN\,m & $10\times$ noise floor \\
-$N_{\mathrm{pre}},\,N_{\mathrm{post}}$ & sweep margins & $8$, $8$ & degenerate-candidate guards \\
+$N_{\mathrm{seg}}$ & sweep margin (each end) & $8$ & degenerate-candidate guard \\
 \bottomrule
 \end{tabular}
 \caption{Design constants. $(C_2, K)$ are \emph{calibrated}, not set
@@ -127,8 +127,8 @@ condition for any onset position. Because the window opens at
 $|M| = 10$~mN\,m while $M_{\mathrm{crit}} \gtrsim 0.4$~N\,m, the onset
 cannot occur earlier than
 $\hat N_{\mathrm{pre}} = M_{\mathrm{crit}}^{\min}/(\dot M\,T_s) \ge 30$
-samples into the window even at the fastest ramp; adding the $8$-sample
-post-onset fit minimum gives $38$.
+samples into the window even at the fastest ramp; adding the
+$N_{\mathrm{seg}} = 8$ post-onset fit minimum gives $38$.
 \item \textbf{Linearity RMSE} $\le 30$~mN\,m about the run's own best-fit
 line: a fault detector for aborted/stepped ramps, set at $10\times$ the
 execution noise floor and above the healthy-run maximum.
@@ -147,18 +147,23 @@ arithmetic evaluation: no optimizer, no initial guess, no seed model.
 \caption{COSH onset detection (single run)}
 \label{alg:cosh}
 \begin{algorithmic}[1]
-\Require windowed samples $\{(t_i,\omega_i)\}_{i=1}^{N}$; moment $M(t)$;
-  calibrated $(C_2, K)$; measured ramp slope $\dot M$
+\Require samples $\{(t_i,\omega_i)\}$ on the excitation window
+  $[i_{\mathrm{start}}, i_{\mathrm{end}}]$; moment $M(t)$;
+  calibrated $(C_2, K)$; measured ramp slope $\dot M$;
+  margin $N_{\mathrm{seg}} = 8$
 \Ensure onset index $j^\ast$; critical moment $M_{\mathrm{crit}}$
 \State $C_1 \gets K\dot M$
   \Comment{onset conditions \eqref{eq:onset-cond} fix the amplitude}
-\For{$j = N_{\mathrm{pre}}, \dots, N - N_{\mathrm{post}}$}
+\For{$j = i_{\mathrm{start}} + N_{\mathrm{seg}}, \dots,
+  i_{\mathrm{end}} - N_{\mathrm{seg}}$}
   \Comment{exhaustive sweep of the single unknown}
-  \State $C \gets \operatorname{median}\{\omega_i : i < j\}$
+  \State $C \gets \operatorname{median}\{\omega_i :
+    i_{\mathrm{start}} \le i < j\}$
     \Comment{baseline by continuity}
-  \State $\mathrm{cost}(j) \gets \sum_{i<j}(\omega_i - C)^2
-    + \sum_{i\ge j}\bigl(\omega_i - [\,C_1(\cosh C_2 (t_i - t_j) - 1)
-    + C\,]\bigr)^2$
+  \State $\mathrm{cost}(j) \gets
+    \sum_{i=i_{\mathrm{start}}}^{j-1}(\omega_i - C)^2
+    + \sum_{i=j}^{i_{\mathrm{end}}}\bigl(\omega_i
+    - [\,C_1(\cosh C_2 (t_i - t_j) - 1) + C\,]\bigr)^2$
 \EndFor
 \State $j^\ast \gets \arg\min_j \mathrm{cost}(j)$;\quad
   $M_{\mathrm{crit}} \gets M(t_{j^\ast})$
@@ -174,11 +179,14 @@ it should expose, flattening the cost landscape; the median stays at the
 rest level until half the segment is contaminated, so misplaced
 candidates are penalized sharply and the minimum stays well defined. It
 is also a one-shot, seedless statistic, consistent with the
-no-optimizer design. \emph{Sweep margins.} The margins
-$N_{\mathrm{pre}} = N_{\mathrm{post}} = 8$ excise only degenerate
-candidates: near $j = 1$ the baseline would be estimated from a handful
-of samples, and near $j = N$ the post-onset arc is too short for the
-cosh branch to be falsifiable (at $j = N$ its cost is an empty sum).
+no-optimizer design. \emph{Sweep margin.} The margin
+$N_{\mathrm{seg}} = 8$, applied at both window ends, guarantees every
+candidate split leaves at least $N_{\mathrm{seg}}$ samples in each
+segment; it excises only degenerate candidates: near
+$j = i_{\mathrm{start}}$ the baseline would be estimated from a handful
+of samples, and near $j = i_{\mathrm{end}}$ the post-onset arc is too
+short for the cosh branch to be falsifiable (at
+$j = i_{\mathrm{end}}$ its cost is nearly an empty sum).
 Since physically feasible onsets lie at least
 $\hat N_{\mathrm{pre}} \ge 30$ samples inside the window
 (Sec.~\ref{sec:gates}) and the window closes only after the response is
