@@ -206,7 +206,19 @@ estimate barely moves ($71/132$ onsets identical,
 $M_{\mathrm{ff}}$ shift $\le 1.3$~mN\,m). The estimated baseline is
 therefore not load-bearing on this dataset; it is kept because it makes
 the sweep invariant to the gyro bias — a rig- and temperature-dependent
-quantity that need not stay this small — at zero parameter cost. \emph{Sweep margin.} The margin
+quantity that need not stay this small — at zero parameter cost. Nor
+does $C$ need the bias to be constant in time: it is re-estimated per
+run, so only \emph{within-window} drift (windows last $1$--$10$~s)
+matters. Measured over the guaranteed pre-onset segment
+($|M| < 0.3$~N\,m, spans $\le 3.0$~s), the baseline wanders by
+$3.4$~mrad/s (median; p90 $24$, max $68$) — an upper bound that
+conflates true sensor drift with real elastic pre-onset motion
+(\texttt{analysis/bias\_drift.py}). This wander is present in the very
+data on which the $C = 0$ bound and the rate-invariance certificates
+were earned, and its structure is covered by the perturbation
+absorption: the constant part goes to $C$, a $\tau$-linear trend is
+absorbed by the span projection, and only the residual curvature
+reaches $\rho$. \emph{Sweep margin.} The margin
 $N_{\mathrm{seg}} = 8$, applied at both window ends, guarantees every
 candidate split leaves at least $N_{\mathrm{seg}}$ samples in each
 segment; it excises only degenerate candidates: near
