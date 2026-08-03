@@ -19,7 +19,7 @@ TRUTH={('case_01','Mx'):-2.90,('case_01','My'):-11.45,('case_02','Mx'):-14.29,
 ('case_04','Mx'):6.67,('case_04','My'):2.40,('case_05','Mx'):10.91,('case_05','My'):-10.89}
 SIGN={'Mx':1.0,'My':-1.0}
 M=['cosh','nls','pelt_normal','pelt_rbf','cusum']
-LBL={'cosh':'COSH','nls':'NLS','pelt_normal':'PELT-N','pelt_rbf':'PELT-R','cusum':'CUSUM'}
+LBL={'cosh':'COSH','nls':'NLS','pelt_normal':'CPD-N','pelt_rbf':'CPD-R','cusum':'CUSUM'}
 COL={'cosh':'#0072B2','nls':'#E69F00','pelt_normal':'#009E73','pelt_rbf':'#D55E00','cusum':'#CC79A7'}
 MRK={'cosh':'o','nls':'s','pelt_normal':'^','pelt_rbf':'v','cusum':'D'}
 

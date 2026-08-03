@@ -223,7 +223,7 @@ certificates — is written up as a drop-in manuscript section in
 `docs/fidelity_section.tex`, whose header maps every quoted number to the
 script that reproduces it.
 
-### Estimator benchmark (COSH vs NLS / PELT / CUSUM)
+### Estimator benchmark (COSH vs NLS / CPD / CUSUM)
 
 Five onset estimators on identical inputs (windows, caps, gates), compared on
 the deliverable (CoM offset vs load-cell truth, Table 7) and on run-level
@@ -237,7 +237,7 @@ python analysis/estimator_error_figure.py <outdir>  # Fig: per-case error, 1×5 
 
 | Script | What it shows |
 |---|---|
-| `analysis/nls_comparison.py` | per-run M_crit for cosh / TRF-NLS / PELT (normal, rbf) / CUSUM; directional means, CVs, M_ff, CoM offset vs truth (`nls_comparison_runs.csv`, `nls_comparison_summary.csv`) |
+| `analysis/nls_comparison.py` | per-run M_crit for cosh / TRF-NLS / CPD (Gaussian, RBF cost) / CUSUM; directional means, CVs, M_ff, CoM offset vs truth (`nls_comparison_runs.csv`, `nls_comparison_summary.csv`) |
 | `analysis/estimator_ci_figure.py` | forest plot `docs/fig_estimator_ci.pdf`: offset ± CI₉₅ per method vs truth, per case–axis; also prints the LaTeX table cells |
 | `analysis/estimator_error_figure.py` | `docs/fig_estimator_err.pdf`: offset error ± CI₉₅ folded about the truth, 1×5 case subplots, x/y components |
 | `analysis/baseline_stat_ablation.py` | onset-sweep baseline statistic ablation (median vs mean vs pinned zero), full recalibration included |
@@ -251,7 +251,7 @@ estimators".
 ### Change-point benchmark
 
 Validates that the identified onset does not depend on the detection method,
-against PELT (Gaussian and RBF-kernel cost) and CUSUM:
+against single change-point detection (CPD; Gaussian and RBF-kernel cost) and CUSUM:
 
 ```bash
 python analysis/pelt_crosscheck.py DataSet/exp/case_05/My --axis y --save-fig --no-plot

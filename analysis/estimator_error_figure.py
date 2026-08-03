@@ -20,7 +20,7 @@ SIGN={'Mx':1.0,'My':-1.0}
 # Mx (roll) senses the y-offset; My (pitch) senses the x-offset
 COMP={'Mx':'y','My':'x'}
 M=['cosh','nls','pelt_normal','pelt_rbf','cusum']
-LBL={'cosh':'COSH','nls':'NLS','pelt_normal':'PELT-N','pelt_rbf':'PELT-R','cusum':'CUSUM'}
+LBL={'cosh':'COSH','nls':'NLS','pelt_normal':'CPD-N','pelt_rbf':'CPD-R','cusum':'CUSUM'}
 COL={'cosh':'#0072B2','nls':'#E69F00','pelt_normal':'#009E73','pelt_rbf':'#D55E00','cusum':'#CC79A7'}
 MRK={'cosh':'o','nls':'s','pelt_normal':'^','pelt_rbf':'v','cusum':'D'}
 
