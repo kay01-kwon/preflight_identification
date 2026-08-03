@@ -1,0 +1,78 @@
+% =====================================================================
+% Algorithm box for the constrained cosh-family identification.
+% Requires: \usepackage{algorithm} \usepackage{algpseudocode}
+% Mirrors critical_value_getter_piecewise.py (detect_excitation_window,
+% extract_piecewise_batch, estimate_rig_constants, cosh_onset_fit).
+% =====================================================================
+
+\begin{algorithm}[t]
+\caption{Pre-flight critical-moment identification with the constrained
+cosh family}
+\label{alg:identification}
+\begin{algorithmic}[1]
+\Require runs $\{(\omega(t),\,\Omega_{1:6}(t))\}$ for axis
+  $a \in \{x,y\}$; commanded rates $\dot M_{\mathrm{cmd}}$;
+  thrust map $C_T$; window threshold $M_{\mathrm{thr}} = 0.01$~N\,m;
+  allocator caps $M_{\mathrm{cap}} = \{2.37,\,2.74\}$~N\,m ($x,y$);
+  gates $\varepsilon_{\max} = 3\%$, $N_{\min} = 38$,
+  $e_{\mathrm{lin,max}} = 30$~mN\,m;
+  sweep margins $N_{\mathrm{pre}} = 30$, $N_{\mathrm{post}} = 8$
+\Ensure per-run $M_{\mathrm{crit}}$; directional means; pivot-free
+  offset $M_{\mathrm{ff}}$; CoM offset
+
+\Statex \textit{— Stage 1: signals and excitation window (per run) —}
+\State $M(t) \gets$ rotor moment from measured speeds,
+  $C_T\sum_i b_{a,i}\,\Omega_i^2(t)$;\quad $\omega(t) \gets$ rate gyro
+\State $i_{\mathrm{end}} \gets \arg\max_t |M|$
+\If{$\exists\, t:\ |M(t)| > M_{\mathrm{cap}}[a]$}
+  \State $i_{\mathrm{end}} \gets$ first crossing $-\,1$
+  \Comment{allocation saturates past the cap: the executed ramp is no
+    longer linear and the cosh family does not apply}
+\EndIf
+\State $i_{\mathrm{start}} \gets$ (last $i < i_{\mathrm{end}}$ with
+  $|M| \le M_{\mathrm{thr}}$) $+\,1$
+  \Comment{backward from the peak: immune to spin-up blips}
+
+\Statex \textit{— Stage 2: onset-free run gates (measured moment only) —}
+\State $\dot M \gets$ least-squares slope of $M$ over the window;\quad
+  $\varepsilon \gets (|\dot M| - \dot M_{\mathrm{cmd}})
+  / \dot M_{\mathrm{cmd}}$
+\State discard the run if $|\varepsilon| > \varepsilon_{\max}$
+  \textbf{or} $N_{\mathrm{full}} < N_{\min}$ \textbf{or}
+  $\mathrm{RMS}\bigl(M - \mathrm{line}\bigr) > e_{\mathrm{lin,max}}$
+
+\Statex \textit{— Stage 3: rig-constant calibration (once per dataset) —}
+\For{$(C_2, K)$ on a coarse grid, then a local refinement}
+  \State run Stage~4 on every gated run with $(C_2, K)$ pinned
+  \State $\mathrm{score}(C_2,K) \gets \sum_{\mathrm{dir} \in \{+,-\}}
+    \mathrm{CV}\bigl(M_{\mathrm{crit}}\ \text{across ramp rates}\bigr)$
+  \Comment{physical self-consistency: a static threshold must not
+    depend on how fast it was approached}
+\EndFor
+\State $(C_2^\ast, K^\ast) \gets \arg\min \mathrm{score}$
+
+\Statex \textit{— Stage 4: constrained fit, no free shape parameter
+  (per run) —}
+\State $C_1 \gets K^\ast \dot M$
+  \Comment{amplitude fixed by the onset conditions
+    $\omega = \dot\omega = 0$}
+\For{candidate onset $j = N_{\mathrm{pre}}, \dots,
+  N_{\mathrm{full}} - N_{\mathrm{post}}$}
+  \State $C_j \gets \operatorname{median}\{\omega_i : i < j\}$
+  \Comment{baseline by continuity}
+  \State $\mathrm{cost}(j) \gets \sum_{i<j} (\omega_i - C_j)^2
+    + \sum_{i \ge j} \bigl(\omega_i - [\,C_1(\cosh C_2^\ast
+    (t_i - t_j) - 1) + C_j\,]\bigr)^2$
+  \Comment{plain arithmetic — no optimiser, no seed}
+\EndFor
+\State $j^\ast \gets \arg\min_j \mathrm{cost}(j)$;\quad
+  $M_{\mathrm{crit}} \gets M(t_{j^\ast})$
+
+\Statex \textit{— Stage 5: aggregation —}
+\State $\bar M_{\pm} \gets$ directional means of $M_{\mathrm{crit}}$;
+  \quad $M_{\mathrm{ff}} \gets \tfrac12 (\bar M_{+} + \bar M_{-})$
+\State CoM offset $\gets$ moment-to-offset conversion of
+  $M_{\mathrm{ff}}$ \Comment{validation only; $M_{\mathrm{ff}}$ itself
+  is the take-off feed-forward}
+\end{algorithmic}
+\end{algorithm}
