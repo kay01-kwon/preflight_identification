@@ -252,13 +252,48 @@ values that absorb the state-linear contributions of the unmodeled
 effects (the local slope of the gravity nonlinearity and the
 ground-effect spring). Both are calibrated once per dataset.
 
-Joint residual minimization is not a usable criterion: in the cost of
-Algorithm~\ref{alg:cosh}, an earlier onset with a smaller amplitude
-trades off against a later onset with a larger one, so the summed
-residual is nearly degenerate along a ridge in the $(C_2,K)$ plane and
-its minimizer is not physically meaningful. We calibrate instead by
-\emph{physical self-consistency}: a static threshold must not depend on
-how fast it was approached. With runs at ramp rates
+Joint residual minimization is not a usable criterion, and the reason
+can be made exact. On the fitted window the closed form is
+tail-dominated: for $C_2\tau \gtrsim 1$,
+\begin{equation}
+C_1\bigl(\cosh(C_2\tau) - 1\bigr) \;\approx\; \tfrac{C_1}{2}\,e^{C_2\tau}
+\;=\; \underbrace{\tfrac{C_1}{2}\,e^{-C_2 t_{\mathrm{on}}}}_{\textstyle A}
+\; e^{C_2 t},
+\end{equation}
+so the amplitude and the onset enter the data only through the product
+$A$: the substitution
+\begin{equation}
+C_1 \to \lambda C_1, \qquad
+t_{\mathrm{on}} \to t_{\mathrm{on}} + C_2^{-1}\ln\lambda
+\label{eq:ridge}
+\end{equation}
+leaves the tail invariant for every $\lambda > 0$ — an earlier onset
+with a smaller amplitude trades off exactly against a later onset with
+a larger one. Equivalently, the sensitivity vectors
+$\partial\omega/\partial C_1 \propto \cosh(C_2\tau) - 1$ and
+$\partial\omega/\partial t_{\mathrm{on}} \propto \sinh(C_2\tau)$ become
+parallel on the tail, so the Gauss--Newton Hessian of the summed
+residual is nearly singular along $\delta C_1/C_1 = C_2\,\delta t$. The
+degeneracy is broken only near the onset, where the response is
+quadratic, $\tfrac12 C_1 C_2^2 \tau^2$, and of the order of the gyro
+noise — hence a \emph{shallow ridge} in the $(C_2, K)$ plane whose
+minimizer is set by noise, not physics.
+
+The ridge is invisible to the residual but not to the deliverable.
+Moving along \eqref{eq:ridge} shifts every detected onset by the same
+\emph{time} offset $\delta t = C_2^{-1}\ln\lambda$ — with
+$\lambda = K^\ast/K$ the same for all runs, since $C_1 = K\dot M$
+scales them alike — and therefore biases the critical moment by
+\begin{equation}
+\delta M_{\mathrm{crit}} \;=\; \dot M\,\delta t \;\propto\; \dot M ,
+\end{equation}
+linearly in the ramp rate: a wrong pair \emph{fans out} the identified
+$M_{\mathrm{crit}}$ across the twelvefold rate range, while the correct
+pair leaves it rate-invariant. The direction the residual cannot see is
+thus exactly the direction a rate-consistency criterion sees best. We
+therefore calibrate by \emph{physical self-consistency}: a static
+threshold must not depend on how fast it was approached. With runs at
+ramp rates
 $r \in \{0.10,\dots,1.20\}$~N\,m/s,
 \begin{equation}
 \mathrm{score}(C_2, K) \;=\; \sum_{\mathrm{dir}\in\{+,-\}}
