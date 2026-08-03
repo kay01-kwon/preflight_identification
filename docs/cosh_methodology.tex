@@ -253,31 +253,35 @@ effects (the local slope of the gravity nonlinearity and the
 ground-effect spring). Both are calibrated once per dataset.
 
 Joint residual minimization is not a usable criterion, and the reason
-can be made exact. On the fitted window the closed form is
-tail-dominated: for $C_2\tau \gtrsim 1$,
+can be made exact. The identity
+$\cosh x - 1 = 2\sinh^2(x/2)$ factors the closed form as
 \begin{equation}
-C_1\bigl(\cosh(C_2\tau) - 1\bigr) \;\approx\; \tfrac{C_1}{2}\,e^{C_2\tau}
-\;=\; \underbrace{\tfrac{C_1}{2}\,e^{-C_2 t_{\mathrm{on}}}}_{\textstyle A}
-\; e^{C_2 t},
+C_1\bigl(\cosh(C_2\tau) - 1\bigr) \;=\;
+\underbrace{\tfrac{C_1}{2}\,e^{-C_2 t_{\mathrm{on}}}}_{\textstyle A}\;
+e^{C_2 t}\,\bigl(1 - e^{-C_2\tau}\bigr)^{2},
 \end{equation}
-so the amplitude and the onset enter the data only through the product
-$A$: the substitution
+whose last factor rises to one within a few growth times $C_2^{-1}$.
+On the tail the amplitude and the onset therefore enter the data only
+through the product $A$, and the substitution
 \begin{equation}
 C_1 \to \lambda C_1, \qquad
 t_{\mathrm{on}} \to t_{\mathrm{on}} + C_2^{-1}\ln\lambda
 \label{eq:ridge}
 \end{equation}
-leaves the tail invariant for every $\lambda > 0$ — an earlier onset
-with a smaller amplitude trades off exactly against a later onset with
-a larger one. Equivalently, the sensitivity vectors
-$\partial\omega/\partial C_1 \propto \cosh(C_2\tau) - 1$ and
+leaves $A$ \emph{exactly} invariant for every $\lambda > 0$: the
+response changes only through the last factor, by the relative amount
+$\bigl[(1 - \lambda e^{-C_2\tau})/(1 - e^{-C_2\tau})\bigr]^{2} - 1
+\approx -2(\lambda - 1)\,e^{-C_2\tau}$, which decays exponentially in
+$\tau$. An earlier onset with a smaller amplitude thus trades off
+against a later onset with a larger one everywhere except near the
+onset — where the response is quadratic, $\tfrac12 C_1 C_2^2\tau^2$,
+and of the order of the gyro noise. Equivalently, the sensitivity
+vectors $\partial\omega/\partial C_1 \propto \cosh(C_2\tau) - 1$ and
 $\partial\omega/\partial t_{\mathrm{on}} \propto \sinh(C_2\tau)$ become
 parallel on the tail, so the Gauss--Newton Hessian of the summed
-residual is nearly singular along $\delta C_1/C_1 = C_2\,\delta t$. The
-degeneracy is broken only near the onset, where the response is
-quadratic, $\tfrac12 C_1 C_2^2 \tau^2$, and of the order of the gyro
-noise — hence a \emph{shallow ridge} in the $(C_2, K)$ plane whose
-minimizer is set by noise, not physics.
+residual is nearly singular along $\delta C_1/C_1 = C_2\,\delta t$ —
+a \emph{shallow ridge} in the $(C_2, K)$ plane whose minimizer is set
+by noise, not physics.
 
 The ridge is invisible to the residual but not to the deliverable.
 Moving along \eqref{eq:ridge} shifts every detected onset by the same
