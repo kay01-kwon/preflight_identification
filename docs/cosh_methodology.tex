@@ -610,17 +610,22 @@ reduction and per-run gating diagnostics.
 \section{Reproducibility}
 
 Every number in this document is reproducible from the repository:
-\texttt{critical\_value\_getter\_piecewise.py} (pipeline, gates, caps,
-calibration, Algorithm~\ref{alg:cosh});
-\texttt{analysis/ramp\_quality.py} (gates);
-\texttt{analysis/sensitivity.py} ($\pm20\%$ robustness);
-\texttt{analysis/cosh\_fidelity.py} (prediction-test residuals);
-\texttt{analysis/excitation\_angle\_design.py} (rate/cutoff design);
-\texttt{analysis/ge\_linearity.py}, \texttt{ge\_trajectory.py}
-(ground-effect bracket); \texttt{analysis/tiltcap\_ablation.py} (window
-ablation); \texttt{analysis/baseline\_stat\_ablation.py} (median/mean/%
-zero baseline); \texttt{analysis/bias\_drift.py} (in-window baseline
-drift); \texttt{analysis/nls\_comparison.py}
-(Table~\ref{tab:nls}).
+\begin{itemize}
+\item \texttt{critical\_value\_getter\_piecewise.py} — pipeline,
+gates, caps, calibration, Algorithm~\ref{alg:cosh};
+\item \texttt{analysis/ramp\_quality.py} — gates;
+\item \texttt{analysis/sensitivity.py} — $\pm20\%$ robustness;
+\item \texttt{analysis/cosh\_fidelity.py} — prediction-test residuals;
+\item \texttt{analysis/excitation\_angle\_design.py} — rate/cutoff
+design;
+\item \texttt{analysis/ge\_linearity.py},
+\texttt{analysis/ge\_trajectory.py} — ground-effect bracket;
+\item \texttt{analysis/tiltcap\_ablation.py} — window ablation;
+\item \texttt{analysis/baseline\_stat\_ablation.py} —
+median/mean/zero baseline;
+\item \texttt{analysis/bias\_drift.py} — in-window baseline drift;
+\item \texttt{analysis/nls\_comparison.py} —
+Tables~\ref{tab:nls}--\ref{tab:nls-disp}.
+\end{itemize}
 
 \end{document}
