@@ -8,8 +8,8 @@ The identification locates the tip-over onset with the closed-form solution
 of the unstable dynamics (``cosh`` model). This script benchmarks that onset
 against classic change-point / onset detectors:
 
-  * PELT normal — Binary Segmentation, Gaussian (mean+variance) cost (ruptures)
-  * PELT rbf    — Binary Segmentation, RBF-kernel cost (nonparametric)
+  * CPD normal — optimal single change point, Gaussian (mean+variance) cost (ruptures)
+  * CPD rbf    — optimal single change point, RBF-kernel cost (nonparametric)
   * CUSUM       — tabular cumulative-sum sequential detector
 
 Agreement across these independent families demonstrates the critical
@@ -57,10 +57,10 @@ from critical_value_getter_piecewise import (
 # Proposed model = 'cosh'. Classic detectors benchmarked against it:
 CLASSIC = ['pelt_normal', 'pelt_rbf', 'cusum']
 ALL_METHODS = ['cosh'] + CLASSIC
-_LABEL = {'cosh': 'cosh (proposed)', 'pelt_normal': 'PELT normal',
-          'pelt_rbf': 'PELT rbf', 'cusum': 'CUSUM'}
-_SHORT = {'cosh': 'cosh', 'pelt_normal': 'PELTnorm',
-          'pelt_rbf': 'PELTrbf', 'cusum': 'CUSUM'}
+_LABEL = {'cosh': 'cosh (proposed)', 'pelt_normal': 'CPD normal',
+          'pelt_rbf': 'CPD rbf', 'cusum': 'CUSUM'}
+_SHORT = {'cosh': 'cosh', 'pelt_normal': 'CPDnorm',
+          'pelt_rbf': 'CPDrbf', 'cusum': 'CUSUM'}
 _COLOR = {'cosh': 'tab:blue', 'pelt_normal': 'tab:orange',
           'pelt_rbf': 'tab:purple', 'cusum': 'tab:brown'}
 
@@ -276,7 +276,7 @@ def plot_crosscheck(series, axis, save_dir=None, show=True):
         r, c = divmod(idx, cols)
         axes[r][c].set_visible(False)
     fig.suptitle('Onset benchmark: cosh (proposed) vs classic change-point '
-                 'detectors (PELT / CUSUM)', fontsize=14)
+                 'detectors (CPD / CUSUM)', fontsize=14)
     fig.tight_layout()
     if save_dir:
         p = Path(save_dir) / f"onset_benchmark_{axis}.png"

@@ -433,7 +433,7 @@ senses the $y$-offset via $M_{\mathrm{ff},x} = +W y_{\mathrm{off}}$; a
 pitch excitation ($M_y$) senses the $x$-offset via
 $M_{\mathrm{ff},y} = -W x_{\mathrm{off}}$.
 
-\section{Comparison with per-run estimators: NLS, PELT, CUSUM}
+\section{Comparison with per-run estimators: NLS, CPD, CUSUM}
 \label{sec:nls}
 
 Four per-run alternatives were run on \emph{identical} inputs — same
@@ -447,9 +447,11 @@ per-run nonlinear least squares (\textsc{scipy}
 \texttt{least\_squares}, trust-region reflective), free
 $(C_1, C_2, C)$ with $C_2$ bounded to $[3, 8]$~rad/s, onset swept
 locally around a quadratic-model seed;
-\item \textbf{PELT$_{\mathrm{N}}$ / PELT$_{\mathrm{R}}$} —
-change-point detection (binary segmentation, \texttt{ruptures}) with
-Gaussian mean+variance and RBF-kernel costs;
+\item \textbf{CPD$_{\mathrm{N}}$ / CPD$_{\mathrm{R}}$} — optimal
+single change-point detection (\texttt{ruptures}; with one break the
+search over all admissible splits is exact) under the Gaussian
+mean+variance cost and the nonparametric RBF-kernel cost,
+respectively;
 \item \textbf{CUSUM} — the tabular sequential detector with allowance
 $k = 2\sigma$ against the pre-onset vibration.
 \end{itemize}
@@ -472,7 +474,7 @@ five estimators, against the load-cell truth (black tick), per
 case--axis pair. COSH (blue) has the narrowest interval in $9$ of $10$
 pairs ($\pm0.3$--$0.9$~mm); the nonparametric detectors blow up to
 $\pm4$--$5$~mm on the pairs where they misplace onsets
-(PELT$_{\mathrm{R}}$ at 2x, 3x, 5x; CUSUM at 1y, 2y, 3y). Marker
+(CPD$_{\mathrm{R}}$ at 2x, 3x, 5x; CUSUM at 1y, 2y, 3y). Marker
 shapes duplicate the color coding.}
 \label{fig:forest}
 \end{figure}
@@ -499,8 +501,8 @@ estimator-to-estimator differences stay within about $\pm1$~mm.}
  & & $\lambda_{\mathrm{truth}}$ &
 \multicolumn{5}{c}{estimated CoM offset $\hat\lambda \pm$ CI$_{95}$ [mm]} \\
 \cmidrule(lr){4-8}
-case & axis & [mm] & COSH & NLS & PELT$_{\mathrm{N}}$ &
-PELT$_{\mathrm{R}}$ & CUSUM \\
+case & axis & [mm] & COSH & NLS & CPD$_{\mathrm{N}}$ &
+CPD$_{\mathrm{R}}$ & CUSUM \\
 \midrule
 1 & x & $-2.90$ & $-1.73\,{\scriptstyle\pm0.93}$ & $-2.05\,{\scriptstyle\pm1.30}$ & $-1.46\,{\scriptstyle\pm1.03}$ & $-1.20\,{\scriptstyle\pm1.51}$ & $-1.15\,{\scriptstyle\pm1.24}$ \\
 1 & y & $-11.45$ & $-10.93\,{\scriptstyle\pm0.39}$ & $-10.91\,{\scriptstyle\pm1.27}$ & $-11.06\,{\scriptstyle\pm0.57}$ & $-10.90\,{\scriptstyle\pm0.81}$ & $-9.53\,{\scriptstyle\pm3.88}$ \\
@@ -551,12 +553,12 @@ NLS & $\bar M_-$ & $-1.018$ & $-0.399$ & $-1.792$ & $-0.637$ & $-1.573$ & $-0.99
  & $M_{\mathrm{ff}}$ & $-0.062$ & $+0.328$ & $-0.472$ & $+0.306$ & $-0.270$ & $-0.033$ & $+0.156$ & $+0.020$ & $+0.317$ & $+0.332$ \\
  & CI$_{95}$ & $\pm0.039$ & $\pm0.038$ & $\pm0.025$ & $\pm0.035$ & $\pm0.024$ & $\pm0.031$ & $\pm0.028$ & $\pm0.047$ & $\pm0.035$ & $\pm0.055$ \\
 \midrule
-PELT$_{\mathrm{N}}$ & $\bar M_-$ & $-1.048$ & $-0.464$ & $-1.852$ & $-0.703$ & $-1.573$ & $-1.059$ & $-1.164$ & $-1.005$ & $-1.033$ & $-0.640$ \\
+CPD$_{\mathrm{N}}$ & $\bar M_-$ & $-1.048$ & $-0.464$ & $-1.852$ & $-0.703$ & $-1.573$ & $-1.059$ & $-1.164$ & $-1.005$ & $-1.033$ & $-0.640$ \\
  & $\bar M_+$ & $+0.960$ & $+1.130$ & $+0.896$ & $+1.333$ & $+1.061$ & $+1.014$ & $+1.516$ & $+1.047$ & $+1.683$ & $+1.332$ \\
  & $M_{\mathrm{ff}}$ & $-0.044$ & $+0.333$ & $-0.478$ & $+0.315$ & $-0.256$ & $-0.022$ & $+0.176$ & $+0.021$ & $+0.325$ & $+0.346$ \\
  & CI$_{95}$ & $\pm0.031$ & $\pm0.017$ & $\pm0.022$ & $\pm0.017$ & $\pm0.038$ & $\pm0.026$ & $\pm0.023$ & $\pm0.044$ & $\pm0.021$ & $\pm0.041$ \\
 \midrule
-PELT$_{\mathrm{R}}$ & $\bar M_-$ & $-1.023$ & $-0.449$ & $-1.680$ & $-0.702$ & $-1.339$ & $-1.055$ & $-1.179$ & $-0.986$ & $-0.932$ & $-0.625$ \\
+CPD$_{\mathrm{R}}$ & $\bar M_-$ & $-1.023$ & $-0.449$ & $-1.680$ & $-0.702$ & $-1.339$ & $-1.055$ & $-1.179$ & $-0.986$ & $-0.932$ & $-0.625$ \\
  & $\bar M_+$ & $+0.950$ & $+1.105$ & $+0.769$ & $+1.314$ & $+1.046$ & $+0.995$ & $+1.406$ & $+1.024$ & $+1.637$ & $+1.328$ \\
  & $M_{\mathrm{ff}}$ & $-0.036$ & $+0.328$ & $-0.455$ & $+0.306$ & $-0.146$ & $-0.030$ & $+0.113$ & $+0.019$ & $+0.353$ & $+0.352$ \\
  & CI$_{95}$ & $\pm0.045$ & $\pm0.024$ & $\pm0.136$ & $\pm0.016$ & $\pm0.149$ & $\pm0.032$ & $\pm0.069$ & $\pm0.043$ & $\pm0.118$ & $\pm0.038$ \\
@@ -571,7 +573,7 @@ CUSUM & $\bar M_-$ & $-1.046$ & $-0.480$ & $-1.861$ & $-0.710$ & $-1.608$ & $-1.
 offset $M_{\mathrm{ff}}$ and its $95\%$ confidence interval (Welch
 $t$) [N\,m] per estimator. Columns are case--axis pairs (e.g.\ 1x $=$
 case~1, roll). Note the signed signatures relative to COSH: NLS
-magnitudes sit low (early onsets), PELT$_{\mathrm{N}}$/CUSUM high
+magnitudes sit low (early onsets), CPD$_{\mathrm{N}}$/CUSUM high
 (detection lag), while $M_{\mathrm{ff}}$ stays nearly
 method-invariant.}
 \label{tab:nls-mom}
@@ -584,8 +586,8 @@ method-invariant.}
 \begin{tabular}{cc rr rr rr rr rr}
 \toprule
  & & \multicolumn{2}{c}{COSH} & \multicolumn{2}{c}{NLS} &
-\multicolumn{2}{c}{PELT$_{\mathrm{N}}$} &
-\multicolumn{2}{c}{PELT$_{\mathrm{R}}$} &
+\multicolumn{2}{c}{CPD$_{\mathrm{N}}$} &
+\multicolumn{2}{c}{CPD$_{\mathrm{R}}$} &
 \multicolumn{2}{c}{CUSUM} \\
 \cmidrule(lr){3-4} \cmidrule(lr){5-6} \cmidrule(lr){7-8}
 \cmidrule(lr){9-10} \cmidrule(lr){11-12}
@@ -616,7 +618,7 @@ $\mathrm{CV}_{-}$ & $\mathrm{CV}_{+}$ \\
 \end{tabular}
 \caption{Ramp-rate dispersion (CV [\%]) of the directional critical
 moments under the five estimators. Bold marks the lowest CV in each
-of the $20$ direction groups: COSH in $16$, PELT$_{\mathrm{N}}$ in
+of the $20$ direction groups: COSH in $16$, CPD$_{\mathrm{N}}$ in
 $4$, the rest in none. The underlying directional means are in
 Table~\ref{tab:nls-mom}.}
 \label{tab:nls-disp}
@@ -633,10 +635,10 @@ Fig.~\ref{fig:err} sharpens it: the residual errors that do remain
 (cases~3--4) are shared by all five estimators, placing them in the
 rig/contact geometry rather than in any onset detector.
 \emph{(ii) Run-level robustness is where the methods separate:} COSH
-has the lowest CV in $16/20$ direction groups (PELT$_{\mathrm{N}}$
+has the lowest CV in $16/20$ direction groups (CPD$_{\mathrm{N}}$
 takes the other $4$), median $2.4\%$ against $3.9$--$7.1\%$, and its
 worst group is $6.5\%$ where the alternatives reach
-$15$--$27\%$ — the nonparametric detectors (PELT$_{\mathrm{R}}$,
+$15$--$27\%$ — the nonparametric detectors (CPD$_{\mathrm{R}}$,
 CUSUM) occasionally misplace the onset badly on short fast-ramp
 windows. Equivalently, the $95\%$ confidence interval on the CoM
 offset is $\pm0.3$--$0.9$~mm under COSH — the narrowest in $9$ of
@@ -646,11 +648,11 @@ $27.6$~mN\,m at the median but up to $217$~mN\,m — the ridge of
 Sec.~\ref{sec:calibration} realized run by run. \emph{(iii) The biases
 carry signatures:} NLS sits $2.6\%$ \emph{low} in mean $|M|$ (the
 early-onset drift of the free amplitude--onset fit), while
-PELT$_{\mathrm{N}}$ and CUSUM sit $3.2\%$ and $3.1\%$ \emph{high} —
+CPD$_{\mathrm{N}}$ and CUSUM sit $3.2\%$ and $3.1\%$ \emph{high} —
 detection lag, since a distribution change must accumulate post-onset
 evidence before it is declared; both signatures largely cancel in
 \eqref{eq:mff}. COSH needs no per-run tuning (CUSUM's allowance $k$,
-PELT's minimum segment) and a \emph{single} run already sits within a
+CPD's minimum segment) and a \emph{single} run already sits within a
 few percent of its directional mean — which is what enables run-count
 reduction and per-run gating diagnostics.
 
