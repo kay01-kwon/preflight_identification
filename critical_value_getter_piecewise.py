@@ -331,6 +331,19 @@ def piecewise_onset_fit(
 
 
 
+# Pre-onset baseline statistic for the onset sweep. 'median' (default) is
+# robust to the heavy-tailed gyro noise and to the cosh rise leaking into the
+# pre-segment when a candidate onset overshoots; 'mean' is the LS-optimal
+# constant and is kept only for the ablation (analysis/baseline_stat_ablation).
+BASELINE_STAT = 'median'
+
+
+def _baseline_of(x: np.ndarray) -> float:
+    if BASELINE_STAT == 'mean':
+        return float(np.mean(x))
+    return float(np.median(x))
+
+
 def cosh_onset_fit(t, omega, moment, onset_guess,
                    sweep_back_s=0.10, sweep_ahead_s=0.30, step_s=0.01,
                    c2_bounds=(3.0, 8.0), moment_floor=0.30, c2_fixed=None,
@@ -435,7 +448,7 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
         for j in range(lo, max(lo + 1, hi), step):
             tau = t[j:] - t[j]
             gfun = np.cosh(np.clip(c2_val * tau, 0, 30)) - 1
-            C0 = float(np.median(omega[:j])) if j > 0 else 0.0
+            C0 = _baseline_of(omega[:j]) if j > 0 else 0.0
             post = np.sum((omega[j:] - (C1_fix * gfun + C0)) ** 2)
             pre = np.sum((omega[:j] - C0) ** 2) if j > 0 else 0.0
             cost = float(post + pre)
@@ -484,7 +497,7 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
     for j in range(lo, max(lo + 1, hi), step):
         tau = t[j:] - t[j]
         y = omega[j:]
-        C0 = float(np.median(omega[:j])) if j > 0 else 0.0
+        C0 = _baseline_of(omega[:j]) if j > 0 else 0.0
         r = least_squares(lambda p: model(p, tau) - y,
                           p0(C0), method='trf', bounds=bounds, max_nfev=300)
         pre = np.sum((omega[:j] - C0) ** 2) if j > 0 else 0.0
