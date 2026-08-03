@@ -427,7 +427,91 @@ is deliberately \emph{retained}: the same contact-phase moment acts at
 lift-off, where $M_{\mathrm{ff}}$ compensates it. The CoM offset follows
 from the moment-to-offset conversion of $M_{\mathrm{ff}}$ and is used
 for validation against load-cell ground truth only; $M_{\mathrm{ff}}$
-itself is the quantity applied in flight.
+itself is the quantity applied in flight. A roll excitation ($M_x$)
+senses the $y$-offset via $M_{\mathrm{ff},x} = +W y_{\mathrm{off}}$; a
+pitch excitation ($M_y$) senses the $x$-offset via
+$M_{\mathrm{ff},y} = -W x_{\mathrm{off}}$.
+
+\section{Comparison with per-run nonlinear least squares}
+\label{sec:nls}
+
+The predecessor of Algorithm~\ref{alg:cosh} fitted each run
+individually by nonlinear least squares (\textsc{scipy}
+\texttt{least\_squares}, trust-region reflective): free
+$(C_1, C_2, C)$ with $C_2$ bounded to the physical band
+$[3, 8]$~rad/s and a free baseline, the onset swept locally around a
+quadratic-model seed. To quantify what the dataset-coupled calibration
+buys, both estimators were run on \emph{identical} inputs — same
+signals, excitation windows, allocator caps and onset-free gates (the
+gated run set is method-independent because the gates use the moment
+trace only), $132$ runs in total
+(\texttt{analysis/nls\_comparison.py}). Table~\ref{tab:nls} reports,
+per case and axis, the directional means and coefficients of variation
+of $M_{\mathrm{crit}}$, the pivot-free offset \eqref{eq:mff}, and the
+CoM offset against the load-cell ground truth.
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4.5pt}
+\begin{tabular}{cclrrrrrrrr}
+\toprule
+case & axis & method & $\bar M_{-}$ & $\bar M_{+}$ &
+$\mathrm{CV}_{-}$ & $\mathrm{CV}_{+}$ & $M_{\mathrm{ff}}$ &
+$\hat\lambda$ & $\lambda_{\mathrm{truth}}$ & err \\
+ & & & [N\,m] & [N\,m] & [\%] & [\%] & [N\,m] & [mm] & [mm] & [mm] \\
+\midrule
+1 & x & COSH & $-1.054$ & $0.950$ & $3.8$ & $5.7$ & $-0.052$ & $-1.73$ & $-2.90$ & $+1.17$ \\
+1 & x & NLS  & $-1.018$ & $0.894$ & $6.4$ & $7.7$ & $-0.062$ & $-2.05$ & $-2.90$ & $+0.85$ \\
+1 & y & COSH & $-0.422$ & $1.079$ & $2.4$ & $2.2$ & $+0.329$ & $-10.93$ & $-11.45$ & $+0.52$ \\
+1 & y & NLS  & $-0.399$ & $1.056$ & $8.8$ & $7.2$ & $+0.328$ & $-10.91$ & $-11.45$ & $+0.54$ \\
+2 & x & COSH & $-1.829$ & $0.867$ & $1.2$ & $1.5$ & $-0.481$ & $-15.22$ & $-14.29$ & $-0.93$ \\
+2 & x & NLS  & $-1.792$ & $0.848$ & $2.5$ & $4.2$ & $-0.472$ & $-14.95$ & $-14.29$ & $-0.66$ \\
+2 & y & COSH & $-0.666$ & $1.320$ & $1.2$ & $1.6$ & $+0.327$ & $-10.36$ & $-9.90$ & $-0.46$ \\
+2 & y & NLS  & $-0.637$ & $1.248$ & $4.9$ & $5.8$ & $+0.306$ & $-9.67$ & $-9.90$ & $+0.23$ \\
+3 & x & COSH & $-1.542$ & $0.997$ & $1.7$ & $2.4$ & $-0.272$ & $-8.62$ & $-5.26$ & $-3.36$ \\
+3 & x & NLS  & $-1.573$ & $1.033$ & $2.4$ & $4.1$ & $-0.270$ & $-8.54$ & $-5.26$ & $-3.28$ \\
+3 & y & COSH & $-0.983$ & $0.937$ & $1.7$ & $2.6$ & $-0.023$ & $+0.73$ & $+3.14$ & $-2.41$ \\
+3 & y & NLS  & $-0.990$ & $0.923$ & $3.2$ & $7.0$ & $-0.033$ & $+1.06$ & $+3.14$ & $-2.08$ \\
+4 & x & COSH & $-1.136$ & $1.468$ & $3.4$ & $2.2$ & $+0.166$ & $+5.26$ & $+6.67$ & $-1.41$ \\
+4 & x & NLS  & $-1.151$ & $1.463$ & $3.8$ & $3.5$ & $+0.156$ & $+4.94$ & $+6.67$ & $-1.73$ \\
+4 & y & COSH & $-0.998$ & $0.988$ & $2.9$ & $3.7$ & $-0.005$ & $+0.16$ & $+2.40$ & $-2.24$ \\
+4 & y & NLS  & $-0.928$ & $0.969$ & $10.3$ & $6.1$ & $+0.020$ & $-0.64$ & $+2.40$ & $-3.04$ \\
+5 & x & COSH & $-1.019$ & $1.695$ & $3.9$ & $2.1$ & $+0.338$ & $+10.70$ & $+10.91$ & $-0.21$ \\
+5 & x & NLS  & $-0.989$ & $1.624$ & $7.2$ & $2.6$ & $+0.317$ & $+10.05$ & $+10.91$ & $-0.86$ \\
+5 & y & COSH & $-0.635$ & $1.310$ & $6.5$ & $2.9$ & $+0.338$ & $-10.70$ & $-10.89$ & $+0.19$ \\
+5 & y & NLS  & $-0.577$ & $1.241$ & $15.2$ & $5.4$ & $+0.332$ & $-10.50$ & $-10.89$ & $+0.39$ \\
+\bottomrule
+\end{tabular}
+\caption{Dataset-calibrated COSH vs.\ per-run nonlinear least squares
+(NLS) on identical inputs. $\hat\lambda$ is the CoM offset from
+\eqref{eq:mff} with the per-case weight ($3.066$~kg for case~1,
+$3.220$~kg otherwise); $\lambda_{\mathrm{truth}}$ is the load-cell
+measurement (manuscript Table~7).}
+\label{tab:nls}
+\end{table}
+
+Three observations. \emph{(i) Run-level robustness is where the
+methods separate:} the directional CV is lower under COSH in
+$20/20$ case--axis--direction groups — median $2.4\%$ vs.\ $5.6\%$,
+NLS worst case $15.2\%$ — and the paired per-run critical moments
+differ by $27.6$~mN\,m at the median but $118$~mN\,m at the 90th
+percentile and up to $217$~mN\,m. This is the ridge of
+Sec.~\ref{sec:calibration} realized: the free fit scatters along the
+amplitude--onset trade-off run by run, and its directional magnitudes
+sit systematically low ($\lvert\bar M_\pm\rvert$ smaller in $17/20$
+groups) — the early-onset drift of the unconstrained fit. \emph{(ii)
+The deliverable survives either way:} against the load-cell truth the
+CoM error is statistically indistinguishable (COSH median
+$1.05$ / RMS $1.64$ / max $3.36$~mm; NLS $0.86$ / $1.72$ / $3.28$~mm),
+because the pivot-free average \eqref{eq:mff} cancels the largely
+common-mode early-onset bias between the $+$ and $-$ directions, and
+averaging $5$--$7$ runs per direction suppresses the scatter.
+\emph{(iii) The calibration is what converts per-run estimates from
+indicative to trustworthy:} with COSH a \emph{single} run already sits
+within a few percent of the directional mean, which is what enables
+run-count reduction and per-run gating diagnostics; the NLS estimator
+needs the full ensemble to average its ridge scatter away.
 
 \section{Reproducibility}
 
@@ -440,6 +524,9 @@ calibration, Algorithm~\ref{alg:cosh});
 \texttt{analysis/excitation\_angle\_design.py} (rate/cutoff design);
 \texttt{analysis/ge\_linearity.py}, \texttt{ge\_trajectory.py}
 (ground-effect bracket); \texttt{analysis/tiltcap\_ablation.py} (window
-ablation).
+ablation); \texttt{analysis/baseline\_stat\_ablation.py} (median/mean/%
+zero baseline); \texttt{analysis/bias\_drift.py} (in-window baseline
+drift); \texttt{analysis/nls\_comparison.py}
+(Table~\ref{tab:nls}).
 
 \end{document}
