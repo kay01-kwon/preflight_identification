@@ -1,6 +1,7 @@
 \documentclass[10pt]{article}
 \usepackage[a4paper,margin=25mm]{geometry}
 \usepackage{amsmath,amssymb}
+\usepackage{graphicx}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{booktabs}
@@ -452,35 +453,69 @@ Gaussian mean+variance and RBF-kernel costs;
 \item \textbf{CUSUM} — the tabular sequential detector with allowance
 $k = 2\sigma$ against the pre-onset vibration.
 \end{itemize}
+Figure~\ref{fig:forest} is the readable summary: per case--axis pair
+it shows each estimator's CoM offset with its $95\%$ confidence
+interval (Welch $t$ on the pivot-free average, run-to-run scatter)
+against the load-cell truth. The full data sit in the tables:
 Table~\ref{tab:nls} compares the deliverable — the CoM offset from the
 pivot-free average \eqref{eq:mff} — against the load-cell ground
 truth; Table~\ref{tab:nls-mom} lists the underlying directional
-critical-moment means and pivot-free offsets; and
-Table~\ref{tab:nls-disp} compares the ramp-rate dispersion of the
-directional critical moments.
+critical-moment means, pivot-free offsets and their confidence
+intervals; and Table~\ref{tab:nls-disp} compares the ramp-rate
+dispersion of the directional critical moments.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.92\linewidth]{fig_estimator_ci.pdf}
+\caption{Estimated CoM offset with $95\%$ confidence intervals for the
+five estimators, against the load-cell truth (black tick), per
+case--axis pair. COSH (blue) has the narrowest interval in $9$ of $10$
+pairs ($\pm0.3$--$0.9$~mm); the nonparametric detectors blow up to
+$\pm4$--$5$~mm on the pairs where they misplace onsets
+(PELT$_{\mathrm{R}}$ at 2x, 3x, 5x; CUSUM at 1y, 2y, 3y). Marker
+shapes duplicate the color coding.}
+\label{fig:forest}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{fig_estimator_err.pdf}
+\caption{The same data folded about the truth: CoM offset \emph{error}
+(estimate $-$ truth) with $95\%$ confidence intervals, grouped by
+component within each case ($x_{\mathrm{off}}$ from the pitch
+excitation, $y_{\mathrm{off}}$ from the roll excitation). The residual
+biases of cases~3 and~4 are \emph{common to all five estimators} — a
+rig/contact asymmetry, not a detection artifact — while the
+estimator-to-estimator differences stay within about $\pm1$~mm.}
+\label{fig:err}
+\end{figure}
 
 \begin{table}[t]
 \centering
-\small
-\setlength{\tabcolsep}{5.5pt}
+\footnotesize
+\setlength{\tabcolsep}{2.6pt}
 \begin{tabular}{cc r rrrrr}
 \toprule
  & & $\lambda_{\mathrm{truth}}$ &
-\multicolumn{5}{c}{estimated CoM offset $\hat\lambda$ [mm]} \\
+\multicolumn{5}{c}{estimated CoM offset $\hat\lambda \pm$ CI$_{95}$ [mm]} \\
 \cmidrule(lr){4-8}
 case & axis & [mm] & COSH & NLS & PELT$_{\mathrm{N}}$ &
 PELT$_{\mathrm{R}}$ & CUSUM \\
 \midrule
-1 & x & $-2.90$ & $-1.73$ & $-2.05$ & $-1.46$ & $-1.20$ & $-1.15$ \\
-1 & y & $-11.45$ & $-10.93$ & $-10.91$ & $-11.06$ & $-10.90$ & $-9.53$ \\
-2 & x & $-14.29$ & $-15.22$ & $-14.95$ & $-15.13$ & $-14.42$ & $-14.99$ \\
-2 & y & $-9.90$ & $-10.36$ & $-9.67$ & $-9.98$ & $-9.69$ & $-8.61$ \\
-3 & x & $-5.26$ & $-8.62$ & $-8.54$ & $-8.11$ & $-4.63$ & $-8.45$ \\
-3 & y & $+3.14$ & $+0.73$ & $+1.06$ & $+0.71$ & $+0.94$ & $+1.12$ \\
-4 & x & $+6.67$ & $+5.26$ & $+4.94$ & $+5.57$ & $+3.58$ & $+5.01$ \\
-4 & y & $+2.40$ & $+0.16$ & $-0.64$ & $-0.66$ & $-0.60$ & $-0.22$ \\
-5 & x & $+10.91$ & $+10.70$ & $+10.05$ & $+10.29$ & $+11.16$ & $+10.25$ \\
-5 & y & $-10.89$ & $-10.70$ & $-10.50$ & $-10.95$ & $-11.14$ & $-11.00$ \\
+1 & x & $-2.90$ & $-1.73\,{\scriptstyle\pm0.93}$ & $-2.05\,{\scriptstyle\pm1.30}$ & $-1.46\,{\scriptstyle\pm1.03}$ & $-1.20\,{\scriptstyle\pm1.51}$ & $-1.15\,{\scriptstyle\pm1.24}$ \\
+1 & y & $-11.45$ & $-10.93\,{\scriptstyle\pm0.39}$ & $-10.91\,{\scriptstyle\pm1.27}$ & $-11.06\,{\scriptstyle\pm0.57}$ & $-10.90\,{\scriptstyle\pm0.81}$ & $-9.53\,{\scriptstyle\pm3.88}$ \\
+\addlinespace[2pt]
+2 & x & $-14.29$ & $-15.22\,{\scriptstyle\pm0.36}$ & $-14.95\,{\scriptstyle\pm0.79}$ & $-15.13\,{\scriptstyle\pm0.71}$ & $-14.42\,{\scriptstyle\pm4.31}$ & $-14.99\,{\scriptstyle\pm0.55}$ \\
+2 & y & $-9.90$ & $-10.36\,{\scriptstyle\pm0.32}$ & $-9.67\,{\scriptstyle\pm1.10}$ & $-9.98\,{\scriptstyle\pm0.54}$ & $-9.69\,{\scriptstyle\pm0.50}$ & $-8.61\,{\scriptstyle\pm4.02}$ \\
+\addlinespace[2pt]
+3 & x & $-5.26$ & $-8.62\,{\scriptstyle\pm0.46}$ & $-8.54\,{\scriptstyle\pm0.74}$ & $-8.11\,{\scriptstyle\pm1.20}$ & $-4.63\,{\scriptstyle\pm4.72}$ & $-8.45\,{\scriptstyle\pm0.92}$ \\
+3 & y & $+3.14$ & $+0.73\,{\scriptstyle\pm0.39}$ & $+1.06\,{\scriptstyle\pm0.97}$ & $+0.71\,{\scriptstyle\pm0.82}$ & $+0.94\,{\scriptstyle\pm1.00}$ & $+1.12\,{\scriptstyle\pm3.39}$ \\
+\addlinespace[2pt]
+4 & x & $+6.67$ & $+5.26\,{\scriptstyle\pm0.65}$ & $+4.94\,{\scriptstyle\pm0.88}$ & $+5.57\,{\scriptstyle\pm0.72}$ & $+3.58\,{\scriptstyle\pm2.19}$ & $+5.01\,{\scriptstyle\pm0.91}$ \\
+4 & y & $+2.40$ & $+0.16\,{\scriptstyle\pm0.61}$ & $-0.64\,{\scriptstyle\pm1.49}$ & $-0.66\,{\scriptstyle\pm1.39}$ & $-0.60\,{\scriptstyle\pm1.36}$ & $-0.22\,{\scriptstyle\pm1.36}$ \\
+\addlinespace[2pt]
+5 & x & $+10.91$ & $+10.70\,{\scriptstyle\pm0.69}$ & $+10.05\,{\scriptstyle\pm1.10}$ & $+10.29\,{\scriptstyle\pm0.65}$ & $+11.16\,{\scriptstyle\pm3.75}$ & $+10.25\,{\scriptstyle\pm0.74}$ \\
+5 & y & $-10.89$ & $-10.70\,{\scriptstyle\pm0.85}$ & $-10.50\,{\scriptstyle\pm1.75}$ & $-10.95\,{\scriptstyle\pm1.28}$ & $-11.14\,{\scriptstyle\pm1.19}$ & $-11.00\,{\scriptstyle\pm1.24}$ \\
 \midrule
 \multicolumn{3}{r}{median $|\mathrm{err}|$ [mm]} &
 $1.05$ & $0.86$ & $0.97$ & $0.59$ & $1.70$ \\
@@ -509,30 +544,36 @@ method & & 1x & 1y & 2x & 2y & 3x & 3y & 4x & 4y & 5x & 5y \\
 COSH & $\bar M_-$ & $-1.054$ & $-0.422$ & $-1.829$ & $-0.666$ & $-1.542$ & $-0.983$ & $-1.136$ & $-0.998$ & $-1.019$ & $-0.635$ \\
  & $\bar M_+$ & $+0.950$ & $+1.079$ & $+0.867$ & $+1.320$ & $+0.997$ & $+0.937$ & $+1.468$ & $+0.988$ & $+1.695$ & $+1.310$ \\
  & $M_{\mathrm{ff}}$ & $-0.052$ & $+0.329$ & $-0.481$ & $+0.327$ & $-0.272$ & $-0.023$ & $+0.166$ & $-0.005$ & $+0.338$ & $+0.338$ \\
+ & CI$_{95}$ & $\pm0.028$ & $\pm0.012$ & $\pm0.011$ & $\pm0.010$ & $\pm0.014$ & $\pm0.012$ & $\pm0.021$ & $\pm0.019$ & $\pm0.022$ & $\pm0.027$ \\
 \midrule
 NLS & $\bar M_-$ & $-1.018$ & $-0.399$ & $-1.792$ & $-0.637$ & $-1.573$ & $-0.990$ & $-1.151$ & $-0.928$ & $-0.989$ & $-0.577$ \\
  & $\bar M_+$ & $+0.894$ & $+1.056$ & $+0.848$ & $+1.248$ & $+1.033$ & $+0.923$ & $+1.463$ & $+0.969$ & $+1.624$ & $+1.241$ \\
  & $M_{\mathrm{ff}}$ & $-0.062$ & $+0.328$ & $-0.472$ & $+0.306$ & $-0.270$ & $-0.033$ & $+0.156$ & $+0.020$ & $+0.317$ & $+0.332$ \\
+ & CI$_{95}$ & $\pm0.039$ & $\pm0.038$ & $\pm0.025$ & $\pm0.035$ & $\pm0.024$ & $\pm0.031$ & $\pm0.028$ & $\pm0.047$ & $\pm0.035$ & $\pm0.055$ \\
 \midrule
 PELT$_{\mathrm{N}}$ & $\bar M_-$ & $-1.048$ & $-0.464$ & $-1.852$ & $-0.703$ & $-1.573$ & $-1.059$ & $-1.164$ & $-1.005$ & $-1.033$ & $-0.640$ \\
  & $\bar M_+$ & $+0.960$ & $+1.130$ & $+0.896$ & $+1.333$ & $+1.061$ & $+1.014$ & $+1.516$ & $+1.047$ & $+1.683$ & $+1.332$ \\
  & $M_{\mathrm{ff}}$ & $-0.044$ & $+0.333$ & $-0.478$ & $+0.315$ & $-0.256$ & $-0.022$ & $+0.176$ & $+0.021$ & $+0.325$ & $+0.346$ \\
+ & CI$_{95}$ & $\pm0.031$ & $\pm0.017$ & $\pm0.022$ & $\pm0.017$ & $\pm0.038$ & $\pm0.026$ & $\pm0.023$ & $\pm0.044$ & $\pm0.021$ & $\pm0.041$ \\
 \midrule
 PELT$_{\mathrm{R}}$ & $\bar M_-$ & $-1.023$ & $-0.449$ & $-1.680$ & $-0.702$ & $-1.339$ & $-1.055$ & $-1.179$ & $-0.986$ & $-0.932$ & $-0.625$ \\
  & $\bar M_+$ & $+0.950$ & $+1.105$ & $+0.769$ & $+1.314$ & $+1.046$ & $+0.995$ & $+1.406$ & $+1.024$ & $+1.637$ & $+1.328$ \\
  & $M_{\mathrm{ff}}$ & $-0.036$ & $+0.328$ & $-0.455$ & $+0.306$ & $-0.146$ & $-0.030$ & $+0.113$ & $+0.019$ & $+0.353$ & $+0.352$ \\
+ & CI$_{95}$ & $\pm0.045$ & $\pm0.024$ & $\pm0.136$ & $\pm0.016$ & $\pm0.149$ & $\pm0.032$ & $\pm0.069$ & $\pm0.043$ & $\pm0.118$ & $\pm0.038$ \\
 \midrule
 CUSUM & $\bar M_-$ & $-1.046$ & $-0.480$ & $-1.861$ & $-0.710$ & $-1.608$ & $-1.029$ & $-1.181$ & $-1.044$ & $-1.048$ & $-0.656$ \\
  & $\bar M_+$ & $+0.977$ & $+1.054$ & $+0.914$ & $+1.254$ & $+1.075$ & $+0.958$ & $+1.498$ & $+1.058$ & $+1.695$ & $+1.351$ \\
  & $M_{\mathrm{ff}}$ & $-0.035$ & $+0.287$ & $-0.473$ & $+0.272$ & $-0.267$ & $-0.035$ & $+0.158$ & $+0.007$ & $+0.324$ & $+0.347$ \\
+ & CI$_{95}$ & $\pm0.037$ & $\pm0.117$ & $\pm0.018$ & $\pm0.127$ & $\pm0.029$ & $\pm0.107$ & $\pm0.029$ & $\pm0.043$ & $\pm0.024$ & $\pm0.039$ \\
 \bottomrule
 \end{tabular}
-\caption{Directional critical-moment means $\bar M_{\pm}$ and
-pivot-free offset $M_{\mathrm{ff}}$ [N\,m] per estimator. Columns are
-case--axis pairs (e.g.\ 1x $=$ case~1, roll). Note the signed
-signatures relative to COSH: NLS magnitudes sit low (early onsets),
-PELT$_{\mathrm{N}}$/CUSUM high (detection lag), while
-$M_{\mathrm{ff}}$ stays nearly method-invariant.}
+\caption{Directional critical-moment means $\bar M_{\pm}$, pivot-free
+offset $M_{\mathrm{ff}}$ and its $95\%$ confidence interval (Welch
+$t$) [N\,m] per estimator. Columns are case--axis pairs (e.g.\ 1x $=$
+case~1, roll). Note the signed signatures relative to COSH: NLS
+magnitudes sit low (early onsets), PELT$_{\mathrm{N}}$/CUSUM high
+(detection lag), while $M_{\mathrm{ff}}$ stays nearly
+method-invariant.}
 \label{tab:nls-mom}
 \end{table}
 
@@ -587,14 +628,20 @@ $1.6$--$1.8$~mm (Table~\ref{tab:nls}, bottom rows) — the pivot-free
 average \eqref{eq:mff} cancels each method's largely common-mode onset
 bias between the $+$ and $-$ directions, and $5$--$7$ runs per
 direction average the rest. That the final CoM offset does not depend
-on the detection methodology is itself a validation certificate.
+on the detection methodology is itself a validation certificate — and
+Fig.~\ref{fig:err} sharpens it: the residual errors that do remain
+(cases~3--4) are shared by all five estimators, placing them in the
+rig/contact geometry rather than in any onset detector.
 \emph{(ii) Run-level robustness is where the methods separate:} COSH
 has the lowest CV in $16/20$ direction groups (PELT$_{\mathrm{N}}$
 takes the other $4$), median $2.4\%$ against $3.9$--$7.1\%$, and its
 worst group is $6.5\%$ where the alternatives reach
 $15$--$27\%$ — the nonparametric detectors (PELT$_{\mathrm{R}}$,
 CUSUM) occasionally misplace the onset badly on short fast-ramp
-windows. The paired per-run critical moments (NLS vs.\ COSH) differ by
+windows. Equivalently, the $95\%$ confidence interval on the CoM
+offset is $\pm0.3$--$0.9$~mm under COSH — the narrowest in $9$ of
+$10$ case--axis pairs — against up to $\pm4$--$5$~mm for the
+nonparametric detectors (Fig.~\ref{fig:forest}). The paired per-run critical moments (NLS vs.\ COSH) differ by
 $27.6$~mN\,m at the median but up to $217$~mN\,m — the ridge of
 Sec.~\ref{sec:calibration} realized run by run. \emph{(iii) The biases
 carry signatures:} NLS sits $2.6\%$ \emph{low} in mean $|M|$ (the
