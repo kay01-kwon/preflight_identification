@@ -213,36 +213,55 @@ $J + m z_{\mathrm{CoM}}^2 \approx 0.2$--$0.35$~kg\,m$^2$ by a factor of
 several on both sides.
 
 \begin{algorithm}[h]
-\caption{Rig-constant calibration by ramp invariance (coarse-to-fine)}
-\label{alg:calib}
+\caption{Ramp-invariance consistency score}
+\label{alg:score}
 \begin{algorithmic}[1]
 \Require gated runs at rates $r \in \{0.10,\dots,1.20\}$~N\,m/s, both
-  directions; box $C_2 \in [3,8]$~rad/s, $K \in [0.05,0.70]$~(N\,m)$^{-1}$
+  tip directions; candidate pair $(C_2, K)$
+\Ensure consistency score $s$ \Comment{lower = $M_{\mathrm{crit}}$ more
+  rate-invariant}
+\For{each gated run $r$}
+  \State $M_{\mathrm{crit}}^{(r)} \gets$
+    Algorithm~\ref{alg:cosh} with $(C_2, K)$ pinned
+    \Comment{stride-3 sweep}
+\EndFor
+\For{$\mathrm{dir} \in \{+,-\}$}
+  \State $\mathrm{CV}_{\mathrm{dir}} \gets
+    \mathrm{std}\bigl(\{M_{\mathrm{crit}}^{(r)}\}_{r\in\mathrm{dir}}\bigr)
+    \,/\, \bigl|\mathrm{mean}\bigl(\{M_{\mathrm{crit}}^{(r)}\}_{r\in
+    \mathrm{dir}}\bigr)\bigr|$
+\EndFor
+\State \Return $s \gets \mathrm{CV}_{+} + \mathrm{CV}_{-}$
+  \Comment{Eq.~\eqref{eq:score}: a static threshold must not depend on
+    the approach rate}
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[h]
+\caption{Rig-constant calibration (coarse-to-fine)}
+\label{alg:calib}
+\begin{algorithmic}[1]
+\Require gated runs; box $C_2 \in [3,8]$~rad/s,
+  $K \in [0.05,0.70]$~(N\,m)$^{-1}$
 \Ensure calibrated pair $(C_2^\ast, K^\ast)$
-\Function{score}{$C_2, K$}
-  \For{each gated run $r$}
-    \State $M_{\mathrm{crit}}^{(r)} \gets$
-      Algorithm~\ref{alg:cosh} with $(C_2, K)$ pinned
-      \Comment{stride-3 sweep}
-  \EndFor
-  \State \Return $\sum_{\mathrm{dir}\in\{+,-\}}
-    \mathrm{CV}\bigl(\{M_{\mathrm{crit}}^{(r)}\}_r\bigr)$
-  \Comment{ramp invariance, Eq.~\eqref{eq:score}}
-\EndFunction
-\State \textbf{coarse:} evaluate \Call{score}{$\cdot$} on the
+\State \textbf{coarse:} evaluate Algorithm~\ref{alg:score} on the
   $11{\times}11$ grid $C_2 = 3.0\!:\!0.5\!:\!8.0$,
   $K = 0.10\!:\!0.04\!:\!0.50$
 \State $(C_2^{b}, K^{b}) \gets \arg\min$ over the coarse grid
-\State \textbf{fine:} evaluate \Call{score}{$\cdot$} on a $9{\times}9$
-  uniform grid over $[C_2^{b} \pm 0.5] \times [K^{b} \pm 0.04]$,
-  clipped to the box \Comment{resolution $0.125$~rad/s,
-  $0.01$~(N\,m)$^{-1}$}
+\State \textbf{fine:} evaluate Algorithm~\ref{alg:score} on a
+  $9{\times}9$ uniform grid over
+  $[C_2^{b} \pm 0.5] \times [K^{b} \pm 0.04]$, clipped to the box
+  \Comment{resolution $0.125$~rad/s, $0.01$~(N\,m)$^{-1}$}
 \State $(C_2^\ast, K^\ast) \gets \arg\min$ over the fine grid
 \end{algorithmic}
 \end{algorithm}
 
-\paragraph{Coarse-to-fine procedure.} Algorithm~\ref{alg:calib}
-summarizes the search. The coarse scan evaluates
+\paragraph{Coarse-to-fine procedure.}
+Algorithm~\ref{alg:score} states the consistency criterion as a
+stand-alone routine — it wraps Algorithm~\ref{alg:cosh} and returns the
+directional sum of coefficients of variation — and
+Algorithm~\ref{alg:calib} performs the search over it. The coarse scan
+evaluates
 \eqref{eq:score} on an $11 \times 11$ grid
 ($\Delta C_2 = 0.5$~rad/s, $\Delta K = 0.04$~(N\,m)$^{-1}$;
 $121$ evaluations). A single refinement pass then re-scans a
