@@ -2,6 +2,8 @@
 \usepackage[a4paper,margin=25mm]{geometry}
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, fit}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{booktabs}
@@ -61,10 +63,25 @@ $N_{\mathrm{seg}}$ & sweep margin (each end) & $8$ & degenerate-candidate guard 
 \section{Pipeline overview}
 \label{sec:overview}
 
-The complete pipeline is five stages; the three algorithms nest as
-Algorithm~\ref{alg:calib} $\supset$ Algorithm~\ref{alg:score}
-$\supset$ Algorithm~\ref{alg:cosh}, and Algorithm~\ref{alg:cosh} is
-the only stage that touches the angular rate.
+The complete pipeline is five stages (Fig.~\ref{fig:flow}); the three
+algorithms nest as Algorithm~\ref{alg:calib} $\supset$
+Algorithm~\ref{alg:score} $\supset$ Algorithm~\ref{alg:cosh}, and
+Algorithm~\ref{alg:cosh} is the only stage that touches the angular
+rate.
+
+\begin{figure}[t]
+\centering
+\input{fig_pipeline_flow.tex}
+\caption{Pipeline at a glance. The dashed container is the
+once-per-configuration calibration: it iterates candidate pairs
+$(C_2, K)$, running the \emph{same} onset detector
+(Algorithm~\ref{alg:cosh}) on every gated run and scoring the
+candidates by rate-invariance of the resulting critical moments. The
+selected pair then drives one final full-resolution detection per run,
+whose onset sample yields $M_{\mathrm{crit}} = M(t_{j^\ast})$, and the
+directional means aggregate into the pivot-free feed-forward moment.}
+\label{fig:flow}
+\end{figure}
 
 \begin{enumerate}
 \item \textbf{Signals and window} (Sec.~\ref{sec:window}) — per run:
