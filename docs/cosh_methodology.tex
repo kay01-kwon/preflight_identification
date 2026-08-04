@@ -340,14 +340,14 @@ several on both sides.
   the rate set $\{0.10,\dots,1.20\}$~N\,m/s); candidate pair $(C_2, K)$
 \Ensure consistency score $s$ \Comment{lower = $M_{\mathrm{crit}}$ more
   rate-invariant}
-\For{each run $\rho \in \mathcal{G}$}
-  \State $M_{\mathrm{crit}}^{(\rho)} \gets$
-    Algorithm~\ref{alg:cosh} with $(C_2, K)$ pinned
-    \Comment{stride-3 sweep}
-\EndFor
 \For{$\mathrm{dir} \in \{+,-\}$}
   \State $\mathcal{G}_{\mathrm{dir}} \gets \{\rho \in \mathcal{G} :
     \operatorname{dir}(\rho) = \mathrm{dir}\}$
+  \For{each run $\rho \in \mathcal{G}_{\mathrm{dir}}$}
+    \State $M_{\mathrm{crit}}^{(\rho)} \gets$
+      Algorithm~\ref{alg:cosh} with $(C_2, K)$ pinned
+      \Comment{stride-3 sweep}
+  \EndFor
   \State $\mathrm{CV}_{\mathrm{dir}} \gets
     \mathrm{std}\bigl(\{M_{\mathrm{crit}}^{(\rho)}\}_{\rho\in
     \mathcal{G}_{\mathrm{dir}}}\bigr)
