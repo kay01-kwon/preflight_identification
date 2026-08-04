@@ -77,9 +77,12 @@ once-per-configuration calibration: it iterates candidate pairs
 $(C_2, K)$, running the \emph{same} onset detector
 (Algorithm~\ref{alg:cosh}) on every gated run and scoring the
 candidates by rate-invariance of the resulting critical moments. The
-selected pair then drives one final full-resolution detection per run,
-whose onset sample yields $M_{\mathrm{crit}} = M(t_{j^\ast})$, and the
-directional means aggregate into the pivot-free feed-forward moment.}
+selected pair then drives one final onset extraction per run — the
+constants are \emph{not} re-estimated; only the onset index is
+re-swept, at full resolution, because the calibration subsamples the
+sweep by a stride of $3$ for speed — whose onset sample yields
+$M_{\mathrm{crit}} = M(t_{j^\ast})$, and the directional means
+aggregate into the pivot-free feed-forward moment.}
 \label{fig:flow}
 \end{figure}
 

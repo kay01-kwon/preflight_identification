@@ -34,10 +34,12 @@
       at (calib.north) {\small\bfseries Effective-constant calibration\\[-2pt]
       {\footnotesize\mdseries once per configuration \& axis}};
 
-\node[box, below=13mm of calib] (final) {\textbf{COSH onset detection
-  (Alg.~1), full resolution}\\[-1pt]
-  {\footnotesize $C_1 = K^\ast \dot M$, median baseline, exhaustive
-   sweep $\Rightarrow$ onset $t_{j^\ast}$}};
+\node[box, below=13mm of calib] (final) {\textbf{Final onset extraction
+  (Alg.~1) — onset only, no re-search}\\[-1pt]
+  \footnotesize $(C_2^\ast, K^\ast)$ fixed, $C_1 = K^\ast\dot M$;
+   full-resolution sweep\\[-2pt]
+  \footnotesize (calibration used stride~$3$)
+   $\Rightarrow$ onset $t_{j^\ast}$ per run};
 \node[box, below=of final] (mcrit) {\textbf{Critical moment}\quad
   $M_{\mathrm{crit}}^{(\rho)} = M(t_{j^\ast})$\\[-1pt]
   {\footnotesize the applied moment at the rotation onset, per run}};
