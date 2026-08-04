@@ -91,7 +91,8 @@ C_2 = \sqrt{\frac{W z_{\mathrm{CoM}}}{J_P}} \; }
 \end{equation}
 for $\tau \ge 0$ (and $\omega = 0$ for $\tau < 0$). Because
 $J_P C_2^2 = W z_{\mathrm{CoM}}$, the amplitude $C_1$ is \emph{fixed} by
-the measured ramp rate: with $(C_2, K)$ pinned as rig constants and the
+the measured ramp rate: with $(C_2, K)$ pinned as per-configuration
+effective constants and the
 baseline fixed by continuity, \textbf{no shape parameter is free per run}.
 The time-quadratic model of the original submission is the $C_2 \to 0$
 limit of \eqref{eq:cosh} — it discards the gravity term that creates the
@@ -206,7 +207,7 @@ motion; $|C|$ median $3.1$, p90 $14.2$, max $30.6$~mrad/s), yet the
 estimate barely moves ($71/132$ onsets identical,
 $M_{\mathrm{ff}}$ shift $\le 1.3$~mN\,m). The estimated baseline is
 therefore not load-bearing on this dataset; it is kept because it makes
-the sweep invariant to the gyro bias — a rig- and temperature-dependent
+the sweep invariant to the gyro bias — a vehicle- and temperature-dependent
 quantity that need not stay this small — at zero parameter cost. Nor
 does $C$ need the bias to be constant in time: it is re-estimated per
 run, so only \emph{within-window} drift (windows last $1$--$10$~s)
@@ -241,7 +242,7 @@ ramp-rate range — the empirical certificate that the response stays in
 the cosh family.
 \end{remark}
 
-\section{Rig-constant calibration}
+\section{Calibration of the effective constants}
 \label{sec:calibration}
 
 Algorithm~\ref{alg:cosh} presupposes $(C_2, K)$. Although both have
@@ -335,20 +336,23 @@ several on both sides.
 \caption{Ramp-invariance consistency score}
 \label{alg:score}
 \begin{algorithmic}[1]
-\Require gated runs at rates $r \in \{0.10,\dots,1.20\}$~N\,m/s, both
-  tip directions; candidate pair $(C_2, K)$
+\Require set $\mathcal{G}$ of gated runs (both tip directions, spanning
+  the rate set $\{0.10,\dots,1.20\}$~N\,m/s); candidate pair $(C_2, K)$
 \Ensure consistency score $s$ \Comment{lower = $M_{\mathrm{crit}}$ more
   rate-invariant}
-\For{each gated run $r$}
-  \State $M_{\mathrm{crit}}^{(r)} \gets$
+\For{each run $\rho \in \mathcal{G}$}
+  \State $M_{\mathrm{crit}}^{(\rho)} \gets$
     Algorithm~\ref{alg:cosh} with $(C_2, K)$ pinned
     \Comment{stride-3 sweep}
 \EndFor
 \For{$\mathrm{dir} \in \{+,-\}$}
+  \State $\mathcal{G}_{\mathrm{dir}} \gets \{\rho \in \mathcal{G} :
+    \operatorname{dir}(\rho) = \mathrm{dir}\}$
   \State $\mathrm{CV}_{\mathrm{dir}} \gets
-    \mathrm{std}\bigl(\{M_{\mathrm{crit}}^{(r)}\}_{r\in\mathrm{dir}}\bigr)
-    \,/\, \bigl|\mathrm{mean}\bigl(\{M_{\mathrm{crit}}^{(r)}\}_{r\in
-    \mathrm{dir}}\bigr)\bigr|$
+    \mathrm{std}\bigl(\{M_{\mathrm{crit}}^{(\rho)}\}_{\rho\in
+    \mathcal{G}_{\mathrm{dir}}}\bigr)
+    \,/\, \bigl|\mathrm{mean}\bigl(\{M_{\mathrm{crit}}^{(\rho)}\}_{\rho\in
+    \mathcal{G}_{\mathrm{dir}}}\bigr)\bigr|$
 \EndFor
 \State \Return $s \gets \mathrm{CV}_{+} + \mathrm{CV}_{-}$
   \Comment{Eq.~\eqref{eq:score}: a static threshold must not depend on
@@ -356,8 +360,15 @@ several on both sides.
 \end{algorithmic}
 \end{algorithm}
 
+Note that the ramp rate never appears explicitly in the score:
+each direction's gated runs span the full rate set, so the
+within-direction dispersion of the per-run critical moments \emph{is}
+the rate dependence (plus repeatability scatter, which the score
+harmlessly co-penalizes). Should a rate be repeated, each run enters
+individually.
+
 \begin{algorithm}[h]
-\caption{Rig-constant calibration (coarse-to-fine)}
+\caption{Effective-constant calibration (coarse-to-fine)}
 \label{alg:calib}
 \begin{algorithmic}[1]
 \Require gated runs; box $C_2 \in [3,8]$~rad/s,
@@ -487,7 +498,7 @@ shapes duplicate the color coding.}
 component within each case ($x_{\mathrm{off}}$ from the pitch
 excitation, $y_{\mathrm{off}}$ from the roll excitation). The residual
 biases of cases~3 and~4 are \emph{common to all five estimators} — a
-rig/contact asymmetry, not a detection artifact — while the
+vehicle--contact asymmetry, not a detection artifact — while the
 estimator-to-estimator differences stay within about $\pm1$~mm.}
 \label{fig:err}
 \end{figure}
@@ -633,7 +644,7 @@ direction average the rest. That the final CoM offset does not depend
 on the detection methodology is itself a validation certificate — and
 Fig.~\ref{fig:err} sharpens it: the residual errors that do remain
 (cases~3--4) are shared by all five estimators, placing them in the
-rig/contact geometry rather than in any onset detector.
+vehicle--contact geometry rather than in any onset detector.
 \emph{(ii) Run-level robustness is where the methods separate:} COSH
 has the lowest CV in $16/20$ direction groups (CPD$_{\mathrm{N}}$
 takes the other $4$), median $2.4\%$ against $3.9$--$7.1\%$, and its
