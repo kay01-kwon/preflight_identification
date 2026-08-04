@@ -2,6 +2,8 @@
 \usepackage[a4paper,margin=25mm]{geometry}
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, fit}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{booktabs}
@@ -58,6 +60,59 @@ $N_{\mathrm{seg}}$ & sweep margin (each end) & $8$ & degenerate-candidate guard 
 (Sec.~\ref{sec:calibration}).}
 \end{table}
 
+\section{Pipeline overview}
+\label{sec:overview}
+
+The complete pipeline is five stages (Fig.~\ref{fig:flow}); the three
+algorithms nest as Algorithm~\ref{alg:calib} $\supset$
+Algorithm~\ref{alg:score} $\supset$ Algorithm~\ref{alg:cosh}, and
+Algorithm~\ref{alg:cosh} is the only stage that touches the angular
+rate.
+
+\begin{figure}[t]
+\centering
+\input{fig_pipeline_flow.tex}
+\caption{Pipeline at a glance. The dashed container is the
+once-per-configuration calibration: it iterates candidate pairs
+$(C_2, K)$, running the \emph{same} onset detector
+(Algorithm~\ref{alg:cosh}) on every gated run and scoring the
+candidates by rate-invariance of the resulting critical moments. The
+selected pair then drives one final onset extraction per run — the
+constants are \emph{not} re-estimated; only the onset index is
+re-swept, at full resolution, because the calibration subsamples the
+sweep by a stride of $3$ for speed — whose onset sample yields
+$M_{\mathrm{crit}} = M(t_{j^\ast})$, and the directional means
+aggregate into the pivot-free feed-forward moment.}
+\label{fig:flow}
+\end{figure}
+
+\begin{enumerate}
+\item \textbf{Signals and window} (Sec.~\ref{sec:window}) — per run:
+reconstruct $M(t)$ from the measured rotor speeds and take $\omega(t)$
+from odometry; open the excitation window at
+$|M| > M_{\mathrm{thr}}$ (backward from the peak), close it at the
+moment peak, truncated at the allocator cap.
+\item \textbf{Run gates} (Sec.~\ref{sec:gates}) — discard runs failing
+the slope-error ($3\%$), sample-count ($38$) or linearity-RMSE
+($30$~mN\,m) gates; moment trace only, so no circularity.
+\item \textbf{Calibration, once per configuration and axis}
+(Sec.~\ref{sec:calibration}) — Algorithm~\ref{alg:calib} scans
+$(C_2, K)$ coarse-to-fine; each candidate is scored by
+Algorithm~\ref{alg:score}, which runs Algorithm~\ref{alg:cosh} on
+every gated run and sums the two directional CVs of
+$M_{\mathrm{crit}}$ across ramp rates.
+\item \textbf{Identification, per run} (Sec.~\ref{sec:algorithm}) —
+Algorithm~\ref{alg:cosh} with the calibrated $(C_2^\ast, K^\ast)$
+pinned, at full sweep resolution: amplitude fixed by $C_1 = K\dot M$,
+baseline by the pre-segment median, the onset index swept
+exhaustively; $M_{\mathrm{crit}} = M(t_{j^\ast})$.
+\item \textbf{Aggregation} (Sec.~\ref{sec:aggregation}) — directional
+means $\bar M_{\pm}$, the pivot-free feed-forward moment
+$M_{\mathrm{ff}} = \tfrac12(\bar M_{+} + \bar M_{-})$, and the CoM
+offset for validation against the load-cell truth
+(Sec.~\ref{sec:nls}).
+\end{enumerate}
+
 \section{Contact-phase dynamics and the closed form}
 \label{sec:closedform}
 
@@ -91,7 +146,8 @@ C_2 = \sqrt{\frac{W z_{\mathrm{CoM}}}{J_P}} \; }
 \end{equation}
 for $\tau \ge 0$ (and $\omega = 0$ for $\tau < 0$). Because
 $J_P C_2^2 = W z_{\mathrm{CoM}}$, the amplitude $C_1$ is \emph{fixed} by
-the measured ramp rate: with $(C_2, K)$ pinned as rig constants and the
+the measured ramp rate: with $(C_2, K)$ pinned as per-configuration
+effective constants and the
 baseline fixed by continuity, \textbf{no shape parameter is free per run}.
 The time-quadratic model of the original submission is the $C_2 \to 0$
 limit of \eqref{eq:cosh} — it discards the gravity term that creates the
@@ -206,7 +262,7 @@ motion; $|C|$ median $3.1$, p90 $14.2$, max $30.6$~mrad/s), yet the
 estimate barely moves ($71/132$ onsets identical,
 $M_{\mathrm{ff}}$ shift $\le 1.3$~mN\,m). The estimated baseline is
 therefore not load-bearing on this dataset; it is kept because it makes
-the sweep invariant to the gyro bias — a rig- and temperature-dependent
+the sweep invariant to the gyro bias — a vehicle- and temperature-dependent
 quantity that need not stay this small — at zero parameter cost. Nor
 does $C$ need the bias to be constant in time: it is re-estimated per
 run, so only \emph{within-window} drift (windows last $1$--$10$~s)
@@ -241,7 +297,7 @@ ramp-rate range — the empirical certificate that the response stays in
 the cosh family.
 \end{remark}
 
-\section{Rig-constant calibration}
+\section{Calibration of the effective constants}
 \label{sec:calibration}
 
 Algorithm~\ref{alg:cosh} presupposes $(C_2, K)$. Although both have
@@ -253,61 +309,38 @@ values that absorb the state-linear contributions of the unmodeled
 effects (the local slope of the gravity nonlinearity and the
 ground-effect spring). Both are calibrated once per dataset.
 
-Joint residual minimization is not a usable criterion, and the reason
-can be made exact. The identity
-$\cosh x - 1 = 2\sinh^2(x/2)$ factors the closed form as
-\begin{equation}
-C_1\bigl(\cosh(C_2\tau) - 1\bigr) \;=\;
-\underbrace{\tfrac{C_1}{2}\,e^{-C_2 t_{\mathrm{on}}}}_{\textstyle A}\;
-e^{C_2 t}\,\bigl(1 - e^{-C_2\tau}\bigr)^{2},
-\end{equation}
-whose last factor rises to one within a few growth times $C_2^{-1}$.
-On the tail the amplitude and the onset therefore enter the data only
-through the product $A$, and the substitution
-\begin{equation}
-C_1 \to \lambda C_1, \qquad
-t_{\mathrm{on}} \to t_{\mathrm{on}} + C_2^{-1}\ln\lambda
-\label{eq:ridge}
-\end{equation}
-leaves $A$ \emph{exactly} invariant for every $\lambda > 0$: the
-response changes only through the last factor, by the relative amount
-$\bigl[(1 - \lambda e^{-C_2\tau})/(1 - e^{-C_2\tau})\bigr]^{2} - 1
-\approx -2(\lambda - 1)\,e^{-C_2\tau}$, which decays exponentially in
-$\tau$. An earlier onset with a smaller amplitude thus trades off
-against a later onset with a larger one everywhere except near the
-onset — where the response is quadratic, $\tfrac12 C_1 C_2^2\tau^2$,
-and of the order of the gyro noise. Equivalently, the sensitivity
-vectors $\partial\omega/\partial C_1 \propto \cosh(C_2\tau) - 1$ and
-$\partial\omega/\partial t_{\mathrm{on}} \propto \sinh(C_2\tau)$ become
-parallel on the tail, so the Gauss--Newton Hessian of the summed
-residual is nearly singular along $\delta C_1/C_1 = C_2\,\delta t$ —
-a \emph{shallow ridge} in the $(C_2, K)$ plane whose minimizer is set
-by noise, not physics. This is an ill-conditioning statement, not a
-non-identifiability one: in the noiseless limit the post-onset shape
-determines all three parameters uniquely. Under gyro noise, however,
-the information along \eqref{eq:ridge} is exponentially small, so
-per-run estimates — and with them the detected critical moments —
-scatter along the ridge. The calibration should therefore be read as
-\emph{variance suppression}: choosing $(C_2, K)$ once per dataset to
-minimize the dispersion of $M_{\mathrm{crit}}$ across ramp rates
-removes precisely that scatter, which is where the practical strength
-of the method lies.
+Joint residual minimization is not a usable criterion in practice.
+On the fitted window the amplitude and the onset are nearly
+interchangeable under noise: a smaller amplitude with an earlier onset
+and a larger amplitude with a later onset produce post-onset curves
+that differ most near the onset itself, where the response is
+quadratic, $\tfrac12 C_1 C_2^2\tau^2$, and of the order of the gyro
+noise. In the noiseless limit the post-onset shape determines all
+three parameters uniquely — the trade-off is an ill-conditioning
+statement, not a non-identifiability one — but under gyro noise the
+summed residual is nearly flat along this amplitude--onset direction:
+a \emph{shallow ridge} in the $(C_2, K)$ plane, observed directly on
+the data (the objective is piecewise-constant in the integer onset
+index, gradient-based and simplex optimizers stall on it, and a
+population-based global search costs about $4\times$ more for no
+measurable gain). Per-run estimates — and with them the detected
+critical moments — scatter along the ridge. The calibration should
+therefore be read as \emph{variance suppression}: choosing $(C_2, K)$
+once per dataset to minimize the dispersion of $M_{\mathrm{crit}}$
+across ramp rates removes precisely that scatter, which is where the
+practical strength of the method lies.
 
-The ridge is invisible to the residual but not to the deliverable.
-Moving along \eqref{eq:ridge} shifts every detected onset by the same
-\emph{time} offset $\delta t = C_2^{-1}\ln\lambda$ — with
-$\lambda = K^\ast/K$ the same for all runs, since $C_1 = K\dot M$
-scales them alike — and therefore biases the critical moment by
-\begin{equation}
-\delta M_{\mathrm{crit}} \;=\; \dot M\,\delta t \;\propto\; \dot M ,
-\end{equation}
-linearly in the ramp rate: a wrong pair \emph{fans out} the identified
-$M_{\mathrm{crit}}$ across the twelvefold rate range, while the correct
-pair leaves it rate-invariant. The direction the residual cannot see is
-thus exactly the direction a rate-consistency criterion sees best. We
-therefore calibrate by \emph{physical self-consistency}: a static
-threshold must not depend on how fast it was approached. With runs at
-ramp rates
+The scatter direction is faint in the residual but loud in the
+deliverable: moving along the trade-off shifts each detected onset in
+\emph{time}, and since $M_{\mathrm{crit}} = M(t_{\mathrm{on}})$ with
+$M$ ramping at $\dot M$, an onset-time bias $\delta t$ common across
+runs biases the critical moment by $\dot M\,\delta t$ — growing
+linearly with the ramp rate. A wrong pair thus \emph{fans out} the
+identified $M_{\mathrm{crit}}$ across the twelvefold rate range, while
+the correct pair leaves it rate-invariant: exactly the direction a
+rate-consistency criterion sees best. We therefore calibrate by
+\emph{physical self-consistency}: a static threshold must not depend
+on how fast it was approached. With runs at ramp rates
 $r \in \{0.10,\dots,1.20\}$~N\,m/s,
 \begin{equation}
 \mathrm{score}(C_2, K) \;=\; \sum_{\mathrm{dir}\in\{+,-\}}
@@ -335,20 +368,23 @@ several on both sides.
 \caption{Ramp-invariance consistency score}
 \label{alg:score}
 \begin{algorithmic}[1]
-\Require gated runs at rates $r \in \{0.10,\dots,1.20\}$~N\,m/s, both
-  tip directions; candidate pair $(C_2, K)$
+\Require set $\mathcal{G}$ of gated runs (both tip directions, spanning
+  the rate set $\{0.10,\dots,1.20\}$~N\,m/s); candidate pair $(C_2, K)$
 \Ensure consistency score $s$ \Comment{lower = $M_{\mathrm{crit}}$ more
   rate-invariant}
-\For{each gated run $r$}
-  \State $M_{\mathrm{crit}}^{(r)} \gets$
-    Algorithm~\ref{alg:cosh} with $(C_2, K)$ pinned
-    \Comment{stride-3 sweep}
-\EndFor
 \For{$\mathrm{dir} \in \{+,-\}$}
+  \State $\mathcal{G}_{\mathrm{dir}} \gets \{\rho \in \mathcal{G} :
+    \operatorname{dir}(\rho) = \mathrm{dir}\}$
+  \For{each run $\rho \in \mathcal{G}_{\mathrm{dir}}$}
+    \State $M_{\mathrm{crit}}^{(\rho)} \gets$
+      Algorithm~\ref{alg:cosh} with $(C_2, K)$ pinned
+      \Comment{stride-3 sweep}
+  \EndFor
   \State $\mathrm{CV}_{\mathrm{dir}} \gets
-    \mathrm{std}\bigl(\{M_{\mathrm{crit}}^{(r)}\}_{r\in\mathrm{dir}}\bigr)
-    \,/\, \bigl|\mathrm{mean}\bigl(\{M_{\mathrm{crit}}^{(r)}\}_{r\in
-    \mathrm{dir}}\bigr)\bigr|$
+    \mathrm{std}\bigl(\{M_{\mathrm{crit}}^{(\rho)}\}_{\rho\in
+    \mathcal{G}_{\mathrm{dir}}}\bigr)
+    \,/\, \bigl|\mathrm{mean}\bigl(\{M_{\mathrm{crit}}^{(\rho)}\}_{\rho\in
+    \mathcal{G}_{\mathrm{dir}}}\bigr)\bigr|$
 \EndFor
 \State \Return $s \gets \mathrm{CV}_{+} + \mathrm{CV}_{-}$
   \Comment{Eq.~\eqref{eq:score}: a static threshold must not depend on
@@ -356,8 +392,15 @@ several on both sides.
 \end{algorithmic}
 \end{algorithm}
 
+Note that the ramp rate never appears explicitly in the score:
+each direction's gated runs span the full rate set, so the
+within-direction dispersion of the per-run critical moments \emph{is}
+the rate dependence (plus repeatability scatter, which the score
+harmlessly co-penalizes). Should a rate be repeated, each run enters
+individually.
+
 \begin{algorithm}[h]
-\caption{Rig-constant calibration (coarse-to-fine)}
+\caption{Effective-constant calibration (coarse-to-fine)}
 \label{alg:calib}
 \begin{algorithmic}[1]
 \Require gated runs; box $C_2 \in [3,8]$~rad/s,
@@ -487,7 +530,7 @@ shapes duplicate the color coding.}
 component within each case ($x_{\mathrm{off}}$ from the pitch
 excitation, $y_{\mathrm{off}}$ from the roll excitation). The residual
 biases of cases~3 and~4 are \emph{common to all five estimators} — a
-rig/contact asymmetry, not a detection artifact — while the
+vehicle--contact asymmetry, not a detection artifact — while the
 estimator-to-estimator differences stay within about $\pm1$~mm.}
 \label{fig:err}
 \end{figure}
@@ -633,7 +676,7 @@ direction average the rest. That the final CoM offset does not depend
 on the detection methodology is itself a validation certificate — and
 Fig.~\ref{fig:err} sharpens it: the residual errors that do remain
 (cases~3--4) are shared by all five estimators, placing them in the
-rig/contact geometry rather than in any onset detector.
+vehicle--contact geometry rather than in any onset detector.
 \emph{(ii) Run-level robustness is where the methods separate:} COSH
 has the lowest CV in $16/20$ direction groups (CPD$_{\mathrm{N}}$
 takes the other $4$), median $2.4\%$ against $3.9$--$7.1\%$, and its

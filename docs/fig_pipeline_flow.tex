@@ -1,0 +1,65 @@
+% Pipeline-overview flowchart (drop-in for the manuscript).
+% Requires: \usepackage{tikz} \usetikzlibrary{arrows.meta, positioning, fit}
+% Algorithm numbers are literal (Alg. 1 = onset detection, 2 = consistency
+% score, 3 = coarse-to-fine calibration); adjust if the numbering differs.
+\begin{tikzpicture}[
+  font=\small,
+  box/.style={draw, semithick, align=center, inner sep=5pt,
+              minimum width=62mm},
+  sub/.style={draw, semithick, align=center, inner sep=4pt,
+              minimum width=54mm, fill=white},
+  arr/.style={-{Latex[length=2.4mm]}, semithick},
+  elbl/.style={font=\footnotesize\itshape, right=1mm, midway},
+  node distance=4.5mm]
+
+\node[box] (data) {\textbf{Excitation data set}\\[-1pt]
+  {\footnotesize one run per tip direction $\times$ ramp rate $r \in \mathcal{R}$}};
+\node[box, below=of data] (gates) {\textbf{Onset-free run gates}\\[-1pt]
+  {\footnotesize slope $\le 3\%$ \,·\, $N_{\mathrm{full}} \ge 38$ \,·\,
+   linearity RMSE $\le 30$~mN\,m}};
+
+\node[sub, below=18mm of gates] (cand) {candidate $(C_2, K)$\\[-1pt]
+  {\footnotesize coarse $11{\times}11$ grid $\to$ fine $9{\times}9$ (Alg.~3)}};
+\node[sub, below=of cand] (alg1c) {COSH onset detection (Alg.~1)\\[-1pt]
+  {\footnotesize every run $\rho$, $(C_2,K)$ pinned
+   $\Rightarrow M_{\mathrm{crit}}^{(\rho)}$}};
+\node[sub, below=of alg1c] (score) {rate-invariance score (Alg.~2)\\[-1pt]
+  {\footnotesize $s = \mathrm{CV}_{+} + \mathrm{CV}_{-}$ of
+   $M_{\mathrm{crit}}$ across ramp rates}};
+\node[inner sep=0, right=7mm of alg1c] (loopx) {};
+\node[inner sep=0, above=10mm of cand] (topx) {};
+\node[draw, dashed, semithick, inner sep=3.5mm,
+      fit=(cand)(alg1c)(score)(loopx)(topx)] (calib) {};
+\node[anchor=north, yshift=-1mm, align=center]
+      at (calib.north) {\small\bfseries Effective-constant calibration\\[-2pt]
+      {\footnotesize\mdseries once per configuration \& axis}};
+
+\node[box, below=13mm of calib] (final) {\textbf{Final onset extraction
+  (Alg.~1) — onset only, no re-search}\\[-1pt]
+  \footnotesize $(C_2^\ast, K^\ast)$ fixed, $C_1 = K^\ast\dot M$;
+   full-resolution sweep\\[-2pt]
+  \footnotesize (calibration used stride~$3$)
+   $\Rightarrow$ onset $t_{j^\ast}$ per run};
+\node[box, below=of final] (mcrit) {\textbf{Critical moment}\quad
+  $M_{\mathrm{crit}}^{(\rho)} = M(t_{j^\ast})$\\[-1pt]
+  {\footnotesize the applied moment at the rotation onset, per run}};
+\node[box, below=of mcrit] (agg) {\textbf{Aggregation}\\[-1pt]
+  {\footnotesize $\bar M_{+},\,\bar M_{-} \;\to\;
+   M_{\mathrm{ff}} = \tfrac12(\bar M_{+} + \bar M_{-})
+   \;\to\; \text{CoM offset}$}};
+
+\draw[arr] (data) -- (gates);
+\draw[arr] (gates) -- node[elbl, pos=0.3] {$\mathcal{G}$} (calib);
+\draw[arr] (cand) -- (alg1c);
+\draw[arr] (alg1c) -- (score);
+\draw[arr] (score.east) -| node[pos=0.72, rotate=90, above=0.6mm,
+  font=\footnotesize\itshape] {next candidate}
+  ([xshift=6mm]alg1c.east) |- (cand.east);
+\draw[arr] (calib) -- node[elbl]
+  {$(C_2^{\ast}, K^{\ast}) = \arg\min s$} (final);
+\draw[arr] (final) -- (mcrit);
+\draw[arr] (mcrit) -- (agg);
+\draw[arr] (gates.west) -- ++(-6mm,0) |-
+  node[pos=0.28, left, font=\footnotesize\itshape,
+  align=center] {gated run\\[-2pt] set $\mathcal{G}$} (final.west);
+\end{tikzpicture}
