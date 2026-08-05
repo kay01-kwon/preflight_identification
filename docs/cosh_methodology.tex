@@ -711,16 +711,28 @@ the measured collective thrust at the onset, and the pivot arms fitted
 from the \emph{position} trace: a circle fit of the odometry motion
 about the contact line per run
 (\texttt{estimate\_pivot\_from\_mocap}), averaged per
-case/axis/direction. Every ingredient is independent of the identified
-moments, so this is a genuine forward test; and because the arms are
-measured rather than inferred, the $\gamma$--$l$ degeneracy of the
-thrust model is broken and the ground-effect question becomes
-falsifiable: predictions are evaluated at $\gamma = 1$ (measured
-thrust as-is) and across the bracket
-$\gamma - 1 \in [1.0, 4.2]\%$ with the arms held fixed. The
-kinematic arms come out remarkably consistent — $140.5 \pm 2.3$~mm
-(roll) and $113.1 \pm 6.2$~mm (pitch) across the five configurations,
-matching the geometric values ($140$/$110$~mm).
+case/axis/direction. The kinematic arms come out remarkably
+consistent — $140.5 \pm 2.3$~mm (roll) and $113.1 \pm 6.2$~mm (pitch)
+across the five configurations, matching the geometric values
+($140$/$110$~mm). Every ingredient is independent of the identified
+moments, so this is a genuine forward test.
+
+Ground effect enters through \emph{both} channels of the pivot-moment
+decomposition $\Delta M_{\mathrm{GE}} = \mathrm{sgn}\cdot a + b\,M$
+(\texttt{analysis/ge\_linearity.py}): the thrust channel
+$a = c_a f l$ (rotor-common surplus, rotor-differential moment and
+fountain body lift, arm exactly $l$) and the moment-proportional
+channel $b$. The onset balance $M(1+b) + \mathrm{sgn}\,a =
+T_{\mathrm{rigid}}$ gives
+\begin{equation}
+M_{\mathrm{pred}} \;=\; \frac{T_{\mathrm{rigid}} -
+\mathrm{sgn}\cdot c_a f l}{1 + b}, \qquad
+T_{\mathrm{rigid}} = \mathrm{sgn}\,(W - f)\,l + S_{\mathrm{off}} ,
+\end{equation}
+evaluated at the two ends of the first-principles bracket:
+the single-rotor superposition ($c_a = 1.03\%$, $b = 1.03\%$, lower
+bound) and the Garofano-adapted interference model ($c_a = 11.67\%$,
+$b = 4.16\%$, upper bound).
 
 \begin{table}[t]
 \centering
@@ -730,14 +742,15 @@ matching the geometric values ($140$/$110$~mm).
 thrust scenario & median & p90 & max & RMS \\
  & \multicolumn{4}{c}{$|$residual$|$ [mN\,m]} \\
 \midrule
-$\gamma = 1$ (no GE) & $204.8$ & $302.1$ & $351.0$ & $218.2$ \\
-$\gamma - 1 = 2.6\%$ (GE mid) & $136.5$ & $227.8$ & $285.4$ & $155.5$ \\
+rigid, no GE & $204.8$ & $302.1$ & $351.0$ & $218.2$ \\
+GE single-rotor (lower) & $163.9$ & $259.1$ & $310.7$ & $181.0$ \\
+GE Garofano (upper) & $142.4$ & $274.1$ & $302.6$ & $170.6$ \\
 \bottomrule
 \end{tabular}
 \caption{Residuals of the identified directional means against the
-static thresholds with the odometry-fitted arms held fixed. Applying
-the ground-effect thrust correction improves \emph{every} one of the
-$20$ groups.}
+static thresholds (odometry-fitted arms held fixed). The no-GE
+residuals are one-sided ($20/20$ groups on the smaller-magnitude
+side); the two GE bounds straddle the data.}
 \label{tab:static-arms}
 \end{table}
 
@@ -745,13 +758,11 @@ $20$ groups.}
 \centering
 \includegraphics[width=\linewidth]{fig_mcrit_static.pdf}
 \caption{Identified directional critical moments (five estimators,
-colored markers) against the static-threshold prediction with truth
-offsets and odometry-fitted arms at $\gamma = 1$ (black tick); the
-gray band is the prediction under the ground-effect bracket with the
-arms held fixed. The markers sit consistently on the
-smaller-magnitude side of the rigid prediction, move toward the band
-as $\gamma$ grows, and the residual disagreement is shared by all
-five estimators — contact physics, not detection.}
+colored markers) against the rigid no-GE static prediction (black
+tick) and the first-principles ground-effect bracket (gray band
+spanning the single-rotor and Garofano-adapted predictions, both
+channels, arms fixed). The identified thresholds fall inside the
+band in $19$ of $20$ groups.}
 \label{fig:static}
 \end{figure}
 
@@ -759,71 +770,74 @@ five estimators — contact physics, not detection.}
 \centering
 \footnotesize
 \setlength{\tabcolsep}{3.4pt}
-\begin{tabular}{ccc r r rr rr c}
+\begin{tabular}{ccc r r rr rr c c}
 \toprule
- & & & $l_{\mathrm{odom}}$ & COSH & \multicolumn{2}{c}{$\gamma = 1$} &
-\multicolumn{2}{c}{GE mid} & benchmark \\
+ & & & $l_{\mathrm{odom}}$ & COSH & \multicolumn{2}{c}{no GE} &
+\multicolumn{2}{c}{GE resid} & in & benchmark \\
 \cmidrule(lr){6-7} \cmidrule(lr){8-9}
-case & axis & dir & [mm] & $\bar M$ [N\,m] & pred & resid & pred &
-resid & range [N\,m] \\
+case & axis & dir & [mm] & $\bar M$ [N\,m] & pred & resid &
+single & Garofano & brkt & range [N\,m] \\
 \midrule
-1 & x & $-$ & $145.2$ & $-1.054$ & $-1.401$ & $+347$ & $-1.322$ & $+268$ & $[-1.048, -1.018]$ \\
-1 & x & $+$ & $139.2$ & $+0.950$ & $+1.172$ & $-222$ & $+1.095$ & $-146$ & $[+0.894, +0.977]$ \\
-1 & y & $-$ & $111.4$ & $-0.422$ & $-0.660$ & $+238$ & $-0.599$ & $+177$ & $[-0.480, -0.399]$ \\
-1 & y & $+$ & $120.0$ & $+1.079$ & $+1.430$ & $-351$ & $+1.365$ & $-285$ & $[+1.054, +1.130]$ \\
+1 & x & $-$ & $145.2$ & $-1.054$ & $-1.401$ & $+347$ & $+302$ & $-51$ & $\checkmark$ & $[-1.048, -1.018]$ \\
+1 & x & $+$ & $139.2$ & $+0.950$ & $+1.172$ & $-222$ & $-180$ & $+153$ & $\checkmark$ & $[+0.894, +0.977]$ \\
+1 & y & $-$ & $111.4$ & $-0.422$ & $-0.660$ & $+238$ & $+207$ & $-51$ & $\checkmark$ & $[-0.480, -0.399]$ \\
+1 & y & $+$ & $120.0$ & $+1.079$ & $+1.430$ & $-351$ & $-311$ & $-11$ & -- & $[+1.054, +1.130]$ \\
 \addlinespace[2pt]
-2 & x & $-$ & $140.0$ & $-1.829$ & $-1.933$ & $+104$ & $-1.856$ & $+28$ & $[-1.861, -1.680]$ \\
-2 & x & $+$ & $139.5$ & $+0.867$ & $+1.021$ & $-154$ & $+0.945$ & $-78$ & $[+0.769, +0.914]$ \\
-2 & y & $-$ & $105.9$ & $-0.666$ & $-0.803$ & $+138$ & $-0.745$ & $+80$ & $[-0.710, -0.637]$ \\
-2 & y & $+$ & $118.4$ & $+1.320$ & $+1.565$ & $-245$ & $+1.501$ & $-181$ & $[+1.248, +1.333]$ \\
+2 & x & $-$ & $140.0$ & $-1.829$ & $-1.933$ & $+104$ & $+54$ & $-303$ & $\checkmark$ & $[-1.861, -1.680]$ \\
+2 & x & $+$ & $139.5$ & $+0.867$ & $+1.021$ & $-154$ & $-114$ & $+216$ & $\checkmark$ & $[+0.769, +0.914]$ \\
+2 & y & $-$ & $105.9$ & $-0.666$ & $-0.803$ & $+138$ & $+107$ & $-144$ & $\checkmark$ & $[-0.710, -0.637]$ \\
+2 & y & $+$ & $118.4$ & $+1.320$ & $+1.565$ & $-245$ & $-204$ & $+96$ & $\checkmark$ & $[+1.248, +1.333]$ \\
 \addlinespace[2pt]
-3 & x & $-$ & $142.5$ & $-1.542$ & $-1.671$ & $+130$ & $-1.594$ & $+52$ & $[-1.608, -1.339]$ \\
-3 & x & $+$ & $138.3$ & $+0.997$ & $+1.294$ & $-297$ & $+1.219$ & $-221$ & $[+1.033, +1.075]$ \\
-3 & y & $-$ & $109.3$ & $-0.984$ & $-1.253$ & $+270$ & $-1.193$ & $+210$ & $[-1.059, -0.990]$ \\
-3 & y & $+$ & $117.9$ & $+0.937$ & $+1.145$ & $-208$ & $+1.080$ & $-143$ & $[+0.923, +1.014]$ \\
+3 & x & $-$ & $142.5$ & $-1.542$ & $-1.671$ & $+130$ & $+82$ & $-273$ & $\checkmark$ & $[-1.608, -1.339]$ \\
+3 & x & $+$ & $138.3$ & $+0.997$ & $+1.294$ & $-297$ & $-254$ & $+80$ & $\checkmark$ & $[+1.033, +1.075]$ \\
+3 & y & $-$ & $109.3$ & $-0.984$ & $-1.253$ & $+270$ & $+234$ & $-38$ & $\checkmark$ & $[-1.059, -0.990]$ \\
+3 & y & $+$ & $117.9$ & $+0.937$ & $+1.145$ & $-208$ & $-171$ & $+116$ & $\checkmark$ & $[+0.923, +1.014]$ \\
 \addlinespace[2pt]
-4 & x & $-$ & $141.1$ & $-1.136$ & $-1.280$ & $+144$ & $-1.203$ & $+67$ & $[-1.181, -1.151]$ \\
-4 & x & $+$ & $138.4$ & $+1.468$ & $+1.674$ & $-206$ & $+1.598$ & $-130$ & $[+1.406, +1.516]$ \\
-4 & y & $-$ & $106.7$ & $-0.998$ & $-1.202$ & $+204$ & $-1.144$ & $+146$ & $[-1.044, -0.928]$ \\
-4 & y & $+$ & $118.3$ & $+0.988$ & $+1.173$ & $-185$ & $+1.109$ & $-120$ & $[+0.969, +1.058]$ \\
+4 & x & $-$ & $141.1$ & $-1.136$ & $-1.280$ & $+144$ & $+101$ & $-240$ & $\checkmark$ & $[-1.181, -1.151]$ \\
+4 & x & $+$ & $138.4$ & $+1.468$ & $+1.674$ & $-206$ & $-159$ & $+187$ & $\checkmark$ & $[+1.406, +1.516]$ \\
+4 & y & $-$ & $106.7$ & $-0.998$ & $-1.202$ & $+204$ & $+169$ & $-95$ & $\checkmark$ & $[-1.044, -0.928]$ \\
+4 & y & $+$ & $118.3$ & $+0.988$ & $+1.173$ & $-185$ & $-148$ & $+141$ & $\checkmark$ & $[+0.969, +1.058]$ \\
 \addlinespace[2pt]
-5 & x & $-$ & $142.5$ & $-1.019$ & $-1.158$ & $+140$ & $-1.080$ & $+62$ & $[-1.048, -0.932]$ \\
-5 & x & $+$ & $137.9$ & $+1.695$ & $+1.804$ & $-109$ & $+1.728$ & $-33$ & $[+1.624, +1.695]$ \\
-5 & y & $-$ & $104.4$ & $-0.634$ & $-0.756$ & $+122$ & $-0.699$ & $+65$ & $[-0.656, -0.577]$ \\
-5 & y & $+$ & $118.6$ & $+1.310$ & $+1.598$ & $-288$ & $+1.534$ & $-223$ & $[+1.241, +1.351]$ \\
+5 & x & $-$ & $142.5$ & $-1.019$ & $-1.158$ & $+140$ & $+97$ & $-243$ & $\checkmark$ & $[-1.048, -0.932]$ \\
+5 & x & $+$ & $137.9$ & $+1.695$ & $+1.804$ & $-109$ & $-61$ & $+288$ & $\checkmark$ & $[+1.624, +1.695]$ \\
+5 & y & $-$ & $104.4$ & $-0.634$ & $-0.756$ & $+122$ & $+92$ & $-155$ & $\checkmark$ & $[-0.656, -0.577]$ \\
+5 & y & $+$ & $118.6$ & $+1.310$ & $+1.598$ & $-288$ & $-247$ & $+55$ & $\checkmark$ & $[+1.241, +1.351]$ \\
 \bottomrule
 \end{tabular}
 \caption{Per-direction static-threshold check with odometry-fitted
-arms. ``pred''/``resid'' [mN\,m] are given for both thrust scenarios;
+arms. Residuals [mN\,m] are given against the rigid no-GE prediction
+and against both ends of the ground-effect bracket; ``in brkt''
+marks identified means falling between the two GE predictions;
 ``benchmark range'' spans the directional means of the four
-alternative estimators (NLS, CPD$_{\mathrm{N}}$, CPD$_{\mathrm{R}}$,
-CUSUM).}
+alternative estimators.}
 \label{tab:static}
 \end{table}
 
-Three observations. \emph{(i) The rigid $\gamma = 1$ prediction
+Three observations. \emph{(i) The rigid no-GE prediction
 over-predicts every group}: the identified magnitudes sit below it in
 all $20$ direction groups (median $205$~mN\,m) — a systematic,
 sign-coherent gap far above the identification scatter, shared by all
 five estimators (benchmark column), hence physical rather than
-algorithmic. \emph{(ii) Ground effect closes part of the gap, in
-every group}: with the arms held fixed, the thrust correction
-$\gamma - 1 = 2.6\%$ reduces the residual RMS from $218$ to
-$155$~mN\,m and improves all $20$ groups — forward evidence that the
-in-ground-effect thrust surplus is real, at roughly the magnitude the
-bracket predicts. \emph{(iii) The remainder points at contact-patch
-compliance}: the surviving deficit corresponds to an effective static
-lever $\sim\!10$--$15$~mm inboard of the kinematic pivot circle —
-independently corroborated by inverting the moment equations for the
-arms ($\approx 122$/$91$~mm effective vs.\ $140.5$/$113.1$~mm
-kinematic): with a finite, compliant contact patch, rotation onsets
-when the normal-force resultant reaches the \emph{inner} edge of the
-patch, before the rigid-edge threshold. All three effects enter the
-two directions with opposite signs through $\pm(W - \gamma f)\,l$ and
-therefore cancel in the pivot-free deliverable \eqref{eq:mff} — which
-is precisely why $M_{\mathrm{ff}}$ validates to millimetres
-(Sec.~\ref{sec:nls}) while the individual thresholds carry a
-$\sim\!0.15$~N\,m contact-physics budget.
+algorithmic. \emph{(ii) The first-principles ground-effect bracket
+captures the data}: with both GE channels applied and the arms held
+fixed, the identified thresholds fall \emph{between} the single-rotor
+and Garofano-adapted predictions in $19/20$ groups (the one exception
+misses the upper bound by $11$~mN\,m). The no-GE hypothesis is
+excluded one-sidedly; the truth lies interior to the declared bracket
+— an independent forward validation of the ground-effect analysis
+itself. \emph{(iii) Neither bound alone fits}, as a bracket should
+behave: the single-rotor model leaves a $+164$~mN\,m median deficit
+(too little ground effect), the Garofano adaptation — whose empirical
+constants are transferred, not calibrated — overshoots the negative
+directions while undershooting the positive ones. Residual
+contributions from contact-patch compliance are degenerate with the
+$a$-channel at this level and cannot be separated here. All of these
+terms enter the two directions antisymmetrically through
+$\pm(W - \gamma f)\,l$ and $\pm a$, and therefore cancel in the
+pivot-free deliverable \eqref{eq:mff} — which is precisely why
+$M_{\mathrm{ff}}$ validates to millimetres (Sec.~\ref{sec:nls}) while
+the individual thresholds carry a $\sim\!0.2$~N\,m ground-contact
+aerodynamic budget.
 
 \section{Reproducibility}
 

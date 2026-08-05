@@ -34,17 +34,19 @@ for r in csv.DictReader(open(f'{SC}/nls_comparison_runs.csv')):
 bmean = {k: {m: float(np.mean(v)) for m, v in d.items()}
          for k, d in bench.items()}
 
-print("% table rows: case ax dir l_odom  M_cosh  predA residA  predB residB  bench")
+print("% rows: case ax dir l_odom M_cosh pred:none r:none r:sgl r:gar inBr bench")
 for k in sorted(pred):
     r = pred[k]
     bs = [bmean[k][m] for m in M[1:] if m in bmean[k]]
     c = k[0].replace('case_0', '')
-    print(f"{c} & {k[1][1]} & {'+' if k[2] == 'pos' else '-'} & "
-          f"{r['l_odom_mm']} & ${float(r['M_ident']):+.3f}$ & "
-          f"${float(r['M_pred']):+.3f}$ & ${float(r['resid_mNm']):+.0f}$ & "
-          f"${float(r['M_pred_ge_mid']):+.3f}$ & "
-          f"${float(r['resid_ge_mid_mNm']):+.0f}$ & "
-          f"$[{min(bs):+.3f}, {max(bs):+.3f}]$ \\\\")
+    chk = '$\\checkmark$' if r['in_bracket'] == 'True' else '--'
+    row = (f"{c} & {k[1][1]} & {'+' if k[2] == 'pos' else '-'} & "
+           f"{r['l_odom_mm']} & ${float(r['M_ident']):+.3f}$ & "
+           f"${float(r['M_pred']):+.3f}$ & ${float(r['resid_mNm']):+.0f}$ & "
+           f"${float(r['resid_single_mNm']):+.0f}$ & "
+           f"${float(r['resid_garofano_mNm']):+.0f}$ & " + chk +
+           f" & $[{min(bs):+.3f}, {max(bs):+.3f}]$ \\\\")
+    print(row)
 
 SLOTS = [('Mx', 'neg'), ('Mx', 'pos'), ('My', 'neg'), ('My', 'pos')]
 XL = [r'$M_{x,-}$', r'$M_{x,+}$', r'$M_{y,-}$', r'$M_{y,+}$']
@@ -55,7 +57,8 @@ for ci, case in enumerate(cases):
     ax.axhline(0, color='0.85', lw=0.7, zorder=0)
     for xi, (axname, dirn) in enumerate(SLOTS):
         r = pred[(case, axname, dirn)]
-        lo, hi = float(r['M_pred_ge_lo']), float(r['M_pred_ge_hi'])
+        lo, hi = sorted((float(r['M_pred_single']),
+                         float(r['M_pred_garofano'])))
         ax.add_patch(plt.Rectangle((xi - 0.34, lo), 0.68, hi - lo,
                                    color='0.85', zorder=1))
         pA = float(r['M_pred'])
@@ -84,8 +87,8 @@ import matplotlib.lines as mlines
 import matplotlib.patches as mpatches
 h += [mlines.Line2D([], [], color='k', lw=1.6),
       mpatches.Patch(color='0.85')]
-l += ['static prediction ($\\gamma=1$, odometry-fitted arms)',
-      'GE band ($\\gamma-1\\in[1.0,4.2]\\%$, arms fixed)']
+l += ['rigid no-GE prediction (odometry-fitted arms)',
+      'GE bracket [single, Garofano], both channels']
 fig.legend(h, l, loc='upper center', ncols=7, fontsize=7.5,
            frameon=False, bbox_to_anchor=(0.5, 1.08))
 fig.tight_layout(rect=(0, 0, 1, 0.96))
