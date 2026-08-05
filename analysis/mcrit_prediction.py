@@ -114,3 +114,33 @@ for ax in ('Mx', 'My'):
     print(f"effective arm l_hat ({ax}) [mm]: mean {a.mean():.1f}, "
           f"std {a.std(ddof=1):.1f}, range [{a.min():.1f}, {a.max():.1f}] "
           f"(nominal {1e3 * ARM[ax]:.0f})")
+
+# ── Fitted-arm stage: one arm per (axis, direction), LS across cases ──
+# Matches the manuscript's l_r / l_l / l_f / l_b distinction; the residuals
+# after this four-constant fit are the per-direction M_crit error range.
+ARMNAME = {('Mx', 'pos'): 'l_r', ('Mx', 'neg'): 'l_l',
+           ('My', 'pos'): 'l_f', ('My', 'neg'): 'l_b'}
+num = defaultdict(list)
+for r in rows:
+    W = MASS_KG[r['case']] * G
+    S = OFF_SIGN[r['axis']] * W * OFF_MM[(r['case'], r['axis'])] * 1e-3
+    sgn = 1.0 if r['dir'] == 'pos' else -1.0
+    num[(r['axis'], r['dir'])].append(
+        (r['case'], W, float(r['f_onset']), float(r['M_ident']), S, sgn))
+print("\n── fitted arms (LS across cases) ──")
+fit = {}
+for k, g in sorted(num.items()):
+    A = np.array([w - f for _, w, f, _, _, _ in g])
+    y = np.array([sg * (Mb - S) for _, _, _, Mb, S, sg in g])
+    fit[k] = float(A @ y / (A @ A))
+    print(f"{ARMNAME[k]} = {1e3 * fit[k]:.1f} mm")
+res_f = []
+for k, g in sorted(num.items()):
+    for case, W, f, Mb, S, sgn in g:
+        pred = sgn * (W - f) * fit[k] + S
+        res_f.append(1e3 * (Mb - pred))
+res_f = np.array(res_f)
+print(f"fitted-arm residuals [mN·m]: median |r| "
+      f"{np.median(np.abs(res_f)):.1f}, p90 "
+      f"{np.percentile(np.abs(res_f), 90):.1f}, max "
+      f"{np.max(np.abs(res_f)):.1f}; RMS {np.sqrt(np.mean(res_f**2)):.1f}")
