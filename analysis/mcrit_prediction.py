@@ -4,20 +4,16 @@
 The static tip-over thresholds are
   M_{x,+} = (W - f) l_r + W y_off        M_{x,-} = -(W - f) l_l + W y_off
   M_{y,+} = (W - f) l_f - W x_off        M_{y,-} = -(W - f) l_b - W x_off
-with W and the CoM offsets known from ground truth (manuscript Table 7)
-and f the measured collective thrust at the onset.  Two readings:
+with every ingredient measured independently of the identified moments:
+W and the CoM offsets from ground truth (manuscript Table 7), f the
+measured collective thrust at the onset, and the pivot arms fitted from
+the odometry/mocap position trace per run (circle fit about the contact
+line, ``estimate_pivot_from_mocap``), averaged per case/axis/direction.
 
-  forward  — predict M_crit per direction with the nominal symmetric arm
-             (l_p = 0.140 m roll / 0.110 m pitch) and compare with the
-             identified directional means; the residual budget is the
-             ground-effect thrust band f_true = gamma*f,
-             gamma - 1 in [1.0%, 4.2%] (bracket), which enters as
-             -/+ (gamma-1) f l_p per direction, plus the arm tolerance
-             (W - f) dl.
-  inverse  — with the offset term pinned by truth, invert each
-             directional mean for the effective arm
-             l_hat = +/-(Mbar_dir - S_off)/(W - f_dir) and check physical
-             plausibility and cross-case consistency.
+Because the arms are independent, the ground-effect question becomes a
+genuine forward test: predictions are evaluated at gamma = 1 (measured
+thrust as-is) and across the bracket gamma - 1 in [1.0, 4.2]% with the
+arms held fixed.
 
 Usage: PYTHONPATH=<stubs> python analysis/mcrit_prediction.py [outdir]
 """
@@ -47,8 +43,8 @@ OFF_MM = {('case_01', 'Mx'): -2.90,  ('case_01', 'My'): -11.45,
           ('case_04', 'Mx'): 6.67,   ('case_04', 'My'): 2.40,
           ('case_05', 'Mx'): 10.91,  ('case_05', 'My'): -10.89}
 OFF_SIGN = {'Mx': +1.0, 'My': -1.0}   # +W y_off (roll) / -W x_off (pitch)
-ARM = {'Mx': 0.140, 'My': 0.110}      # nominal symmetric pivot arm [m]
 GE_BAND = (0.010, 0.042)              # gamma - 1 bracket
+GE_MID = 0.5 * (GE_BAND[0] + GE_BAND[1])
 
 rows = []
 for d in sorted(ROOT.glob('case_*/M[xy]')):
@@ -56,34 +52,43 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
     with contextlib.redirect_stdout(io.StringIO()):
         bags = load_excitation_dataset(d)
         crits, _ = cvp.extract_piecewise_batch(bags, axis)
+    by_bag = {b.name: b for b in bags}
     key = (d.parent.name, d.name)
     W = MASS_KG[key[0]] * G
     S_off = OFF_SIGN[key[1]] * W * OFF_MM[key] * 1e-3
-    lp = ARM[key[1]]
-    by = defaultdict(lambda: ([], []))
+    by = defaultdict(lambda: ([], [], []))
     for c in crits:
         dirn = 'pos' if c.bag_name.startswith('pos') else 'neg'
+        piv = cvp.estimate_pivot_from_mocap(by_bag[c.bag_name],
+                                            c.onset_time, axis)
         by[dirn][0].append(c.onset_moment)
         by[dirn][1].append(c.onset_thrust)
+        if not np.isnan(piv['pivot_abs']):
+            by[dirn][2].append(piv['pivot_abs'] * 1e-3)
     for dirn in ('neg', 'pos'):
         M_bar = float(np.mean(by[dirn][0]))
         f_bar = float(np.mean(by[dirn][1]))
+        arms = np.array(by[dirn][2])
+        l_bar = float(np.mean(arms))
         sgn = +1.0 if dirn == 'pos' else -1.0
-        pred = sgn * (W - f_bar) * lp + S_off
-        # GE band: f_true = gamma*f shifts the prediction by
-        # -sgn*(gamma-1)*f*lp  (thrust larger than measured -> smaller |M|)
-        band = sorted(pred - sgn * g * f_bar * lp for g in GE_BAND)
-        resid = M_bar - pred
-        l_hat = sgn * (M_bar - S_off) / (W - f_bar)
+        pred = {g: sgn * (W - (1 + g) * f_bar) * l_bar + S_off
+                for g in (0.0, GE_MID, *GE_BAND)}
+        band = sorted((pred[GE_BAND[0]], pred[GE_BAND[1]]))
         rows.append(dict(case=key[0], axis=key[1], dir=dirn,
                          W=f"{W:.2f}", f_onset=f"{f_bar:.2f}",
-                         Wmf=f"{W - f_bar:.2f}",
-                         M_ident=f"{M_bar:+.4f}", M_pred=f"{pred:+.4f}",
+                         l_odom_mm=f"{1e3 * l_bar:.1f}",
+                         l_std_mm=(f"{1e3 * arms.std(ddof=1):.1f}"
+                                   if len(arms) > 1 else ''),
+                         n_piv=len(arms),
+                         M_ident=f"{M_bar:+.4f}",
+                         M_pred=f"{pred[0.0]:+.4f}",
+                         M_pred_ge_mid=f"{pred[GE_MID]:+.4f}",
                          M_pred_ge_lo=f"{band[0]:+.4f}",
                          M_pred_ge_hi=f"{band[1]:+.4f}",
-                         resid_mNm=f"{1e3 * resid:+.1f}",
-                         in_band=str(band[0] <= M_bar <= band[1]),
-                         l_hat_mm=f"{1e3 * l_hat:.1f}"))
+                         resid_mNm=f"{1e3 * (M_bar - pred[0.0]):+.1f}",
+                         resid_ge_mid_mNm=
+                         f"{1e3 * (M_bar - pred[GE_MID]):+.1f}",
+                         in_band=str(band[0] <= M_bar <= band[1])))
     print(f"done {key[0]}/{key[1]}", flush=True)
 
 with open(OUT / 'mcrit_prediction.csv', 'w', newline='') as f:
@@ -91,56 +96,23 @@ with open(OUT / 'mcrit_prediction.csv', 'w', newline='') as f:
     w.writeheader()
     w.writerows(rows)
 
-hdr = (f"{'case':8} {'ax':3} {'dir':4} {'W-f':>6} {'M_ident':>9} "
-       f"{'M_pred':>9} {'GE band':>19} {'resid':>7} {'inB':>4} "
-       f"{'l_hat':>6}")
+hdr = (f"{'case':8} {'ax':3} {'dir':4} {'l_odom':>7} {'M_ident':>9} "
+       f"{'pred(g=1)':>9} {'resid':>7} {'pred(mid)':>9} {'residGE':>8} "
+       f"{'inB':>5}")
 print("\n" + hdr)
 print("-" * len(hdr))
 for r in rows:
-    print(f"{r['case']:8} {r['axis']:3} {r['dir']:4} {r['Wmf']:>6} "
-          f"{r['M_ident']:>9} {r['M_pred']:>9} "
-          f"[{r['M_pred_ge_lo']}, {r['M_pred_ge_hi']}] "
-          f"{r['resid_mNm']:>7} {r['in_band']:>4} {r['l_hat_mm']:>6}")
+    print(f"{r['case']:8} {r['axis']:3} {r['dir']:4} {r['l_odom_mm']:>7} "
+          f"{r['M_ident']:>9} {r['M_pred']:>9} {r['resid_mNm']:>7} "
+          f"{r['M_pred_ge_mid']:>9} {r['resid_ge_mid_mNm']:>8} "
+          f"{r['in_band']:>5}")
 
-res = np.array([float(r['resid_mNm']) for r in rows])
-lh = {ax: [float(r['l_hat_mm']) for r in rows if r['axis'] == ax]
-      for ax in ('Mx', 'My')}
-print(f"\nresidual vs nominal-arm prediction [mN·m]: "
-      f"median {np.median(np.abs(res)):.1f}, "
-      f"p90 {np.percentile(np.abs(res), 90):.1f}, "
-      f"max {np.max(np.abs(res)):.1f}")
+for lbl, col in (('gamma=1 ', 'resid_mNm'), ('GE mid  ', 'resid_ge_mid_mNm')):
+    a = np.abs(np.array([float(r[col]) for r in rows]))
+    print(f"{lbl}: |resid| median {np.median(a):.1f}, "
+          f"p90 {np.percentile(a, 90):.1f}, max {a.max():.1f}, "
+          f"RMS {np.sqrt(np.mean(a**2)):.1f} mN·m")
 for ax in ('Mx', 'My'):
-    a = np.array(lh[ax])
-    print(f"effective arm l_hat ({ax}) [mm]: mean {a.mean():.1f}, "
-          f"std {a.std(ddof=1):.1f}, range [{a.min():.1f}, {a.max():.1f}] "
-          f"(nominal {1e3 * ARM[ax]:.0f})")
-
-# ── Fitted-arm stage: one arm per (axis, direction), LS across cases ──
-# Matches the manuscript's l_r / l_l / l_f / l_b distinction; the residuals
-# after this four-constant fit are the per-direction M_crit error range.
-ARMNAME = {('Mx', 'pos'): 'l_r', ('Mx', 'neg'): 'l_l',
-           ('My', 'pos'): 'l_f', ('My', 'neg'): 'l_b'}
-num = defaultdict(list)
-for r in rows:
-    W = MASS_KG[r['case']] * G
-    S = OFF_SIGN[r['axis']] * W * OFF_MM[(r['case'], r['axis'])] * 1e-3
-    sgn = 1.0 if r['dir'] == 'pos' else -1.0
-    num[(r['axis'], r['dir'])].append(
-        (r['case'], W, float(r['f_onset']), float(r['M_ident']), S, sgn))
-print("\n── fitted arms (LS across cases) ──")
-fit = {}
-for k, g in sorted(num.items()):
-    A = np.array([w - f for _, w, f, _, _, _ in g])
-    y = np.array([sg * (Mb - S) for _, _, _, Mb, S, sg in g])
-    fit[k] = float(A @ y / (A @ A))
-    print(f"{ARMNAME[k]} = {1e3 * fit[k]:.1f} mm")
-res_f = []
-for k, g in sorted(num.items()):
-    for case, W, f, Mb, S, sgn in g:
-        pred = sgn * (W - f) * fit[k] + S
-        res_f.append(1e3 * (Mb - pred))
-res_f = np.array(res_f)
-print(f"fitted-arm residuals [mN·m]: median |r| "
-      f"{np.median(np.abs(res_f)):.1f}, p90 "
-      f"{np.percentile(np.abs(res_f), 90):.1f}, max "
-      f"{np.max(np.abs(res_f)):.1f}; RMS {np.sqrt(np.mean(res_f**2)):.1f}")
+    a = np.array([float(r['l_odom_mm']) for r in rows if r['axis'] == ax])
+    print(f"odom-fitted arm ({ax}) [mm]: mean {a.mean():.1f}, "
+          f"std {a.std(ddof=1):.1f}, range [{a.min():.1f}, {a.max():.1f}]")
