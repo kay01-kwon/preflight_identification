@@ -8,7 +8,10 @@ with every ingredient measured independently of the identified moments:
 W and the CoM offsets from ground truth (manuscript Table 7), f the
 measured collective thrust at the onset, and the pivot arms fitted from
 the odometry/mocap position trace per run (circle fit about the contact
-line, ``estimate_pivot_from_mocap``), averaged per case/axis/direction.
+line, ``estimate_pivot_from_mocap``).  Each run is predicted with its
+OWN arm and onset thrust; per-run predictions (and residuals) are then
+aggregated per case/axis/direction.  The identified mean uses the same
+valid-pivot run subset, so mean residual = mean(M) - mean(pred).
 
 Because the arms are independent, the ground-effect question becomes a
 genuine forward test.  The GE correction uses the FULL pivot-moment
@@ -62,37 +65,49 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
     key = (d.parent.name, d.name)
     W = MASS_KG[key[0]] * G
     S_off = OFF_SIGN[key[1]] * W * OFF_MM[key] * 1e-3
-    by = defaultdict(lambda: ([], [], []))
+    by = defaultdict(list)
+    n_all = defaultdict(int)
     for c in crits:
         dirn = 'pos' if c.bag_name.startswith('pos') else 'neg'
+        n_all[dirn] += 1
         piv = cvp.estimate_pivot_from_mocap(by_bag[c.bag_name],
                                             c.onset_time, axis)
-        by[dirn][0].append(c.onset_moment)
-        by[dirn][1].append(c.onset_thrust)
         if not np.isnan(piv['pivot_abs']):
-            by[dirn][2].append(piv['pivot_abs'] * 1e-3)
+            by[dirn].append((c.onset_moment, c.onset_thrust,
+                             piv['pivot_abs'] * 1e-3))
     for dirn in ('neg', 'pos'):
-        M_bar = float(np.mean(by[dirn][0]))
-        f_bar = float(np.mean(by[dirn][1]))
-        arms = np.array(by[dirn][2])
-        l_bar = float(np.mean(arms))
+        runs = by[dirn]
         sgn = +1.0 if dirn == 'pos' else -1.0
-        T = sgn * (W - f_bar) * l_bar + S_off
-        pred = {'none': T}
-        for name, (ca, b) in GE.items():
-            pred[name] = (T - sgn * ca * f_bar * l_bar) / (1.0 + b)
+        # per-run prediction with that run's own arm and onset thrust,
+        # then aggregate: pred_dir = mean over runs (and identically for
+        # the residuals, since the identified mean uses the same subset)
+        per = {'none': [], 'single': [], 'garofano': []}
+        for M_r, f_r, l_r in runs:
+            T = sgn * (W - f_r) * l_r + S_off
+            per['none'].append(T)
+            for name, (ca, b) in GE.items():
+                per[name].append((T - sgn * ca * f_r * l_r) / (1.0 + b))
+        M_bar = float(np.mean([r[0] for r in runs]))
+        f_bar = float(np.mean([r[1] for r in runs]))
+        arms = np.array([r[2] for r in runs])
+        pred = {k: float(np.mean(v)) for k, v in per.items()}
         band = sorted((pred['single'], pred['garofano']))
+        res_runs = 1e3 * (np.array([r[0] for r in runs])
+                          - np.array(per['none']))
         rows.append(dict(case=key[0], axis=key[1], dir=dirn,
                          W=f"{W:.2f}", f_onset=f"{f_bar:.2f}",
-                         l_odom_mm=f"{1e3 * l_bar:.1f}",
+                         l_odom_mm=f"{1e3 * arms.mean():.1f}",
                          l_std_mm=(f"{1e3 * arms.std(ddof=1):.1f}"
                                    if len(arms) > 1 else ''),
-                         n_piv=len(arms),
+                         n_piv=f"{len(runs)}/{n_all[dirn]}",
                          M_ident=f"{M_bar:+.4f}",
                          M_pred=f"{pred['none']:+.4f}",
                          M_pred_single=f"{pred['single']:+.4f}",
                          M_pred_garofano=f"{pred['garofano']:+.4f}",
                          resid_mNm=f"{1e3 * (M_bar - pred['none']):+.1f}",
+                         resid_run_std_mNm=
+                         f"{res_runs.std(ddof=1):.1f}"
+                         if len(runs) > 1 else '',
                          resid_single_mNm=
                          f"{1e3 * (M_bar - pred['single']):+.1f}",
                          resid_garofano_mNm=
