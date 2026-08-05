@@ -56,7 +56,8 @@ def srot_matrix(z, pxy, R):
 
 def main():
     p = argparse.ArgumentParser(description="Exact GE linearity in tilt.")
-    p.add_argument('--model', choices=['single', 'garofano'], default='single')
+    p.add_argument('--model', choices=['single', 'interf', 'garofano'],
+                   default='single')
     p.add_argument('--arm', type=float, default=0.265, help="arm length L [m]")
     p.add_argument('--radius', type=float, default=0.127)
     p.add_argument('--hub-height', type=float, default=0.315)
@@ -114,6 +115,15 @@ def main():
             a = np.sum(arm_c * g1) * f / 6 + lp * np.sum(g1) * f / 6
             b = float(np.sum((arm_c + lp) * g1 * tm))
             return a, b
+        if args.model == 'interf':
+            # pure image superposition over rotor-centre distances: mutual
+            # interference included, NO empirical constants (no k matching,
+            # no fountain/body term) — Sanchez-style neighbour sum.
+            srot = srot_matrix(z, pxy, R)
+            g = 1.0 / (1.0 - srot) - 1.0
+            a = (np.sum(arm_c * g) + lp * np.sum(g)) * f / 6
+            b = float(np.sum((arm_c + lp) * g * tm))
+            return a, b
         zc = h * np.cos(phi) + lp * np.sin(phi)
         k = k_of_z(zc)                             # re-evaluated per attitude
         srot = srot_matrix(z, pxy, R)
@@ -127,7 +137,7 @@ def main():
         return a, b
 
     print(f"model = {args.model}"
-          + ("" if args.model == 'single' else
+          + ("" if args.model != 'garofano' else
              f"  (J_k={args.jk}, r_d={rd:.3f} m — J_k transferred from "
                f"Garofano-Soldado et al. 2024; k(z_c) matched per attitude)"))
     for name, lp, s_h, arm_c, Mx in (
