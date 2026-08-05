@@ -11,9 +11,15 @@ the odometry/mocap position trace per run (circle fit about the contact
 line, ``estimate_pivot_from_mocap``), averaged per case/axis/direction.
 
 Because the arms are independent, the ground-effect question becomes a
-genuine forward test: predictions are evaluated at gamma = 1 (measured
-thrust as-is) and across the bracket gamma - 1 in [1.0, 4.2]% with the
-arms held fixed.
+genuine forward test.  The GE correction uses the FULL pivot-moment
+decomposition of analysis/ge_linearity.py (both channels),
+    Delta M_GE = sgn*a + b*M,   a = c_a * f * l,   at the onset
+so the balance M(1+b) + sgn*a = T_rigid gives
+    M_pred = (T_rigid - sgn*a) / (1 + b),  T_rigid = sgn*(W-f)l + S.
+Coefficients at phi = 0 (attitude dependence < 0.5% over the measured
+onset tilts), from `python analysis/ge_linearity.py --model ...`:
+    single   c_a = 1.03%,  b = 1.026%   (lower bound)
+    garofano c_a = 11.67%, b = 4.155%   (upper bound)
 
 Usage: PYTHONPATH=<stubs> python analysis/mcrit_prediction.py [outdir]
 """
@@ -43,8 +49,8 @@ OFF_MM = {('case_01', 'Mx'): -2.90,  ('case_01', 'My'): -11.45,
           ('case_04', 'Mx'): 6.67,   ('case_04', 'My'): 2.40,
           ('case_05', 'Mx'): 10.91,  ('case_05', 'My'): -10.89}
 OFF_SIGN = {'Mx': +1.0, 'My': -1.0}   # +W y_off (roll) / -W x_off (pitch)
-GE_BAND = (0.010, 0.042)              # gamma - 1 bracket
-GE_MID = 0.5 * (GE_BAND[0] + GE_BAND[1])
+GE = {'single': (0.0103, 0.01026),     # (c_a, b) at phi=0
+      'garofano': (0.1167, 0.04155)}
 
 rows = []
 for d in sorted(ROOT.glob('case_*/M[xy]')):
@@ -71,9 +77,11 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
         arms = np.array(by[dirn][2])
         l_bar = float(np.mean(arms))
         sgn = +1.0 if dirn == 'pos' else -1.0
-        pred = {g: sgn * (W - (1 + g) * f_bar) * l_bar + S_off
-                for g in (0.0, GE_MID, *GE_BAND)}
-        band = sorted((pred[GE_BAND[0]], pred[GE_BAND[1]]))
+        T = sgn * (W - f_bar) * l_bar + S_off
+        pred = {'none': T}
+        for name, (ca, b) in GE.items():
+            pred[name] = (T - sgn * ca * f_bar * l_bar) / (1.0 + b)
+        band = sorted((pred['single'], pred['garofano']))
         rows.append(dict(case=key[0], axis=key[1], dir=dirn,
                          W=f"{W:.2f}", f_onset=f"{f_bar:.2f}",
                          l_odom_mm=f"{1e3 * l_bar:.1f}",
@@ -81,14 +89,15 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
                                    if len(arms) > 1 else ''),
                          n_piv=len(arms),
                          M_ident=f"{M_bar:+.4f}",
-                         M_pred=f"{pred[0.0]:+.4f}",
-                         M_pred_ge_mid=f"{pred[GE_MID]:+.4f}",
-                         M_pred_ge_lo=f"{band[0]:+.4f}",
-                         M_pred_ge_hi=f"{band[1]:+.4f}",
-                         resid_mNm=f"{1e3 * (M_bar - pred[0.0]):+.1f}",
-                         resid_ge_mid_mNm=
-                         f"{1e3 * (M_bar - pred[GE_MID]):+.1f}",
-                         in_band=str(band[0] <= M_bar <= band[1])))
+                         M_pred=f"{pred['none']:+.4f}",
+                         M_pred_single=f"{pred['single']:+.4f}",
+                         M_pred_garofano=f"{pred['garofano']:+.4f}",
+                         resid_mNm=f"{1e3 * (M_bar - pred['none']):+.1f}",
+                         resid_single_mNm=
+                         f"{1e3 * (M_bar - pred['single']):+.1f}",
+                         resid_garofano_mNm=
+                         f"{1e3 * (M_bar - pred['garofano']):+.1f}",
+                         in_bracket=str(band[0] <= M_bar <= band[1])))
     print(f"done {key[0]}/{key[1]}", flush=True)
 
 with open(OUT / 'mcrit_prediction.csv', 'w', newline='') as f:
@@ -97,17 +106,20 @@ with open(OUT / 'mcrit_prediction.csv', 'w', newline='') as f:
     w.writerows(rows)
 
 hdr = (f"{'case':8} {'ax':3} {'dir':4} {'l_odom':>7} {'M_ident':>9} "
-       f"{'pred(g=1)':>9} {'resid':>7} {'pred(mid)':>9} {'residGE':>8} "
-       f"{'inB':>5}")
+       f"{'pred:none':>9} {'resid':>7} {'single':>9} {'r_sgl':>7} "
+       f"{'garofano':>9} {'r_gar':>7} {'inBr':>5}")
 print("\n" + hdr)
 print("-" * len(hdr))
 for r in rows:
     print(f"{r['case']:8} {r['axis']:3} {r['dir']:4} {r['l_odom_mm']:>7} "
           f"{r['M_ident']:>9} {r['M_pred']:>9} {r['resid_mNm']:>7} "
-          f"{r['M_pred_ge_mid']:>9} {r['resid_ge_mid_mNm']:>8} "
-          f"{r['in_band']:>5}")
+          f"{r['M_pred_single']:>9} {r['resid_single_mNm']:>7} "
+          f"{r['M_pred_garofano']:>9} {r['resid_garofano_mNm']:>7} "
+          f"{r['in_bracket']:>5}")
 
-for lbl, col in (('gamma=1 ', 'resid_mNm'), ('GE mid  ', 'resid_ge_mid_mNm')):
+for lbl, col in (('no GE   ', 'resid_mNm'),
+                 ('single  ', 'resid_single_mNm'),
+                 ('garofano', 'resid_garofano_mNm')):
     a = np.abs(np.array([float(r[col]) for r in rows]))
     print(f"{lbl}: |resid| median {np.median(a):.1f}, "
           f"p90 {np.percentile(a, 90):.1f}, max {a.max():.1f}, "
