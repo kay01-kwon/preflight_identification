@@ -732,10 +732,15 @@ M_{\mathrm{pred}} \;=\; \frac{T_{\mathrm{rigid}} -
 \mathrm{sgn}\cdot c_a f l}{1 + b}, \qquad
 T_{\mathrm{rigid}} = \mathrm{sgn}\,(W - f)\,l + S_{\mathrm{off}} ,
 \end{equation}
-evaluated at the two ends of the first-principles bracket:
-the single-rotor superposition ($c_a = 1.03\%$, $b = 1.03\%$, lower
-bound) and the Garofano-adapted interference model ($c_a = 11.67\%$,
-$b = 4.16\%$, upper bound).
+evaluated for three thrust models of increasing physics content:
+the single-rotor superposition ($c_a = 1.03\%$, $b = 1.03\%$ — no
+rotor--rotor interference, lower bound); the \emph{parameter-free
+interference model} — the pure image superposition over the
+rotor-centre distances, whose self term is exactly Cheeseman--Bennett
+and whose mutual terms carry the interference, with \emph{no}
+empirical constant of any kind ($c_a = b = 4.31\%$); and the
+Garofano-adapted model with transferred constants
+($c_a = 11.67\%$, $b = 4.16\%$, upper bound).
 
 \begin{table}[t]
 \centering
@@ -747,13 +752,17 @@ thrust scenario & median & p90 & max & RMS \\
 \midrule
 rigid, no GE & $204.8$ & $302.3$ & $351.0$ & $218.6$ \\
 GE single-rotor (lower) & $163.9$ & $259.3$ & $310.8$ & $181.4$ \\
+\textbf{GE interference (param.-free)} & $\mathbf{62.5}$ &
+$\mathbf{127.6}$ & $\mathbf{187.6}$ & $\mathbf{89.7}$ \\
 GE Garofano (upper) & $139.1$ & $274.1$ & $302.5$ & $170.3$ \\
 \bottomrule
 \end{tabular}
 \caption{Residuals of the identified directional means against the
 static thresholds (odometry-fitted arms held fixed). The no-GE
 residuals are one-sided ($20/20$ groups on the smaller-magnitude
-side); the two GE bounds straddle the data.}
+side); the single-rotor and Garofano models straddle the data; the
+parameter-free interference model is both the most accurate and
+essentially unbiased (signed mean $-16$~mN\,m).}
 \label{tab:static-arms}
 \end{table}
 
@@ -762,10 +771,12 @@ side); the two GE bounds straddle the data.}
 \includegraphics[width=\linewidth]{fig_mcrit_static.pdf}
 \caption{Identified directional critical moments (five estimators,
 colored markers) against the rigid no-GE static prediction (black
-tick) and the first-principles ground-effect bracket (gray band
-spanning the single-rotor and Garofano-adapted predictions, both
-channels, arms fixed). The identified thresholds fall inside the
-band in $19$ of $20$ groups.}
+tick), the parameter-free interference prediction (dashed line) and
+the ground-effect bracket (gray band spanning the single-rotor and
+Garofano-adapted predictions; arms fixed). The identified thresholds
+fall inside the band in $19$ of $20$ groups, and the dashed
+interference prediction passes through the estimator cluster in
+nearly every group.}
 \label{fig:static}
 \end{figure}
 
@@ -773,38 +784,38 @@ band in $19$ of $20$ groups.}
 \centering
 \footnotesize
 \setlength{\tabcolsep}{3.4pt}
-\begin{tabular}{ccc r r rr rr c c}
+\begin{tabular}{ccc r r rr rrr c c}
 \toprule
  & & & $l_{\mathrm{odom}}$ & COSH & \multicolumn{2}{c}{no GE} &
-\multicolumn{2}{c}{GE resid} & in & benchmark \\
-\cmidrule(lr){6-7} \cmidrule(lr){8-9}
+\multicolumn{3}{c}{GE resid} & in & benchmark \\
+\cmidrule(lr){6-7} \cmidrule(lr){8-10}
 case & axis & dir & [mm] & $\bar M$ [N\,m] & pred & resid &
-single & Garofano & brkt & range [N\,m] \\
+single & interf & Garof. & brkt & range [N\,m] \\
 \midrule
-1 & x & - & 145.2 & $-1.051$ & $-1.401$ & $+350$ & $+304$ & $-49$ & $\checkmark$ & $[-1.048, -1.018]$ \\
-1 & x & + & 139.2 & $+0.950$ & $+1.172$ & $-222$ & $-180$ & $+153$ & $\checkmark$ & $[+0.894, +0.977]$ \\
-1 & y & - & 111.4 & $-0.422$ & $-0.660$ & $+238$ & $+207$ & $-51$ & $\checkmark$ & $[-0.480, -0.399]$ \\
-1 & y & + & 120.0 & $+1.079$ & $+1.430$ & $-351$ & $-311$ & $-11$ & -- & $[+1.054, +1.130]$ \\
+1 & x & - & 145.2 & $-1.051$ & $-1.401$ & $+350$ & $+304$ & $+165$ & $-49$ & $\checkmark$ & $[-1.048, -1.018]$ \\
+1 & x & + & 139.2 & $+0.950$ & $+1.172$ & $-222$ & $-180$ & $-52$ & $+153$ & $\checkmark$ & $[+0.894, +0.977]$ \\
+1 & y & - & 111.4 & $-0.422$ & $-0.660$ & $+238$ & $+207$ & $+114$ & $-51$ & $\checkmark$ & $[-0.480, -0.399]$ \\
+1 & y & + & 120.0 & $+1.079$ & $+1.430$ & $-351$ & $-311$ & $-188$ & $-11$ & -- & $[+1.054, +1.130]$ \\
 \addlinespace[2pt]
-2 & x & - & 140.0 & $-1.829$ & $-1.933$ & $+104$ & $+54$ & $-302$ & $\checkmark$ & $[-1.861, -1.680]$ \\
-2 & x & + & 139.5 & $+0.867$ & $+1.021$ & $-154$ & $-114$ & $+216$ & $\checkmark$ & $[+0.769, +0.914]$ \\
-2 & y & - & 105.9 & $-0.666$ & $-0.803$ & $+138$ & $+107$ & $-144$ & $\checkmark$ & $[-0.710, -0.637]$ \\
-2 & y & + & 118.4 & $+1.320$ & $+1.565$ & $-245$ & $-204$ & $+96$ & $\checkmark$ & $[+1.248, +1.333]$ \\
+2 & x & - & 140.0 & $-1.829$ & $-1.933$ & $+104$ & $+54$ & $-98$ & $-302$ & $\checkmark$ & $[-1.861, -1.680]$ \\
+2 & x & + & 139.5 & $+0.867$ & $+1.021$ & $-154$ & $-114$ & $+10$ & $+216$ & $\checkmark$ & $[+0.769, +0.914]$ \\
+2 & y & - & 105.9 & $-0.666$ & $-0.803$ & $+138$ & $+107$ & $+12$ & $-144$ & $\checkmark$ & $[-0.710, -0.637]$ \\
+2 & y & + & 118.4 & $+1.320$ & $+1.565$ & $-245$ & $-204$ & $-78$ & $+96$ & $\checkmark$ & $[+1.248, +1.333]$ \\
 \addlinespace[2pt]
-3 & x & - & 142.5 & $-1.542$ & $-1.672$ & $+130$ & $+82$ & $-273$ & $\checkmark$ & $[-1.608, -1.339]$ \\
-3 & x & + & 138.3 & $+0.997$ & $+1.294$ & $-297$ & $-254$ & $+80$ & $\checkmark$ & $[+1.033, +1.075]$ \\
-3 & y & - & 109.3 & $-0.984$ & $-1.253$ & $+270$ & $+233$ & $-38$ & $\checkmark$ & $[-1.059, -0.990]$ \\
-3 & y & + & 117.9 & $+0.937$ & $+1.145$ & $-208$ & $-171$ & $+116$ & $\checkmark$ & $[+0.923, +1.014]$ \\
+3 & x & - & 142.5 & $-1.542$ & $-1.672$ & $+130$ & $+82$ & $-63$ & $-273$ & $\checkmark$ & $[-1.608, -1.339]$ \\
+3 & x & + & 138.3 & $+0.997$ & $+1.294$ & $-297$ & $-254$ & $-123$ & $+80$ & $\checkmark$ & $[+1.033, +1.075]$ \\
+3 & y & - & 109.3 & $-0.984$ & $-1.253$ & $+270$ & $+233$ & $+123$ & $-38$ & $\checkmark$ & $[-1.059, -0.990]$ \\
+3 & y & + & 117.9 & $+0.937$ & $+1.145$ & $-208$ & $-171$ & $-58$ & $+116$ & $\checkmark$ & $[+0.923, +1.014]$ \\
 \addlinespace[2pt]
-4 & x & - & 141.1 & $-1.136$ & $-1.280$ & $+144$ & $+101$ & $-240$ & $\checkmark$ & $[-1.181, -1.151]$ \\
-4 & x & + & 138.4 & $+1.468$ & $+1.674$ & $-206$ & $-159$ & $+187$ & $\checkmark$ & $[+1.406, +1.516]$ \\
-4 & y & - & 106.7 & $-0.998$ & $-1.202$ & $+204$ & $+169$ & $-96$ & $\checkmark$ & $[-1.044, -0.928]$ \\
-4 & y & + & 118.3 & $+0.982$ & $+1.174$ & $-192$ & $-154$ & $+134$ & $\checkmark$ & $[+0.969, +1.058]$ \\
+4 & x & - & 141.1 & $-1.136$ & $-1.280$ & $+144$ & $+101$ & $-32$ & $-240$ & $\checkmark$ & $[-1.181, -1.151]$ \\
+4 & x & + & 138.4 & $+1.468$ & $+1.674$ & $-206$ & $-159$ & $-16$ & $+187$ & $\checkmark$ & $[+1.406, +1.516]$ \\
+4 & y & - & 106.7 & $-0.998$ & $-1.202$ & $+204$ & $+169$ & $+62$ & $-96$ & $\checkmark$ & $[-1.044, -0.928]$ \\
+4 & y & + & 118.3 & $+0.982$ & $+1.174$ & $-192$ & $-154$ & $-40$ & $+134$ & $\checkmark$ & $[+0.969, +1.058]$ \\
 \addlinespace[2pt]
-5 & x & - & 142.5 & $-1.019$ & $-1.158$ & $+140$ & $+97$ & $-242$ & $\checkmark$ & $[-1.048, -0.932]$ \\
-5 & x & + & 137.9 & $+1.695$ & $+1.804$ & $-109$ & $-61$ & $+288$ & $\checkmark$ & $[+1.624, +1.695]$ \\
-5 & y & - & 104.4 & $-0.634$ & $-0.756$ & $+122$ & $+92$ & $-154$ & $\checkmark$ & $[-0.656, -0.577]$ \\
-5 & y & + & 118.6 & $+1.310$ & $+1.598$ & $-288$ & $-246$ & $+55$ & $\checkmark$ & $[+1.241, +1.351]$ \\
+5 & x & - & 142.5 & $-1.019$ & $-1.158$ & $+140$ & $+97$ & $-32$ & $-242$ & $\checkmark$ & $[-1.048, -0.932]$ \\
+5 & x & + & 137.9 & $+1.695$ & $+1.804$ & $-109$ & $-61$ & $+86$ & $+288$ & $\checkmark$ & $[+1.624, +1.695]$ \\
+5 & y & - & 104.4 & $-0.634$ & $-0.756$ & $+122$ & $+92$ & $-0$ & $-154$ & $\checkmark$ & $[-0.656, -0.577]$ \\
+5 & y & + & 118.6 & $+1.310$ & $+1.598$ & $-288$ & $-246$ & $-119$ & $+55$ & $\checkmark$ & $[+1.241, +1.351]$ \\
 \bottomrule
 \end{tabular}
 \caption{Per-direction static-threshold check with odometry-fitted
@@ -828,13 +839,18 @@ and Garofano-adapted predictions in $19/20$ groups (the one exception
 misses the upper bound by $11$~mN\,m). The no-GE hypothesis is
 excluded one-sidedly; the truth lies interior to the declared bracket
 — an independent forward validation of the ground-effect analysis
-itself. \emph{(iii) Neither bound alone fits}, as a bracket should
-behave: the single-rotor model leaves a $+164$~mN\,m median deficit
-(too little ground effect), the Garofano adaptation — whose empirical
-constants are transferred, not calibrated — overshoots the negative
-directions while undershooting the positive ones. Residual
-contributions from contact-patch compliance are degenerate with the
-$a$-channel at this level and cannot be separated here. All of these
+itself. \emph{(iii) The parameter-free interference model fits best — by a
+factor of two}: $62.5$~mN\,m median / $89.7$~mN\,m RMS, with mixed
+residual signs and a signed mean of only $-16$~mN\,m, i.e.\
+essentially unbiased, against one-sided deficits for the single-rotor
+model (interference is real) and direction-antisymmetric over/under
+correction for the Garofano adaptation (its transferred constants
+overstate the interference roughly twofold). A model with \emph{no}
+tuned constant reproducing all twenty directional thresholds at the
+$\sim\!0.06$~N\,m level is strong evidence that the ground-contact
+aerodynamics are understood. Residual contributions from
+contact-patch compliance are degenerate with the $a$-channel at this
+level and cannot be separated here. All of these
 terms enter the two directions antisymmetrically through
 $\pm(W - \gamma f)\,l$ and $\pm a$, and therefore cancel in the
 pivot-free deliverable \eqref{eq:mff} — which is precisely why

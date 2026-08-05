@@ -44,6 +44,7 @@ for k in sorted(pred):
            f"{r['l_odom_mm']} & ${float(r['M_ident']):+.3f}$ & "
            f"${float(r['M_pred']):+.3f}$ & ${float(r['resid_mNm']):+.0f}$ & "
            f"${float(r['resid_single_mNm']):+.0f}$ & "
+           f"${float(r['resid_interf_mNm']):+.0f}$ & "
            f"${float(r['resid_garofano_mNm']):+.0f}$ & " + chk +
            f" & $[{min(bs):+.3f}, {max(bs):+.3f}]$ \\\\")
     print(row)
@@ -64,6 +65,9 @@ for ci, case in enumerate(cases):
         pA = float(r['M_pred'])
         ax.plot([xi - 0.34, xi + 0.34], [pA, pA], color='k', lw=1.6,
                 zorder=2)
+        pI = float(r['M_pred_interf'])
+        ax.plot([xi - 0.34, xi + 0.34], [pI, pI], color='0.25', lw=1.3,
+                ls=(0, (4, 2)), zorder=2)
         k = (case, axname, dirn)
         for mi, m in enumerate(M):
             val = (float(r['M_ident']) if m == 'cosh'
@@ -86,9 +90,11 @@ h, l = axes[0].get_legend_handles_labels()
 import matplotlib.lines as mlines
 import matplotlib.patches as mpatches
 h += [mlines.Line2D([], [], color='k', lw=1.6),
+      mlines.Line2D([], [], color='0.25', lw=1.3, ls=(0, (4, 2))),
       mpatches.Patch(color='0.85')]
 l += ['rigid no-GE prediction (odometry-fitted arms)',
-      'GE bracket [single, Garofano], both channels']
+      'parameter-free interference model',
+      'GE bracket [single, Garofano]']
 fig.legend(h, l, loc='upper center', ncols=7, fontsize=7.5,
            frameon=False, bbox_to_anchor=(0.5, 1.08))
 fig.tight_layout(rect=(0, 0, 1, 0.96))
