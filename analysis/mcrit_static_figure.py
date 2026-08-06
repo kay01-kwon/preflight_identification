@@ -34,20 +34,32 @@ for r in csv.DictReader(open(f'{SC}/nls_comparison_runs.csv')):
 bmean = {k: {m: float(np.mean(v)) for m, v in d.items()}
          for k, d in bench.items()}
 
-print("% rows: case ax dir l_odom M_cosh pred:none r:none r:sgl r:gar inBr bench")
+print("% rows: case ax dir l_odom M_cosh pred:none r:none r:sgl "
+      "pred:interf r:interf bench")
 for k in sorted(pred):
     r = pred[k]
     bs = [bmean[k][m] for m in M[1:] if m in bmean[k]]
     c = k[0].replace('case_0', '')
-    chk = '$\\checkmark$' if r['in_bracket'] == 'True' else '--'
     row = (f"{c} & {k[1][1]} & {'+' if k[2] == 'pos' else '-'} & "
            f"{r['l_odom_mm']} & ${float(r['M_ident']):+.3f}$ & "
            f"${float(r['M_pred']):+.3f}$ & ${float(r['resid_mNm']):+.0f}$ & "
            f"${float(r['resid_single_mNm']):+.0f}$ & "
+           f"${float(r['M_pred_interf']):+.3f}$ & "
            f"${float(r['resid_interf_mNm']):+.0f}$ & "
-           f"${float(r['resid_garofano_mNm']):+.0f}$ & " + chk +
-           f" & $[{min(bs):+.3f}, {max(bs):+.3f}]$ \\\\")
+           f"$[{min(bs):+.3f}, {max(bs):+.3f}]$ \\\\")
     print(row)
+
+# magnitude-signed residual: |M_ident| - |M_pred| (negative = the model
+# over-predicts the threshold).  This is the statistic that exposes the
+# one-sided bias, which the raw signed residual hides because the two tip
+# directions carry opposite signs.
+print("\n% magnitude deficit |M_ident| - |M_pred| [mN·m]")
+for key, col in (('no GE', 'resid_mNm'), ('no interference',
+                 'resid_single_mNm'), ('interference', 'resid_interf_mNm')):
+    d = np.array([(1.0 if r['dir'] == 'pos' else -1.0) * float(r[col])
+                  for r in pred.values()])
+    print(f"%   {key:16}: mean {d.mean():+7.1f}, "
+          f"{int((d < 0).sum())}/{len(d)} over-predicted")
 
 SLOTS = [('Mx', 'neg'), ('Mx', 'pos'), ('My', 'neg'), ('My', 'pos')]
 XL = [r'$M_{x,-}$', r'$M_{x,+}$', r'$M_{y,-}$', r'$M_{y,+}$']
@@ -58,16 +70,14 @@ for ci, case in enumerate(cases):
     ax.axhline(0, color='0.85', lw=0.7, zorder=0)
     for xi, (axname, dirn) in enumerate(SLOTS):
         r = pred[(case, axname, dirn)]
-        lo, hi = sorted((float(r['M_pred_single']),
-                         float(r['M_pred_garofano'])))
-        ax.add_patch(plt.Rectangle((xi - 0.34, lo), 0.68, hi - lo,
-                                   color='0.85', zorder=1))
-        pA = float(r['M_pred'])
-        ax.plot([xi - 0.34, xi + 0.34], [pA, pA], color='k', lw=1.6,
+        pA, pS, pI = (float(r['M_pred']), float(r['M_pred_single']),
+                      float(r['M_pred_interf']))
+        ax.plot([xi - 0.34, xi + 0.34], [pA, pA], color='k', lw=1.5,
                 zorder=2)
-        pI = float(r['M_pred_interf'])
-        ax.plot([xi - 0.34, xi + 0.34], [pI, pI], color='0.25', lw=1.3,
-                ls=(0, (4, 2)), zorder=2)
+        ax.plot([xi - 0.34, xi + 0.34], [pS, pS], color='0.45', lw=1.2,
+                ls=(0, (1.6, 1.6)), zorder=2)
+        ax.plot([xi - 0.36, xi + 0.36], [pI, pI], color='#009E73', lw=2.0,
+                ls=(0, (4.5, 1.8)), zorder=2)
         k = (case, axname, dirn)
         for mi, m in enumerate(M):
             val = (float(r['M_ident']) if m == 'cosh'
@@ -88,13 +98,11 @@ for ci, case in enumerate(cases):
 axes[0].set_ylabel(r'$M_{\mathrm{crit}}$ [N$\cdot$m]')
 h, l = axes[0].get_legend_handles_labels()
 import matplotlib.lines as mlines
-import matplotlib.patches as mpatches
-h += [mlines.Line2D([], [], color='k', lw=1.6),
-      mlines.Line2D([], [], color='0.25', lw=1.3, ls=(0, (4, 2))),
-      mpatches.Patch(color='0.85')]
-l += ['rigid no-GE prediction (odometry-fitted arms)',
-      'parameter-free interference model',
-      'GE bracket [single, Garofano]']
+h += [mlines.Line2D([], [], color='k', lw=1.5),
+      mlines.Line2D([], [], color='0.45', lw=1.2, ls=(0, (1.6, 1.6))),
+      mlines.Line2D([], [], color='#009E73', lw=2.0, ls=(0, (4.5, 1.8)))]
+l += ['no ground effect', 'GE without rotor interference',
+      'GE with rotor interference (parameter-free)']
 fig.legend(h, l, loc='upper center', ncols=7, fontsize=7.5,
            frameon=False, bbox_to_anchor=(0.5, 1.08))
 fig.tight_layout(rect=(0, 0, 1, 0.96))

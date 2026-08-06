@@ -16,7 +16,7 @@
 %
 % Every quantitative figure is reproducible from this repository:
 %   eta(0)=1.03%, GE linearity, k_GE ....... analysis/ge_linearity.py
-%   GE slope ratio +0.99%, residual 2.3 .... analysis/ge_trajectory.py
+%   GE slope ratio +0.99/+4.20%, resid 2.3/9.3 . analysis/ge_trajectory.py
 %   small-angle residual 1.2/12.3 .......... analysis/small_angle_trajectory.py
 %   tilt range 2.6 / 9.4 deg ............... analysis/tilt_range.py
 %   ramp fit-segment 1.6/6.2 ............... analysis/postonset_linearity.py
@@ -127,8 +127,10 @@ are absorbed by the onset anchoring; terms $\propto \dot M\tau$
 (including the thrust-ramp channel of \eqref{eq:ge-identity}, whose
 coefficient $\eta^*$ is rate-independent) are absorbed by the
 ramp-invariance calibration of $K$; terms $\propto \delta\phi$ (the
-gravity slope $W z_{\mathrm{CoM}}$ — exactly the textbook stiffness
-here — and $\eta' M_P^*$) are absorbed by the calibrated $C_2$. What
+gravity slope $W z_{\mathrm{CoM}}$ — here an \emph{anti-restoring}
+gradient, i.e.\ a negative stiffness, which is what makes the response
+hyperbolic rather than oscillatory — and $\eta' M_P^*$) are absorbed by
+the calibrated $C_2$. What
 remains is the second-order Taylor remainder in Lagrange form,
 \begin{equation}
   \rho \;=\; \tfrac12\,G''(\xi)\,\delta\phi^2 + \dots,
@@ -156,7 +158,7 @@ $e_\phi \triangleq \phi - \phi_{\mathrm{nom}}$
 where the state-dependent remainder is recast as an equivalent
 exogenous input, $\rho(\tau) \triangleq \rho(\delta\phi(\tau))$, and
 $W z_{\mathrm{CoM}} = J_P C_2^2$ is understood as the \emph{effective}
-stiffness that the calibrated $C_2$ estimates. Every solution of the
+anti-restoring gradient that the calibrated $C_2$ estimates. Every solution of the
 unforced problem with the onset conditions
 $\omega(0)=\dot\omega(0)=0$ is exactly
 $\omega(\tau)=C_1(\cosh C_2\tau - 1)$ with $C_1 = K\dot M$ fixed — no
@@ -261,7 +263,7 @@ variable becomes the excursion $\delta\phi = \phi - \phi^*$ (measured:
 at most $9.4^\circ$ over the fit window, median $6.1^\circ$), and
 every operating-point effect transfers with an explicit bound:
 \begin{itemize}
-\item the effective stiffness shifts from the textbook
+\item the effective anti-restoring gradient shifts from
 $W z_{\mathrm{CoM}}$ to
 $W z_{\mathrm{CoM}}\cos\phi^* + W(l_p{+}\lambda_{\mathrm{off}})\sin\phi^*$
 — at most $+2.3\%$, absorbed by the calibrated $C_2$;
@@ -288,20 +290,21 @@ estimator's exact per-run degrees of freedom. Table~\ref{tab:rho}
 compares the ideal-theory bounds with the measured values; the
 measured residuals, on which the claims rest, lie consistently below
 their a priori counterparts. For the ground effect the projection is
-evaluated under both bracket models: the measured slope ratio is
-$+0.99\%$ of $\dot M$ (single-rotor evaluation) and $+3.84\%$
-(hexarotor-adapted evaluation, IQR $[3.75, 3.98]\%$), \emph{both}
+evaluated with and without rotor--rotor interference: the measured
+slope ratio is $+0.99\%$ of $\dot M$ (interference neglected) and
+$+4.20\%$ (interference included, IQR $[4.13, 4.27]\%$), \emph{both}
 rate-invariant across the twelvefold rate range — the property the
 $K$-calibration absorption requires — and the out-of-span residual
-grows from $2.3$ to at most $22$~mN\,m (median RMS $1.7$) under the
-upper model while remaining edge-concentrated, so the propagated shape
-deviation stays at the few-percent level, below the noise-dominated
-residual. The channel fates are model-independent: the thrust channel
+grows from $0.16\,/\,2.3$ to $0.67\,/\,9.3$~mN\,m (median RMS /
+max) with interference, while remaining edge-concentrated, so the
+propagated shape deviation stays at the few-percent level, below the
+noise-dominated residual. The channel fates are model-independent: the thrust channel
 (rotor-common and body lift alike) acts through the arm $l_p$ exactly,
 is antisymmetric between tip directions, and cancels in
 $M_{\mathrm{ff}}$ regardless of its magnitude; the moment coefficient
-leaves a relative bias on $M_{\mathrm{ff}}$ bracketed between $-1.0\%$
-and $-4.2\%$ ($3$--$14$~mN\,m, $0.10$--$0.43$~mm of CoM offset) —
+leaves a relative bias on $M_{\mathrm{ff}}$ between $-1.0\%$
+(no interference) and $-4.3\%$ (with interference), i.e.\
+$3$--$14$~mN\,m or $0.10$--$0.44$~mm of CoM offset —
 below the validation scatter ($52$~mN\,m RMS), which is dominated by
 the genuine contact asymmetries the pivot-free average is designed to
 capture, and present identically at lift-off, where $M_{\mathrm{ff}}$
@@ -326,8 +329,8 @@ Component & A priori & Measured (RMS / max) & Character \\
 \hline
 Small-angle curvature & $19.2$ at $5^\circ$ ($\approx 28$ at the
 median excursion) & $1.2\;/\;12.3$ & coherent, edge-concentrated \\
-Ground effect (single-rotor / hexarotor-adapted) & $3.2\;/\;11.8$
-(tangent deviation, full range) & $0.16\,/\,2.3$ \;--\; $1.7\,/\,22$
+Ground effect (without / with rotor interference) & $3.2\;/\;7.5$
+(tangent deviation, full range) & $0.16\,/\,2.3$ \;--\; $0.67\,/\,9.3$
 & coherent, edge-concentrated \\
 Ramp nonlinearity & $30$ (gate, full window) & $1.6\;/\;6.2$ (fit
 segment) & incoherent (noise-like) \\
@@ -358,10 +361,11 @@ measurement noise — while the predicted systematic deviation
 \item \emph{Trajectory-evaluated forcing.} The small-angle forcing
 deviates from the absorbable span by at most $12.3$~mN\,m (median RMS
 $1.2$), edge-concentrated where the kernel provides no amplification;
-the ground-effect forcing by $2.3$ to $22$~mN\,m across the bracket
-models. The measured slope ratios, $+0.99\%$ of $\dot M$
-(single-rotor) and $+3.84\%$ (hexarotor-adapted), reproduce each
-model's coefficient in situ and are rate-independent in both cases —
+the ground-effect forcing by $2.3$ to $9.3$~mN\,m depending on
+whether rotor interference is included. The measured slope ratios,
+$+0.99\%$ of $\dot M$ (without interference) and $+4.20\%$ (with),
+reproduce each model's coefficient in situ and are rate-independent in
+both cases —
 the property on which the $K$-calibration absorption rests.
 \item \emph{Window ablation.} Truncating the window at a $3^\circ$
 relative excursion — where the small-angle model is unimpeachable —

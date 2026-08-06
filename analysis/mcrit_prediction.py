@@ -21,11 +21,12 @@ so the balance M(1+b) + sgn*a = T_rigid gives
     M_pred = (T_rigid - sgn*a) / (1 + b),  T_rigid = sgn*(W-f)l + S.
 Coefficients at phi = 0 (attitude dependence < 0.5% over the measured
 onset tilts), from `python analysis/ge_linearity.py --model ...`:
-    single   c_a = 1.03%,  b = 1.026%   (lower bound, no interference)
-    interf   c_a = 4.31%,  b = 4.314%   (pure image superposition over
-             rotor-centre distances: mutual interference, no empirical
-             constants -- no k matching, no fountain)
-    garofano c_a = 11.67%, b = 4.155%   (upper bound, transferred consts)
+    single   c_a = 1.03%,  b = 1.026%   (reference: per-rotor Cheeseman
+             superposition, i.e. rotor-rotor interference NEGLECTED)
+    interf   c_a = 4.31%,  b = 4.314%   (reported model: image
+             superposition over rotor-centre distances in the sense of
+             Sanchez-Cuevas et al.; mutual interference included, no
+             empirical constant of any kind)
 
 Usage: PYTHONPATH=<stubs> python analysis/mcrit_prediction.py [outdir]
 """
@@ -56,8 +57,7 @@ OFF_MM = {('case_01', 'Mx'): -2.90,  ('case_01', 'My'): -11.45,
           ('case_05', 'Mx'): 10.91,  ('case_05', 'My'): -10.89}
 OFF_SIGN = {'Mx': +1.0, 'My': -1.0}   # +W y_off (roll) / -W x_off (pitch)
 GE = {'single': (0.0103, 0.01026),     # (c_a, b) at phi=0
-      'interf': (0.0431, 0.04314),
-      'garofano': (0.1167, 0.04155)}
+      'interf': (0.0431, 0.04314)}
 
 rows = []
 for d in sorted(ROOT.glob('case_*/M[xy]')):
@@ -85,8 +85,7 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
         # per-run prediction with that run's own arm and onset thrust,
         # then aggregate: pred_dir = mean over runs (and identically for
         # the residuals, since the identified mean uses the same subset)
-        per = {'none': [], 'single': [], 'interf': [],
-               'garofano': []}
+        per = {'none': [], 'single': [], 'interf': []}
         for M_r, f_r, l_r in runs:
             T = sgn * (W - f_r) * l_r + S_off
             per['none'].append(T)
@@ -96,7 +95,7 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
         f_bar = float(np.mean([r[1] for r in runs]))
         arms = np.array([r[2] for r in runs])
         pred = {k: float(np.mean(v)) for k, v in per.items()}
-        band = sorted((pred['single'], pred['garofano']))
+        band = sorted((pred['single'], pred['interf']))
         res_runs = 1e3 * (np.array([r[0] for r in runs])
                           - np.array(per['none']))
         rows.append(dict(case=key[0], axis=key[1], dir=dirn,
@@ -109,7 +108,6 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
                          M_pred=f"{pred['none']:+.4f}",
                          M_pred_single=f"{pred['single']:+.4f}",
                          M_pred_interf=f"{pred['interf']:+.4f}",
-                         M_pred_garofano=f"{pred['garofano']:+.4f}",
                          resid_mNm=f"{1e3 * (M_bar - pred['none']):+.1f}",
                          resid_run_std_mNm=
                          f"{res_runs.std(ddof=1):.1f}"
@@ -118,8 +116,6 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
                          f"{1e3 * (M_bar - pred['single']):+.1f}",
                          resid_interf_mNm=
                          f"{1e3 * (M_bar - pred['interf']):+.1f}",
-                         resid_garofano_mNm=
-                         f"{1e3 * (M_bar - pred['garofano']):+.1f}",
                          in_bracket=str(band[0] <= M_bar <= band[1])))
     print(f"done {key[0]}/{key[1]}", flush=True)
 
@@ -129,24 +125,25 @@ with open(OUT / 'mcrit_prediction.csv', 'w', newline='') as f:
     w.writerows(rows)
 
 hdr = (f"{'case':8} {'ax':3} {'dir':4} {'l_odom':>7} {'M_ident':>9} "
-       f"{'pred:none':>9} {'resid':>7} {'r_sgl':>7} {'r_int':>7} "
-       f"{'r_gar':>7} {'inBr':>5}")
+       f"{'pred:none':>9} {'resid':>7} {'pred:int':>9} {'r_sgl':>7} "
+       f"{'r_int':>7}")
 print("\n" + hdr)
 print("-" * len(hdr))
 for r in rows:
     print(f"{r['case']:8} {r['axis']:3} {r['dir']:4} {r['l_odom_mm']:>7} "
           f"{r['M_ident']:>9} {r['M_pred']:>9} {r['resid_mNm']:>7} "
-          f"{r['resid_single_mNm']:>7} {r['resid_interf_mNm']:>7} "
-          f"{r['resid_garofano_mNm']:>7} {r['in_bracket']:>5}")
+          f"{r['M_pred_interf']:>9} {r['resid_single_mNm']:>7} "
+          f"{r['resid_interf_mNm']:>7}")
 
 for lbl, col in (('no GE   ', 'resid_mNm'),
                  ('single  ', 'resid_single_mNm'),
-                 ('interf  ', 'resid_interf_mNm'),
-                 ('garofano', 'resid_garofano_mNm')):
-    a = np.abs(np.array([float(r[col]) for r in rows]))
+                 ('interf  ', 'resid_interf_mNm')):
+    v = np.array([float(r[col]) for r in rows])
+    a = np.abs(v)
     print(f"{lbl}: |resid| median {np.median(a):.1f}, "
           f"p90 {np.percentile(a, 90):.1f}, max {a.max():.1f}, "
-          f"RMS {np.sqrt(np.mean(a**2)):.1f} mN·m")
+          f"RMS {np.sqrt(np.mean(a**2)):.1f} mN·m; signed mean "
+          f"{v.mean():+.1f}, {int((v > 0).sum())}/{len(v)} positive")
 for ax in ('Mx', 'My'):
     a = np.array([float(r['l_odom_mm']) for r in rows if r['axis'] == ax])
     print(f"odom-fitted arm ({ax}) [mm]: mean {a.mean():.1f}, "
