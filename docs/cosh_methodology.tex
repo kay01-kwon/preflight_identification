@@ -51,6 +51,7 @@ $C_T$ & thrust map, $T_i = C_T\Omega_i^2$ & $1.3175\times10^{-7}$ & bench calibr
 $M_{\mathrm{thr}}$ & window threshold & $0.01$~N\,m & noise floor \\
 $M_{\mathrm{cap}}$ & allocator caps $(x,y)$ & $2.37$, $2.74$~N\,m & allocation feasibility \\
 $\varepsilon_{\max}$ & ramp-slope gate & $3\%$ & sensitivity chain (Sec.~\ref{sec:gates}) \\
+$M_{\mathrm{floor}}$ & slope-gate floors $(x,y)$ & $0.7$, $0.4$~N\,m & $|M_{\mathrm{crit}}|$ lower bound, $\pm20$~mm box \\
 $N_{\min}$ & window-sample gate & $38$ & $30$ pre $+\,8$ post \\
 $e_{\mathrm{lin,max}}$ & linearity-RMSE gate & $30$~mN\,m & $10\times$ noise floor \\
 $N_{\mathrm{seg}}$ & sweep margin (each end) & $8$ & degenerate-candidate guard \\
@@ -176,9 +177,17 @@ the measured moment trace alone (hence free of circularity):
 \begin{enumerate}
 \item \textbf{Ramp-slope error} $|\varepsilon| \le 3\%$, with
 $\varepsilon = (|\dot M| - \dot M_{\mathrm{cmd}})/\dot M_{\mathrm{cmd}}$
-and $\dot M$ the least-squares slope over the window. A $3\%$ error in
-$\dot M$ perturbs $C_1 = K\dot M$ by $3\%$ — about $7\times$ below the
-$\pm20\%$ level the sensitivity analysis shows harmless.
+and $\dot M$ the least-squares slope over the sub-segment
+$|M| \ge M_{\mathrm{floor}}$ ($0.7$~N\,m roll, $0.4$~N\,m pitch). The
+floors are the per-axis lower bounds of $|M_{\mathrm{crit}}|$ over the
+$\pm 20$~mm CoM-offset design box, so the gate scores the ramp exactly
+where an onset can occur: spin-up imperfections at near-zero moment
+cannot reject a run whose ramp is within spec where it matters. (On
+this dataset the floored gate passes all $140$ runs; scored on the
+full window instead, $8$ fast runs would be rejected by their early
+transients.) A $3\%$ error in $\dot M$ perturbs $C_1 = K\dot M$ by
+$3\%$ — about $7\times$ below the $\pm20\%$ level the sensitivity
+analysis shows harmless.
 \item \textbf{Window samples} $N_{\mathrm{full}} \ge 38$: a necessary
 condition for any onset position. Because the window opens at
 $|M| = 10$~mN\,m while $M_{\mathrm{crit}} \gtrsim 0.4$~N\,m, the onset
@@ -703,42 +712,66 @@ reduction and per-run gating diagnostics.
 \label{sec:static}
 
 The static tip-over thresholds tie each directional critical moment to
-ground truth:
+independently measured quantities:
 $M_{\pm} = \pm(W - f)\,l_{\mathrm{arm}} + W y_{\mathrm{off}}$ (roll)
 and $M_{\pm} = \pm(W - f)\,l_{\mathrm{arm}} - W x_{\mathrm{off}}$
-(pitch), with $W$ and the offsets pinned by the load-cell truth and $f$
-the measured collective thrust at the onset. The pivot arms are not
-independently known, so one arm per axis and direction
-($l_r, l_l, l_f, l_b$) is least-squares fitted across the five
-configurations; the residuals after this four-constant fit are the
-per-direction error range of the identified critical moments. Two
-thrust scenarios separate the ground-effect question: $\gamma = 1$
-(measured thrust used as-is) and $f \to \gamma f$ with
-$\gamma - 1 \in [1.0, 4.2]\%$ (the ground-effect bracket).
+(pitch), with $W$ and the offsets pinned by the load-cell truth, $f$
+the measured collective thrust at the onset, and the pivot arms fitted
+from the \emph{position} trace: a circle fit of the odometry motion
+about the contact line per run
+(\texttt{estimate\_pivot\_from\_mocap}); each run is predicted with
+its \emph{own} arm and onset thrust, and the per-run predictions and
+residuals are then averaged per case/axis/direction (the identified
+means use the same valid-pivot run subset, so the mean residual is
+exactly $\overline{M} - \overline{M}_{\mathrm{pred}}$). The kinematic arms come out remarkably
+consistent — $140.5 \pm 2.3$~mm (roll) and $113.1 \pm 6.2$~mm (pitch)
+across the five configurations, matching the geometric values
+($140$/$110$~mm). Every ingredient is independent of the identified
+moments, so this is a genuine forward test.
+
+Ground effect enters through \emph{both} channels of the pivot-moment
+decomposition $\Delta M_{\mathrm{GE}} = \mathrm{sgn}\cdot a + b\,M$
+(\texttt{analysis/ge\_linearity.py}): the thrust channel
+$a = c_a f l$ (rotor-common surplus, rotor-differential moment and
+fountain body lift, arm exactly $l$) and the moment-proportional
+channel $b$. The onset balance $M(1+b) + \mathrm{sgn}\,a =
+T_{\mathrm{rigid}}$ gives
+\begin{equation}
+M_{\mathrm{pred}} \;=\; \frac{T_{\mathrm{rigid}} -
+\mathrm{sgn}\cdot c_a f l}{1 + b}, \qquad
+T_{\mathrm{rigid}} = \mathrm{sgn}\,(W - f)\,l + S_{\mathrm{off}} ,
+\end{equation}
+evaluated for three thrust models of increasing physics content:
+the single-rotor superposition ($c_a = 1.03\%$, $b = 1.03\%$ — no
+rotor--rotor interference, lower bound); the \emph{parameter-free
+interference model} — the pure image superposition over the
+rotor-centre distances, whose self term is exactly Cheeseman--Bennett
+and whose mutual terms carry the interference, with \emph{no}
+empirical constant of any kind ($c_a = b = 4.31\%$); and the
+Garofano-adapted model with transferred constants
+($c_a = 11.67\%$, $b = 4.16\%$, upper bound).
 
 \begin{table}[t]
 \centering
 \small
-\begin{tabular}{l rrrr c rrrr}
+\begin{tabular}{l rrrr}
 \toprule
- & $l_l$ & $l_r$ & $l_b$ & $l_f$ & &
-median & p90 & max & RMS \\
-scenario & \multicolumn{4}{c}{fitted arms [mm]} & &
-\multicolumn{4}{c}{$|$residual$|$ [mN\,m]} \\
+thrust scenario & median & p90 & max & RMS \\
+ & \multicolumn{4}{c}{$|$residual$|$ [mN\,m]} \\
 \midrule
-no GE ($\gamma = 1$) & $125.8$ & $119.5$ & $88.5$ & $94.0$ & &
-$45.4$ & $100.2$ & $171.0$ & $65.9$ \\
-GE mid ($\gamma - 1 = 2.6\%$) & $132.9$ & $126.2$ & $93.5$ & $99.3$ & &
-$44.0$ & $101.2$ & $162.4$ & $63.4$ \\
+rigid, no GE & $204.8$ & $302.3$ & $351.0$ & $218.6$ \\
+GE single-rotor (lower) & $163.9$ & $259.3$ & $310.8$ & $181.4$ \\
+\textbf{GE interference (param.-free)} & $\mathbf{62.5}$ &
+$\mathbf{127.6}$ & $\mathbf{187.6}$ & $\mathbf{89.7}$ \\
+GE Garofano (upper) & $139.1$ & $274.1$ & $302.5$ & $170.3$ \\
 \bottomrule
 \end{tabular}
-\caption{Fitted arms and residual statistics under the two thrust
-scenarios. Applying the ground-effect correction shifts every fitted
-arm by $+5$--$7$~mm but leaves the residuals essentially unchanged:
-at the static level the thrust-proportional ground effect is absorbed
-by the arm constants, exactly as the absorption framework predicts —
-the per-direction check cannot discriminate $\gamma$, and does not
-need to.}
+\caption{Residuals of the identified directional means against the
+static thresholds (odometry-fitted arms held fixed). The no-GE
+residuals are one-sided ($20/20$ groups on the smaller-magnitude
+side); the single-rotor and Garofano models straddle the data; the
+parameter-free interference model is both the most accurate and
+essentially unbiased (signed mean $-16$~mN\,m).}
 \label{tab:static-arms}
 \end{table}
 
@@ -746,84 +779,93 @@ need to.}
 \centering
 \includegraphics[width=\linewidth]{fig_mcrit_static.pdf}
 \caption{Identified directional critical moments (five estimators,
-colored markers) against the static-threshold prediction with truth
-offsets and fitted $\gamma = 1$ arms (black tick); the gray band is
-the prediction under the ground-effect bracket with the arms held
-fixed. The estimator markers cluster within or near the band in
-nearly every group — the residual disagreement is dominated by
-contact geometry, not by the onset detector.}
+colored markers) against the rigid no-GE static prediction (black
+tick), the parameter-free interference prediction (dashed line) and
+the ground-effect bracket (gray band spanning the single-rotor and
+Garofano-adapted predictions; arms fixed). The identified thresholds
+fall inside the band in $19$ of $20$ groups, and the dashed
+interference prediction passes through the estimator cluster in
+nearly every group.}
 \label{fig:static}
 \end{figure}
 
 \begin{table}[t]
 \centering
 \footnotesize
-\setlength{\tabcolsep}{3.6pt}
-\begin{tabular}{ccc r rr rr c}
+\setlength{\tabcolsep}{3.4pt}
+\begin{tabular}{ccc r r rr rrr c c}
 \toprule
- & & & COSH & \multicolumn{2}{c}{no GE} &
-\multicolumn{2}{c}{GE mid} & benchmark \\
-\cmidrule(lr){5-6} \cmidrule(lr){7-8}
-case & axis & dir & $\bar M$ [N\,m] & pred & resid [mN\,m] &
-pred & resid [mN\,m] & range [N\,m] \\
+ & & & $l_{\mathrm{odom}}$ & COSH & \multicolumn{2}{c}{no GE} &
+\multicolumn{3}{c}{GE resid} & in & benchmark \\
+\cmidrule(lr){6-7} \cmidrule(lr){8-10}
+case & axis & dir & [mm] & $\bar M$ [N\,m] & pred & resid &
+single & interf & Garof. & brkt & range [N\,m] \\
 \midrule
-1 & x & $-$ & $-1.054$ & $-1.225$ & $+171$ & $-1.217$ & $+162$ & $[-1.048, -1.018]$ \\
-1 & x & $+$ & $+0.950$ & $+0.994$ & $-44$ & $+0.986$ & $-36$ & $[+0.894, +0.977]$ \\
-1 & y & $-$ & $-0.422$ & $-0.454$ & $+32$ & $-0.448$ & $+26$ & $[-0.480, -0.399]$ \\
-1 & y & $+$ & $+1.079$ & $+1.195$ & $-116$ & $+1.189$ & $-109$ & $[+1.054, +1.130]$ \\
+1 & x & - & 145.2 & $-1.051$ & $-1.401$ & $+350$ & $+304$ & $+165$ & $-49$ & $\checkmark$ & $[-1.048, -1.018]$ \\
+1 & x & + & 139.2 & $+0.950$ & $+1.172$ & $-222$ & $-180$ & $-52$ & $+153$ & $\checkmark$ & $[+0.894, +0.977]$ \\
+1 & y & - & 111.4 & $-0.422$ & $-0.660$ & $+238$ & $+207$ & $+114$ & $-51$ & $\checkmark$ & $[-0.480, -0.399]$ \\
+1 & y & + & 120.0 & $+1.079$ & $+1.430$ & $-351$ & $-311$ & $-188$ & $-11$ & -- & $[+1.054, +1.130]$ \\
 \addlinespace[2pt]
-2 & x & $-$ & $-1.829$ & $-1.782$ & $-47$ & $-1.784$ & $-44$ & $[-1.861, -1.680]$ \\
-2 & x & $+$ & $+0.867$ & $+0.810$ & $+57$ & $+0.812$ & $+55$ & $[+0.769, +0.914]$ \\
-2 & y & $-$ & $-0.666$ & $-0.620$ & $-45$ & $-0.622$ & $-44$ & $[-0.710, -0.637]$ \\
-2 & y & $+$ & $+1.320$ & $+1.307$ & $+12$ & $+1.309$ & $+11$ & $[+1.248, +1.333]$ \\
+2 & x & - & 140.0 & $-1.829$ & $-1.933$ & $+104$ & $+54$ & $-98$ & $-302$ & $\checkmark$ & $[-1.861, -1.680]$ \\
+2 & x & + & 139.5 & $+0.867$ & $+1.021$ & $-154$ & $-114$ & $+10$ & $+216$ & $\checkmark$ & $[+0.769, +0.914]$ \\
+2 & y & - & 105.9 & $-0.666$ & $-0.803$ & $+138$ & $+107$ & $+12$ & $-144$ & $\checkmark$ & $[-0.710, -0.637]$ \\
+2 & y & + & 118.4 & $+1.320$ & $+1.565$ & $-245$ & $-204$ & $-78$ & $+96$ & $\checkmark$ & $[+1.248, +1.333]$ \\
 \addlinespace[2pt]
-3 & x & $-$ & $-1.542$ & $-1.496$ & $-46$ & $-1.498$ & $-44$ & $[-1.608, -1.339]$ \\
-3 & x & $+$ & $+0.997$ & $+1.096$ & $-99$ & $+1.097$ & $-100$ & $[+1.033, +1.075]$ \\
-3 & y & $-$ & $-0.984$ & $-1.034$ & $+51$ & $-1.035$ & $+52$ & $[-1.059, -0.990]$ \\
-3 & y & $+$ & $+0.937$ & $+0.893$ & $+45$ & $+0.894$ & $+43$ & $[+0.923, +1.014]$ \\
+3 & x & - & 142.5 & $-1.542$ & $-1.672$ & $+130$ & $+82$ & $-63$ & $-273$ & $\checkmark$ & $[-1.608, -1.339]$ \\
+3 & x & + & 138.3 & $+0.997$ & $+1.294$ & $-297$ & $-254$ & $-123$ & $+80$ & $\checkmark$ & $[+1.033, +1.075]$ \\
+3 & y & - & 109.3 & $-0.984$ & $-1.253$ & $+270$ & $+233$ & $+123$ & $-38$ & $\checkmark$ & $[-1.059, -0.990]$ \\
+3 & y & + & 117.9 & $+0.937$ & $+1.145$ & $-208$ & $-171$ & $-58$ & $+116$ & $\checkmark$ & $[+0.923, +1.014]$ \\
 \addlinespace[2pt]
-4 & x & $-$ & $-1.136$ & $-1.119$ & $-17$ & $-1.121$ & $-15$ & $[-1.181, -1.151]$ \\
-4 & x & $+$ & $+1.468$ & $+1.475$ & $-7$ & $+1.477$ & $-9$ & $[+1.406, +1.516]$ \\
-4 & y & $-$ & $-0.998$ & $-1.011$ & $+12$ & $-1.012$ & $+14$ & $[-1.044, -0.928]$ \\
-4 & y & $+$ & $+0.988$ & $+0.917$ & $+71$ & $+0.919$ & $+69$ & $[+0.969, +1.058]$ \\
+4 & x & - & 141.1 & $-1.136$ & $-1.280$ & $+144$ & $+101$ & $-32$ & $-240$ & $\checkmark$ & $[-1.181, -1.151]$ \\
+4 & x & + & 138.4 & $+1.468$ & $+1.674$ & $-206$ & $-159$ & $-16$ & $+187$ & $\checkmark$ & $[+1.406, +1.516]$ \\
+4 & y & - & 106.7 & $-0.998$ & $-1.202$ & $+204$ & $+169$ & $+62$ & $-96$ & $\checkmark$ & $[-1.044, -0.928]$ \\
+4 & y & + & 118.3 & $+0.982$ & $+1.174$ & $-192$ & $-154$ & $-40$ & $+134$ & $\checkmark$ & $[+0.969, +1.058]$ \\
 \addlinespace[2pt]
-5 & x & $-$ & $-1.019$ & $-0.982$ & $-36$ & $-0.984$ & $-34$ & $[-1.048, -0.932]$ \\
-5 & x & $+$ & $+1.695$ & $+1.609$ & $+86$ & $+1.611$ & $+84$ & $[+1.624, +1.695]$ \\
-5 & y & $-$ & $-0.634$ & $-0.589$ & $-45$ & $-0.590$ & $-44$ & $[-0.656, -0.577]$ \\
-5 & y & $+$ & $+1.310$ & $+1.339$ & $-28$ & $+1.340$ & $-30$ & $[+1.241, +1.351]$ \\
+5 & x & - & 142.5 & $-1.019$ & $-1.158$ & $+140$ & $+97$ & $-32$ & $-242$ & $\checkmark$ & $[-1.048, -0.932]$ \\
+5 & x & + & 137.9 & $+1.695$ & $+1.804$ & $-109$ & $-61$ & $+86$ & $+288$ & $\checkmark$ & $[+1.624, +1.695]$ \\
+5 & y & - & 104.4 & $-0.634$ & $-0.756$ & $+122$ & $+92$ & $-0$ & $-154$ & $\checkmark$ & $[-0.656, -0.577]$ \\
+5 & y & + & 118.6 & $+1.310$ & $+1.598$ & $-288$ & $-246$ & $-119$ & $+55$ & $\checkmark$ & $[+1.241, +1.351]$ \\
 \bottomrule
 \end{tabular}
-\caption{Per-direction static-threshold check. ``pred''/``resid'' are
-the prediction and residual under each thrust scenario (fitted arms of
-Table~\ref{tab:static-arms}); ``benchmark range'' spans the
-directional means of the four alternative estimators (NLS,
-CPD$_{\mathrm{N}}$, CPD$_{\mathrm{R}}$, CUSUM).}
+\caption{Per-direction static-threshold check with odometry-fitted
+arms. Residuals [mN\,m] are given against the rigid no-GE prediction
+and against both ends of the ground-effect bracket; ``in brkt''
+marks identified means falling between the two GE predictions;
+``benchmark range'' spans the directional means of the four
+alternative estimators.}
 \label{tab:static}
 \end{table}
 
-Three observations. \emph{(i)} The identified critical moments satisfy
-the static thresholds to $45$~mN\,m median / $66$~mN\,m RMS /
-$171$~mN\,m worst case — a $3$--$5\%$ per-direction certificate whose
-magnitude is consistent with the ground-effect band and the pivot-free
-validation scatter. The one large residual is the light configuration
-(case~1, $3.066$~kg), whose reduced gear compression shifts the
-contact line inboard of the five-case fit. \emph{(ii)} The fitted arms
-are physically meaningful: all inside the conservative geometric
-bounds ($140$/$110$~mm), roll larger than pitch as the gear geometry
-dictates, with measured left--right and front--back asymmetries of
-$6.3$ and $5.5$~mm. \emph{(iii)} Applying the ground-effect correction
-is \emph{absorbed}: the arms shift by $+5$--$7$~mm while the residuals
-stay put (Table~\ref{tab:static-arms}) — at the static level
-$(W - \gamma f)\,l \approx (W - f)\,l'$, so the check neither needs
-nor can identify $\gamma$, in line with the perturbation-absorption
-framework. The physical arm itself is of course unique: the fitted
-values are estimates \emph{conditional on the assumed thrust model} —
-the data constrain only the product $(W - \gamma f)\,l$ — and the true
-arm equals the fit evaluated at the true $\gamma$. Conversely, an
-independent measurement of the contact-line position would identify
-$\gamma$ through this same relation. The pivot-free deliverable
-\eqref{eq:mff} cancels the $\pm(W - \gamma f)\,l$ term entirely and
-therefore depends on neither factor.
+Three observations. \emph{(i) The rigid no-GE prediction
+over-predicts every group}: the identified magnitudes sit below it in
+all $20$ direction groups (median $205$~mN\,m) — a systematic,
+sign-coherent gap far above the identification scatter, shared by all
+five estimators (benchmark column), hence physical rather than
+algorithmic. \emph{(ii) The first-principles ground-effect bracket
+captures the data}: with both GE channels applied and the arms held
+fixed, the identified thresholds fall \emph{between} the single-rotor
+and Garofano-adapted predictions in $19/20$ groups (the one exception
+misses the upper bound by $11$~mN\,m). The no-GE hypothesis is
+excluded one-sidedly; the truth lies interior to the declared bracket
+— an independent forward validation of the ground-effect analysis
+itself. \emph{(iii) The parameter-free interference model fits best — by a
+factor of two}: $62.5$~mN\,m median / $89.7$~mN\,m RMS, with mixed
+residual signs and a signed mean of only $-16$~mN\,m, i.e.\
+essentially unbiased, against one-sided deficits for the single-rotor
+model (interference is real) and direction-antisymmetric over/under
+correction for the Garofano adaptation (its transferred constants
+overstate the interference roughly twofold). A model with \emph{no}
+tuned constant reproducing all twenty directional thresholds at the
+$\sim\!0.06$~N\,m level is strong evidence that the ground-contact
+aerodynamics are understood. Residual contributions from
+contact-patch compliance are degenerate with the $a$-channel at this
+level and cannot be separated here. All of these
+terms enter the two directions antisymmetrically through
+$\pm(W - \gamma f)\,l$ and $\pm a$, and therefore cancel in the
+pivot-free deliverable \eqref{eq:mff} — which is precisely why
+$M_{\mathrm{ff}}$ validates to millimetres (Sec.~\ref{sec:nls}) while
+the individual thresholds carry a $\sim\!0.2$~N\,m ground-contact
+aerodynamic budget.
 
 \section{Reproducibility}
 

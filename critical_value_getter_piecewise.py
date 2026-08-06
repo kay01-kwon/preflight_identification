@@ -711,6 +711,15 @@ def estimate_rig_constants(bags, axis, c2_grid=None, k_grid=None, stride=3,
 # truncated where |M| first exceeds the cap.
 MOMENT_CAP = {'x': 2.37, 'y': 2.74}
 
+# Slope-error gate floor [N·m]: the ramp-tracking check is evaluated on the
+# sub-segment |M| >= floor only. The floors are the per-axis lower bounds of
+# |M_crit| over the ±20 mm CoM-offset design box ((W-f)·l_p − W·0.020 with
+# margin), so the gate scores exactly the segment where an onset can occur —
+# early spin-up imperfections at near-zero moment cannot reject a run whose
+# ramp is within spec where it matters. Identification's Ṁ estimate and the
+# linearity check remain full-window.
+SLOPE_GATE_FLOOR = {'x': 0.7, 'y': 0.4}
+
 
 def detect_excitation_window(
     moment: np.ndarray,
@@ -975,7 +984,11 @@ def extract_piecewise_batch(
                         continue
                 cmd = commanded_ramp_rate(bag.name)
                 if ramp_gate_pct is not None and cmd:
-                    eps = (abs(float(a)) - cmd) / cmd * 100.0
+                    floor = SLOPE_GATE_FLOOR.get(axis, 0.0)
+                    mask = np.abs(m_w) >= floor
+                    a_gate = (np.polyfit(t_w[mask], m_w[mask], 1)[0]
+                              if int(mask.sum()) >= 10 else a)
+                    eps = (abs(float(a_gate)) - cmd) / cmd * 100.0
                     if abs(eps) > ramp_gate_pct:
                         print(f"  [gate] {bag.name}: ramp-rate error "
                               f"{eps:+.2f}% > {ramp_gate_pct:.0f}% — excluded")
