@@ -24,6 +24,8 @@
 %   3-deg ablation 0.022/0.012 N.m ......... analysis/tiltcap_ablation.py
 %   design tables, 1% crossing 4.8-8.9 deg . analysis/excitation_angle_design.py
 %   signal level at the peak ............... analysis/alpha_at_peak.py
+%   bilinear tau*dphi term 0.04/0.17 ....... analysis/ge_bilinear.py
+%   GE vs contact-lever attribution ........ analysis/static_attribution.py
 % Constants: conservative l_p = 0.140/0.110 m (roll/pitch), hub height
 % h = 0.315 m, rotor radius R = 0.127 m (10-in propeller), W = 31.59 N,
 % z_CoM = 0.30 m, calibrated C2 = 5, K = 0.19 (representative).
@@ -59,56 +61,65 @@ where $\bar\gamma$ denotes the rotor-common thrust factor. The identity
 is \emph{independent of the CoM position} — $\lambda_{\mathrm{off}}$
 enters \eqref{eq:exact-dyn} only through the gravity arm — so ground
 effect biases the identified critical moment identically for every CoM
-configuration. The magnitude is evaluated with two models forming a
-bracket. The per-rotor superposition of the single-rotor
-Cheeseman--Bennett result (lower bound; neglects rotor--rotor
+configuration. The magnitude is evaluated with two models of increasing physics
+content. The per-rotor superposition of the single-rotor
+Cheeseman--Bennett result (which \emph{neglects} rotor--rotor
 interference) gives, at the measured geometry ($h=0.315$~m,
-$R=0.127$~m), $\eta(0) = 1.03\%$ independent of $l_p$. The upper bound
-is derived from first principles by the image method: each rotor is a
-three-dimensional potential source of strength $R^2 v_\infty/4$, the
-ground plane is enforced by mirror images, and only the vertical
-projection of each image-induced velocity reduces the downwash, giving
-the per-rotor interference sum
-$\delta v_i/v_\infty = (R^2/4)\sum_j (z_i{+}z_j)/[d_{ij}^2 +
-(z_i{+}z_j)^2]^{3/2}$ evaluated at each rotor's \emph{own} tilted
-height $z_i = h\cos\phi + s_i\sin\phi$ — no averaging enters, and the
+$R=0.127$~m), $\eta(0) = 1.03\%$ independent of $l_p$. The reported
+model adds the interference from first principles by the image method:
+each rotor is a three-dimensional potential source of strength
+$R^2 v_\infty/4$, the ground plane is enforced by mirror images, and
+only the vertical projection of each image-induced velocity reduces
+the downwash, giving the per-rotor sum
+\begin{equation}
+  s_{\mathrm{rot},i} \;=\; \frac{R^2}{4}\sum_j
+  \frac{z_i + z_j}{\bigl[d_{ij}^2 + (z_i+z_j)^2\bigr]^{3/2}},
+  \qquad \gamma_i = \bigl(1 - s_{\mathrm{rot},i}\bigr)^{-1},
+  \label{eq:ge-interference}
+\end{equation}
+evaluated at each rotor's \emph{own} tilted height
+$z_i = h\cos\phi + s_i\sin\phi$ — no averaging enters, and the
 attitude dependence of the model resides entirely in this term. The
-fountain-driven body lift of Garofano-Soldado
-\emph{et al.}~[RA-L 9(2), 2024] — whose hexarotor characterization was
-performed on a \emph{static test bench}, i.e.\ in the same
-quasi-static, zero-airspeed regime as the contact-phase excitation —
-acts at the body centre and therefore contributes no moment about it,
-entering the pivot moment only through the parallel-axis transfer
-$F\,l_p$:
+self term $j = i$ reduces exactly to Cheeseman--Bennett, so
+\eqref{eq:ge-interference} contains the single-rotor result as the
+zero-neighbour limit and adds \emph{no empirical constant of any
+kind}: the neighbour sum is fixed by the measured rotor geometry
+alone. Mapping the per-rotor gains to the pivot,
 \begin{equation}
   \Delta M_{\mathrm{GE}}
-  = \sum_i b_i\,(\gamma_i^{\mathrm{rot}}-1)\,T_i
-  \;+\; \Bigl[\sum_i (\gamma_i^{\mathrm{full}}-1)\,T_i\Bigr] l_p ,
+  = \sum_i b_i\,(\gamma_i-1)\,T_i
+  \;+\; \Bigl[\sum_i (\gamma_i-1)\,T_i\Bigr] l_p ,
   \label{eq:ge-mapping}
 \end{equation}
-with $b_i$ the body-centre arms, $\gamma_i^{\mathrm{rot}}$ the
-interference-only gain and $\gamma_i^{\mathrm{full}}$ the
-fountain-inclusive gain; the matching constant $k(z_c)$ that joins the
-rotor-centre construction to the published model is re-evaluated at
-the body-centre height of each attitude (changing the moment by less
-than $0.1\%$). Under constant total thrust the result is affine in the
-commanded moment, $\Delta M_{\mathrm{GE}} = a(\phi) + b(\phi)
-M_{\mathrm{cmd}}$, with fitted coefficients
-$a/(f l_p)\,[\%] = 11.59 - 0.153\,\phi$ and
-$b\,[\%] = 4.12 - 0.061\,\phi$ ($\phi$ in degrees): the constant
-channel carries the fountain contribution, while $b$ reflects
-rotor-to-rotor interference alone, since the body lift does not scale
-with the commanded moment. The boundary between the derived and the
-fitted layer is explicit — the image method captures the interference
-and its attitude dependence analytically, while wake recirculation is
-represented by the single empirical constant $J_k$ transferred from
-the authors' vehicle; an alternative distribution of the body lift
-(applying $\gamma^{\mathrm{full}}$ per rotor) brackets the fountain
-placement and is reported alongside. In both bracket models the affine
-decomposition, the restoring sign of the height-asymmetry moment, and
-the channel structure below are identical — they follow from
+with $b_i$ the body-centre arms and the second term the parallel-axis
+transfer of the net vertical surplus. Under constant total thrust the
+result is affine in the commanded moment,
+$\Delta M_{\mathrm{GE}} = a(\phi) + b(\phi) M_{\mathrm{cmd}}$, with
+fitted coefficients $a/(f l_p)\,[\%] = 4.27 - 0.086\,\phi$ and
+$b\,[\%] = 4.28 - 0.060\,\phi$ ($\phi$ in degrees) — a factor
+$\approx 4$ above the interference-free value in both channels, which
+is the quantitative statement that rotor--rotor interference is not
+negligible at this clearance. The affine decomposition, the
+anti-restoring sign of the height-asymmetry moment, and the channel
+structure below are identical in the two models — they follow from
 thrust-proportionality and smooth height dependence alone; only the
-magnitudes differ, by a factor of about four.
+magnitudes differ.
+
+Everything that follows is deliberately insensitive to that magnitude.
+The absorption argument assumes only smoothness and
+thrust-proportionality, which any near-ground aerodynamic model
+shares, and the same is true of a purely geometric alternative: a
+contact-force lever displaced inboard of the kinematic pivot circle by
+a finite, compliant contact patch enters \eqref{eq:exact-dyn} in the
+same functional position as the $a$-channel. The static check of the
+identified thresholds indeed cannot separate the two — a
+$19.2 \pm 1.8$~mm inboard lever reproduces the measured deficit as
+well as the interference model does (residual RMS $82.3$ versus
+$86.0$~mN\,m), the discriminating moment-proportional channel being
+below the group-to-group scatter. This is a limitation of the
+attribution, not of the method: the bounds below hold for either
+cause, and both cancel antisymmetrically in the pivot-free
+deliverable.
 
 % ==================================================================
 \subsubsection{Ideal configuration: the cosh family and its escape channel}
@@ -298,7 +309,18 @@ $K$-calibration absorption requires — and the out-of-span residual
 grows from $0.16\,/\,2.3$ to $0.67\,/\,9.3$~mN\,m (median RMS /
 max) with interference, while remaining edge-concentrated, so the
 propagated shape deviation stays at the few-percent level, below the
-noise-dominated residual. The channel fates are model-independent: the thrust channel
+noise-dominated residual. One term of the affine decomposition deserves explicit accounting.
+Because the moment coefficient is itself attitude dependent, the
+product $b(\phi) M_{\mathrm{cmd}}$ contains
+$\beta_M\,\dot M\tau\,\delta\phi$ — a bilinear term in two spanned
+coordinates, hence the one piece of the ground-effect moment that is
+\emph{not} in $\{1,\tau,\delta\phi\}$. Evaluated along the measured
+trajectories with $\beta_M = 0.0345$~rad$^{-1}$
+(\texttt{analysis/ge\_bilinear.py}), its raw peak is $3.0$~mN\,m and
+what survives the projection is $0.17$~mN\,m at most (median
+$0.04$) — the product is strongly correlated with the spanned
+coordinates along real trajectories, so it is absorbed almost
+entirely. The channel fates are model-independent: the thrust channel
 (rotor-common and body lift alike) acts through the arm $l_p$ exactly,
 is antisymmetric between tip directions, and cancels in
 $M_{\mathrm{ff}}$ regardless of its magnitude; the moment coefficient
@@ -332,6 +354,9 @@ median excursion) & $1.2\;/\;12.3$ & coherent, edge-concentrated \\
 Ground effect (without / with rotor interference) & $3.2\;/\;7.5$
 (tangent deviation, full range) & $0.16\,/\,2.3$ \;--\; $0.67\,/\,9.3$
 & coherent, edge-concentrated \\
+Bilinear $\tau\,\delta\phi$ (GE moment channel) & $3.9$
+(envelope of the factor maxima) & $0.04\;/\;0.17$ & coherent,
+absorbed almost entirely \\
 Ramp nonlinearity & $30$ (gate, full window) & $1.6\;/\;6.2$ (fit
 segment) & incoherent (noise-like) \\
 \hline
@@ -351,7 +376,7 @@ $\mathrm{NRMSE} = [\tfrac1N\sum_k(\omega_k-\hat\omega_k)^2]^{1/2}
 / \max_k|\omega_k - C|$, four measured, model-independent certificates
 close the claim:
 \begin{enumerate}
-\item \emph{Rate invariance.} Across all $132$ gate-passing runs the
+\item \emph{Rate invariance.} Across all $140$ gate-passing runs the
 NRMSE is $6.3\%$ (median; $R^2=0.95$) and flat from $0.10$ to
 $1.20$~N\,m/s ($5.5$–$6.6\%$): a state-dependent deformation would
 grow with amplitude, and none does. The residual sits at $2.2\times$
