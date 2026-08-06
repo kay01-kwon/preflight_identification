@@ -839,7 +839,10 @@ offsets and odometry-fitted arms: no ground effect (black solid),
 ground effect without rotor interference (gray dotted), and with
 rotor interference (green dashed). The interference prediction passes
 through the estimator cluster in nearly every group, while the other
-two sit systematically outside it.}
+two sit systematically outside it. A $19$~mm inboard shift of the
+static contact lever would move the black line by a similar amount:
+the figure shows the \emph{size} of the near-ground correction, not
+its attribution.}
 \label{fig:static}
 \end{figure}
 
@@ -891,33 +894,54 @@ onset detector.}
 \label{tab:static}
 \end{table}
 
-Three observations. \emph{(i) Ground effect is required, and rotor
-interference with it.} Without ground effect the prediction
-over-predicts the threshold magnitude in all $20$ direction groups
-by $199$~mN\,m on average — a strictly one-sided gap, far above the
-identification scatter and shared by all five estimators (last
-column), hence physical rather than algorithmic. Adding the
-single-rotor ground effect removes only a fifth of it ($-159$~mN\,m,
-still $20/20$ one-sided): neglecting rotor--rotor interference is
-not tenable at this clearance. \emph{(ii) The parameter-free
-interference model closes the gap.} With interference included, the
-median residual falls to $61$~mN\,m (RMS $86$), the mean magnitude
-deficit to $-36$~mN\,m, and the one-sidedness breaks
-($12/20$) — a model with \emph{no} tuned constant, evaluated at the
-measured geometry and driven by measured thrust, reproduces twenty
-independent directional thresholds at the $\sim\!5\%$ level. That is
-a forward validation of the ground-effect treatment, not a fit.
-\emph{(iii) What remains is contact physics, and it cancels.} The
-residual $-36$~mN\,m mean deficit is consistent with contact-patch
-compliance — rotation onsets when the normal-force resultant reaches
-the \emph{inner} edge of a finite, compliant contact patch, slightly
-before the rigid-edge threshold — which is degenerate with the
-$a$-channel at this level and cannot be separated here. All these
-terms enter the two directions antisymmetrically through
-$\pm(W-f)l$ and $\pm a$, so they cancel in the pivot-free
-deliverable \eqref{eq:mff}: $M_{\mathrm{ff}}$ validates to
-millimetres (Sec.~\ref{sec:nls}) while the individual thresholds carry
-a $\sim\!0.06$~N\,m ground-contact budget.
+Three observations. \emph{(i) A systematic deficit exists, and it is
+physical.} The rigid no-GE prediction over-predicts the threshold
+magnitude in all $20$ direction groups, by $199$~mN\,m on average — a
+strictly one-sided gap, far above the identification scatter and
+shared by all five estimators (last column of
+Table~\ref{tab:static}), hence a property of the contact physics, not
+of the onset detector. \emph{(ii) Its size is what near-ground
+aerodynamics predicts.} The parameter-free interference model —
+evaluated at the measured geometry, driven by the measured thrust,
+with no tuned constant — accounts for $82\%$ of it, leaving a mean
+deficit of $-36$~mN\,m and breaking the one-sidedness ($12/20$);
+neglecting rotor--rotor interference accounts for only a fifth
+($-159$~mN\,m, still $20/20$ one-sided), so interference is not
+negligible at this clearance.
+
+\emph{(iii) The check cannot attribute the deficit uniquely, and the
+argument does not need it to.} A contact-geometry explanation fits
+equally well: if the normal-force resultant acts a distance
+$\delta l$ \emph{inboard} of the kinematic pivot circle — as a finite,
+compliant contact patch implies — the least-squares fit gives
+$\delta l = 19.2 \pm 1.8$~mm with a residual RMS of $82.3$~mN\,m,
+statistically indistinguishable from the $86.0$~mN\,m of the
+ground-effect hypothesis (\texttt{analysis/static\_attribution.py}).
+The two are degenerate because both act as force~$\times$~length in
+the constant part; the only discriminating structure is the
+moment-proportional channel $b\,M$, whose signal across the groups
+($18$--$79$~mN\,m over a $4.3\times$ range of $M_{\mathrm{crit}}$)
+sits below the group-to-group scatter of the deficit ($77$~mN\,m), so
+a free fit returns $b = -2.9 \pm 5.2\%$ — consistent with the model
+value $+4.31\%$ and with zero alike. This check therefore
+\emph{bounds the combined ground-contact budget} at
+$\sim\!0.2$~N\,m per direction and confirms it has the magnitude and
+sign that ground effect predicts; it is not an identification of
+ground effect against contact compliance.
+
+That limitation is immaterial to the method, and by construction. The
+fidelity analysis assumes only that the perturbation is smooth and
+thrust-proportional — which \emph{both} candidates are — and shows
+that any such term enters as a constant, a $\tau$-linear and a
+$\varphi$-linear contribution plus a bounded remainder, i.e.\ it
+renames the effective constants that the calibration estimates rather
+than deforming the cosh family. Both candidates also enter the two
+tip directions antisymmetrically through $\pm(W - f)\,l$ and
+$\pm a$, so both cancel in the pivot-free deliverable
+\eqref{eq:mff}. This is why $M_{\mathrm{ff}}$ validates to
+millimetres (Sec.~\ref{sec:nls}) even though the individual
+thresholds carry a $\sim\!0.2$~N\,m ground-contact budget whose
+internal split this experiment cannot resolve.
 
 \section{Reproducibility}
 
@@ -939,8 +963,12 @@ median/mean/zero baseline;
 \item \texttt{analysis/nls\_comparison.py} —
 Tables~\ref{tab:nls}--\ref{tab:nls-disp};
 \item \texttt{analysis/mcrit\_prediction.py},
-\texttt{analysis/mcrit\_static\_figure.py} —
-Sec.~\ref{sec:static} (static-threshold check, arms, Fig.~\ref{fig:static}).
+\texttt{analysis/mcrit\_static\_figure.py},
+\texttt{analysis/static\_attribution.py} — Sec.~\ref{sec:static}
+(static-threshold check, arms, attribution limits,
+Fig.~\ref{fig:static});
+\item \texttt{analysis/ge\_bilinear.py} — the bilinear $\tau\varphi$
+ground-effect term along measured trajectories.
 \end{itemize}
 
 \end{document}
