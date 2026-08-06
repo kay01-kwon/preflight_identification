@@ -1,3 +1,8 @@
+% Preview build:  wrap this file in a minimal article shell
+%   \documentclass[10pt]{article}\usepackage[a4paper,margin=25mm]{geometry}
+%   \usepackage{amsmath,amssymb,graphicx,booktabs}
+%   \newtheorem{proposition}{Proposition}\newtheorem{remark}{Remark}
+% and run pdflatex twice -> docs/fidelity_section_preview.pdf
 % =====================================================================
 % Model-fidelity section (final draft, ideal-first structure) —
 % "Why the Response Remains of the Closed Form"
@@ -362,20 +367,32 @@ Sec.~\ref{sec:fid-ideal} evaluated at the measured tilt range;
 projected out of the estimator span $\{1,\tau,\delta\phi\}$. All
 values in mN\,m.}
 \label{tab:rho}
-\begin{tabular}{lccc}
+\small
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}p{0.235\linewidth} p{0.255\linewidth}
+                  p{0.185\linewidth} p{0.225\linewidth}@{}}
 \hline
-Component & A priori & Measured (RMS / max) & Character \\
+\raggedright Component & \raggedright A priori &
+\raggedright Measured (RMS\,/\,max) & \raggedright\arraybackslash
+Character \\
 \hline
-Small-angle curvature & $19.2$ at $5^\circ$ ($\approx 28$ at the
-median excursion) & $1.2\;/\;12.3$ & coherent, edge-concentrated \\
-Ground effect (without / with rotor interference) & $3.2\;/\;7.5$
-(tangent deviation, full range) & $0.16\,/\,2.3$ \;--\; $0.67\,/\,9.3$
-& coherent, edge-concentrated \\
-Bilinear $\tau\,\delta\phi$ (GE moment channel) & $3.9$
-(envelope of the factor maxima) & $0.04\;/\;0.17$ & coherent,
-absorbed almost entirely \\
-Ramp nonlinearity & $30$ (gate, full window) & $1.6\;/\;6.2$ (fit
-segment) & incoherent (noise-like) \\
+\raggedright Small-angle curvature &
+\raggedright $19.2$ at $5^\circ$; $\approx 28$ at the median
+excursion & \raggedright $1.2\;/\;12.3$ &
+\raggedright\arraybackslash coherent, edge-concentrated \\
+\raggedright Ground effect, without\,/\,with rotor interference &
+\raggedright $3.2\;/\;7.5$ (tangent deviation, full range) &
+\raggedright $0.16/2.3 \rightarrow 0.67/9.3$ &
+\raggedright\arraybackslash coherent, edge-concentrated \\
+\raggedright Bilinear $\tau\,\delta\phi$ (GE moment channel) &
+\raggedright $3.9$ (envelope of the factor maxima) &
+\raggedright $0.04\;/\;0.17$ &
+\raggedright\arraybackslash coherent, almost fully absorbed \\
+\raggedright Ramp nonlinearity &
+\raggedright $30$ (gate, full window) &
+\raggedright $1.6\;/\;6.2$ (fit segment) &
+\raggedright\arraybackslash incoherent (noise-like) \\
 \hline
 \end{tabular}
 \end{table}
