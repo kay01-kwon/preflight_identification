@@ -146,16 +146,30 @@ ramp-invariance calibration of $K$; terms $\propto \delta\phi$ (the
 gravity slope $W z_{\mathrm{CoM}}$ — here an \emph{anti-restoring}
 gradient, i.e.\ a negative stiffness, which is what makes the response
 hyperbolic rather than oscillatory — and $\eta' M_P^*$) are absorbed by
-the calibrated $C_2$. What
-remains is the second-order Taylor remainder in Lagrange form,
+the calibrated $C_2$. What escapes is of two kinds — the second-order
+Taylor remainder of the gravity terms and, from the ground effect, the
+one product that is bilinear in two spanned coordinates:
 \begin{equation}
-  \rho \;=\; \tfrac12\,G''(\xi)\,\delta\phi^2 + \dots,
+  \rho \;=\; \underbrace{\tfrac12\,G''(\xi)\,\delta\phi^2}
+             _{\text{gravity curvature}}
+     \;+\; \underbrace{\beta_M\,\dot M\,\tau\,\delta\phi}
+             _{\text{ground effect}} \;+\; \dots,
   \qquad
   G''(\xi) = W(l_p+\lambda_{\mathrm{off}})\cos\xi
              - W z_{\mathrm{CoM}}\sin\xi ,
   \label{eq:lagrange}
 \end{equation}
-with $\xi$ between $0$ and $\phi$: the sine term enters at second
+the second term arising because the moment-proportional ground-effect
+coefficient is itself attitude dependent: writing
+$b(\phi) = \alpha_M + \beta_M\delta\phi$ and
+$M_{\mathrm{cmd}} = M^*_{\mathrm{crit}} + \dot M\tau$, the product
+$b(\phi) M_{\mathrm{cmd}}$ splits into a constant, a term
+$\propto\dot M\tau$, a term $\propto\delta\phi$ with coefficient
+$\beta_M M^*_{\mathrm{crit}}$ — all three absorbed above — and this
+single bilinear leftover. It is quantified in
+Sec.~\ref{sec:fid-transfer} and enters Table~\ref{tab:rho} on its own
+row. With $\xi$ between $0$ and $\phi$ in the first term: the sine
+term enters at second
 order \emph{with a negative sign} and is dropped conservatively,
 $|G''| \le W(l_p+\lambda_{\mathrm{off}})$. At the $5^\circ$ excursion
 this bound evaluates to $19.2$~mN\,m (roll) / $15.6$~mN\,m (pitch).
@@ -374,25 +388,25 @@ values in mN\,m.}
                   p{0.185\linewidth} p{0.225\linewidth}@{}}
 \hline
 \raggedright Component & \raggedright A priori &
-\raggedright Measured (RMS\,/\,max) & \raggedright\arraybackslash
-Character \\
+\raggedright Measured (RMS\,/\,max) & \raggedright
+Character \tabularnewline
 \hline
 \raggedright Small-angle curvature &
 \raggedright $19.2$ at $5^\circ$; $\approx 28$ at the median
 excursion & \raggedright $1.2\;/\;12.3$ &
-\raggedright\arraybackslash coherent, edge-concentrated \\
+\raggedright coherent, edge-concentrated \tabularnewline
 \raggedright Ground effect, without\,/\,with rotor interference &
 \raggedright $3.2\;/\;7.5$ (tangent deviation, full range) &
 \raggedright $0.16/2.3 \rightarrow 0.67/9.3$ &
-\raggedright\arraybackslash coherent, edge-concentrated \\
+\raggedright coherent, edge-concentrated \tabularnewline
 \raggedright Bilinear $\tau\,\delta\phi$ (GE moment channel) &
 \raggedright $3.9$ (envelope of the factor maxima) &
 \raggedright $0.04\;/\;0.17$ &
-\raggedright\arraybackslash coherent, almost fully absorbed \\
+\raggedright coherent, almost fully absorbed \tabularnewline
 \raggedright Ramp nonlinearity &
 \raggedright $30$ (gate, full window) &
 \raggedright $1.6\;/\;6.2$ (fit segment) &
-\raggedright\arraybackslash incoherent (noise-like) \\
+\raggedright incoherent (noise-like) \tabularnewline
 \hline
 \end{tabular}
 \end{table}
