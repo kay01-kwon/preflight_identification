@@ -35,7 +35,7 @@ fractional margin:
                 ground-effect curvature (~5% of the gravity curvature) ]
 
 and its propagated deviation is the exact convolution with the
-unstable-stiffness kernel (Duhamel):
+unstable (anti-restoring) kernel (Duhamel):
 
     d_omega(tau_end) = (1/J) * int_0^tau_end cosh(C2*(tau_end-s)) rho(s) ds,
     J = W*z_CoM / C2^2 .
