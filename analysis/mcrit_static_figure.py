@@ -49,6 +49,18 @@ for k in sorted(pred):
            f"$[{min(bs):+.3f}, {max(bs):+.3f}]$ \\\\")
     print(row)
 
+# magnitude-signed residual: |M_ident| - |M_pred| (negative = the model
+# over-predicts the threshold).  This is the statistic that exposes the
+# one-sided bias, which the raw signed residual hides because the two tip
+# directions carry opposite signs.
+print("\n% magnitude deficit |M_ident| - |M_pred| [mN·m]")
+for key, col in (('no GE', 'resid_mNm'), ('no interference',
+                 'resid_single_mNm'), ('interference', 'resid_interf_mNm')):
+    d = np.array([(1.0 if r['dir'] == 'pos' else -1.0) * float(r[col])
+                  for r in pred.values()])
+    print(f"%   {key:16}: mean {d.mean():+7.1f}, "
+          f"{int((d < 0).sum())}/{len(d)} over-predicted")
+
 SLOTS = [('Mx', 'neg'), ('Mx', 'pos'), ('My', 'neg'), ('My', 'pos')]
 XL = [r'$M_{x,-}$', r'$M_{x,+}$', r'$M_{y,-}$', r'$M_{y,+}$']
 cases = [f'case_0{i}' for i in range(1, 6)]
