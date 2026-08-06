@@ -491,7 +491,7 @@ $M_{\mathrm{ff},y} = -W x_{\mathrm{off}}$.
 Four per-run alternatives were run on \emph{identical} inputs — same
 signals, excitation windows, allocator caps and onset-free gates (the
 gated run set is method-independent because the gates use the moment
-trace only), $132$ runs in total
+trace only), $140$ runs in total
 (\texttt{analysis/nls\_comparison.py}):
 \begin{itemize}
 \item \textbf{NLS} — the predecessor of Algorithm~\ref{alg:cosh}:
@@ -557,10 +557,10 @@ case & axis & [mm] & COSH & NLS & CPD$_{\mathrm{N}}$ &
 CPD$_{\mathrm{R}}$ & CUSUM \\
 \midrule
 1 & x & $-2.90$ & $-1.73\,{\scriptstyle\pm0.93}$ & $-2.05\,{\scriptstyle\pm1.30}$ & $-1.46\,{\scriptstyle\pm1.03}$ & $-1.20\,{\scriptstyle\pm1.51}$ & $-1.15\,{\scriptstyle\pm1.24}$ \\
-1 & y & $-11.45$ & $-10.93\,{\scriptstyle\pm0.39}$ & $-10.91\,{\scriptstyle\pm1.27}$ & $-11.06\,{\scriptstyle\pm0.57}$ & $-10.90\,{\scriptstyle\pm0.81}$ & $-9.53\,{\scriptstyle\pm3.88}$ \\
+1 & y & $-11.45$ & $-11.13\,{\scriptstyle\pm0.43}$ & $-11.35\,{\scriptstyle\pm1.37}$ & $-11.21\,{\scriptstyle\pm0.61}$ & $-10.79\,{\scriptstyle\pm0.80}$ & $-9.59\,{\scriptstyle\pm3.88}$ \\
 \addlinespace[2pt]
-2 & x & $-14.29$ & $-15.22\,{\scriptstyle\pm0.36}$ & $-14.95\,{\scriptstyle\pm0.79}$ & $-15.13\,{\scriptstyle\pm0.71}$ & $-14.42\,{\scriptstyle\pm4.31}$ & $-14.99\,{\scriptstyle\pm0.55}$ \\
-2 & y & $-9.90$ & $-10.36\,{\scriptstyle\pm0.32}$ & $-9.67\,{\scriptstyle\pm1.10}$ & $-9.98\,{\scriptstyle\pm0.54}$ & $-9.69\,{\scriptstyle\pm0.50}$ & $-8.61\,{\scriptstyle\pm4.02}$ \\
+2 & x & $-14.29$ & $-15.17\,{\scriptstyle\pm0.36}$ & $-15.03\,{\scriptstyle\pm0.76}$ & $-15.09\,{\scriptstyle\pm0.70}$ & $-14.10\,{\scriptstyle\pm4.15}$ & $-15.00\,{\scriptstyle\pm0.52}$ \\
+2 & y & $-9.90$ & $-10.49\,{\scriptstyle\pm0.42}$ & $-9.60\,{\scriptstyle\pm1.13}$ & $-9.91\,{\scriptstyle\pm0.52}$ & $-9.61\,{\scriptstyle\pm0.46}$ & $-8.54\,{\scriptstyle\pm4.02}$ \\
 \addlinespace[2pt]
 3 & x & $-5.26$ & $-8.62\,{\scriptstyle\pm0.46}$ & $-8.54\,{\scriptstyle\pm0.74}$ & $-8.11\,{\scriptstyle\pm1.20}$ & $-4.63\,{\scriptstyle\pm4.72}$ & $-8.45\,{\scriptstyle\pm0.92}$ \\
 3 & y & $+3.14$ & $+0.73\,{\scriptstyle\pm0.39}$ & $+1.06\,{\scriptstyle\pm0.97}$ & $+0.71\,{\scriptstyle\pm0.82}$ & $+0.94\,{\scriptstyle\pm1.00}$ & $+1.12\,{\scriptstyle\pm3.39}$ \\
@@ -569,10 +569,10 @@ CPD$_{\mathrm{R}}$ & CUSUM \\
 4 & y & $+2.40$ & $+0.16\,{\scriptstyle\pm0.61}$ & $-0.64\,{\scriptstyle\pm1.49}$ & $-0.66\,{\scriptstyle\pm1.39}$ & $-0.60\,{\scriptstyle\pm1.36}$ & $-0.22\,{\scriptstyle\pm1.36}$ \\
 \addlinespace[2pt]
 5 & x & $+10.91$ & $+10.70\,{\scriptstyle\pm0.69}$ & $+10.05\,{\scriptstyle\pm1.10}$ & $+10.29\,{\scriptstyle\pm0.65}$ & $+11.16\,{\scriptstyle\pm3.75}$ & $+10.25\,{\scriptstyle\pm0.74}$ \\
-5 & y & $-10.89$ & $-10.70\,{\scriptstyle\pm0.85}$ & $-10.50\,{\scriptstyle\pm1.75}$ & $-10.95\,{\scriptstyle\pm1.28}$ & $-11.14\,{\scriptstyle\pm1.19}$ & $-11.00\,{\scriptstyle\pm1.24}$ \\
+5 & y & $-10.89$ & $-10.73\,{\scriptstyle\pm0.70}$ & $-11.11\,{\scriptstyle\pm1.68}$ & $-10.84\,{\scriptstyle\pm0.98}$ & $-10.95\,{\scriptstyle\pm0.95}$ & $-10.84\,{\scriptstyle\pm1.00}$ \\
 \midrule
 \multicolumn{3}{r}{median $|\mathrm{err}|$ [mm]} &
-$1.05$ & $0.86$ & $0.97$ & $0.59$ & $1.70$ \\
+$1.02$ & $0.86$ & $0.95$ & $0.64$ & $1.70$ \\
 \multicolumn{3}{r}{RMS $|\mathrm{err}|$ [mm]} &
 $1.64$ & $1.72$ & $1.67$ & $1.65$ & $1.82$ \\
 \multicolumn{3}{r}{max $|\mathrm{err}|$ [mm]} &
@@ -595,30 +595,30 @@ per the axis mapping of Sec.~\ref{sec:aggregation}.}
 \toprule
 method & & 1x & 1y & 2x & 2y & 3x & 3y & 4x & 4y & 5x & 5y \\
 \midrule
-COSH & $\bar M_-$ & $-1.054$ & $-0.422$ & $-1.829$ & $-0.666$ & $-1.542$ & $-0.983$ & $-1.136$ & $-0.998$ & $-1.019$ & $-0.635$ \\
- & $\bar M_+$ & $+0.950$ & $+1.079$ & $+0.867$ & $+1.320$ & $+0.997$ & $+0.937$ & $+1.468$ & $+0.988$ & $+1.695$ & $+1.310$ \\
- & $M_{\mathrm{ff}}$ & $-0.052$ & $+0.329$ & $-0.481$ & $+0.327$ & $-0.272$ & $-0.023$ & $+0.166$ & $-0.005$ & $+0.338$ & $+0.338$ \\
- & CI$_{95}$ & $\pm0.028$ & $\pm0.012$ & $\pm0.011$ & $\pm0.010$ & $\pm0.014$ & $\pm0.012$ & $\pm0.021$ & $\pm0.019$ & $\pm0.022$ & $\pm0.027$ \\
+COSH & $\bar M_-$ & $-1.054$ & $-0.421$ & $-1.829$ & $-0.675$ & $-1.542$ & $-0.983$ & $-1.136$ & $-0.998$ & $-1.019$ & $-0.645$ \\
+ & $\bar M_+$ & $+0.950$ & $+1.090$ & $+0.870$ & $+1.338$ & $+0.997$ & $+0.937$ & $+1.468$ & $+0.988$ & $+1.695$ & $+1.323$ \\
+ & $M_{\mathrm{ff}}$ & $-0.052$ & $+0.335$ & $-0.479$ & $+0.331$ & $-0.272$ & $-0.023$ & $+0.166$ & $-0.005$ & $+0.338$ & $+0.339$ \\
+ & CI$_{95}$ & $\pm0.028$ & $\pm0.013$ & $\pm0.011$ & $\pm0.013$ & $\pm0.014$ & $\pm0.012$ & $\pm0.021$ & $\pm0.019$ & $\pm0.022$ & $\pm0.022$ \\
 \midrule
-NLS & $\bar M_-$ & $-1.018$ & $-0.399$ & $-1.792$ & $-0.637$ & $-1.573$ & $-0.990$ & $-1.151$ & $-0.928$ & $-0.989$ & $-0.577$ \\
- & $\bar M_+$ & $+0.894$ & $+1.056$ & $+0.848$ & $+1.248$ & $+1.033$ & $+0.923$ & $+1.463$ & $+0.969$ & $+1.624$ & $+1.241$ \\
- & $M_{\mathrm{ff}}$ & $-0.062$ & $+0.328$ & $-0.472$ & $+0.306$ & $-0.270$ & $-0.033$ & $+0.156$ & $+0.020$ & $+0.317$ & $+0.332$ \\
- & CI$_{95}$ & $\pm0.039$ & $\pm0.038$ & $\pm0.025$ & $\pm0.035$ & $\pm0.024$ & $\pm0.031$ & $\pm0.028$ & $\pm0.047$ & $\pm0.035$ & $\pm0.055$ \\
+NLS & $\bar M_-$ & $-1.018$ & $-0.373$ & $-1.792$ & $-0.641$ & $-1.573$ & $-0.990$ & $-1.151$ & $-0.928$ & $-0.989$ & $-0.539$ \\
+ & $\bar M_+$ & $+0.894$ & $+1.056$ & $+0.843$ & $+1.248$ & $+1.033$ & $+0.923$ & $+1.463$ & $+0.969$ & $+1.624$ & $+1.241$ \\
+ & $M_{\mathrm{ff}}$ & $-0.062$ & $+0.341$ & $-0.475$ & $+0.303$ & $-0.270$ & $-0.033$ & $+0.156$ & $+0.020$ & $+0.317$ & $+0.351$ \\
+ & CI$_{95}$ & $\pm0.039$ & $\pm0.041$ & $\pm0.024$ & $\pm0.036$ & $\pm0.024$ & $\pm0.031$ & $\pm0.028$ & $\pm0.047$ & $\pm0.035$ & $\pm0.053$ \\
 \midrule
-CPD$_{\mathrm{N}}$ & $\bar M_-$ & $-1.048$ & $-0.464$ & $-1.852$ & $-0.703$ & $-1.573$ & $-1.059$ & $-1.164$ & $-1.005$ & $-1.033$ & $-0.640$ \\
- & $\bar M_+$ & $+0.960$ & $+1.130$ & $+0.896$ & $+1.333$ & $+1.061$ & $+1.014$ & $+1.516$ & $+1.047$ & $+1.683$ & $+1.332$ \\
- & $M_{\mathrm{ff}}$ & $-0.044$ & $+0.333$ & $-0.478$ & $+0.315$ & $-0.256$ & $-0.022$ & $+0.176$ & $+0.021$ & $+0.325$ & $+0.346$ \\
- & CI$_{95}$ & $\pm0.031$ & $\pm0.017$ & $\pm0.022$ & $\pm0.017$ & $\pm0.038$ & $\pm0.026$ & $\pm0.023$ & $\pm0.044$ & $\pm0.021$ & $\pm0.041$ \\
+PELT$_{\mathrm{N}}$ & $\bar M_-$ & $-1.048$ & $-0.456$ & $-1.852$ & $-0.707$ & $-1.573$ & $-1.059$ & $-1.164$ & $-1.005$ & $-1.033$ & $-0.647$ \\
+ & $\bar M_+$ & $+0.960$ & $+1.130$ & $+0.898$ & $+1.333$ & $+1.061$ & $+1.014$ & $+1.516$ & $+1.047$ & $+1.683$ & $+1.332$ \\
+ & $M_{\mathrm{ff}}$ & $-0.044$ & $+0.337$ & $-0.477$ & $+0.313$ & $-0.256$ & $-0.022$ & $+0.176$ & $+0.021$ & $+0.325$ & $+0.342$ \\
+ & CI$_{95}$ & $\pm0.031$ & $\pm0.018$ & $\pm0.022$ & $\pm0.017$ & $\pm0.038$ & $\pm0.026$ & $\pm0.023$ & $\pm0.044$ & $\pm0.021$ & $\pm0.031$ \\
 \midrule
-CPD$_{\mathrm{R}}$ & $\bar M_-$ & $-1.023$ & $-0.449$ & $-1.680$ & $-0.702$ & $-1.339$ & $-1.055$ & $-1.179$ & $-0.986$ & $-0.932$ & $-0.625$ \\
- & $\bar M_+$ & $+0.950$ & $+1.105$ & $+0.769$ & $+1.314$ & $+1.046$ & $+0.995$ & $+1.406$ & $+1.024$ & $+1.637$ & $+1.328$ \\
- & $M_{\mathrm{ff}}$ & $-0.036$ & $+0.328$ & $-0.455$ & $+0.306$ & $-0.146$ & $-0.030$ & $+0.113$ & $+0.019$ & $+0.353$ & $+0.352$ \\
- & CI$_{95}$ & $\pm0.045$ & $\pm0.024$ & $\pm0.136$ & $\pm0.016$ & $\pm0.149$ & $\pm0.032$ & $\pm0.069$ & $\pm0.043$ & $\pm0.118$ & $\pm0.038$ \\
+PELT$_{\mathrm{R}}$ & $\bar M_-$ & $-1.023$ & $-0.455$ & $-1.680$ & $-0.706$ & $-1.339$ & $-1.055$ & $-1.179$ & $-0.986$ & $-0.932$ & $-0.637$ \\
+ & $\bar M_+$ & $+0.950$ & $+1.105$ & $+0.789$ & $+1.314$ & $+1.046$ & $+0.995$ & $+1.406$ & $+1.024$ & $+1.637$ & $+1.328$ \\
+ & $M_{\mathrm{ff}}$ & $-0.036$ & $+0.325$ & $-0.445$ & $+0.304$ & $-0.146$ & $-0.030$ & $+0.113$ & $+0.019$ & $+0.353$ & $+0.346$ \\
+ & CI$_{95}$ & $\pm0.045$ & $\pm0.024$ & $\pm0.131$ & $\pm0.015$ & $\pm0.149$ & $\pm0.032$ & $\pm0.069$ & $\pm0.043$ & $\pm0.118$ & $\pm0.030$ \\
 \midrule
-CUSUM & $\bar M_-$ & $-1.046$ & $-0.480$ & $-1.861$ & $-0.710$ & $-1.608$ & $-1.029$ & $-1.181$ & $-1.044$ & $-1.048$ & $-0.656$ \\
- & $\bar M_+$ & $+0.977$ & $+1.054$ & $+0.914$ & $+1.254$ & $+1.075$ & $+0.958$ & $+1.498$ & $+1.058$ & $+1.695$ & $+1.351$ \\
- & $M_{\mathrm{ff}}$ & $-0.035$ & $+0.287$ & $-0.473$ & $+0.272$ & $-0.267$ & $-0.035$ & $+0.158$ & $+0.007$ & $+0.324$ & $+0.347$ \\
- & CI$_{95}$ & $\pm0.037$ & $\pm0.117$ & $\pm0.018$ & $\pm0.127$ & $\pm0.029$ & $\pm0.107$ & $\pm0.029$ & $\pm0.043$ & $\pm0.024$ & $\pm0.039$ \\
+CUSUM & $\bar M_-$ & $-1.046$ & $-0.476$ & $-1.861$ & $-0.714$ & $-1.608$ & $-1.029$ & $-1.181$ & $-1.044$ & $-1.048$ & $-0.667$ \\
+ & $\bar M_+$ & $+0.977$ & $+1.054$ & $+0.913$ & $+1.254$ & $+1.075$ & $+0.958$ & $+1.498$ & $+1.058$ & $+1.695$ & $+1.351$ \\
+ & $M_{\mathrm{ff}}$ & $-0.035$ & $+0.289$ & $-0.474$ & $+0.270$ & $-0.267$ & $-0.035$ & $+0.158$ & $+0.007$ & $+0.324$ & $+0.342$ \\
+ & CI$_{95}$ & $\pm0.037$ & $\pm0.117$ & $\pm0.017$ & $\pm0.127$ & $\pm0.029$ & $\pm0.107$ & $\pm0.029$ & $\pm0.043$ & $\pm0.024$ & $\pm0.032$ \\
 \bottomrule
 \end{tabular}
 \caption{Directional critical-moment means $\bar M_{\pm}$, pivot-free
@@ -650,28 +650,28 @@ $\mathrm{CV}_{-}$ & $\mathrm{CV}_{+}$ &
 $\mathrm{CV}_{-}$ & $\mathrm{CV}_{+}$ \\
 \midrule
 1 & x & $\mathbf{3.8}$ & $\mathbf{5.7}$ & $6.4$ & $7.7$ & $4.4$ & $6.1$ & $7.3$ & $8.6$ & $5.9$ & $6.7$ \\
-1 & y & $2.4$ & $\mathbf{2.2}$ & $8.8$ & $7.2$ & $\mathbf{1.8}$ & $3.3$ & $5.2$ & $4.4$ & $5.2$ & $24.0$ \\
-2 & x & $\mathbf{1.2}$ & $\mathbf{1.5}$ & $2.5$ & $4.2$ & $2.5$ & $2.4$ & $15.5$ & $23.6$ & $1.8$ & $2.6$ \\
-2 & y & $\mathbf{1.2}$ & $\mathbf{1.6}$ & $4.9$ & $5.8$ & $2.8$ & $2.5$ & $3.1$ & $2.0$ & $3.1$ & $21.9$ \\
+1 & y & $\mathbf{4.2}$ & $\mathbf{2.3}$ & $17.1$ & $7.2$ & $5.0$ & $3.3$ & $7.0$ & $4.4$ & $4.8$ & $24.0$ \\
+2 & x & $\mathbf{1.2}$ & $\mathbf{1.6}$ & $2.5$ & $4.2$ & $2.5$ & $2.2$ & $15.5$ & $22.1$ & $1.8$ & $2.4$ \\
+2 & y & $\mathbf{1.5}$ & $2.1$ & $7.1$ & $5.8$ & $3.1$ & $2.5$ & $3.3$ & $\mathbf{2.0}$ & $3.0$ & $21.9$ \\
 3 & x & $\mathbf{1.7}$ & $\mathbf{2.4}$ & $2.4$ & $4.1$ & $4.9$ & $4.2$ & $23.9$ & $8.5$ & $3.1$ & $4.7$ \\
 3 & y & $\mathbf{1.7}$ & $\mathbf{2.6}$ & $3.2$ & $7.0$ & $4.4$ & $4.1$ & $4.4$ & $6.0$ & $12.4$ & $22.8$ \\
 4 & x & $\mathbf{3.4}$ & $2.2$ & $3.8$ & $3.5$ & $4.0$ & $\mathbf{1.6}$ & $5.6$ & $10.3$ & $3.9$ & $3.5$ \\
 4 & y & $\mathbf{2.9}$ & $\mathbf{3.7}$ & $10.3$ & $6.1$ & $7.5$ & $7.2$ & $7.8$ & $6.9$ & $6.7$ & $7.3$ \\
 5 & x & $3.9$ & $2.1$ & $7.2$ & $2.6$ & $\mathbf{3.6}$ & $\mathbf{2.0}$ & $27.4$ & $3.0$ & $4.0$ & $2.3$ \\
-5 & y & $\mathbf{6.5}$ & $\mathbf{2.9}$ & $15.2$ & $5.4$ & $10.1$ & $3.8$ & $9.5$ & $3.8$ & $9.3$ & $4.0$ \\
+5 & y & $\mathbf{5.3}$ & $\mathbf{3.1}$ & $19.8$ & $5.4$ & $8.6$ & $3.8$ & $8.4$ & $3.8$ & $8.3$ & $4.0$ \\
 \midrule
 \multicolumn{2}{r}{median / worst [\%]} &
-\multicolumn{2}{c}{$\mathbf{2.4}$ / $\mathbf{6.5}$} &
-\multicolumn{2}{c}{$5.6$ / $15.2$} &
-\multicolumn{2}{c}{$3.9$ / $10.1$} &
+\multicolumn{2}{c}{$\mathbf{2.5}$ / $\mathbf{5.7}$} &
+\multicolumn{2}{c}{$5.9$ / $19.8$} &
+\multicolumn{2}{c}{$4.1$ / $8.6$} &
 \multicolumn{2}{c}{$7.1$ / $27.4$} &
-\multicolumn{2}{c}{$4.9$ / $24.0$} \\
+\multicolumn{2}{c}{$4.7$ / $24.0$} \\
 \bottomrule
 \end{tabular}
 \caption{Ramp-rate dispersion (CV [\%]) of the directional critical
 moments under the five estimators. Bold marks the lowest CV in each
 of the $20$ direction groups: COSH in $16$, CPD$_{\mathrm{N}}$ in
-$4$, the rest in none. The underlying directional means are in
+$3$, CPD$_{\mathrm{R}}$ in $1$, the rest in none. The underlying directional means are in
 Table~\ref{tab:nls-mom}.}
 \label{tab:nls-disp}
 \end{table}
@@ -688,19 +688,19 @@ Fig.~\ref{fig:err} sharpens it: the residual errors that do remain
 vehicle--contact geometry rather than in any onset detector.
 \emph{(ii) Run-level robustness is where the methods separate:} COSH
 has the lowest CV in $16/20$ direction groups (CPD$_{\mathrm{N}}$
-takes the other $4$), median $2.4\%$ against $3.9$--$7.1\%$, and its
-worst group is $6.5\%$ where the alternatives reach
-$15$--$27\%$ — the nonparametric detectors (CPD$_{\mathrm{R}}$,
+takes $3$, CPD$_{\mathrm{R}}$ $1$), median $2.5\%$ against
+$4.1$--$7.1\%$, and its worst group is $5.7\%$ where the alternatives
+reach $8.6$--$27.4\%$ — the nonparametric detectors (CPD$_{\mathrm{R}}$,
 CUSUM) occasionally misplace the onset badly on short fast-ramp
 windows. Equivalently, the $95\%$ confidence interval on the CoM
 offset is $\pm0.3$--$0.9$~mm under COSH — the narrowest in $9$ of
 $10$ case--axis pairs — against up to $\pm4$--$5$~mm for the
 nonparametric detectors (Fig.~\ref{fig:forest}). The paired per-run critical moments (NLS vs.\ COSH) differ by
-$27.6$~mN\,m at the median but up to $217$~mN\,m — the ridge of
+$33$~mN\,m at the median but up to $269$~mN\,m — the ridge of
 Sec.~\ref{sec:calibration} realized run by run. \emph{(iii) The biases
-carry signatures:} NLS sits $2.6\%$ \emph{low} in mean $|M|$ (the
+carry signatures:} NLS sits $3.7\%$ \emph{low} in mean $|M|$ (the
 early-onset drift of the free amplitude--onset fit), while
-CPD$_{\mathrm{N}}$ and CUSUM sit $3.2\%$ and $3.1\%$ \emph{high} —
+CPD$_{\mathrm{N}}$ and CUSUM sit $3.0\%$ and $3.1\%$ \emph{high} —
 detection lag, since a distribution change must accumulate post-onset
 evidence before it is declared; both signatures largely cancel in
 \eqref{eq:mff}. COSH needs no per-run tuning (CUSUM's allowance $k$,
@@ -724,7 +724,7 @@ its \emph{own} arm and onset thrust, and the per-run predictions and
 residuals are then averaged per case/axis/direction (the identified
 means use the same valid-pivot run subset, so the mean residual is
 exactly $\overline{M} - \overline{M}_{\mathrm{pred}}$). The kinematic arms come out remarkably
-consistent — $140.5 \pm 2.3$~mm (roll) and $113.1 \pm 6.2$~mm (pitch)
+consistent — $140.4 \pm 2.3$~mm (roll) and $112.7 \pm 6.6$~mm (pitch)
 across the five configurations, matching the geometric values
 ($140$/$110$~mm). Every ingredient is independent of the identified
 moments, so this is a genuine forward test.
@@ -759,11 +759,11 @@ Garofano-adapted model with transferred constants
 thrust scenario & median & p90 & max & RMS \\
  & \multicolumn{4}{c}{$|$residual$|$ [mN\,m]} \\
 \midrule
-rigid, no GE & $204.8$ & $302.3$ & $351.0$ & $218.6$ \\
-GE single-rotor (lower) & $163.9$ & $259.3$ & $310.8$ & $181.4$ \\
-\textbf{GE interference (param.-free)} & $\mathbf{62.5}$ &
-$\mathbf{127.6}$ & $\mathbf{187.6}$ & $\mathbf{89.7}$ \\
-GE Garofano (upper) & $139.1$ & $274.1$ & $302.5$ & $170.3$ \\
+rigid, no GE & $204.8$ & $301.5$ & $349.5$ & $213.3$ \\
+GE single-rotor (lower) & $163.9$ & $258.9$ & $304.2$ & $176.1$ \\
+\textbf{GE interference (param.-free)} & $\mathbf{61.0}$ &
+$\mathbf{127.6}$ & $\mathbf{177.4}$ & $\mathbf{86.0}$ \\
+GE Garofano (upper) & $143.5$ & $274.1$ & $302.5$ & $173.7$ \\
 \bottomrule
 \end{tabular}
 \caption{Residuals of the identified directional means against the
@@ -803,13 +803,13 @@ single & interf & Garof. & brkt & range [N\,m] \\
 \midrule
 1 & x & - & 145.2 & $-1.051$ & $-1.401$ & $+350$ & $+304$ & $+165$ & $-49$ & $\checkmark$ & $[-1.048, -1.018]$ \\
 1 & x & + & 139.2 & $+0.950$ & $+1.172$ & $-222$ & $-180$ & $-52$ & $+153$ & $\checkmark$ & $[+0.894, +0.977]$ \\
-1 & y & - & 111.4 & $-0.422$ & $-0.660$ & $+238$ & $+207$ & $+114$ & $-51$ & $\checkmark$ & $[-0.480, -0.399]$ \\
-1 & y & + & 120.0 & $+1.079$ & $+1.430$ & $-351$ & $-311$ & $-188$ & $-11$ & -- & $[+1.054, +1.130]$ \\
+1 & y & - & 109.3 & $-0.421$ & $-0.630$ & $+209$ & $+179$ & $+87$ & $-75$ & $\checkmark$ & $[-0.476, -0.373]$ \\
+1 & y & + & 120.1 & $+1.090$ & $+1.431$ & $-341$ & $-301$ & $-177$ & $-1$ & -- & $[+1.054, +1.130]$ \\
 \addlinespace[2pt]
 2 & x & - & 140.0 & $-1.829$ & $-1.933$ & $+104$ & $+54$ & $-98$ & $-302$ & $\checkmark$ & $[-1.861, -1.680]$ \\
-2 & x & + & 139.5 & $+0.867$ & $+1.021$ & $-154$ & $-114$ & $+10$ & $+216$ & $\checkmark$ & $[+0.769, +0.914]$ \\
-2 & y & - & 105.9 & $-0.666$ & $-0.803$ & $+138$ & $+107$ & $+12$ & $-144$ & $\checkmark$ & $[-0.710, -0.637]$ \\
-2 & y & + & 118.4 & $+1.320$ & $+1.565$ & $-245$ & $-204$ & $-78$ & $+96$ & $\checkmark$ & $[+1.248, +1.333]$ \\
+2 & x & + & 139.4 & $+0.870$ & $+1.019$ & $-149$ & $-109$ & $+14$ & $+220$ & $\checkmark$ & $[+0.789, +0.913]$ \\
+2 & y & - & 105.0 & $-0.675$ & $-0.791$ & $+116$ & $+86$ & $-8$ & $-163$ & $\checkmark$ & $[-0.714, -0.641]$ \\
+2 & y & + & 118.5 & $+1.338$ & $+1.566$ & $-228$ & $-187$ & $-60$ & $+113$ & $\checkmark$ & $[+1.248, +1.333]$ \\
 \addlinespace[2pt]
 3 & x & - & 142.5 & $-1.542$ & $-1.672$ & $+130$ & $+82$ & $-63$ & $-273$ & $\checkmark$ & $[-1.608, -1.339]$ \\
 3 & x & + & 138.3 & $+0.997$ & $+1.294$ & $-297$ & $-254$ & $-123$ & $+80$ & $\checkmark$ & $[+1.033, +1.075]$ \\
@@ -823,8 +823,8 @@ single & interf & Garof. & brkt & range [N\,m] \\
 \addlinespace[2pt]
 5 & x & - & 142.5 & $-1.019$ & $-1.158$ & $+140$ & $+97$ & $-32$ & $-242$ & $\checkmark$ & $[-1.048, -0.932]$ \\
 5 & x & + & 137.9 & $+1.695$ & $+1.804$ & $-109$ & $-61$ & $+86$ & $+288$ & $\checkmark$ & $[+1.624, +1.695]$ \\
-5 & y & - & 104.4 & $-0.634$ & $-0.756$ & $+122$ & $+92$ & $-0$ & $-154$ & $\checkmark$ & $[-0.656, -0.577]$ \\
-5 & y & + & 118.6 & $+1.310$ & $+1.598$ & $-288$ & $-246$ & $-119$ & $+55$ & $\checkmark$ & $[+1.241, +1.351]$ \\
+5 & y & - & 103.2 & $-0.645$ & $-0.741$ & $+96$ & $+66$ & $-25$ & $-178$ & $\checkmark$ & $[-0.667, -0.539]$ \\
+5 & y & + & 118.9 & $+1.323$ & $+1.601$ & $-278$ & $-236$ & $-109$ & $+66$ & $\checkmark$ & $[+1.241, +1.351]$ \\
 \bottomrule
 \end{tabular}
 \caption{Per-direction static-threshold check with odometry-fitted
@@ -845,12 +845,12 @@ algorithmic. \emph{(ii) The first-principles ground-effect bracket
 captures the data}: with both GE channels applied and the arms held
 fixed, the identified thresholds fall \emph{between} the single-rotor
 and Garofano-adapted predictions in $19/20$ groups (the one exception
-misses the upper bound by $11$~mN\,m). The no-GE hypothesis is
+misses the upper bound by $1$~mN\,m). The no-GE hypothesis is
 excluded one-sidedly; the truth lies interior to the declared bracket
 — an independent forward validation of the ground-effect analysis
 itself. \emph{(iii) The parameter-free interference model fits best — by a
-factor of two}: $62.5$~mN\,m median / $89.7$~mN\,m RMS, with mixed
-residual signs and a signed mean of only $-16$~mN\,m, i.e.\
+factor of two}: $61.0$~mN\,m median / $86.0$~mN\,m RMS, with mixed
+residual signs and a signed mean of only $-18$~mN\,m, i.e.\
 essentially unbiased, against one-sided deficits for the single-rotor
 model (interference is real) and direction-antisymmetric over/under
 correction for the Garofano adaptation (its transferred constants
