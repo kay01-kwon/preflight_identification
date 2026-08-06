@@ -201,6 +201,52 @@ execution noise floor and above the healthy-run maximum.
 \end{enumerate}
 The gates run \emph{before} calibration so a poorly executed ramp cannot
 contaminate the dataset-coupled constraint $C_1 = K\dot M$.
+Figure~\ref{fig:gates} and Table~\ref{tab:gates} report the three gate
+quantities for all $140$ runs, evaluated on the floored segment: the
+slope tracking error stays within $\pm 2.4\%$ (median $0.28\%$), the
+ramp-linearity RMSE within $4.2$~mN\,m (median $2.0$ — the execution
+noise floor itself, a factor $7$ below the gate), and the shortest
+window carries $53$ samples ($1.4\times$ the necessary minimum).
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{fig_gate_report.pdf}
+\caption{Run-gate quantities for all $140$ runs versus the commanded
+ramp rate, in gate order: slope tracking error $\varepsilon$ and
+ramp-linearity RMSE on the floored segment
+($|M| \ge M_{\mathrm{floor}}$), and the excitation-window sample count
+$N_{\mathrm{full}}$. Dashed lines are the gate thresholds
+($\pm3\%$, $30$~mN\,m, $38$ samples); every run clears all three.}
+\label{fig:gates}
+\end{figure}
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{r rr rr rr}
+\toprule
+rate & \multicolumn{2}{c}{$|\varepsilon|$ [\%]} &
+\multicolumn{2}{c}{lin.\ RMSE [mN\,m]} &
+$N_{\mathrm{full}}$ & $N_{\mathrm{floor}}$ \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5}
+[N\,m/s] & med & max & med & max & min & min \\
+\midrule
+$0.10$ & $0.14$ & $1.16$ & $2.3$ & $3.8$ & $484$ & $102$ \\
+$0.20$ & $0.19$ & $1.55$ & $1.9$ & $3.3$ & $257$ & $71$ \\
+$0.30$ & $0.17$ & $0.83$ & $1.8$ & $2.5$ & $191$ & $56$ \\
+$0.45$ & $0.15$ & $2.21$ & $1.7$ & $2.8$ & $130$ & $52$ \\
+$0.65$ & $0.23$ & $0.90$ & $1.8$ & $2.9$ & $95$ & $47$ \\
+$0.90$ & $0.39$ & $2.40$ & $1.9$ & $2.9$ & $77$ & $33$ \\
+$1.20$ & $0.86$ & $1.80$ & $2.3$ & $4.2$ & $53$ & $31$ \\
+\bottomrule
+\end{tabular}
+\caption{Per-rate summary of the gate quantities ($20$ runs per rate;
+slope and linearity on the floored segment). All values are inside the
+gates with wide margin; the mild growth of $|\varepsilon|$ toward
+$1.20$~N\,m/s reflects the shorter averaging segment, not degraded
+execution (\texttt{analysis/gate\_report.py}).}
+\label{tab:gates}
+\end{table}
 
 \section{Onset detection}
 \label{sec:algorithm}

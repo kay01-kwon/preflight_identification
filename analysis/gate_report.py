@@ -35,7 +35,15 @@ OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('.')
 RATES = [0.10, 0.20, 0.30, 0.45, 0.65, 0.90, 1.20]
 
 rows = []
-for d in sorted(ROOT.glob('case_*/M[xy]')):
+_csv = OUT / 'gate_report.csv'
+if _csv.exists():
+    for r in csv.DictReader(open(_csv)):
+        r['rate'] = float(r['rate'])
+        r['n_full'] = int(r['n_full'])
+        r['n_floor'] = int(r['n_floor'])
+        rows.append(r)
+    print(f're-using {_csv} ({len(rows)} runs)')
+for d in (() if rows else sorted(ROOT.glob('case_*/M[xy]'))):
     axis = 'x' if d.name == 'Mx' else 'y'
     floor = cvp.SLOPE_GATE_FLOOR[axis]
     with contextlib.redirect_stdout(io.StringIO()):
@@ -93,7 +101,7 @@ AXMRK = {'Mx': 'o', 'My': 's'}
 rng = np.random.default_rng(0)
 fig, axes = plt.subplots(1, 3, figsize=(12.0, 3.1))
 panels = [('eps_pct', r'slope tracking error $\varepsilon$ [%]',
-           [(3.0, '+3\\%'), (-3.0, '-3\\%')], 'lin'),
+           [(3.0, '+3%'), (-3.0, '\u22123%')], 'lin'),
           ('lin_mNm', r'ramp-linearity RMSE [mN$\cdot$m]',
            [(30.0, '30 mN$\\cdot$m')], 'lin'),
           ('n_full', r'window samples $N_{\mathrm{full}}$',
