@@ -51,6 +51,7 @@ $C_T$ & thrust map, $T_i = C_T\Omega_i^2$ & $1.3175\times10^{-7}$ & bench calibr
 $M_{\mathrm{thr}}$ & window threshold & $0.01$~N\,m & noise floor \\
 $M_{\mathrm{cap}}$ & allocator caps $(x,y)$ & $2.37$, $2.74$~N\,m & allocation feasibility \\
 $\varepsilon_{\max}$ & ramp-slope gate & $3\%$ & sensitivity chain (Sec.~\ref{sec:gates}) \\
+$M_{\mathrm{floor}}$ & slope-gate floors $(x,y)$ & $0.7$, $0.4$~N\,m & $|M_{\mathrm{crit}}|$ lower bound, $\pm20$~mm box \\
 $N_{\min}$ & window-sample gate & $38$ & $30$ pre $+\,8$ post \\
 $e_{\mathrm{lin,max}}$ & linearity-RMSE gate & $30$~mN\,m & $10\times$ noise floor \\
 $N_{\mathrm{seg}}$ & sweep margin (each end) & $8$ & degenerate-candidate guard \\
@@ -176,9 +177,17 @@ the measured moment trace alone (hence free of circularity):
 \begin{enumerate}
 \item \textbf{Ramp-slope error} $|\varepsilon| \le 3\%$, with
 $\varepsilon = (|\dot M| - \dot M_{\mathrm{cmd}})/\dot M_{\mathrm{cmd}}$
-and $\dot M$ the least-squares slope over the window. A $3\%$ error in
-$\dot M$ perturbs $C_1 = K\dot M$ by $3\%$ — about $7\times$ below the
-$\pm20\%$ level the sensitivity analysis shows harmless.
+and $\dot M$ the least-squares slope over the sub-segment
+$|M| \ge M_{\mathrm{floor}}$ ($0.7$~N\,m roll, $0.4$~N\,m pitch). The
+floors are the per-axis lower bounds of $|M_{\mathrm{crit}}|$ over the
+$\pm 20$~mm CoM-offset design box, so the gate scores the ramp exactly
+where an onset can occur: spin-up imperfections at near-zero moment
+cannot reject a run whose ramp is within spec where it matters. (On
+this dataset the floored gate passes all $140$ runs; scored on the
+full window instead, $8$ fast runs would be rejected by their early
+transients.) A $3\%$ error in $\dot M$ perturbs $C_1 = K\dot M$ by
+$3\%$ — about $7\times$ below the $\pm20\%$ level the sensitivity
+analysis shows harmless.
 \item \textbf{Window samples} $N_{\mathrm{full}} \ge 38$: a necessary
 condition for any onset position. Because the window opens at
 $|M| = 10$~mN\,m while $M_{\mathrm{crit}} \gtrsim 0.4$~N\,m, the onset

@@ -135,13 +135,14 @@ criteria, all evaluated on the measured moment trace alone (see
 
 | Gate | Threshold | Rationale |
 |---|---|---|
-| slope error \|ε\| | ≤ 3 % | a 3 % Ṁ error perturbs C₁ = K·Ṁ by 3 %, ~7× below the ±20 % level the sensitivity analysis shows harmless |
+| slope error \|ε\| | ≤ 3 % | evaluated on the \|M\| ≥ floor segment (0.7 N·m roll / 0.4 N·m pitch = \|M_crit\| lower bound over the ±20 mm CoM-offset box); a 3 % Ṁ error perturbs C₁ = K·Ṁ by 3 % |
 | window samples N_full | ≥ 38 | necessary condition for any onset position: 30 pre-onset (baseline + sweep minimum) + 8 post-onset samples |
 | linearity RMSE | ≤ 30 mN·m | fault detector for aborted/stepped ramps: ~10× the execution noise floor, above the healthy-run maximum |
 
 Pass `ramp_gate_pct=None`, `n_full_min=None` or `lin_rmse_max=None` to disable
-individually. On the reference dataset only the slope-error gate ever fires
-(8/140 runs), and gating changes the identified CoM by < 0.05 mm.
+individually. With the floored slope gate all 140 reference runs pass; scored
+on the full window instead, the slope gate would reject 8 fast runs on their
+early spin-up transients.
 
 ### Ramp-execution quality
 
