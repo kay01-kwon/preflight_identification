@@ -53,7 +53,8 @@ def main():
     p = argparse.ArgumentParser(
         description="Exact GE moment along measured trajectories.")
     p.add_argument('root', help="dataset root (e.g. DataSet/exp)")
-    p.add_argument('--model', choices=['single', 'garofano'], default='single',
+    p.add_argument('--model', choices=['single', 'interf', 'garofano'],
+                   default='single',
                    help="single = per-rotor Cheeseman superposition (lower "
                         "bound); garofano = attitude-dependent adaptation of "
                         "the Garofano-Soldado et al. (RA-L 2024) co-planar "
@@ -121,6 +122,16 @@ def main():
             if args.model == 'single':
                 dT = Ti[:n] * R**2 / (16 * h_it**2 - R**2)
                 dtau = dT @ arm
+            elif args.model == 'interf':
+                # pure image superposition over rotor-centre distances
+                # (Sanchez-style neighbour sum): mutual interference
+                # included, no empirical constant, no fountain term.
+                d2 = ((pP[0][:, None] - pP[0][None, :]) ** 2
+                      + (pP[1][:, None] - pP[1][None, :]) ** 2)
+                Z = h_it[:, :, None] + h_it[:, None, :]
+                srot = (R**2 / 4) * np.sum(Z / (d2 + Z**2) ** 1.5, axis=2)
+                g = 1.0 / (1.0 - srot) - 1.0
+                dtau = (g * Ti[:n]) @ arm
             else:
                 # attitude-dependent Garofano-Soldado adaptation, Eq. (2)
                 # mapping: interference gains act through the body-centre
