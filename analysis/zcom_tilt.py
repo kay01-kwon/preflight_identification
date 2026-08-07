@@ -525,10 +525,27 @@ def gear_corrected(rows, z_marker):
         txt = ',  '.join(f"{n} = {v:+.1f} ± {s:.1f}"
                          for n, v, s in zip(cols, c, se))
         print(f"  {name}: {txt}   (resid RMS {np.std(r, ddof=1):.2f} mm)")
-    print("  -> measuring the gear asymmetry instead of leaving it free is "
-          "what turns\n     this channel positive; what remains degenerate "
-          "is only a constant\n     offset between the contact-midpoint "
-          "frame and the load-cell reference.")
+    # what the tilt-modulated coefficient actually contains
+    W = float(np.mean([MASS_KG[r['case']] * G for r in rows]))
+    f = float(np.mean([r['f'] for r in rows]))
+    known = (W - f) / W * z_marker * 1e3
+    c, se, _, _ = _ols(reg[:, None], e)
+    comb = known - c[0]
+    print(f"\n  WHAT THIS CHANNEL MEASURES.  Folding the arm bookkeeping back "
+          f"in,\n    err - gear_asym = const + s_ax sin(phi_0) "
+          f"[ (W-f)/W z_m  -  z_CoM ]")
+    print(f"  The known part (W-f)/W z_m = {known:.0f} mm is of the SAME order "
+          f"as z_CoM, so\n  the channel measures a DIFFERENCE of two similar "
+          f"numbers: {comb:+.0f} ± {se[0]:.0f} mm.")
+    for lbl, pred in (('z_CoM = 200 mm (CAD), truth body-referenced',
+                       known - 200.0),
+                      ('z_CoM cancels (truth taken in the SAME resting '
+                       'posture)', known)):
+        print(f"    {lbl}\n      predicts {pred:+.0f} mm  -> "
+              f"{abs(pred - comb) / se[0]:.1f} sigma from the measurement")
+    print("  A 1 mm systematic on M_ff/W moves z_CoM by 37-110 mm through this "
+          "lever,\n  so quote the static channel as a consistency check, not "
+          "as a measurement\n  competing with CAD or with the J_P channel.")
 
 
 def between_group(rows):
@@ -639,6 +656,33 @@ def main():
         print(f"      95% CI [{za - 1.96 * sa:+.0f}, {za + 1.96 * sa:+.0f}] mm"
               f"   |  z = {args.z_nominal * 1e3:.0f} mm rejected at "
               f"{abs(args.z_nominal * 1e3 - za) / sa:.1f} sigma")
+
+    print("  EXOGENEITY CHECK — the within-group lever is only valid if the")
+    print("  resting tilt varies because the vehicle was RE-PLACED, not "
+          "because of\n  the run condition:")
+    bad = False
+    for ax in ('Mx', 'My'):
+        dt, dr = [], []
+        for k, v in grp.items():
+            if k[1] != ax:
+                continue
+            t = np.array([r['tilt'] for r in v])
+            rt = np.array([r['rate'] for r in v])
+            dt.append(t - t.mean())
+            dr.append(rt - np.nanmean(rt))
+        dt, dr = np.concatenate(dt), np.concatenate(dr)
+        ok = np.isfinite(dr)
+        c = float(np.corrcoef(dt[ok], dr[ok])[0, 1])
+        bad |= abs(c) > 0.4
+        print(f"    {ax}: corr(resting tilt, commanded ramp rate) = {c:+.3f}"
+              + ("   <-- NOT exogenous" if abs(c) > 0.4 else ""))
+    if bad:
+        print("  The commanded rate cannot change where the vehicle was put "
+              "down, so a\n  correlation means the 'resting tilt' spread is "
+              "an artefact of the\n  pre-excitation window (which shortens "
+              "with rate) rather than real\n  placement variation.  "
+              "Estimator A therefore has NO valid lever and its\n  null is "
+              "not evidence about z_CoM.  It is kept as a diagnostic only.")
 
     # ── B. between-group, against the load-cell truth ──────────────
     print("\n" + "=" * 70)

@@ -225,25 +225,41 @@ python analysis/zcom_tilt.py --table zcom_tilt_runs.csv --budget DataSet/exp
 
 | Estimator | What it uses | Result |
 |---|---|---|
-| A within-group | run-to-run variation of `φ₀`, with case×axis×direction fixed effects — **truth-free**, and GE-proof (the GE moment is constant within a group, so the fixed effect absorbs it) | `z_CoM = +1 ± 27` mm (mocap attitude, errors-in-variables corrected); `−32 ± 38` mm (odom) |
+| A within-group | run-to-run variation of `φ₀`, with case×axis×direction fixed effects — truth-free, but see the exogeneity check | **no valid lever** — the within-group resting tilt correlates with the *commanded ramp rate* (`+0.60` roll), which cannot move the vehicle, so the spread is a pre-excitation-window artefact. Diagnostic only |
 | B between-group | offset error of `M_ff` against the load-cell truth, on `−s_ax sin φ₀`, gear asymmetry left free | `z_CoM = −23 ± 48` mm |
 | B′ gear-measured | same channel, but the landing-gear asymmetry **measured** from the circle fit — see below | `z_CoM = +67 ± 25` mm if the marker and load-cell frames share an origin; `+4 ± 51` mm if they may differ by a constant |
 | C rig constant | `W z_CoM = 1/K` from the ramp-invariance calibration | 61–554 mm over the ten case–axis groups — the `(C₂, K)` ridge, a 9× spread |
 | E truth-pinned dynamics | the truth pins `½(M₊ + M₋)` exactly, so the onset needs no sweep; then a 2-parameter `ω = C₁(cosh C₂τ − 1)` fit per run | `C₂` runs to a bound on 49% of the 134 fitted runs, `z_CoM` median 1 mm with IQR `[0, 166]` and range up to 12.6 m — only `C₁C₂² = Ṁ/J_P` is determined (`J_P` median `0.123` kg·m², IQR `[0.074, 0.267]`) |
 
-A and B agree on a null: the identified threshold does not respond to the
-resting tilt the way an `O(0.1–0.3 m)` CoM height demands. The estimators are
-not blind — `--inject 0.30` puts a synthetic `z_CoM = 300` mm into every
-`M_crit` and is recovered as `299 ± 42` mm (A) and `277 ± 48` mm (B) — and the
-orthogonal-axis placebo returns `+9 ± 14` mm. The limitation is the **lever**:
-the resting tilt is `+0.5°` (roll) / `−1.5°` (pitch) on every run and varies by
-only `0.21°` within a group, and the odom/mocap cross-check attributes just
-`44%` of the odom spread to a real attitude change (the rest is
-attitude-estimate noise, which attenuates the slope). Read the result as a
-bound rather than a measurement: `|z_CoM| ≲ 55` mm at 95%, in tension with the
-`0.3 m` used a priori — which is why the resting attitude belongs in the error
-budget, and why a deliberate `±5°` wedge is the fix (same per-run residual and
-run count → `SE(z_CoM) ≈ 1` mm).
+**What the static channel actually measures.** Folding the arm bookkeeping
+back in, the tilt-modulated coefficient is not `z_CoM` but
+
+```
+err − gear_asym = const + s_ax sin φ₀ · [ (W−f)/W · z_m − z_CoM ]
+```
+
+and the known part `(W−f)/W · z_m = 0.335 × 316 = 104` mm is the *same order*
+as `z_CoM` itself. The channel therefore measures a difference of two similar
+numbers, `+36 ± 25` mm, and a 1 mm systematic on `M_ff/W` moves the inferred
+`z_CoM` by 37–110 mm. Against that:
+
+| hypothesis | predicted coefficient | vs measured `+36 ± 25` mm |
+|---|---|---|
+| `z_CoM = 200` mm (CAD), truth body-referenced | `−96` mm | 5.3σ |
+| `z_CoM` cancels — truth taken in the same resting posture | `+104` mm | 2.7σ |
+
+Neither closes, so **the static channel is a consistency check, not a
+measurement competing with CAD.** The `J_P` channel, by contrast, gives
+`214 ± 13` mm (roll) and agrees with CAD. Settling it needs one experimental
+fact — whether the load-cell truth was taken with the vehicle on its own gear
+(gravity-referenced, in which case the tilt term cancels and this channel is
+vacuous by construction) or levelled/fixtured (body-referenced) — and, for a
+real measurement, a deliberate `±5°` wedge, where the lever is 45× larger and
+the `(W−f)z_m/W` term no longer competes with the signal.
+
+The estimators are not blind: `--inject 0.30` puts a synthetic `z_CoM = 300` mm
+into every `M_crit` and it is recovered as `299 ± 42` mm (A) and `277 ± 48` mm
+(B), and the orthogonal-axis placebo returns `+9 ± 14` mm.
 
 **The circle fit gives a height, not just an arm.** `estimate_pivot_from_mocap`
 pins the fitted circle's centre to the contact plane (`cz = 0`), so its radius
