@@ -37,7 +37,17 @@
 %      equivalent |dC2/C2| <= eps/2 = 0.13%/2.96%)
 %   GE shift of (C2, K): dC2/C2 >= -1.7%, dK/K <= +8.0% — closed form
 %     eq:ge-constant-shift; J_P cancels, so no inertia estimate enters.
-% Constants: conservative l_p = 0.140/0.110 m (roll/pitch), hub height
+% !! PENDING RE-RUN after the l_p change (0.140/0.110 -> 0.130/0.100).
+%    The analytic figures above have been recomputed by hand from the
+%    exact remainder eq:lagrange; the following MEASURED figures were
+%    produced with the old arm and are stale by roughly -6% (the arm
+%    term scales by 0.150/0.160):
+%      small-angle measured residual 1.2 / 12.3 mN.m
+%      GE slope ratios +0.99 / +4.20% and residuals 0.16/2.3, 0.67/9.3
+%      bilinear 0.04 / 0.17 mN.m and beta_M = 0.0345 1/rad
+%      Table tab:budget (error_budget.py) in its entirety
+%      the 3-14 mN.m / 0.10-0.44 mm M_ff bias band
+% Constants: conservative l_p = 0.130/0.100 m (roll/pitch), hub height
 % h = 0.315 m, rotor radius R = 0.127 m (10-in propeller), W = 31.59 N,
 % z_CoM = 0.30 m, calibrated C2 = 5, K = 0.19 (representative).
 % =====================================================================
@@ -58,8 +68,8 @@ contact read (the pitch case is analogous)
     + W z_{\mathrm{CoM}}\sin\phi ,
   \label{eq:exact-dyn}
 \end{equation}
-with $M_{x,P} = M_x + f\,l_p$ and, conservatively, $l_{p,\phi}=0.140$~m,
-$l_{p,\theta}=0.110$~m. The ground-contact phase is a one-degree-of-freedom
+with $M_{x,P} = M_x + f\,l_p$ and, conservatively, $l_{p,\phi}=0.130$~m,
+$l_{p,\theta}=0.100$~m. The ground-contact phase is a one-degree-of-freedom
 rigid rotation about the gear line, so every rotor height is an exact
 trigonometric function of the single angle $\phi$; in the level
 configuration all heights coincide, yielding the exact identity
@@ -209,17 +219,19 @@ ramp-invariance calibration of $K$; terms $\propto \delta\phi$ (the
 gravity slope $W z_{\mathrm{CoM}}$ — here an \emph{anti-restoring}
 gradient, i.e.\ a negative stiffness, which is what makes the response
 hyperbolic rather than oscillatory — and $\eta' M_P^*$) are absorbed by
-the calibrated $C_2$. What escapes is of two kinds — the second-order
-Taylor remainder of the gravity terms and, from the ground effect, the
-one product that is bilinear in two spanned coordinates:
+the calibrated $C_2$. What escapes is of two kinds — the linearization
+remainder of the gravity terms and, from the ground effect, the one
+product that is bilinear in two spanned coordinates. Subtracting the
+tangent $G_{\mathrm{lin}} = -Wa + W z_{\mathrm{CoM}}\,\delta\phi$ from
+the exact gravity moment leaves the remainder \emph{in closed form} —
+no Lagrange point $\xi$ and no truncation:
 \begin{equation}
-  \rho \;=\; \underbrace{\tfrac12\,G''(\xi)\,\delta\phi^2}
-             _{\text{gravity curvature}}
+  \rho \;=\; \underbrace{W a\,(1-\cos\delta\phi)
+             \;+\; W z_{\mathrm{CoM}}\,(\sin\delta\phi - \delta\phi)}
+             _{\rho_\phi,\ \text{gravity (exact)}}
      \;+\; \underbrace{\beta_M\,\dot M\,\tau\,\delta\phi}
-             _{\text{ground effect}} \;+\; \dots,
-  \qquad
-  G''(\xi) = W(l_p+\lambda_{\mathrm{off}})\cos\xi
-             - W z_{\mathrm{CoM}}\sin\xi ,
+             _{\rho_b,\ \text{ground effect (bilinear)}} \;+\; \dots,
+  \qquad a \triangleq l_p+\lambda_{\mathrm{off}} ,
   \label{eq:lagrange}
 \end{equation}
 the second term arising because the moment-proportional ground-effect
@@ -231,11 +243,36 @@ $\propto\dot M\tau$, a term $\propto\delta\phi$ with coefficient
 $\beta_M M^*_{\mathrm{crit}}$ — all three absorbed above — and this
 single bilinear leftover. It is quantified in
 Sec.~\ref{sec:fid-transfer} and enters Table~\ref{tab:rho} on its own
-row. With $\xi$ between $0$ and $\phi$ in the first term: the sine
-term enters at second
-order \emph{with a negative sign} and is dropped conservatively,
-$|G''| \le W(l_p+\lambda_{\mathrm{off}})$. At the $5^\circ$ excursion
-this bound evaluates to $19.2$~mN\,m (roll) / $15.6$~mN\,m (pitch).
+row.
+
+In $\rho_\phi$ the two terms have opposite signs and different orders:
+the arm term is $+\tfrac12 W a\,\delta\phi^2$ to leading order, the
+$z_{\mathrm{CoM}}$ term $-\tfrac16 W z_{\mathrm{CoM}}\,\delta\phi^3$, so
+dropping the latter recovers the familiar quadratic bound
+$\tfrac12 W a\,\delta\phi^2$ conservatively. Because that third-order
+term carries the only $z_{\mathrm{CoM}}$ dependence, the whole
+$z_{\mathrm{CoM}}\in[0.2,0.3]$~m box moves $\rho_\phi$ by less than
+$4\%$; the worst case is the \emph{smallest} $z_{\mathrm{CoM}}$.
+Evaluated with $W = 31.59$~N, $a = l_p + 0.020$~m and
+$z_{\mathrm{CoM}} = 0.2$~m, Table~\ref{tab:rhophi} gives the resulting
+envelope at the design cap and at the largest absolute tilt reached.
+
+\begin{table}[h]
+\centering
+\caption{Exact gravity remainder $\rho_\phi$ [mN\,m] from
+\eqref{eq:lagrange}, at $z_{\mathrm{CoM}} = 0.2$~m (worst case).}
+\label{tab:rhophi}
+\small
+\begin{tabular}{@{}lccc@{}}
+\hline
+& $a$ [m] & $\delta\phi = 5^\circ$ (design cap)
+& $\delta\phi = 10^\circ$ (largest absolute tilt) \\
+\hline
+Roll  & $0.150$ & $17.3$ & $66.4$ \\
+Pitch & $0.120$ & $13.7$ & $52.0$ \\
+\hline
+\end{tabular}
+\end{table}
 
 \begin{proposition}
 Under (i) maintained pivot contact, (ii) gate-passing ramp execution,
@@ -361,11 +398,11 @@ $W z_{\mathrm{CoM}}$ to
 $W z_{\mathrm{CoM}}\cos\phi^* + W(l_p{+}\lambda_{\mathrm{off}})\sin\phi^*$
 — at most $+2.3\%$, absorbed by the calibrated $C_2$;
 \item the onset-instant small-angle bias grows from zero to
-$\tfrac12 W(l_p{+}\lambda_{\mathrm{off}})\phi^{*2} \le 5.4$~mN\,m per
+$\tfrac12 W(l_p{+}\lambda_{\mathrm{off}})\phi^{*2} \le 4.9$~mN\,m per
 direction — common to both tip directions, which start from the same
 rest attitude, hence cancelling in $M_{\mathrm{ff}}$;
-\item the Lagrange remainder is in fact \emph{smaller} at the tilted
-point ($18.0$ vs.\ $19.2$~mN\,m at the $5^\circ$ excursion), the
+\item the linearization remainder is in fact \emph{smaller} at the
+tilted point ($16.2$ vs.\ $17.3$~mN\,m at the $5^\circ$ excursion), the
 restoring term subtracting from the curvature; the design tables,
 functions of the excursion alone, apply unchanged.
 \end{itemize}
@@ -430,9 +467,9 @@ below the validation scatter ($52$~mN\,m RMS), which is dominated by
 the genuine contact asymmetries the pivot-free average is designed to
 capture, and present identically at lift-off, where $M_{\mathrm{ff}}$
 compensates it by design. The full chain of reductions is
-$85 \to 28 \to 12.3 \to 1.2$~mN\,m: the unconditional $\phi{=}0$
-envelope at the largest absolute tilt ($10^\circ$), the onset-anchored
-Lagrange bound at the median measured excursion, the measured
+$66.4 \to 25.6 \to 12.3 \to 1.2$~mN\,m: the exact remainder
+\eqref{eq:lagrange} at the largest absolute tilt ($10^\circ$), the same
+expression at the median measured excursion ($6.1^\circ$), the measured
 pointwise maximum after projection, and the measured window RMS.
 
 \begin{table}[t]
@@ -455,7 +492,7 @@ values in mN\,m.}
 Character \tabularnewline
 \hline
 \raggedright Small-angle curvature &
-\raggedright $19.2$ at $5^\circ$; $\approx 28$ at the median
+\raggedright $17.3$ at $5^\circ$; $25.6$ at the median
 excursion & \raggedright $1.2\;/\;12.3$ &
 \raggedright coherent, edge-concentrated \tabularnewline
 \raggedright Ground effect, without\,/\,with rotor interference &

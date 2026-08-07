@@ -49,8 +49,8 @@ def main():
     p.add_argument('--weight', type=float, default=31.59, help="W [N]")
     p.add_argument('--z-com', type=float, default=0.30,
                    help="conservative z_CoM [m]")
-    p.add_argument('--lp-roll', type=float, default=0.140)
-    p.add_argument('--lp-pitch', type=float, default=0.110)
+    p.add_argument('--lp-roll', type=float, default=0.130)
+    p.add_argument('--lp-pitch', type=float, default=0.100)
     p.add_argument('--offset-margin', type=float, default=0.020,
                    help="worst |CoM offset| added to the gravity arm [m]")
     p.add_argument('--output-dir', default=None)
