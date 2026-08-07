@@ -25,17 +25,41 @@ fit, and the CoM offset from the load-cell table.
 This is compared against the parameter-free image-superposition model
 (the 'interf' branch of analysis/ge_trajectory.py).
 
-CONDITIONING WARNING.  dM_GE is a few percent of terms that are
-themselves of order W a ~ 5 N.m, so the inversion amplifies errors in
-a, z_CoM and J_P.  Rules of thumb at phi = 5 deg:
-    1 mm of l_p        -> 32 mN.m      (~20% of the GE signal)
-    10 mm of z_CoM     -> 28 mN.m
-    10% of J_P         -> ~75 mN.m at the largest omega_dot
-So the LEVEL of dM_GE^dyn is not trustworthy on its own.  What is
-comparatively well conditioned is its ATTITUDE SLOPE, because the
-gravity terms contribute known functional forms (cos, sin) whose
-coefficients are fixed by a and z_CoM, while J_P omega_dot is measured.
-Both are reported, with a sensitivity sweep over J_P and z_CoM.
+RESULT: THE INVERSION ADDS NOTHING.  Two facts, both verified by the
+--z-sweep runs, close this off.
+
+1. At the onset the balance is STATIC, exactly.  The onset is defined by
+   a vanishing net moment, so omega(0) = 0 AND omega_dot(0) = 0, and the
+   excursion is zero there by construction.  Every dynamic term drops:
+
+       dM_GE(0) = W a - M_crit - f l_p          (no J_P, no z_CoM)
+
+   which is precisely the static check of mcrit_prediction.py.  Using
+   the measured omega_dot(0) instead of zero only injects the noise of a
+   numerical derivative: the residual RMS here is 97-102 mN.m against
+   86.0 mN.m for the static check.  Strictly worse, for the same
+   quantity.
+
+2. Away from the onset the model signal is buried.  Because
+   -W z_CoM sin(phi) is linear in phi to first order, it moves the
+   fitted SLOPE by exactly -W z_CoM and leaves the INTERCEPT untouched:
+   with J_P pinned, the intercept over z_CoM = 0.10/0.20/0.30 m is
+   +54.2/+49.8/+49.6 mN.m (flat) while the slope steps by -53.5 and
+   -53.2 mN.m/deg against a predicted -55.1 -- agreement to 3%.  So the
+   slope measures how well the growth of J_P omega_dot cancels W z_CoM
+   (-55 to -165 mN.m/deg), and the model's own slope is -0.2 to -2.5,
+   i.e. 1-2% of the term being cancelled.  Resolving it needs the
+   cancellation closed to ~98.5%; the best achieved is 80%.
+
+   (An earlier reading of the parallel-axis sweep, where the intercept
+   appeared to move with z_CoM, was wrong: J_P varied by 2.5x across
+   that sweep and J_P omega_dot is NOT linear in phi near the anchor,
+   so the trend came from J_P alone.)
+
+Conclusion: the attitude dependence of the ground-effect moment cannot
+be tested from this data by any choice of (z_CoM, J_P), and the level
+is better tested statically.  The method is unaffected -- it uses the
+onset alone, where the balance is the static one.
 
 Usage
 -----
