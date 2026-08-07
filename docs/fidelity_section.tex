@@ -32,6 +32,7 @@
 %   bilinear tau*dphi term 0.04/0.17 ....... analysis/ge_bilinear.py
 %   GE vs contact-lever attribution ........ analysis/static_attribution.py
 %   error budget rho -> onset -> M_ff -> mm  analysis/error_budget.py
+%   rho onset order / projection anchor .... analysis/rho_onset_order.py
 %     (Table tab:budget; total 1.30/4.28 um of CoM offset, and the
 %      equivalent |dC2/C2| <= eps/2 = 0.13%/2.96%)
 %   GE shift of (C2, K): dC2/C2 >= -1.7%, dK/K <= +8.0% — closed form
@@ -550,21 +551,38 @@ in any case unreachable, since $C_2$ is not re-estimated per run: the
 sole per-run degree of freedom is the onset index, which is exactly what
 \eqref{eq:onset-translation} quantifies.
 
-That bound is moreover loose near the anchor, where the two shapes
-differ not in size but in \emph{order}. A genuine exponent error
-deforms the rate as $C_1\,\Delta C_2\,C_2\,\tau^2$, whereas the actual
-deviation inherits the sixth-order zero of $\rho$ and, convolved with
-$h_\phi(u)\simeq u/J_P$, grows as $e_\phi\sim\tau^8$, i.e.\
-$\delta\omega\sim\tau^7$. Equivalently, the forcing that would produce
-an exact $A(\cosh C_2'\tau - 1)$ response is
+That bound is moreover loose near the anchor, where the coherent model
+error and an exponent error differ not in size but in \emph{order}.
+Along the nominal trajectory $\delta\phi \sim \tau^3$, so the
+lowest-order surviving channel is the bilinear ground-effect term,
+$\beta_M\dot M\tau\,\delta\phi \sim \tau^4$ — the smallest channel
+overall is the slowest to vanish, the gravity curvature
+($\propto\delta\phi^2$) being $\tau^6$. Convolved with
+$h_\phi(u)\simeq u/J_P$ this gives $e_\phi\sim\tau^6$, i.e.\
+$\delta\omega\sim\tau^5$, against $C_1\,\Delta C_2\,C_2\,\tau^2$ for a
+genuine exponent error. Equivalently, the forcing that would produce an
+exact $A(\cosh C_2'\tau - 1)$ response is
 $\rho = A(J_PC_2'^2 - D)\cosh C_2'\tau + AD$, which requires
-$\rho(0) = A J_P C_2'^2 \neq 0$: a forcing alive \emph{at} the onset.
-The onset conditions forbid precisely that — this, rather than the
-vanishing of $A_1$ and $A_2$ (which the $\cosh-1$ shape satisfies), is
-the structural obstruction. Exponent mimicry is therefore possible only
-towards the window edge, where both shapes have relaxed into
-exponentials and only the amplitude distinguishes them; that is the
-regime the $\varepsilon/2$ bound covers.
+$\rho(0) = A J_P C_2'^2 \neq 0$: a forcing alive \emph{at} the onset,
+which the onset conditions forbid. This, rather than the vanishing of
+$A_1$ and $A_2$ — a condition the $\cosh-1$ shape itself satisfies — is
+the structural obstruction, and it confines exponent mimicry to the
+window edge, where both shapes have relaxed into exponentials and only
+the amplitude distinguishes them; that is the regime the
+$\varepsilon/2$ bound covers.
+
+Two qualifications keep this a statement about the coherent model error
+alone. It is an anchored statement, the absorbable coefficients being
+matched at $\tau=0$; the least-squares projection used for the measured
+residuals instead trades anchor accuracy for window-wide RMS, so
+$|\rho(0)|$ is not small there ($0.17$–$0.52$ of the window peak in
+median). And near the anchor the measured residual is noise-dominated,
+its fitted leading power being $1.2$–$1.7$ rather than $4$: the record
+does not resolve the order separation, which is a property of the
+modelling error and is certified instead by the rate invariance of
+Sec.~\ref{sec:fid-verify}. Neither qualification touches
+Table~\ref{tab:budget}, which forwards the projected \emph{peak}
+through the Duhamel integral and invokes no onset-order argument.
 
 \begin{table}[t]
 \centering
