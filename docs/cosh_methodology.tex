@@ -498,16 +498,114 @@ speed; the final identification runs at full resolution with the
 selected pair. Each evaluation is an arithmetic sweep, so no iterative
 optimizer is involved anywhere in the pipeline.
 
-\begin{remark}
-The objective \eqref{eq:score} retains a shallow valley, so the
-individual constants are only loosely determined:
-$W z_{\mathrm{CoM}} = 1/K$ and $J_P = 1/(K C_2^2)$ are
-order-of-magnitude sanity checks, not precision measurements. What the
-criterion pins down — by construction — is the identified onset:
-$M_{\mathrm{crit}}$ is robust along the valley, and a $\pm 20\%$
-mis-specification of either constant moves the identified CoM by less
-than $0.9$~mm.
+\begin{remark}[What the valley does and does not determine]
+\label{rem:ridge}
+The objective \eqref{eq:score} retains a shallow valley, and the two
+constants are \emph{not} equally determined along it. Read literally,
+$1/K$ would be $W z_{\mathrm{CoM}}$; across the ten datasets it implies
+$z_{\mathrm{CoM}}$ between $0.061$ and $0.554$~m, and the roll and pitch
+datasets of \emph{the same airframe} disagree by up to a factor $8$
+(case~1: $0.554$ versus $0.068$~m). Since only horizontal masses are
+moved between configurations, $z_{\mathrm{CoM}}$ must be common, so
+$1/K$ is not measuring it and must not be reported as a CoM height.
+The combination $J_P = 1/(K C_2^2)$ behaves quite differently:
+$0.249 \pm 0.016$~kg\,m$^2$ over the five roll datasets
+($\mathrm{CV} = 6.5\%$) and $0.140 \pm 0.034$ over the five pitch
+datasets, against $\mathrm{CV} = 65\%$ and $49\%$ for $1/K$.
+
+This is structural, not accidental. At the window edge, with
+$x = C_2\tau_{\mathrm{end}}$, the log sensitivities are
+\begin{equation*}
+  \frac{\partial\ln\omega}{\partial\ln C_2} = x\coth\frac{x}{2} \;\ge\; 2,
+  \qquad
+  \frac{\partial\ln\omega}{\partial\ln K} = 1 ,
+\end{equation*}
+so the two cancel along
+$\delta\ln K = -x\coth(x/2)\,\delta\ln C_2$, which for small $x$ is
+exactly $\delta\ln K = -2\,\delta\ln C_2$, i.e.\
+$K C_2^2 = 1/J_P$ constant. The valley \emph{is} the statement that
+$C_2$ carries twice the leverage of $K$; equivalently, near the onset
+$\omega \simeq (\dot M/J_P)\tau^2/2$ depends on the pair only through
+$J_P$. The measured spread confirms the factor: over the search box
+$1/K$ moves by $2.36\times$ while $C_2$ moves by $1.54\times$, and
+$\ln 2.36/\ln 1.54 = 1.99$.
 \end{remark}
+
+\paragraph{Robustness certificate: three constants for ten datasets.}
+Because the individual constants are weakly determined, a natural
+objection is that $(C_2, K)$ act as a two-parameter curve family with
+physical labels attached after the fact. The objection is answered by
+removing the freedom. Physics requires $z_{\mathrm{CoM}}$ to be shared
+by the whole vehicle and $J_P$ to be shared by all datasets on a given
+axis, so we reparametrize by
+\begin{equation}
+  \bigl(W z_{\mathrm{CoM}},\; J_{P,\mathrm{roll}},\;
+        J_{P,\mathrm{pitch}}\bigr),
+  \qquad
+  C_2 = \sqrt{\frac{W z_{\mathrm{CoM}}}{J_{P,\mathrm{axis}}}},
+  \qquad
+  K = \frac{1}{W z_{\mathrm{CoM}}},
+  \label{eq:constrained}
+\end{equation}
+minimize the \emph{same} score \eqref{eq:score} summed over all ten
+datasets, and rerun the identification. Twenty free numbers become
+three; the roll and pitch inertias decouple, so the inner search is two
+independent scalar minimizations per candidate $W z_{\mathrm{CoM}}$.
+The optimum is $W z_{\mathrm{CoM}} = 5.50$~N\,m
+($z_{\mathrm{CoM}} = 0.174$~m), $J_{P,\mathrm{roll}} = 0.240$ and
+$J_{P,\mathrm{pitch}} = 0.153$~kg\,m$^2$, giving $C_2 = 4.79$ and
+$6.00$~rad/s and $K = 0.182$~(N\,m)$^{-1}$ — close to the
+representative values quoted throughout. Table~\ref{tab:constrained}
+compares the delivered CoM offsets.
+
+\begin{table}[h]
+\centering
+\caption{Identified CoM offset [mm] against the load-cell truth, with
+the constants calibrated per dataset (twenty free numbers) and with the
+physically shared parametrization \eqref{eq:constrained} (three).}
+\label{tab:constrained}
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}llrrrrr@{}}
+\hline
+Case & Axis & Truth & Free & error & Constrained & error \\
+\hline
+1 & $M_x$ & $-2.90$  & $-1.73$  & $+1.17$ & $-1.64$  & $+1.26$ \\
+1 & $M_y$ & $-11.45$ & $-11.13$ & $+0.32$ & $-11.25$ & $+0.20$ \\
+2 & $M_x$ & $-14.29$ & $-15.17$ & $-0.88$ & $-15.16$ & $-0.87$ \\
+2 & $M_y$ & $-9.90$  & $-10.49$ & $-0.59$ & $-10.53$ & $-0.63$ \\
+3 & $M_x$ & $-5.26$  & $-8.62$  & $-3.36$ & $-8.66$  & $-3.40$ \\
+3 & $M_y$ & $3.14$   & $0.73$   & $-2.41$ & $0.63$   & $-2.51$ \\
+4 & $M_x$ & $6.67$   & $5.26$   & $-1.41$ & $5.23$   & $-1.44$ \\
+4 & $M_y$ & $2.40$   & $0.16$   & $-2.24$ & $0.11$   & $-2.29$ \\
+5 & $M_x$ & $10.91$  & $10.70$  & $-0.21$ & $10.79$  & $-0.12$ \\
+5 & $M_y$ & $-10.89$ & $-10.73$ & $+0.16$ & $-10.62$ & $+0.27$ \\
+\hline
+\multicolumn{3}{@{}l}{RMS error}   & \multicolumn{2}{r}{$1.64$}
+                                   & \multicolumn{2}{r}{$1.67$} \\
+\multicolumn{3}{@{}l}{max $|$error$|$} & \multicolumn{2}{r}{$3.36$}
+                                   & \multicolumn{2}{r}{$3.40$} \\
+\multicolumn{3}{@{}l}{mean error}  & \multicolumn{2}{r}{$-0.95$}
+                                   & \multicolumn{2}{r}{$-0.95$} \\
+\hline
+\end{tabular}
+\end{table}
+
+Collapsing the twenty free numbers to three changes the RMS error by
+$0.03$~mm and no individual case by more than $0.11$~mm. The identical
+mean error, $-0.95$~mm in both columns, further shows that the residual
+bias is a property of the physics — the ground-contact budget of
+Sec.~\ref{sec:static} — and not of the calibration. The constrained
+form also cannot rail against a search bound, since $C_2$ is derived
+rather than searched.
+
+One caution completes the picture: this does \emph{not} measure
+$z_{\mathrm{CoM}}$. The score varies by only $3.6\%$ across the whole
+box $z_{\mathrm{CoM}} \in [0.15, 0.35]$~m, so every physically
+plausible height performs equally well. That is the stronger statement
+for the method — the identification does not need $z_{\mathrm{CoM}}$ —
+and it is the reason the individual constants should be reported as
+effective values rather than as geometry.
 
 \section{Aggregation and deliverables}
 \label{sec:aggregation}
@@ -946,6 +1044,7 @@ internal split this experiment cannot resolve.
 \section{Reproducibility}
 
 Every number in this document is reproducible from the repository:
+\begingroup\sloppy
 \begin{itemize}
 \item \texttt{critical\_value\_getter\_piecewise.py} — pipeline,
 gates, caps, calibration, Algorithm~\ref{alg:cosh};
@@ -968,7 +1067,16 @@ Tables~\ref{tab:nls}--\ref{tab:nls-disp};
 (static-threshold check, arms, attribution limits,
 Fig.~\ref{fig:static});
 \item \texttt{analysis/ge\_bilinear.py} — the bilinear $\tau\varphi$
-ground-effect term along measured trajectories.
+ground-effect term along measured trajectories;
+\item \texttt{analysis/constrained\_calibration.py} —
+Remark~\ref{rem:ridge} and Table~\ref{tab:constrained} (the shared
+$(W z_{\mathrm{CoM}}, J_{P,\mathrm{roll}}, J_{P,\mathrm{pitch}})$
+reparametrization and the rerun identification);
+\item \texttt{analysis/ge\_dynamics\_check.py} — dynamic inversion of
+the ground-effect moment, which reduces to the static check at the
+onset and is swamped by the $W z_{\mathrm{CoM}}$ cancellation away from
+it (negative result, \texttt{-{}-z-sweep} reproduces it).
 \end{itemize}
+\endgroup
 
 \end{document}
