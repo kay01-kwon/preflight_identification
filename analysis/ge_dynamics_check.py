@@ -82,6 +82,18 @@ OFF_SIGN = {'Mx': +1.0, 'My': -1.0}
 Z_COM_SHARED = 0.174                       # m   (W z_CoM = 5.50 N.m)
 J_AXIS = {'x': 0.240, 'y': 0.153}          # kg.m^2
 
+# Sweeping z_CoM requires J_P to follow: the parallel-axis theorem forces
+# J_P = J_CoM + m (z_CoM^2 + l_p^2).  Anchoring J_CoM on the constrained fit
+# at z = 0.174 m and m = 3.220 kg gives the body-frame inertias below, from
+# which J_P at any other z_CoM follows without a second free parameter.
+J_COM = {'x': J_AXIS['x'] - 3.220 * (Z_COM_SHARED ** 2 + LP['x'] ** 2),
+         'y': J_AXIS['y'] - 3.220 * (Z_COM_SHARED ** 2 + LP['y'] ** 2)}
+
+
+def j_parallel(axis, z_com, mass):
+    """Parallel-axis J_P at an arbitrary z_CoM (no extra free parameter)."""
+    return J_COM[axis] + mass * (z_com ** 2 + LP[axis] ** 2)
+
 
 def analyse(bag, crit, axis, sig, phi_all, n, z_com, j_p, savgol=9):
     """Dynamic inversion of dM_GE for one run; returns the fit summary."""
@@ -137,35 +149,84 @@ def analyse(bag, crit, axis, sig, phi_all, n, z_com, j_p, savgol=9):
                 a_rate_mm_per_deg=1e3 * a_rate * np.pi / 180)
 
 
-def batch(z_com, savgol):
-    """All ten datasets, both tip directions, constrained constants."""
+def batch(z_list, savgol, jp_mode='parallel'):
+    """All ten datasets, both tip directions, for each z_CoM in z_list.
+
+    Each dataset is loaded once and reused across the z values.  J_P either
+    follows the parallel-axis theorem (default, physically forced) or is
+    pinned at the constrained-fit value (jp_mode='fixed'), which lets the
+    two effects be separated.
+    """
     root = Path(__file__).resolve().parents[1] / 'DataSet' / 'exp'
-    out = []
+    out = {z: [] for z in z_list}
     for d in sorted(root.glob('case_*/M[xy]')):
         axis = 'x' if d.name == 'Mx' else 'y'
         case, axname = d.parent.name, d.name
-        analyse.W = MASS_KG[case] * G
+        mass = MASS_KG[case]
+        analyse.W = mass * G
         analyse.off_truth = OFF_SIGN[axname] * OFF_MM[(case, axname)] * 1e-3
-        j_p = J_AXIS[axis]
         with contextlib.redirect_stdout(io.StringIO()):
             bags = load_excitation_dataset(d)
-            c2 = float(np.sqrt(analyse.W * z_com / j_p))
-            crits, _ = cvp.extract_piecewise_batch(
-                bags, axis, cosh_c2=c2, ramp_gain=1.0 / (analyse.W * z_com))
         by = {b.name: b for b in bags}
-        for crit in crits:
-            bag = by[crit.bag_name]
-            sig = cvp.prepare_signals(bag, axis)
-            roll, pitch = math_tools.quaternion_to_euler_vectorized(
-                bag.odom.quaternion)
-            phi_all = roll if axis == 'x' else pitch
-            nn = min(len(phi_all), len(sig['t']))
-            r = analyse(bag, crit, axis, sig, phi_all, nn, z_com, j_p, savgol)
-            if r:
-                r.update(case=case, axis=axname)
-                out.append(r)
-        print(f"  {case}/{axname}: {sum(1 for r in out if r['case'] == case and r['axis'] == axname)} runs")
+        cache = {}
+        for z_com in z_list:
+            j_p = (j_parallel(axis, z_com, mass) if jp_mode == 'parallel'
+                   else J_AXIS[axis])
+            with contextlib.redirect_stdout(io.StringIO()):
+                c2 = float(np.sqrt(analyse.W * z_com / j_p))
+                crits, _ = cvp.extract_piecewise_batch(
+                    bags, axis, cosh_c2=c2,
+                    ramp_gain=1.0 / (analyse.W * z_com))
+            for crit in crits:
+                bag = by[crit.bag_name]
+                if crit.bag_name not in cache:
+                    sig = cvp.prepare_signals(bag, axis)
+                    roll, pitch = math_tools.quaternion_to_euler_vectorized(
+                        bag.odom.quaternion)
+                    cache[crit.bag_name] = (
+                        sig, roll if axis == 'x' else pitch)
+                sig, phi_all = cache[crit.bag_name]
+                nn = min(len(phi_all), len(sig['t']))
+                r = analyse(bag, crit, axis, sig, phi_all, nn, z_com, j_p,
+                            savgol)
+                if r:
+                    r.update(case=case, axis=axname, z_com=z_com, j_p=j_p)
+                    out[z_com].append(r)
+        print(f"  {case}/{axname}: "
+              + ', '.join(f"z={z:.2f} J={j_parallel(axis, z, mass):.3f} "
+                          f"n={sum(1 for r in out[z] if r['case'] == case and r['axis'] == axname)}"
+                          for z in z_list))
     return out
+
+
+def sweep_report(by_z):
+    """One summary line per z_CoM, so the trend is visible at a glance."""
+    print(f"\n{'z_CoM':>7} {'J_roll':>8} {'J_pitch':>8} | "
+          f"{'intercept dyn-model [mN.m]':>28} | "
+          f"{'slope dyn-model [mN.m/deg]':>28} | {'-W z':>9}")
+    print(f"{'[m]':>7} {'':8} {'':8} | {'mean':>9} {'RMS':>9} {'<50':>8} | "
+          f"{'mean':>9} {'RMS':>9} {'':8} | {'[mN.m/deg]':>9}")
+    print('-' * 104)
+    for z, rows in sorted(by_z.items()):
+        keys = sorted({(r['case'], r['axis'], r['dir']) for r in rows})
+        di, ds = [], []
+        for k in keys:
+            g = [r for r in rows if (r['case'], r['axis'], r['dir']) == k]
+            di.append(np.mean([r['int_dyn'] - r['int_mod'] for r in g]))
+            ds.append(np.mean([r['slope_dyn'] - r['slope_mod'] for r in g]))
+        di, ds = np.array(di), np.array(ds)
+        jr = j_parallel('x', z, 3.220)
+        jq = j_parallel('y', z, 3.220)
+        wz_slope = -31.59 * z * np.pi / 180 * 1e3
+        print(f"{z:7.2f} {jr:8.3f} {jq:8.3f} | {di.mean():+9.1f} "
+              f"{np.sqrt(np.mean(di**2)):9.1f} {int((np.abs(di) < 50).sum()):3d}/{len(di):<4d} | "
+              f"{ds.mean():+9.2f} {np.sqrt(np.mean(ds**2)):9.2f} {'':8} | "
+              f"{wz_slope:9.1f}")
+    print('-' * 104)
+    print("The last column is d/dphi[-W z_CoM sin phi], the term the growth")
+    print("of J_P omega_dot has to cancel.  The model's own slope is")
+    print("-0.2 .. -2.5 mN.m/deg, so it is testable only if that cancellation")
+    print("closes to a couple of percent.")
 
 
 def report(rows):
@@ -237,14 +298,27 @@ def main():
                    help="bag name; default = first slow positive run")
     p.add_argument('--all', action='store_true',
                    help="batch over all datasets and both tip directions")
+    p.add_argument('--z-sweep', default=None,
+                   help="comma-separated z_CoM values, e.g. 0.10,0.20,0.30")
+    p.add_argument('--jp-mode', choices=['parallel', 'fixed'],
+                   default='parallel',
+                   help="parallel: J_P follows the parallel-axis theorem")
     p.add_argument('--z-com', type=float, default=Z_COM_SHARED)
     p.add_argument('--savgol', type=int, default=9,
                    help="Savitzky-Golay window for omega_dot [samples]")
     p.add_argument('--out', default='ge_dynamics_check.pdf')
     args = p.parse_args()
 
+    if args.z_sweep:
+        zs = [float(v) for v in args.z_sweep.split(',')]
+        by_z = batch(zs, args.savgol, args.jp_mode)
+        sweep_report(by_z)
+        for z in zs:
+            print(f"\n===== z_CoM = {z:.3f} m =====")
+            report(by_z[z])
+        return
     if args.all:
-        report(batch(args.z_com, args.savgol))
+        report(batch([args.z_com], args.savgol, args.jp_mode)[args.z_com])
         return
 
     d = Path(args.dir)
