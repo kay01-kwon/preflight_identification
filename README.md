@@ -197,6 +197,61 @@ plus the error map when `--truth-com` is given). On the reference dataset a
 ±20 % mis-specification of either constant moves the CoM by < 0.9 mm, and the
 constant choice moves the ground-truth error by < 0.9 mm over the whole box.
 
+### CoM height (`z_CoM`) from the resting tilt
+
+Asks whether the ground data can measure `z_CoM` — and whether the ground-effect
+moment can be told apart from it — given the load-cell truth for `W` and the CoM
+offset. Carrying the absolute resting tilt `φ₀` through the pivot balance,
+
+```
+M_crit = sgn·(W cos φ₀ − f)·l + s_ax·W·λ·cos φ₀ − W·z_CoM·sin φ₀ + ΔM_GE
+```
+
+the `z_CoM` term is **symmetric** between the two tip directions: a tilted
+vehicle simply has its CoM displaced by `z_CoM sin φ₀`, so it is algebraically
+indistinguishable from a CoM offset and it survives `M_ff`. Per group that is
+one equation in which `z_CoM`, the landing-gear asymmetry `(l₊ − l₋)` and the
+symmetric part of the ground effect all enter as constants — knowing `W` and `λ`
+does not break that tie. Only a *varying* regressor does, and `sin φ₀` is the one
+`z_CoM` owns:
+
+```bash
+python analysis/zcom_tilt.py --collect DataSet/exp --output-dir .   # 140 runs
+python analysis/zcom_tilt.py --table zcom_tilt_runs.csv            # re-analyse
+python analysis/zcom_tilt.py --table zcom_tilt_runs.csv --inject 0.30
+python analysis/zcom_tilt.py --table zcom_tilt_runs.csv --dynamic DataSet/exp
+```
+
+| Estimator | What it uses | Result |
+|---|---|---|
+| A within-group | run-to-run variation of `φ₀`, with case×axis×direction fixed effects — **truth-free**, and GE-proof (the GE moment is constant within a group, so the fixed effect absorbs it) | `z_CoM = +1 ± 27` mm (mocap attitude, errors-in-variables corrected); `−32 ± 38` mm (odom) |
+| B between-group | offset error of `M_ff` against the load-cell truth, on `−s_ax sin φ₀` | `z_CoM = −23 ± 48` mm |
+| C rig constant | `W z_CoM = 1/K` from the ramp-invariance calibration | 61–554 mm over the ten case–axis groups — the `(C₂, K)` ridge, a 9× spread |
+| E truth-pinned dynamics | the truth pins `½(M₊ + M₋)` exactly, so the onset needs no sweep; then a 2-parameter `ω = C₁(cosh C₂τ − 1)` fit per run | `C₂` runs to a bound on 49% of the 134 fitted runs, `z_CoM` median 1 mm with IQR `[0, 166]` and range up to 12.6 m — only `C₁C₂² = Ṁ/J_P` is determined (`J_P` median `0.123` kg·m², IQR `[0.074, 0.267]`) |
+
+A and B agree on a null: the identified threshold does not respond to the
+resting tilt the way an `O(0.1–0.3 m)` CoM height demands. The estimators are
+not blind — `--inject 0.30` puts a synthetic `z_CoM = 300` mm into every
+`M_crit` and is recovered as `299 ± 42` mm (A) and `277 ± 48` mm (B) — and the
+orthogonal-axis placebo returns `+9 ± 14` mm. The limitation is the **lever**:
+the resting tilt is `+0.5°` (roll) / `−1.5°` (pitch) on every run and varies by
+only `0.21°` within a group, and the odom/mocap cross-check attributes just
+`44%` of the odom spread to a real attitude change (the rest is
+attitude-estimate noise, which attenuates the slope). Read the result as a
+bound rather than a measurement: `|z_CoM| ≲ 55` mm at 95%, in tension with the
+`0.3 m` used a priori — which is why the resting attitude belongs in the error
+budget, and why a deliberate `±5°` wedge is the fix (same per-run residual and
+run count → `SE(z_CoM) ≈ 1` mm).
+
+**The ground-effect residual is not separable here.** Within a group `ΔM_GE` is
+a constant (same collective, same tilt) sharing a fixed effect with the arm, the
+offset and the gear asymmetry. Its only structured channels are `sgn·c_a f l`,
+antisymmetric and hence degenerate with the pivot arm / contact lever, and
+`b·M`, a 1–4% scale on `M_crit` — 3–14 mN·m against a 29 mN·m within-group
+residual and a 52 mN·m group-to-group scatter. The static data bound the
+combined ground-contact budget; they cannot attribute it
+(`analysis/static_attribution.py`).
+
 ### Model-fidelity analysis
 
 Certifies that the post-onset response stays in the cosh family — every
