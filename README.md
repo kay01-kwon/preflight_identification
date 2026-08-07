@@ -197,6 +197,40 @@ plus the error map when `--truth-com` is given). On the reference dataset a
 ±20 % mis-specification of either constant moves the CoM by < 0.9 mm, and the
 constant choice moves the ground-truth error by < 0.9 mm over the whole box.
 
+### The rate channel: `odom` twist.angular under-reads
+
+`/mavros/local_position/odom`'s `twist.angular` is an EKF output, not the raw
+gyro, and it **under-reads the true body rate**. Integrated over a window and
+compared with the attitude change on the same clock, over 70 runs:
+
+| window | `∫ω_odom dt / Δφ` | `∫ω_imu dt / Δφ` |
+|---|---|---|
+| powered ramp (onset → peak, ω < 0.1 rad/s) | `0.914 ± 0.060` | `0.993 ± 0.064` |
+| free tip-over (ω up to 3 rad/s) | `0.66 – 0.87` | `0.95 – 1.05` |
+
+The raw gyro integrates to the attitude; the odometry rate does not, and the
+shortfall grows with rate. A *uniform* scale error is absorbed by the
+ramp-invariance calibration of `K`, which is why the identification's CoM
+results are unaffected — but anything that uses `ω` or `φ̈` in absolute terms
+inherits it. `analysis/zcom_freefall.py` and `analysis/ge_error_chart.py`
+therefore default to `--omega-source imu` (15 Hz low-pass for propeller
+vibration), and both interpolate the attitude onto the rate's clock rather than
+truncating, which would silently misalign the two.
+
+What that changes, on the free tip-over:
+
+| | rate channel | `z_CoM` | `C₂` | `J_P` | `J_cm = J_P − m(h₀² + z²)` |
+|---|---|---|---|---|---|
+| pitch | odom | 205 ± 4 mm | 4.15 | 0.378 | `0.201 ± 0.028` |
+| pitch | **raw IMU** | **207 ± 4 mm** | **5.52** | **0.217** | **`0.038 ± 0.022`** |
+| roll | odom | 267 ± 6 mm | 4.04 | 0.516 | `0.216 ± 0.014` |
+| roll | **raw IMU** | **269 ± 5 mm** | **5.37** | **0.296** | **`−0.009 ± 0.026`** |
+
+`z_CoM` and the balance angle are unchanged — they come from the *ratio* `A/B`,
+which a common rate error cancels — but `C₂`, `J_P` and the about-CoM inertia
+move by a factor of ~1.7, and only the raw-gyro column is compatible with a CAD
+`J_cm ≈ 0.06` kg·m² for this airframe.
+
 ### Dynamics residual vs the theoretical rotor GE moment
 
 With `z_CoM` and `J_P` pinned, every term of the contact-phase rotational

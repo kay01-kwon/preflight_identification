@@ -84,6 +84,13 @@ def main():
     p.add_argument('--z-com', type=float, default=0.267)
     p.add_argument('--jp', type=float, default=0.311)
     p.add_argument('--mass', type=float, default=3.22)
+    p.add_argument('--omega-source', choices=['odom', 'imu'], default='imu',
+                   help="rate channel.  DEFAULT imu: the odometry's "
+                        "twist.angular is an EKF output that integrates to "
+                        "only 0.914 +- 0.060 of the attitude change over the "
+                        "ramp (raw gyro: 0.993 +- 0.064) and to ~0.75 of it "
+                        "during the fast fall, which biases phi'' here.")
+    p.add_argument('--lpf-cutoff', type=float, default=15.0)
     p.add_argument('--savgol', type=int, default=15)
     p.add_argument('--grid-max', type=float, default=10.0,
                    help="tilt grid upper edge [deg]")
@@ -114,13 +121,19 @@ def main():
         with contextlib.redirect_stdout(io.StringIO()):
             bags = load_excitation_dataset(d)
         for b in bags:
-            sig = prepare_signals(b, axis)
+            sig = prepare_signals(
+                b, axis, omega_source=args.omega_source,
+                lpf_cutoff=(args.lpf_cutoff
+                            if args.omega_source == 'imu'
+                            and args.lpf_cutoff > 0 else None))
             t, om, M, f = sig['t'], sig['omega'], sig['moment'], sig['f_col']
             roll, pitch = math_tools.quaternion_to_euler_vectorized(
                 b.odom.quaternion)
-            phi = roll if axis == 'x' else pitch
-            n = min(len(t), len(phi))
-            t, om, M, f, phi = t[:n], om[:n], M[:n], f[:n], phi[:n]
+            # the attitude lives on the odom clock; interpolate rather than
+            # truncate so it stays aligned with the chosen rate channel
+            phi = np.interp(t, b.odom.t - b.odom.t[0],
+                            roll if axis == 'x' else pitch)
+            n = len(t)
             i0, i1 = detect_excitation_window(M,
                                               moment_cap=MOMENT_CAP.get(axis))
             if i1 - i0 < args.min_samples:
