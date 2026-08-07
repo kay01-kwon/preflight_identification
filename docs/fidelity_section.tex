@@ -139,10 +139,15 @@ $W z_{\mathrm{CoM}}$, so
 \begin{equation*}
   \frac{\Delta C_2}{C_2} \ge -1.7\%\ \text{(roll)},\quad
   -1.4\%\ \text{(pitch)}, \qquad
-  \frac{\Delta K}{K} \le +8.0\% ,
+  \frac{\Delta K}{K} \in [+6.2\%, +8.0\%] ,
 \end{equation*}
-the amplitude constant moving more because it carries the
-moment-channel gain $\alpha_M$ and the gradient reduction together.
+the amplitude constant moving more because it carries the two effects
+multiplicatively, $1.0428 \times (0.96566)^{-1}$: the moment-channel
+gain $\alpha_M$ raises the effective ramp rate while the gradient
+reduction raises $1/D$, whereas $C_2$ receives only the latter and
+under a square root. The $K$ shift is one-signed over the whole box,
+so neglecting ground effect does not merely blur the amplitude constant
+— it underestimates it by at least $6\%$.
 Two consequences. First, a \emph{single} $C_2$ per configuration
 remains legitimate: within one dataset the only run-to-run variation of
 $k_0^{\mathrm{GE}}$ enters through $M_{\mathrm{crit}}$, whose largest
@@ -151,7 +156,8 @@ $0.26\%$. Second, these shifts are \emph{absorbed}, not committed as
 errors — the calibration estimates the effective constants directly —
 and the sensitivity analysis shows that a $\pm20\%$ mis-specification
 of either constant moves the identified CoM offset by less than
-$0.9$~mm, an order of magnitude of slack above the numbers above. For
+$0.9$~mm --- a $12\times$ margin on the $C_2$ shift and $2.5\times$ on
+the larger $K$ shift. For
 scale, the a priori uncertainty of $C_2$ from the $z_{\mathrm{CoM}}$
 box alone is $-12.5\%$ ($6.14 \to 5.37$~rad/s with
 $J_P \ge m(z_{\mathrm{CoM}}^2 + l_p^2)$), several times the
