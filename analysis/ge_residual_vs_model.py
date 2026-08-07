@@ -253,8 +253,17 @@ def main():
             # M(t) = J_P alpha - f a_t + W [a_c cos - z sin] - dM_GE
             # Model 0: (a_t, a_c) free, (J_P, z_CoM) pinned as requested.
             # Model 1: adds g * dM_GE.  The GE model is a KNOWN regressor,
-            # so g is a direct test — it should come out at -1, and its
+            # so g is a direct test — it should come out at +1, and its
             # standard error says whether the data can see it at all.
+            # Sign convention, checked against the mocap pivot side: the
+            # code places the pivot at -lp (roll, pos) / +lp (pitch, pos),
+            # matching the measured cx, and sgn * dM_GE then comes out
+            # POSITIVE = the ground effect aids the tip and lowers M_crit,
+            # as the manuscript's thrust channel a = c_a f l requires.
+            # Balance (tipping-positive):
+            #   J_P phi'' = M + f a - W a cos(dphi) + W z sin(dphi) + dM_GE
+            # so   y = M - J_P phi'' + W z sin(dphi) = a (W cos - f) - dM_GE
+            # and the fitted coefficient of the -dM_GE column is g = +1.
             y = (sgn * M[s] - jp * sgn * alpha[s]
                  + W * args.z_com * np.sin(dphi[s]))
             # a_t and a_c multiply near-constants (f is flat, cos dphi ~ 1)
@@ -316,7 +325,7 @@ def main():
     print(f"    (free-phase a_c for the same runs: "
           f"{1e3 * np.mean([r['a_c_free'] for r in rows]):.1f} mm)")
 
-    print(f"\n  MODEL 1  adds g x dM_GE.  g = -1 would mean the theoretical")
+    print(f"\n  MODEL 1  adds g x dM_GE.  g = +1 would mean the theoretical")
     print(f"  moment is exactly what the dynamics is missing.")
     print(f"  {'GE model':10}{'level [mN·m]':>15}{'span [mN·m]':>14}"
           f"{'g (per run)':>18}{'g (pooled)':>14}{'RMS gain':>11}")
@@ -349,6 +358,19 @@ def main():
           f"Model 0 {at.mean():.0f}, mocap ~113 mm), so the GE level sits "
           f"INSIDE\n  the arm uncertainty and only its {1e3 * np.mean([r['ge_interf_span'] for r in rows]):.0f} mN·m "
           f"of curvature could ever be separated.")
+
+    print(f"\n  distance from the theory value g = 1, per model:")
+    for name in MODELS:
+        gg = np.array([r[f'g_{name}'] for r in rows])
+        sg = np.array([r[f'sg_{name}'] for r in rows])
+        wsum = 1.0 / sg ** 2
+        pool = float(np.sum(gg * wsum) / np.sum(wsum))
+        pse = float(np.sqrt(1.0 / np.sum(wsum)))
+        print(f"    {name:10}: per-run {gg.mean():+6.1f} ± {sg.mean():4.1f} "
+              f"-> {abs(gg.mean() - 1) / sg.mean():4.1f} sigma;  pooled "
+              f"{pool:+6.2f} ± {pse:.2f} -> {abs(pool - 1) / pse:5.1f} sigma")
+    print(f"    (the pooled figure ignores between-run scatter, so read the "
+          f"per-run column)")
 
     print(f"\n  per-run SE(g) is the resolving power: the smallest GE "
           f"amplitude the\n  dynamics could distinguish from zero at 3 sigma "

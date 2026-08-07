@@ -224,10 +224,17 @@ Over the powered window (`δφ` 0.5° → 8.9°, 87 samples, 20 runs):
 | GE, interference | `156 ± 16` | `18 ± 4` |
 | GE, Garofano adaptation | `336 ± 37` | `29 ± 9` |
 
-**The two do not match, and the comparison has no power to make them.** Adding
-`g·ΔM_GE` to the rigid model (one free arm, `z_CoM` and `J_P` pinned) returns
-`g = +28 ± 13`, `−16 ± 3.6`, `+2.3 ± 3.9` for the three models, where `g = −1`
-would mean the theory is exactly what the dynamics is missing. The reason is
+**The comparison has no power either way.** Adding `g·ΔM_GE` to the rigid model
+(one free arm, `z_CoM` and `J_P` pinned) returns `g = +28 ± 13` (single),
+`−16 ± 3.6` (interference) and `+2.3 ± 3.9` (Garofano), where `g = +1` would
+mean the theory is exactly what the dynamics is missing — i.e. 2.1σ, 4.6σ and
+0.3σ from it. With per-run standard errors of 3.6–13, `g = 1` and `g = 0` are
+not distinguishable, so the Garofano agreement is not evidence for it either.
+The `lp` placement behind these numbers is verified run by run against the
+mocap pivot side (roll pos → pivot at `−lp`, pitch pos → `+lp`, matching the
+sign of the measured `cx`), and `sgn·ΔM_GE > 0` throughout: the ground effect
+aids the tip and lowers `M_crit`, as the thrust channel `a = c_a f l` requires.
+The reason the test is powerless is
 structural: over this window the theoretical GE moment is **almost a constant**
 (span/level = 20 / 12 / 9%), and a constant is precisely what the arm absorbs —
 156 mN·m of GE is the same as a 14.7 mm error on the gravity arm or 7.4 mm on
