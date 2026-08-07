@@ -243,6 +243,32 @@ model fit 112 ± 15 mm, mocap 113 mm). Only the 18 mN·m of *curvature* could
 ever be separated, against a 181 mN·m fit RMS. The 3σ detection floor is
 1.4–3.9 N·m — 4 to 100× above what the models predict.
 
+**Chart, whole dataset.** `analysis/ge_error_chart.py` draws the same comparison
+with no free parameter at all — `z_CoM` and `J_P` pinned, the arm taken from the
+mocap circle fit — pooled over all 139 runs as a function of accumulated tilt:
+
+```bash
+python analysis/ge_error_chart.py DataSet/exp --z-com 0.267 --jp 0.311
+```
+
+→ `docs/fig_ge_error.pdf` (+ `.png`) and `docs/ge_error_by_tilt.csv`. The window
+starts at 1° of tilt, below which the vehicle is still static and the rotational
+balance does not apply. Median over runs, in mN·m:
+
+| model | theory @8° | difference @8° | difference level | difference RMS | shape-only RMS |
+|---|---|---|---|---|---|
+| single-rotor | `32` | `−442` | `−238` | `398` | `105` |
+| interference | `148` | `−551` | `−350` | `429` | `103` |
+| Garofano | `307` | `−711` | `−513` | `526` | `101` |
+
+The residual runs from `−50` mN·m at 1° of tilt to `−650` mN·m at 9.5°, while
+every model stays flat at `+32…+310`: they differ in sign and in slope, not
+merely in size. Panel (c) removes each run's own mean — the only part an arm
+error cannot absorb — and there the residual still sweeps 150 → −300 mN·m while
+all three models stay inside ±20 mN·m. So the shape of what the dynamics is
+missing is a tilt-proportional term ~5× larger than the ground effect, i.e. a
+`W·z_CoM`-like stiffness error, not the ground effect.
+
 Note also that `z_CoM = 267` mm and `J_P = 0.311` kg·m² over-determine the
 pendulum: the free phase measures `A = 2W·z_CoM/J_P` directly, and at
 `J_P = 0.311` that implies `z_CoM = 167 ± 10` mm. Self-consistency at
