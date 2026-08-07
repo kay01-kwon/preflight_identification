@@ -75,17 +75,177 @@ OFF_MM = {('case_01', 'Mx'): -2.90,  ('case_01', 'My'): -11.45,
           ('case_05', 'Mx'): 10.91,  ('case_05', 'My'): -10.89}
 OFF_SIGN = {'Mx': +1.0, 'My': -1.0}
 
+# Physically consistent constants from analysis/constrained_calibration.py:
+# one z_CoM for the vehicle, one J_P per axis, shared by all ten datasets.
+# These replace the per-dataset (C2, K), whose 1/K implies z_CoM between
+# 0.061 and 0.554 m and so cannot be used in a dynamic inversion.
+Z_COM_SHARED = 0.174                       # m   (W z_CoM = 5.50 N.m)
+J_AXIS = {'x': 0.240, 'y': 0.153}          # kg.m^2
+
+
+def analyse(bag, crit, axis, sig, phi_all, n, z_com, j_p, savgol=9):
+    """Dynamic inversion of dM_GE for one run; returns the fit summary."""
+    case_w = analyse.W
+    pos = crit.bag_name.startswith('pos')
+    s = 1.0 if pos else -1.0
+    piv = cvp.estimate_pivot_from_mocap(bag, crit.onset_time, axis)
+    lp = (piv['pivot_abs'] * 1e-3 if not np.isnan(piv['pivot_abs'])
+          else LP[axis])
+    a = lp + s * analyse.off_truth
+
+    _, i1 = cvp.detect_excitation_window(
+        sig['moment'], moment_cap=cvp.MOMENT_CAP.get(axis))
+    j = crit.onset_idx
+    i1 = min(i1, n - 1)
+    if i1 - j < 15:
+        return None
+    sl = slice(j, i1 + 1)
+    tau = sig['t'][sl] - sig['t'][j]
+    phi = s * (phi_all[sl] - phi_all[j])
+    om = s * sig['omega'][sl]
+    m = s * sig['moment'][sl]
+    f = sig['f_col'][sl]
+
+    w = min(savgol if savgol % 2 else savgol + 1,
+            len(tau) - (1 - len(tau) % 2))
+    if w < 5:
+        return None
+    dt = float(np.median(np.diff(tau)))
+    om_dot = savgol_filter(om, w, 2, deriv=1, delta=dt)
+
+    ge_dyn = (j_p * om_dot - m - f * lp
+              + case_w * a * np.cos(phi) - case_w * z_com * np.sin(phi))
+    raw = ge_moment(bag, sig, axis, n, pos)
+    if raw is None:
+        return None
+    ge_mod = s * raw[sl]
+    if np.mean(ge_mod) < 0:
+        ge_mod = -ge_mod
+
+    sd, id_ = np.polyfit(phi, ge_dyn, 1)
+    sm, im = np.polyfit(phi, ge_mod, 1)
+    # An effective arm varying with tilt would show up as an extra W a' phi,
+    # so a' = (slope_model - slope_dyn)/W.  CAUTION: this is fully degenerate
+    # with an error in (J_P, z_CoM) -- see the batch summary -- and is
+    # reported only to expose that degeneracy, not as a measurement.
+    a_rate = -(sd - sm) / case_w              # m/rad
+    return dict(bag=crit.bag_name, dir='pos' if pos else 'neg',
+                lp_mm=1e3 * lp, dphi_deg=float(np.rad2deg(phi[-1])),
+                int_dyn=1e3 * id_, int_mod=1e3 * im,
+                slope_dyn=1e3 * sd * np.pi / 180,
+                slope_mod=1e3 * sm * np.pi / 180,
+                a_rate_mm_per_deg=1e3 * a_rate * np.pi / 180)
+
+
+def batch(z_com, savgol):
+    """All ten datasets, both tip directions, constrained constants."""
+    root = Path(__file__).resolve().parents[1] / 'DataSet' / 'exp'
+    out = []
+    for d in sorted(root.glob('case_*/M[xy]')):
+        axis = 'x' if d.name == 'Mx' else 'y'
+        case, axname = d.parent.name, d.name
+        analyse.W = MASS_KG[case] * G
+        analyse.off_truth = OFF_SIGN[axname] * OFF_MM[(case, axname)] * 1e-3
+        j_p = J_AXIS[axis]
+        with contextlib.redirect_stdout(io.StringIO()):
+            bags = load_excitation_dataset(d)
+            c2 = float(np.sqrt(analyse.W * z_com / j_p))
+            crits, _ = cvp.extract_piecewise_batch(
+                bags, axis, cosh_c2=c2, ramp_gain=1.0 / (analyse.W * z_com))
+        by = {b.name: b for b in bags}
+        for crit in crits:
+            bag = by[crit.bag_name]
+            sig = cvp.prepare_signals(bag, axis)
+            roll, pitch = math_tools.quaternion_to_euler_vectorized(
+                bag.odom.quaternion)
+            phi_all = roll if axis == 'x' else pitch
+            nn = min(len(phi_all), len(sig['t']))
+            r = analyse(bag, crit, axis, sig, phi_all, nn, z_com, j_p, savgol)
+            if r:
+                r.update(case=case, axis=axname)
+                out.append(r)
+        print(f"  {case}/{axname}: {sum(1 for r in out if r['case'] == case and r['axis'] == axname)} runs")
+    return out
+
+
+def report(rows):
+    import csv as _csv
+    if not rows:
+        raise SystemExit("no runs analysed -- check the dataset path")
+    print(f"\n{'case':9} {'ax':3} {'dir':4} {'n':>3} {'dphi':>6} | "
+          f"{'intercept [mN.m]':>22} | {'slope [mN.m/deg]':>22} | "
+          f"{'a-rate':>9}")
+    print(f"{'':9} {'':3} {'':4} {'':3} {'[deg]':>6} | "
+          f"{'dyn':>10} {'model':>11} | {'dyn':>10} {'model':>11} | "
+          f"{'[mm/deg]':>9}")
+    print('-' * 92)
+    keys = sorted({(r['case'], r['axis'], r['dir']) for r in rows})
+    agg = {}
+    for k in keys:
+        g = [r for r in rows if (r['case'], r['axis'], r['dir']) == k]
+        mean = {f: float(np.mean([r[f] for r in g])) for f in
+                ('dphi_deg', 'int_dyn', 'int_mod', 'slope_dyn', 'slope_mod',
+                 'a_rate_mm_per_deg')}
+        agg[k] = mean
+        print(f"{k[0]:9} {k[1]:3} {k[2]:4} {len(g):3d} {mean['dphi_deg']:6.2f} | "
+              f"{mean['int_dyn']:10.1f} {mean['int_mod']:11.1f} | "
+              f"{mean['slope_dyn']:10.2f} {mean['slope_mod']:11.2f} | "
+              f"{mean['a_rate_mm_per_deg']:9.2f}")
+    print('-' * 92)
+    d_int = np.array([agg[k]['int_dyn'] - agg[k]['int_mod'] for k in keys])
+    d_slp = np.array([agg[k]['slope_dyn'] - agg[k]['slope_mod'] for k in keys])
+    ar = np.array([agg[k]['a_rate_mm_per_deg'] for k in keys])
+    print(f"intercept  dyn-model: mean {d_int.mean():+7.1f} mN.m, "
+          f"RMS {np.sqrt(np.mean(d_int**2)):.1f}, "
+          f"{int((np.abs(d_int) < 50).sum())}/{len(d_int)} within 50 mN.m")
+    print(f"slope      dyn-model: mean {d_slp.mean():+7.2f} mN.m/deg, "
+          f"RMS {np.sqrt(np.mean(d_slp**2)):.2f}")
+    print(f"implied arm rate    : mean {ar.mean():+6.2f} mm/deg, "
+          f"std {ar.std(ddof=1):.2f}  "
+          f"-- DEGENERATE with (J_P, z_CoM), not a measurement")
+    print(f"\nWhy the SLOPE carries no information about the model:")
+    print(f"  d/dphi[-W z_CoM sin phi] = -W z_CoM = -96 mN.m/deg, which the")
+    print(f"  growth of J_P omega_dot must cancel.  The observed slopes span")
+    print(f"  -11 .. -100, i.e. they measure how well that cancellation")
+    print(f"  closes.  The model's OWN slope is -0.2 .. -2.5 mN.m/deg, i.e.")
+    print(f"  0.2-2.6% of the term being cancelled: testing it would need")
+    print(f"  z_CoM and J_P to ~2%, and z_CoM is not known to a factor of 2.")
+    print(f"  The slope also correlates with the fitted excursion range")
+    print(f"  (My neg, 2.3-4.2 deg, is steepest; Mx, 5.3-7.2 deg, flattest),")
+    print(f"  the signature of a fitting artefact rather than a physical rate.")
+    # antisymmetry test: same sign in both tip directions -> cancels in M_ff
+    pairs = [(agg[(c, a, 'pos')]['a_rate_mm_per_deg'],
+              agg[(c, a, 'neg')]['a_rate_mm_per_deg'])
+             for (c, a, dd) in keys if dd == 'pos'
+             and (c, a, 'neg') in agg]
+    p_, n_ = np.array([p for p, _ in pairs]), np.array([n for _, n in pairs])
+    print(f"\ncommon-mode test (tipping frame): pos {p_.mean():+.2f} vs "
+          f"neg {n_.mean():+.2f} mm/deg;  half-difference "
+          f"{0.5*np.abs(p_ - n_).mean():.2f} mm/deg")
+    print("  a common-mode arm change cancels in M_ff = +-0.5 (M_pos + M_neg);")
+    print("  only the half-difference survives the pivot-free average.")
+    with open('ge_dynamics_runs.csv', 'w', newline='') as f:
+        w = _csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+        w.writeheader(); w.writerows(rows)
+    print("\nrows -> ge_dynamics_runs.csv")
+
 
 def main():
     p = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     p.add_argument('--dir', default='DataSet/exp/case_02/Mx')
     p.add_argument('--bag', default=None,
                    help="bag name; default = first slow positive run")
-    p.add_argument('--z-com', type=float, default=0.250)
+    p.add_argument('--all', action='store_true',
+                   help="batch over all datasets and both tip directions")
+    p.add_argument('--z-com', type=float, default=Z_COM_SHARED)
     p.add_argument('--savgol', type=int, default=9,
                    help="Savitzky-Golay window for omega_dot [samples]")
     p.add_argument('--out', default='ge_dynamics_check.pdf')
     args = p.parse_args()
+
+    if args.all:
+        report(batch(args.z_com, args.savgol))
+        return
 
     d = Path(args.dir)
     axis = 'x' if d.name == 'Mx' else 'y'
