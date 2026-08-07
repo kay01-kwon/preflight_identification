@@ -197,6 +197,50 @@ plus the error map when `--truth-com` is given). On the reference dataset a
 ±20 % mis-specification of either constant moves the CoM by < 0.9 mm, and the
 constant choice moves the ground-truth error by < 0.9 mm over the whole box.
 
+### CoM height from the free tip-over (no load cell, no truth)
+
+At the moment peak the throttle is cut — collective 21 N → 0 in ~0.25 s — and
+the vehicle finishes falling over **under gravity alone**, still rotating about
+the same contact line. On the runs that pass the balance point that is a
+large-amplitude pendulum, 36–47° of travel, and it contains `z_CoM` outright:
+
+```
+J_P (φ̈)  =  W ρ sin(δφ − ψ)      ⇒   ω² = C − A cos δφ − B sin δφ
+A = 2 W z_CoM / J_P = 2 C₂²          B = 2 W h₀ / J_P        tan ψ = B/A
+```
+
+a linear fit in `(C, A, B)` on the measured rate and attitude — no
+differentiation, no mass, no inertia, no onset model, no load cell, and no
+ground-effect model (the rotors are stopped). `δφ` must be referenced to the
+**resting** attitude: the cut happens ~25° into the tip-over, already past the
+balance point.
+
+```bash
+python analysis/zcom_freefall.py DataSet/exp --save-csv
+```
+
+| axis | n | `z_CoM = h₀·A/B` | balance angle `ψ` | `C₂ = √(A/2)` | `J_P` |
+|---|---|---|---|---|---|
+| pitch (rigid gear) | 13 | **`205 ± 4` mm** | `28.8°` | `4.15 ± 0.14` rad/s | `0.378 ± 0.042` kg·m² |
+| roll (compliant gear) | 6 | `267 ± 6` mm | `29.1°` | `4.04 ± 0.04` rad/s | `0.516 ± 0.031` kg·m² |
+
+The pitch figure matches the CAD value (`≥ 0.2 m`). Both axes agree on `ψ ≈ 29°`
+so `z = h₀/tan ψ` inherits the arm: the roll result is 30% high because its `h₀`
+comes from the landing gear the pipeline already documents as compliant
+(`analysis/com_estimator.py` refuses to use the geometric `y_p` for the same
+reason). The parallel-axis closure works — `J_cm = J_P − m(h₀² + z²)` gives
+`0.216 ± 0.014` (roll) against `0.201 ± 0.028` (pitch), consistent at 0.5σ as a
+six-fold symmetric airframe requires, which resolves the 5.2σ axis failure the
+`(C₂, K)` ridge constants produced. Only systematic: `h₀` carries the unknown
+CoM offset (`|λ| ≤ 20` mm on `h₀ ≈ 113` mm → ≤ 18% on `z_CoM`); the pos/neg
+pair would remove it, but the sloped surface means only one direction tips over
+per axis.
+
+`C₂ = 4.11 ± 0.13` rad/s over all 19 runs is also the rig constant the ramp
+calibration searches for — measured here directly, at 3% scatter, against the
+`3.5–8.0` spread the ramp-invariance criterion returns over the ten case–axis
+groups.
+
 ### CoM height (`z_CoM`) from the resting tilt
 
 Asks whether the ground data can measure `z_CoM` — and whether the ground-effect
