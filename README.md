@@ -263,6 +263,55 @@ needs `z_CoM` to `±0.6` mm and `J_P` to `0.7%`; what the dataset supplies
 mN·m — which is why the GE moment is bounded by forward modelling
 (`analysis/ge_trajectory.py`) rather than read off the balance.
 
+### GE pinned by the model: are `J_P` and `z_CoM` then consistent?
+
+The reverse of the section above — instead of leaving the ground effect as an
+unknown residual, pin it with the parameter-free rotor-interference model and
+ask what the data then say about the two mechanical constants:
+
+```bash
+python analysis/ge_pinned_consistency.py --table zcom_tilt_runs.csv --verbose
+```
+
+**Static.** With GE pinned, the onset balance leaves only the CoM height and
+the contact-lever offset `dl`, and they sit in *orthogonal* channels: `dl` and
+the GE thrust term `sgn·c_a f l` are antisymmetric between the tip directions,
+`z_CoM sin φ₀` is symmetric. So the GE model can only move `dl`:
+
+| GE model | `dl` roll [mm] | `dl` pitch [mm] | `z_CoM` [mm] | resid |
+|---|---|---|---|---|
+| none | `17.5 ± 2.6` | `20.7 ± 2.6` | `−39 ± 29` | 78 mN·m |
+| single (Cheeseman) | `13.3 ± 2.5` | `17.4 ± 2.5` | `−35 ± 28` | 76 mN·m |
+| interference | `−0.1 ± 2.5` | `6.8 ± 2.5` | `−23 ± 28` | 71 mN·m |
+
+The interference model absorbs the entire deficit that the rigid fit otherwise
+has to buy with a 17–21 mm inboard contact shift — consistency, not
+attribution, since the two stay degenerate in that channel. `z_CoM` moves by
+only 16 mm across the whole GE bracket, inside its own ±28 mm standard error:
+**pinning GE cannot inform the CoM height.**
+
+**Dynamic.** The parallel-axis theorem is a free, GE-independent and
+truth-independent constraint on every calibrated pair: `J_P = J_cm + m(l² +
+z_CoM²) ≥ m(l² + z_CoM²)`. **4 of the 10 pairs violate it** — the ridge wanders
+where the claimed height alone would need more inertia than the same pair's
+`J_P` supplies, so the `(C₂, K)` box should be carrying this inequality as a
+constraint and currently is not.
+
+| axis | `J_P` [kg·m²] | `z_CoM` from `1/K` [mm] | `z_CoM` from `J_P` [mm] |
+|---|---|---|---|
+| roll | `0.249 ± 0.016` (CV 6.5%) | `271 ± 181` (CV 67%) | `214 ± 13` |
+| pitch | `0.140 ± 0.034` (CV 24%) | `106 ± 51` (CV 48%) | `131 ± 43` |
+
+So the ridge's invariant is `J_P`, not `W z_CoM`: the same pairs that repeat
+`J_P` to 6.5% scatter `z_CoM` by 67%. Across axes neither closes. `z_CoM`
+cancels in the axis *difference*, giving a parameter-free test — `J_P(roll) −
+J_P(pitch)` must equal `(J_xx − J_yy) + m(l_r² − l_p²)`, i.e. `+0.022` kg·m²
+on a six-fold symmetric airframe; measured `+0.109 ± 0.017`, which would demand
+`J_xx − J_yy = 0.087` kg·m² (5.2σ, a 165 mm difference in mass spread between
+two nominally identical body axes). The roll pivot is the compliant one
+(`analysis/com_estimator.py`), so its `J_P` is an effective constant, not a
+rigid-body pivot inertia.
+
 ### Model-fidelity analysis
 
 Certifies that the post-onset response stays in the cosh family — every
