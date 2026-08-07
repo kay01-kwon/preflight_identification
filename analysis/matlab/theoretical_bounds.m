@@ -47,7 +47,11 @@ c.zCoM     = 0.20;               % m, WORST case (smallest -> largest rho)
 c.beta_M   = 0.0345;             % 1/rad, GE moment-coefficient slope
 c.dM_win   = 1.30;               % N.m, commanded moment increment over the
                                  %      fit window   <-- CHECK against data
-c.caps_deg = [5 10];             % excursion caps: design cap, largest tilt
+% Fit-window excursions.  NOTE: the implementation truncates the window by
+% MOMENT, not by angle, so 5 deg is the excitation-DESIGN cap, not what the
+% windows realise.  The operative figures are the measured excursions.
+c.caps_deg = [5 6.1 9.4 10];     % design cap | measured median | measured
+                                 % max | largest absolute tilt
 c.x_meas   = [1.08 2.67 5.20];   % measured C2*tau_end: min, median, max
 c.C2_rep   = 5.0;                % rad/s, representative calibrated C2
 c.K_rep    = 0.19;               % 1/(N.m), representative calibrated K
