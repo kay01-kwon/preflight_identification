@@ -107,7 +107,7 @@ def main():
     W = args.mass * G
     grid = np.arange(0.0, args.grid_max + 1e-9, args.grid_step)
     root = Path(args.root)
-    res, th, names = [], {m: [] for m in MODELS}, []
+    res, th, names, sign_rows = [], {m: [] for m in MODELS}, [], []
 
     for d in sorted(root.glob('case_*/M[xy]')):
         axis = 'x' if d.name == 'Mx' else 'y'
@@ -166,6 +166,11 @@ def main():
             res.append(onto(ri))
             for name in MODELS:
                 th[name].append(onto((sgn * ge[name][s])[keep]))
+            sign_rows.append({name: (float(np.mean(sgn * ge[name][s] > 0)),
+                                     float(np.mean(sgn * ge[name][s])),
+                                     float(np.polyfit(x, sgn * ge[name][s],
+                                                      1)[0]))
+                              for name in MODELS})
             names.append(f"{d.parent.name}/{d.name}/{b.name}")
         print(f"  assessed {d}", flush=True)
 
@@ -288,6 +293,33 @@ def main():
               f"{np.nanmedian(np.sqrt(np.nanmean(E ** 2, axis=1))):11.0f}"
               f"{np.nanmedian(np.sqrt(np.nanmean(D[m] ** 2, axis=1))):14.0f}")
     print("  [mN·m]  level/RMS are per-run figures, median over runs")
+
+    # ── which way does the GE moment push? ─────────────────────────
+    stiff = 1e3 * W * args.z_com * np.pi / 180.0
+    print(f"\n  DIRECTION.  sgn * dM_GE > 0 means the ground effect acts WITH "
+          f"the tip-over.")
+    print(f"  {'model':11}{'samples with sgn·GE>0':>24}{'level':>14}"
+          f"{'slope [mN·m/deg]':>19}{'vs W·z_CoM':>13}")
+    for m in MODELS:
+        pf = 100 * np.mean([r[m][0] for r in sign_rows])
+        lv = 1e3 * np.array([r[m][1] for r in sign_rows])
+        sl = 1e3 * np.array([r[m][2] for r in sign_rows])
+        print(f"  {m:11}{pf:21.1f} %{lv.mean():9.0f} ±{lv.std(ddof=1):3.0f}"
+              f"{sl.mean():14.1f} ±{sl.std(ddof=1):4.1f}"
+              f"{100 * sl.mean() / stiff:11.2f} %")
+    rs = np.polyfit(grid[np.sum(np.isfinite(R), axis=0) >= 5],
+                    np.nanmedian(R[:, np.sum(np.isfinite(R), axis=0) >= 5],
+                                 axis=0), 1)[0]
+    print(f"  gravitational anti-restoring term W z_CoM = {stiff:.0f} mN·m/deg "
+          f"at z_CoM = {1e3 * args.z_com:.0f} mm")
+    print(f"  -> the GE LEVEL always aids the tip; only its GRADIENT opposes "
+          f"further\n     tilting, and that gradient is under "
+          f"{abs(100 * min(np.mean([r[m][2] for r in sign_rows]) for m in MODELS) * 1e3 / stiff):.1f}% of the "
+          f"gravitational term.")
+    print(f"  The residual's own slope is {rs:.0f} mN·m/deg — same sign, "
+          f"{abs(rs / (1e3 * np.mean([r['garofano'][2] for r in sign_rows]))):.0f}x "
+          f"the largest model — i.e. a z_CoM error of "
+          f"{abs(rs) / stiff * 1e3 * args.z_com:.0f} mm, not ground effect.")
 
 
 if __name__ == '__main__':

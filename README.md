@@ -261,6 +261,23 @@ balance does not apply. Median over runs, in mN·m:
 | interference | `148` | `−551` | `−350` | `429` | `103` |
 | Garofano | `307` | `−711` | `−513` | `526` | `101` |
 
+**Which way does the GE moment push?** Across all 140 runs, both axes and both
+directions, `sgn·ΔM_GE > 0` in **100.0%** of samples — the ground effect always
+acts *with* the tip-over, lowering `M_crit`, as its thrust channel `a = c_a f l`
+requires. Only its *gradient* opposes further tilting:
+
+| model | level | slope | vs the gravitational term |
+|---|---|---|---|
+| single-rotor | `+36 ± 6` mN·m | `−0.8 ± 0.4` mN·m/deg | `−0.57%` |
+| interference | `+157 ± 26` | `−1.4 ± 1.7` | `−0.92%` |
+| Garofano | `+343 ± 45` | `−3.3 ± 1.9` | `−2.26%` |
+
+against `W·z_CoM = 147` mN·m/deg at `z_CoM = 267` mm — the "ground-induced
+restoring spring" of `docs/response_ge_comment.md`, now measured along all 140
+trajectories rather than at an operating point. The residual's own slope is
+`−61` mN·m/deg: the same sign, but **18× the largest model**, which is a
+`z_CoM` error of 111 mm rather than a ground effect.
+
 The residual runs from `−50` mN·m at 1° of tilt to `−650` mN·m at 9.5°, while
 every model stays flat at `+32…+310`: they differ in sign and in slope, not
 merely in size. Panel (c) removes each run's own mean — the only part an arm
