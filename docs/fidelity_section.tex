@@ -511,7 +511,43 @@ $\partial\hat\omega/\partial t_0 = -C_1 C_2 \sinh(C_2\tau)$ gives
 \end{equation}
 the ramp rate cancelling because $C_1 = K\dot M$: the exchange rate from
 residual forcing to identified threshold is a constant of the
-calibration, not of the run. The deliverable follows the pipeline
+calibration, not of the run.
+
+Two identities make this concrete. First, the deviation is not a member
+of the cosh family: expanding the kernel,
+\begin{equation}
+  \delta\omega(\tau) = \frac{1}{J_P}\Bigl[P(\tau)\cosh C_2\tau
+    - Q(\tau)\sinh C_2\tau\Bigr],
+  \quad
+  \begin{aligned}
+    P(\tau) &= \textstyle\int_0^\tau \cosh(C_2 s)\rho(s)\,ds,\\
+    Q(\tau) &= \textstyle\int_0^\tau \sinh(C_2 s)\rho(s)\,ds,
+  \end{aligned}
+  \label{eq:drifting-coeffs}
+\end{equation}
+whose coefficients drift with $\tau$; they are constant only for
+$\rho\equiv0$. This is the escape channel as an identity rather than a
+claim, and it is structural: solving \eqref{eq:deviation} for each
+spanned forcing shows that the three absorbable directions are exactly
+the three deformations of the family — $\rho\propto1$ gives
+$\delta\omega = \rho_0\sinh(C_2\tau)/(J_PC_2)$, an onset shift;
+$\rho\propto\tau$ gives $\delta\omega = (c/D)(\cosh C_2\tau - 1)$, an
+amplitude ($C_1$) change; $\rho\propto\delta\phi$ moves the gradient and
+hence $C_2$. Since $\rho$ is \emph{defined} as what remains after those
+are removed, its response has no fixed-coefficient family component.
+
+Second, \eqref{eq:onset-translation} passes an exact check. Substituting
+the constant-forcing response above,
+$\Delta M_{\mathrm{crit}} = -\rho_0/(J_PC_2^2 K) = -\rho_0$, since
+$J_PC_2^2 = D$ and $K = 1/D$: a constant residual moment displaces the
+identified threshold by exactly itself, which is what the physics
+requires — the vehicle tips on $\rho_0$ less commanded moment. The
+translation is therefore unit-faithful, and it bounds the general case:
+only the projection of $\delta\omega$ on the onset direction
+$\sinh(C_2\tau)$ biases the result; the rest appears as fit residual,
+which the NRMSE certificate of Sec.~\ref{sec:fid-verify} measures.
+
+The deliverable follows the pipeline
 exactly, $M_{\mathrm{ff}} = \pm\tfrac12(M_+ + M_-)$ and
 $\lambda_{\mathrm{off}} = M_{\mathrm{ff}}/W$. The estimate is
 conservative three times over: it forwards the \emph{peak} of each
