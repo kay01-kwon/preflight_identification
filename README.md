@@ -197,6 +197,53 @@ plus the error map when `--truth-com` is given). On the reference dataset a
 ±20 % mis-specification of either constant moves the CoM by < 0.9 mm, and the
 constant choice moves the ground-truth error by < 0.9 mm over the whole box.
 
+### Dynamics residual vs the theoretical rotor GE moment
+
+With `z_CoM` and `J_P` pinned, every term of the contact-phase rotational
+balance is known except the ground effect, so the residual should *be* it:
+
+```
+r(t) = J_P φ̈ − M − f·a_t + W[a_c cos δφ − z_CoM sin δφ]   ≟   ΔM_GE(t)
+```
+
+The throttle cut makes the calibration possible — the coasting pendulum is
+GE-free, so it fixes the CoM arm where the ground effect cannot touch it — and
+the theoretical moment is evaluated on the same measured trajectory with the
+three models of `analysis/ge_linearity.py`.
+
+```bash
+python analysis/ge_residual_vs_model.py DataSet/exp --z-com 0.267 --jp 0.311
+```
+
+Over the powered window (`δφ` 0.5° → 8.9°, 87 samples, 20 runs):
+
+| | level | span |
+|---|---|---|
+| dynamics residual | `−209 ± 152` mN·m | `874 ± 179` mN·m |
+| GE, single (Cheeseman) | `37 ± 4` | `7 ± 2` |
+| GE, interference | `156 ± 16` | `18 ± 4` |
+| GE, Garofano adaptation | `336 ± 37` | `29 ± 9` |
+
+**The two do not match, and the comparison has no power to make them.** Adding
+`g·ΔM_GE` to the rigid model (one free arm, `z_CoM` and `J_P` pinned) returns
+`g = +28 ± 13`, `−16 ± 3.6`, `+2.3 ± 3.9` for the three models, where `g = −1`
+would mean the theory is exactly what the dynamics is missing. The reason is
+structural: over this window the theoretical GE moment is **almost a constant**
+(span/level = 20 / 12 / 9%), and a constant is precisely what the arm absorbs —
+156 mN·m of GE is the same as a 14.7 mm error on the gravity arm or 7.4 mm on
+the thrust arm, while the arm itself is only known to ~15 mm (free phase 92 mm,
+model fit 112 ± 15 mm, mocap 113 mm). Only the 18 mN·m of *curvature* could
+ever be separated, against a 181 mN·m fit RMS. The 3σ detection floor is
+1.4–3.9 N·m — 4 to 100× above what the models predict.
+
+Note also that `z_CoM = 267` mm and `J_P = 0.311` kg·m² over-determine the
+pendulum: the free phase measures `A = 2W·z_CoM/J_P` directly, and at
+`J_P = 0.311` that implies `z_CoM = 167 ± 10` mm. Self-consistency at
+`z_CoM = 267` mm needs `J_P ≈ 0.48` kg·m². Pass `--jp 0` to derive `J_P` from
+the pinned height instead; the GE conclusion is unchanged either way (the
+out-of-parameter-span content is identical, because `α`, `f`, `cos δφ` and
+`sin δφ` are all in the span the fit removes).
+
 ### CoM height from the free tip-over (no load cell, no truth)
 
 At the moment peak the throttle is cut — collective 21 N → 0 in ~0.25 s — and
