@@ -547,6 +547,45 @@ only the projection of $\delta\omega$ on the onset direction
 $\sinh(C_2\tau)$ biases the result; the rest appears as fit residual,
 which the NRMSE certificate of Sec.~\ref{sec:fid-verify} measures.
 
+\paragraph{An unconditional bound.} Exchanging the order of integration
+in \eqref{eq:onset-translation} reduces the entire propagation to a
+weighted average of the forcing,
+\begin{equation}
+  \Delta M_{\mathrm{crit}} = -\!\int_0^{\tau_{\mathrm{end}}}\!\!\!
+    \rho(s)\,w(s)\,ds,
+  \quad
+  w(s) = \frac{\int_s^{\tau_{\mathrm{end}}}\!
+               \sinh(C_2\tau)\cosh\bigl(C_2(\tau{-}s)\bigr)d\tau}
+              {J_P K C_2\,\|\sinh C_2\tau\|^2},
+  \label{eq:rho-weight}
+\end{equation}
+whose kernel is non-negative on the window and \emph{normalized}:
+$\int_0^{\tau_{\mathrm{end}}} w = 1$ is precisely the constant-forcing
+identity $\Delta M_{\mathrm{crit}} = -\rho_0$ just established (verified
+to $5\times10^{-4}$ on the discrete operators actually used,
+\texttt{analysis/error\_budget.py -{}-check}). Consequently
+\begin{equation*}
+  |\Delta M_{\mathrm{crit}}| \;\le\; \max_{[0,\tau_{\mathrm{end}}]}|\rho|
+\end{equation*}
+holds unconditionally --- no envelope, no $\coth$ factor, no small-gain
+closure, and no assumption whatever on the \emph{shape} of $\rho$, only
+on its magnitude. Across all $140$ runs $\max|\rho| \le 15.9$~mN\,m, so
+no coherent modelling residual of any profile can bias the identified
+offset by more than $0.50$~mm.
+
+The measured value is a further $18\times$ smaller ($0.90$~mN\,m,
+$5.7\%$ of the bound), because $\rho$ changes sign within the window and
+the weighted mean largely cancels: $|\langle\rho\rangle_w|/\max|\rho|$
+is $0.5$--$1.6\%$ in median by channel and at most $12.6\%$. The
+resulting ladder --- $15.9 \to 0.90 \to 0.14$~mN\,m, equivalently
+$0.50$~mm $\to 28\,\mu$m $\to 4.3\,\mu$m --- separates cleanly what is
+bounded by magnitude alone, what the measured sign structure adds, and
+what the pivot-free pairing removes. (The envelope of
+Sec.~\ref{sec:fid-ideal} is not superseded: it bounds the \emph{shape}
+deviation $\delta\omega/\omega$, which is what the excitation design
+tables and the NRMSE comparison need, whereas \eqref{eq:rho-weight}
+bounds the deliverable directly.)
+
 The deliverable follows the pipeline
 exactly, $M_{\mathrm{ff}} = \pm\tfrac12(M_+ + M_-)$ and
 $\lambda_{\mathrm{off}} = M_{\mathrm{ff}}/W$. The estimate is

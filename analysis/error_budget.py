@@ -149,13 +149,65 @@ def ge_moment(bag, sig, axis, n, pos):
     return (gain * thrust[:n]) @ arm
 
 
+def check_weight():
+    """Verify the reduction dM_crit = -<rho>_w with w >= 0 and int w = 1.
+
+    Exchanging the order of integration in the translation formula turns
+    the whole propagation into a weighted average of the forcing,
+
+        dM_crit = -int_0^T rho(s) w(s) ds,
+        w(s) = int_s^T sinh(C2 tau) cosh(C2 (tau-s)) dtau
+               / (J_P K C2 ||sinh||^2).
+
+    The weight is non-negative (both factors are positive on s < tau)
+    and normalized -- int w = 1 is exactly the constant-forcing identity
+    dM_crit = -rho_0.  Hence |dM_crit| <= max|rho| unconditionally, with
+    no assumption on the shape of rho.  This checks both properties on
+    the discrete operators the budget actually uses, and reports how far
+    a sign-changing forcing falls below the bound.
+    """
+    print("reduction check:  dM_crit = -<rho>_w,   w >= 0,   int w = 1\n")
+    print(f"{'C2':>5} {'K':>7} {'T[s]':>6} {'N':>4} | {'dM(rho=1)':>11} "
+          f"{'int w':>9} {'min w':>10} | {'<rho>_w/max|rho|':>17}")
+    for c2, k, t_end, n in [(8.0, 0.060, 0.30, 31), (6.125, 0.110, 0.45, 46),
+                            (3.5, 0.300, 0.90, 91), (4.5, 0.520, 0.70, 71),
+                            (6.625, 0.180, 0.55, 56)]:
+        tau = np.linspace(0.0, t_end, n)
+        j_p = 1.0 / (k * c2 ** 2)
+        sh = np.sinh(np.clip(c2 * tau, 0, 30))
+        den = k * c2 * float(sh @ sh)
+
+        def d_mcrit(rho):
+            return -float(duhamel(tau, rho, c2, j_p) @ sh) / den
+
+        one = d_mcrit(np.ones_like(tau))
+        eye = np.eye(n)
+        w = -np.array([d_mcrit(eye[i]) for i in range(n)]) / (tau[1] - tau[0])
+        rho = np.sin(6 * np.pi * tau / t_end) * (tau / t_end) ** 4
+        ratio = abs(d_mcrit(rho)) / max(np.abs(rho).max(), 1e-12)
+        print(f"{c2:5.2f} {k:7.3f} {t_end:6.2f} {n:4d} | {one:11.6f} "
+              f"{w.sum() * (tau[1] - tau[0]):9.5f} {w.min():10.2e} | "
+              f"{ratio:17.4f}")
+    print("\ndM(rho=1) = -1 confirms int w = 1; min w >= 0 confirms the weight")
+    print("is non-negative, so |dM_crit| <= max|rho| holds unconditionally.")
+
+
 def main():
     p = argparse.ArgumentParser(
         description="rho -> onset -> M_crit -> CoM offset error budget.")
-    p.add_argument('root', help="dataset root (e.g. DataSet/exp)")
+    p.add_argument('--check', action='store_true',
+                   help="verify the weighted-average reduction and exit "
+                        "(no dataset needed)")
+    p.add_argument('root', nargs='?', help="dataset root (e.g. DataSet/exp)")
     p.add_argument('--weight', type=float, default=W_DEFAULT)
     p.add_argument('--output-dir', default=None)
     args = p.parse_args()
+
+    if args.check:
+        check_weight()
+        return
+    if not args.root:
+        p.error("dataset root is required unless --check is given")
 
     weight = args.weight
     root = Path(args.root)
