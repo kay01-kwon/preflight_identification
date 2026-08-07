@@ -220,6 +220,7 @@ python analysis/zcom_tilt.py --collect DataSet/exp --output-dir .   # 140 runs
 python analysis/zcom_tilt.py --table zcom_tilt_runs.csv            # re-analyse
 python analysis/zcom_tilt.py --table zcom_tilt_runs.csv --inject 0.30
 python analysis/zcom_tilt.py --table zcom_tilt_runs.csv --dynamic DataSet/exp
+python analysis/zcom_tilt.py --table zcom_tilt_runs.csv --budget DataSet/exp
 ```
 
 | Estimator | What it uses | Result |
@@ -251,6 +252,16 @@ antisymmetric and hence degenerate with the pivot arm / contact lever, and
 residual and a 52 mN·m group-to-group scatter. The static data bound the
 combined ground-contact budget; they cannot attribute it
 (`analysis/static_attribution.py`).
+
+Reading it off the post-onset balance instead does not work either, and
+`--budget` says why: `ΔM_res = J_P α − M − f l + W(l + λ) cos δφ − W z_CoM sin δφ`
+leaves `J_P` and `W z_CoM` as the only unmeasured coefficients, and each is
+multiplied by a large measured signal — `|δφ| = 5.95°` at the window edge,
+`|α| = 2.24` rad/s² at the moment peak (medians). A 2 mN·m readout therefore
+needs `z_CoM` to `±0.6` mm and `J_P` to `0.7%`; what the dataset supplies
+(`±27` mm and an IQR half-width of `0.097` kg·m²) propagates to `88` and `216`
+mN·m — which is why the GE moment is bounded by forward modelling
+(`analysis/ge_trajectory.py`) rather than read off the balance.
 
 ### Model-fidelity analysis
 

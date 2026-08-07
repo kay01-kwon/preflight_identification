@@ -75,7 +75,7 @@ OFF_MM = {('case_01', 'Mx'): -2.90,  ('case_01', 'My'): -11.45,
           ('case_05', 'Mx'): 10.91,  ('case_05', 'My'): -10.89}
 S_AX = {'Mx': +1.0, 'My': -1.0}       # W y_off = +M_ff ; W x_off = -M_ff
 FIELDS = ['case', 'axis', 'bag', 'dir', 'rate', 'M', 'f', 'arm', 'tilt',
-          'tilt_mc', 'tilt_on', 'tilt_orth', 'c2', 'k']
+          'tilt_mc', 'tilt_on', 'tilt_orth', 'onset_t', 'c2', 'k']
 
 
 # ═════════════════════════════════════════════════════════════
@@ -126,7 +126,7 @@ def collect(root: Path, out: Path) -> list[dict]:
                 tilt_mc=float(np.median(exc_mc[:nm])),
                 tilt_on=float(exc[j]),
                 tilt_orth=float(np.median(orth[:n])),
-                c2=c2, k=k))
+                onset_t=c.onset_time, c2=c2, k=k))
         print(f"  collected {d} ({len(rows)} runs)", flush=True)
 
     out.mkdir(parents=True, exist_ok=True)
@@ -244,12 +244,92 @@ def dynamic(root: Path, rows: list[dict], c2_bounds=(0.2, 25.0)) -> None:
           "in the dynamic channel too.")
 
 
+def budget(root: Path, rows: list[dict], target_mnm=2.0) -> None:
+    """F: what J_P and W z_CoM precision a residual-moment readout needs.
+
+    Reading a residual moment straight off the post-onset balance,
+
+        dM_res = J_P alpha - M - f l + W(l + lam) cos(dphi)
+                 - W z_CoM sin(dphi) ,
+
+    leaves J_P and W z_CoM as the only unmeasured coefficients, so both
+    are required and both enter multiplied by a *large* measured signal:
+    alpha at the moment peak and the tilt excursion dphi at the window
+    edge.  This reports those two levers and the precision they demand of
+    a ``target_mnm`` residual readout, against what the dataset supplies.
+    """
+    import critical_value_getter_piecewise as cvp
+    from utils.extractor import load_excitation_dataset
+    from utils import math_tools
+
+    on = {(r['case'], r['axis'], r['bag']): r['onset_t'] for r in rows
+          if np.isfinite(r.get('onset_t', np.nan))}
+    if not on:
+        print("\n[F] skipped: the table carries no onset_t column "
+              "(re-run --collect)")
+        return
+    dphi, alpha = [], []
+    for d in sorted(root.glob('case_*/M[xy]')):
+        axis = 'x' if d.name == 'Mx' else 'y'
+        with contextlib.redirect_stdout(io.StringIO()):
+            bags = load_excitation_dataset(d)
+        for b in bags:
+            t_on = on.get((d.parent.name, d.name, b.name))
+            if t_on is None:
+                continue
+            sig = cvp.prepare_signals(b, axis)
+            t, om, M = sig['t'], sig['omega'], sig['moment']
+            i0, i1 = cvp.detect_excitation_window(
+                M, moment_cap=cvp.MOMENT_CAP.get(axis))
+            j = int(np.searchsorted(t, t_on))
+            if i1 - j < 6:
+                continue
+            roll, pitch = math_tools.quaternion_to_euler_vectorized(
+                b.odom.quaternion)
+            phi = (roll if axis == 'x' else pitch)[:len(t)]
+            dphi.append(abs(phi[i1] - phi[j]))
+            m = (t >= t[i1] - 0.06) & (t <= t[i1] + 0.06)
+            if m.sum() >= 4:
+                alpha.append(abs(float(np.polyfit(t[m], om[m], 1)[0])))
+    dphi, alpha = np.array(dphi), np.array(alpha)
+    dp, al = float(np.median(dphi)), float(np.median(alpha))
+    W = float(np.mean([MASS_KG[r['case']] * G for r in rows]))
+    tgt = target_mnm * 1e-3
+
+    print("\n" + "=" * 70)
+    print("F.  Precision a residual-moment readout would demand")
+    print(f"  levers at the median operating point: |dphi| at the window "
+          f"edge {np.degrees(dp):.2f} deg")
+    print(f"  (p90 {np.degrees(np.percentile(dphi, 90)):.2f}, max "
+          f"{np.degrees(dphi.max()):.2f}),  |alpha| at the moment peak "
+          f"{al:.2f} rad/s^2")
+    print(f"\n  {'coefficient':16}{'needed for':>13}{'available here':>28}"
+          f"{'-> error':>12}")
+    print(f"  {'W z_CoM':16}{tgt / dp:9.3f} N·m"
+          f"{27e-3 * W:16.2f} N·m (+-27 mm)"
+          f"{1e3 * 27e-3 * W * dp:9.0f} mN·m")
+    print(f"  {'':16}{'':13}{0.5 * (554 - 61) * 1e-3 * W:16.2f} N·m (1/K "
+          f"spread){1e3 * 0.5 * (554 - 61) * 1e-3 * W * dp:6.0f} mN·m")
+    print(f"  {'J_P':16}{tgt / al:9.3f} kg m^2"
+          f"{0.5 * (0.267 - 0.074):14.3f} kg m^2 (IQR/2)"
+          f"{1e3 * 0.5 * (0.267 - 0.074) * al:11.0f} mN·m")
+    print(f"\n  i.e. {target_mnm:.0f} mN·m of residual needs W z_CoM to "
+          f"+-{tgt / dp / W * 1e3:.2f} mm of z_CoM "
+          f"({tgt / dp / 4.5 * 100:.2f}% of a nominal 4.5 N·m) and J_P to "
+          f"{tgt / al / 0.123 * 100:.1f}%\n  of the 0.123 kg m^2 median — two "
+          f"orders beyond what this experiment determines,\n  which is why "
+          f"the GE moment is bounded by forward modelling "
+          f"(analysis/ge_trajectory.py)\n  rather than read off the "
+          f"balance.")
+
+
 def load(path: Path) -> list[dict]:
     rows = []
     for r in csv.DictReader(open(path)):
         for k in FIELDS:
             if k not in ('case', 'axis', 'bag', 'dir'):
-                r[k] = float(r[k]) if r[k] not in ('', 'nan') else np.nan
+                r[k] = (float(r[k]) if r.get(k) not in (None, '', 'nan')
+                        else np.nan)
         rows.append(r)
     return rows
 
@@ -349,6 +429,8 @@ def main():
                    help="wedge inclination of the proposed design [deg]")
     p.add_argument('--dynamic', metavar='ROOT',
                    help="also run the truth-pinned post-onset fit over ROOT")
+    p.add_argument('--budget', metavar='ROOT',
+                   help="also run the residual-moment precision budget")
     p.add_argument('--inject', type=float, default=None, metavar='Z',
                    help="injection-recovery self-test: add a synthetic "
                         "-W*Z*sin(phi_0) term [m] to every M_crit and check "
@@ -490,6 +572,8 @@ def main():
               f"group")
     if args.dynamic:
         dynamic(Path(args.dynamic), rows)
+    if args.budget:
+        budget(Path(args.budget), rows)
 
     print("\n  GE residual: within a group the ground-effect moment is a")
     print("  constant (same collective, same tilt) and is absorbed by the")
