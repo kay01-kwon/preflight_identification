@@ -64,9 +64,9 @@ def main():
                    help="calibrated ramp gain K [1/(N.m)]")
     p.add_argument('--weight', type=float, default=31.59, help="W [N]")
     p.add_argument('--z-com', type=float, default=0.30, help="z_CoM [m]")
-    p.add_argument('--arm', type=float, default=0.150,
+    p.add_argument('--arm', type=float, default=0.160,
                    help="conservative gravity arm l_p+|off| [m] "
-                        "(0.130+0.020 roll)")
+                        "(0.140+0.020 roll)")
     p.add_argument('--ge-margin', type=float, default=0.05,
                    help="GE curvature as a fraction of the gravity curvature")
     p.add_argument('--fs', type=float, default=130.0,

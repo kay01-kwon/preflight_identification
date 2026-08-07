@@ -9,7 +9,7 @@
 
 Every number below is reproducible from the repository
 (`analysis/ge_linearity.py`, `analysis/ge_trajectory.py`; constants:
-h = 0.315 m, R = 0.127 m, l_p = 0.130/0.100 m conservative,
+h = 0.315 m, R = 0.127 m, l_p = 0.140/0.110 m conservative,
 W = 31.59 N).
 
 ---

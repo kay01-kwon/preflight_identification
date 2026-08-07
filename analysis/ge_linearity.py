@@ -63,8 +63,8 @@ def main():
     p.add_argument('--hub-height', type=float, default=0.315)
     p.add_argument('--thrust', type=float, default=26.25,
                    help="total collective thrust f [N]")
-    p.add_argument('--lp-roll', type=float, default=0.130)
-    p.add_argument('--lp-pitch', type=float, default=0.100)
+    p.add_argument('--lp-roll', type=float, default=0.140)
+    p.add_argument('--lp-pitch', type=float, default=0.110)
     p.add_argument('--frame-width', type=float, default=0.22,
                    help="central frame width c [m] (garofano fountain)")
     p.add_argument('--jk', type=float, default=2.2,

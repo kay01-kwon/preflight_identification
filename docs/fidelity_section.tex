@@ -37,17 +37,7 @@
 %      equivalent |dC2/C2| <= eps/2 = 0.13%/2.96%)
 %   GE shift of (C2, K): dC2/C2 >= -1.7%, dK/K <= +8.0% — closed form
 %     eq:ge-constant-shift; J_P cancels, so no inertia estimate enters.
-% !! PENDING RE-RUN after the l_p change (0.140/0.110 -> 0.130/0.100).
-%    The analytic figures above have been recomputed by hand from the
-%    exact remainder eq:lagrange; the following MEASURED figures were
-%    produced with the old arm and are stale by roughly -6% (the arm
-%    term scales by 0.150/0.160):
-%      small-angle measured residual 1.2 / 12.3 mN.m
-%      GE slope ratios +0.99 / +4.20% and residuals 0.16/2.3, 0.67/9.3
-%      bilinear 0.04 / 0.17 mN.m and beta_M = 0.0345 1/rad
-%      Table tab:budget (error_budget.py) in its entirety
-%      the 3-14 mN.m / 0.10-0.44 mm M_ff bias band
-% Constants: conservative l_p = 0.130/0.100 m (roll/pitch), hub height
+% Constants: conservative l_p = 0.140/0.110 m (roll/pitch), hub height
 % h = 0.315 m, rotor radius R = 0.127 m (10-in propeller), W = 31.59 N,
 % z_CoM = 0.30 m, calibrated C2 = 5, K = 0.19 (representative).
 % =====================================================================
@@ -68,8 +58,8 @@ contact read (the pitch case is analogous)
     + W z_{\mathrm{CoM}}\sin\phi ,
   \label{eq:exact-dyn}
 \end{equation}
-with $M_{x,P} = M_x + f\,l_p$ and, conservatively, $l_{p,\phi}=0.130$~m,
-$l_{p,\theta}=0.100$~m. The ground-contact phase is a one-degree-of-freedom
+with $M_{x,P} = M_x + f\,l_p$ and, conservatively, $l_{p,\phi}=0.140$~m,
+$l_{p,\theta}=0.110$~m. The ground-contact phase is a one-degree-of-freedom
 rigid rotation about the gear line, so every rotor height is an exact
 trigonometric function of the single angle $\phi$; in the level
 configuration all heights coincide, yielding the exact identity
@@ -268,8 +258,8 @@ envelope at the design cap and at the largest absolute tilt reached.
 & $a$ [m] & $\delta\phi = 5^\circ$ (design cap)
 & $\delta\phi = 10^\circ$ (largest absolute tilt) \\
 \hline
-Roll  & $0.150$ & $17.3$ & $66.4$ \\
-Pitch & $0.120$ & $13.7$ & $52.0$ \\
+Roll  & $0.160$ & $18.5$ & $71.2$ \\
+Pitch & $0.130$ & $14.9$ & $56.8$ \\
 \hline
 \end{tabular}
 \end{table}
@@ -402,7 +392,7 @@ $\tfrac12 W(l_p{+}\lambda_{\mathrm{off}})\phi^{*2} \le 4.9$~mN\,m per
 direction — common to both tip directions, which start from the same
 rest attitude, hence cancelling in $M_{\mathrm{ff}}$;
 \item the linearization remainder is in fact \emph{smaller} at the
-tilted point ($16.2$ vs.\ $17.3$~mN\,m at the $5^\circ$ excursion), the
+tilted point ($17.3$ vs.\ $18.5$~mN\,m at the $5^\circ$ excursion), the
 restoring term subtracting from the curvature; the design tables,
 functions of the excursion alone, apply unchanged.
 \end{itemize}
@@ -467,7 +457,7 @@ below the validation scatter ($52$~mN\,m RMS), which is dominated by
 the genuine contact asymmetries the pivot-free average is designed to
 capture, and present identically at lift-off, where $M_{\mathrm{ff}}$
 compensates it by design. The full chain of reductions is
-$66.4 \to 25.6 \to 12.3 \to 1.2$~mN\,m: the exact remainder
+$71.2 \to 27.3 \to 12.3 \to 1.2$~mN\,m: the exact remainder
 \eqref{eq:lagrange} at the largest absolute tilt ($10^\circ$), the same
 expression at the median measured excursion ($6.1^\circ$), the measured
 pointwise maximum after projection, and the measured window RMS.
@@ -492,7 +482,7 @@ values in mN\,m.}
 Character \tabularnewline
 \hline
 \raggedright Small-angle curvature &
-\raggedright $17.3$ at $5^\circ$; $25.6$ at the median
+\raggedright $18.5$ at $5^\circ$; $27.3$ at the median
 excursion & \raggedright $1.2\;/\;12.3$ &
 \raggedright coherent, edge-concentrated \tabularnewline
 \raggedright Ground effect, without\,/\,with rotor interference &
@@ -563,8 +553,8 @@ of the cosh family: expanding the kernel,
   \label{eq:drifting-coeffs}
 \end{equation}
 whose coefficients drift with $\tau$; they are constant only for
-$\rho\equiv0$. This is the escape channel as an identity rather than a
-claim, and it is structural: solving \eqref{eq:deviation} for each
+$\rho\equiv0$. This makes the escape channel explicit, and its structure follows from
+the spanned directions: solving \eqref{eq:deviation} for each
 spanned forcing shows that the three absorbable directions are exactly
 the three deformations of the family — $\rho\propto1$ gives
 $\delta\omega = \rho_0\sinh(C_2\tau)/(J_PC_2)$, an onset shift;
@@ -604,9 +594,9 @@ to $5\times10^{-4}$ on the discrete operators actually used,
 \begin{equation*}
   |\Delta M_{\mathrm{crit}}| \;\le\; \max_{[0,\tau_{\mathrm{end}}]}|\rho|
 \end{equation*}
-holds unconditionally --- no envelope, no $\coth$ factor, no small-gain
-closure, and no assumption whatever on the \emph{shape} of $\rho$, only
-on its magnitude. Across all $140$ runs $\max|\rho| \le 15.9$~mN\,m, so
+holds without further assumptions --- no envelope, no $\coth$ factor and
+no small-gain closure are needed, and nothing is assumed about the
+\emph{shape} of $\rho$, only about its magnitude. Across all $140$ runs $\max|\rho| \le 15.9$~mN\,m, so
 no coherent modelling residual of any profile can bias the identified
 offset by more than $0.50$~mm.
 
@@ -640,9 +630,9 @@ error of the identified CoM offset is $1.3\,\mu$m (median) and
 $4.3\,\mu$m (worst configuration) --- roughly $400\times$ below the
 $1.6$--$1.8$~mm load-cell validation RMS of the identified offset, and
 $100\times$ below the $0.39$~mm that the $3^\circ$ window ablation
-moves. The identification is therefore \emph{noise-limited, not
-model-limited}, which is the same conclusion the rate-invariance
-certificate reaches from the opposite direction. The channel ranking is
+moves. Over this dataset the identification is therefore limited by
+measurement noise rather than by the closed form, which is also what
+the rate-invariance certificate indicates. The channel ranking is
 also informative: the gravity curvature dominates and is common-mode,
 so the pivot-free pairing does not reduce it ($0.99\times$), whereas the
 ground-effect channels are antisymmetric between tip directions and are
@@ -779,8 +769,9 @@ the response cannot leave the cosh family; the sole escape channel is
 measured — not merely bounded — at a few mN\,m, and its exact
 propagation through the deviation dynamics and the onset sensitivity
 (Table~\ref{tab:budget}) moves the delivered CoM offset by at most
-$4.3\,\mu$m, some $400\times$ below the achieved accuracy: the method
-is noise-limited, not model-limited. Empirically, the zero-freedom
+$4.3\,\mu$m, some $400\times$ below the achieved accuracy: over this
+dataset the accuracy is set by measurement noise rather than by the
+closed form. Empirically, the zero-freedom
 family predicts the response across all runs with a noise-dominated,
 rate-invariant residual, is insensitive to the window extent, and
 decisively outperforms its own quadratic limit. The theoretical bounds

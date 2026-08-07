@@ -45,7 +45,7 @@ no stable in-flight data are used.
 Symbol & Meaning & Value & Provenance \\
 \midrule
 $W$, $z_{\mathrm{CoM}}$ & weight, CoM height & $31.59$~N, $\sim$0.3~m & measured / conservative \\
-$l_{p,\phi},\,l_{p,\theta}$ & pivot offsets (roll, pitch) & $0.130$, $0.100$~m & conservative geometry \\
+$l_{p,\phi},\,l_{p,\theta}$ & pivot offsets (roll, pitch) & $0.140$, $0.110$~m & conservative geometry \\
 $J_P$ & inertia about the pivot line & — & never used numerically \\
 $C_T$ & thrust map, $T_i = C_T\Omega_i^2$ & $1.3175\times10^{-7}$ & bench calibration \\
 $M_{\mathrm{thr}}$ & window threshold & $0.01$~N\,m & noise floor \\
@@ -506,8 +506,8 @@ $1/K$ would be $W z_{\mathrm{CoM}}$; across the ten datasets it implies
 $z_{\mathrm{CoM}}$ between $0.061$ and $0.554$~m, and the roll and pitch
 datasets of \emph{the same airframe} disagree by up to a factor $8$
 (case~1: $0.554$ versus $0.068$~m). Since only horizontal masses are
-moved between configurations, $z_{\mathrm{CoM}}$ must be common, so
-$1/K$ is not measuring it and must not be reported as a CoM height.
+moved between configurations, $z_{\mathrm{CoM}}$ is common across them,
+so $1/K$ is better read as an effective gain than as a CoM height.
 The combination $J_P = 1/(K C_2^2)$ behaves quite differently:
 $0.249 \pm 0.016$~kg\,m$^2$ over the five roll datasets
 ($\mathrm{CV} = 6.5\%$) and $0.140 \pm 0.034$ over the five pitch
@@ -523,7 +523,7 @@ $x = C_2\tau_{\mathrm{end}}$, the log sensitivities are
 so the two cancel along
 $\delta\ln K = -x\coth(x/2)\,\delta\ln C_2$, which for small $x$ is
 exactly $\delta\ln K = -2\,\delta\ln C_2$, i.e.\
-$K C_2^2 = 1/J_P$ constant. The valley \emph{is} the statement that
+$K C_2^2 = 1/J_P$ constant. The valley therefore runs along the direction in which
 $C_2$ carries twice the leverage of $K$; equivalently, near the onset
 $\omega \simeq (\dot M/J_P)\tau^2/2$ depends on the pair only through
 $J_P$. The measured spread confirms the factor: over the search box
@@ -532,10 +532,10 @@ $\ln 2.36/\ln 1.54 = 1.99$.
 \end{remark}
 
 \paragraph{Robustness certificate: three constants for ten datasets.}
-Because the individual constants are weakly determined, a natural
-objection is that $(C_2, K)$ act as a two-parameter curve family with
-physical labels attached after the fact. The objection is answered by
-removing the freedom. Physics requires $z_{\mathrm{CoM}}$ to be shared
+Because the individual constants are weakly determined, it is
+reasonable to ask whether $(C_2, K)$ are doing the work of a
+two-parameter curve family rather than of the geometry they name. A
+direct test is to remove the freedom. Physics requires $z_{\mathrm{CoM}}$ to be shared
 by the whole vehicle and $J_P$ to be shared by all datasets on a given
 axis, so we reparametrize by
 \begin{equation}
@@ -595,17 +595,16 @@ Collapsing the twenty free numbers to three changes the RMS error by
 $0.03$~mm and no individual case by more than $0.11$~mm. The identical
 mean error, $-0.95$~mm in both columns, further shows that the residual
 bias is a property of the physics — the ground-contact budget of
-Sec.~\ref{sec:static} — and not of the calibration. The constrained
-form also cannot rail against a search bound, since $C_2$ is derived
-rather than searched.
+Sec.~\ref{sec:static} — and not of the calibration. In the constrained form $C_2$ is also derived rather
+than searched, so it cannot settle on a search bound.
 
 One caution completes the picture: this does \emph{not} measure
 $z_{\mathrm{CoM}}$. The score varies by only $3.6\%$ across the whole
 box $z_{\mathrm{CoM}} \in [0.15, 0.35]$~m, so every physically
-plausible height performs equally well. That is the stronger statement
-for the method — the identification does not need $z_{\mathrm{CoM}}$ —
-and it is the reason the individual constants should be reported as
-effective values rather than as geometry.
+plausible height performs comparably. The identification therefore does
+not depend on knowing $z_{\mathrm{CoM}}$, which is also why the
+individual constants are best reported as effective values rather than
+as geometry.
 
 \section{Aggregation and deliverables}
 \label{sec:aggregation}

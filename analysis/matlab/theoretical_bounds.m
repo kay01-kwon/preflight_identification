@@ -41,7 +41,7 @@ function theoretical_bounds()
 
 % ----------------------------------------------------------------- config
 c.W        = 31.59;              % N, loaded weight (3.220 kg)
-c.lp       = struct('roll', 0.130, 'pitch', 0.100);   % m, pivot offsets
+c.lp       = struct('roll', 0.140, 'pitch', 0.110);   % m, pivot offsets
 c.lam_off  = 0.020;              % m, worst |CoM offset| added to the arm
 c.zCoM     = 0.20;               % m, WORST case (smallest -> largest rho)
 c.beta_M   = 0.0345;             % 1/rad, GE moment-coefficient slope

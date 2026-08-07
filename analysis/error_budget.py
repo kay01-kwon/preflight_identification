@@ -78,7 +78,7 @@ from critical_value_getter_piecewise import (
 # small_angle_trajectory.py so the components stay comparable
 W_DEFAULT = 31.59          # N
 Z_COM = 0.30               # m, conservative
-LP = dict(x=0.130, y=0.100)
+LP = dict(x=0.140, y=0.110)
 OFFSET_MARGIN = 0.020      # m, worst |CoM offset| added to the gravity arm
 R_ROTOR = 0.127            # m
 H_HUB = 0.315              # m
