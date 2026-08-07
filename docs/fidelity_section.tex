@@ -148,16 +148,24 @@ reduction raises $1/D$, whereas $C_2$ receives only the latter and
 under a square root. The $K$ shift is one-signed over the whole box,
 so neglecting ground effect does not merely blur the amplitude constant
 — it underestimates it by at least $6\%$.
-Two consequences. First, a \emph{single} $C_2$ per configuration
-remains legitimate: within one dataset the only run-to-run variation of
-$k_0^{\mathrm{GE}}$ enters through $M_{\mathrm{crit}}$, whose largest
+Neither shift is an error. The calibration estimates the
+\emph{effective} constants directly, so $\alpha_M$ and
+$k_0^{\mathrm{GE}}$ are absorbed by construction — provided each is
+common to the runs that share one calibrated pair. Both are, to the
+measured precision: the moment-channel gain is rate-invariant over the
+twelvefold rate range (IQR $[4.13,4.27]\%$, a $0.14$~pp spread, i.e.\
+$0.13\%$ of $K$), and within one dataset the only run-to-run variation
+of $k_0^{\mathrm{GE}}$ enters through $M_{\mathrm{crit}}$, whose largest
 directional spread ($0.96$~N\,m) changes $D$ by $0.52\%$ and $C_2$ by
-$0.26\%$. Second, these shifts are \emph{absorbed}, not committed as
-errors — the calibration estimates the effective constants directly —
-and the sensitivity analysis shows that a $\pm20\%$ mis-specification
-of either constant moves the identified CoM offset by less than
-$0.9$~mm --- a $12\times$ margin on the $C_2$ shift and $2.5\times$ on
-the larger $K$ shift. For
+$0.26\%$ — so a \emph{single} $C_2$ per configuration remains
+legitimate, and only those residual spreads escape absorption. What the
+shifts do say is that the calibrated constants are not their textbook
+counterparts: $1/K$ underestimates $W z_{\mathrm{CoM}}$ by $6$–$8\%$ and
+must not be reported as a measurement of $z_{\mathrm{CoM}}$. The
+$\pm20\%$ sensitivity result — a mis-specification of either constant
+moves the identified CoM offset by less than $0.9$~mm — is the fallback
+for a user who pins the constants a priori instead of calibrating; it is
+not what protects the absorbed shifts. For
 scale, the a priori uncertainty of $C_2$ from the $z_{\mathrm{CoM}}$
 box alone is $-12.5\%$ ($6.14 \to 5.37$~rad/s with
 $J_P \ge m(z_{\mathrm{CoM}}^2 + l_p^2)$), several times the
@@ -541,6 +549,22 @@ the $12.5\%$ a priori spread the calibration already has to resolve, and
 in any case unreachable, since $C_2$ is not re-estimated per run: the
 sole per-run degree of freedom is the onset index, which is exactly what
 \eqref{eq:onset-translation} quantifies.
+
+That bound is moreover loose near the anchor, where the two shapes
+differ not in size but in \emph{order}. A genuine exponent error
+deforms the rate as $C_1\,\Delta C_2\,C_2\,\tau^2$, whereas the actual
+deviation inherits the sixth-order zero of $\rho$ and, convolved with
+$h_\phi(u)\simeq u/J_P$, grows as $e_\phi\sim\tau^8$, i.e.\
+$\delta\omega\sim\tau^7$. Equivalently, the forcing that would produce
+an exact $A(\cosh C_2'\tau - 1)$ response is
+$\rho = A(J_PC_2'^2 - D)\cosh C_2'\tau + AD$, which requires
+$\rho(0) = A J_P C_2'^2 \neq 0$: a forcing alive \emph{at} the onset.
+The onset conditions forbid precisely that — this, rather than the
+vanishing of $A_1$ and $A_2$ (which the $\cosh-1$ shape satisfies), is
+the structural obstruction. Exponent mimicry is therefore possible only
+towards the window edge, where both shapes have relaxed into
+exponentials and only the amplitude distinguishes them; that is the
+regime the $\varepsilon/2$ bound covers.
 
 \begin{table}[t]
 \centering
