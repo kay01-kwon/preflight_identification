@@ -75,8 +75,8 @@ OFF_MM = {('case_01', 'Mx'): -2.90,  ('case_01', 'My'): -11.45,
           ('case_05', 'Mx'): 10.91,  ('case_05', 'My'): -10.89}
 S_AX = {'Mx': +1.0, 'My': -1.0}       # W y_off = +M_ff ; W x_off = -M_ff
 FIELDS = ['case', 'axis', 'bag', 'dir', 'rate', 'M', 'f', 'arm', 'tilt',
-          'tilt_mc', 'tilt_on', 'tilt_orth', 'onset_t', 'R', 'res', 'c2',
-          'k']
+          'tilt_mc', 'tilt_on', 'tilt_orth', 'onset_t', 'cx', 'R', 'res',
+          'c2', 'k']
 
 
 # ═════════════════════════════════════════════════════════════
@@ -122,7 +122,7 @@ def collect(root: Path, out: Path) -> list[dict]:
                 dir='pos' if c.bag_name.startswith('pos') else 'neg',
                 rate=cvp.commanded_ramp_rate(c.bag_name) or np.nan,
                 M=c.onset_moment, f=c.onset_thrust,
-                arm=piv['pivot_abs'] * 1e-3,
+                arm=piv['pivot_abs'] * 1e-3, cx=piv['cx'] * 1e-3,
                 R=piv['R'] * 1e-3, res=piv['residual'],
                 tilt=float(np.median(exc[:n])),
                 tilt_mc=float(np.median(exc_mc[:nm])),
@@ -440,49 +440,85 @@ def gear_corrected(rows, z_marker):
            - W z_CoM sin(phi_0)
 
     left the landing-gear asymmetry as a free constant degenerate with
-    z_CoM.  The circle fit measures it, so the only unknowns left are
-    z_CoM and whatever constant separates the mocap marker frame from the
-    load-cell reference.
+    z_CoM.  The circle fit measures it.  Work from the SIGNED centre cx,
+    not |cx|: the two tip directions pivot about opposite contact lines,
+    so cx changes sign between them and the two combinations separate
+    cleanly.  With the contact at body (+-l, -z_m) relative to the marker
+    and d_horiz measured world-horizontally,
+
+        a_+ =  o cx_+ = l_+ cos(phi_0) - z_m sin(phi_0)
+        a_- = -o cx_- = l_- cos(phi_0) + z_m sin(phi_0)
+
+    with o = sign(cx_+) absorbing the axis convention (the pos roll tip
+    pivots about the -y contact, the pos pitch tip about the +x one, and
+    the fit confirms cx_+ and cx_- always come out with opposite signs).
+    Then  (a_+ + a_-)/2  is the contact half-span, pure geometry with the
+    tilt term cancelled, and
+          l_+ - l_- = [(a_+ - a_-) + 2 z_m sin(phi_0)] / cos(phi_0).
+
+    That asymmetry is measured in the SAME frame as the arms, so
+    subtracting it re-references the estimated offset from the marker to
+    the contact midpoint — which is where the load-cell truth is expected
+    to live.
     """
     grp = defaultdict(list)
     for r in rows:
         grp[(r['case'], r['axis'], r['dir'])].append(r)
-    print("\n  body-frame gear asymmetry  l+ - l-  =  (a+ - a-) "
-          f"+ 2 z_m sin(phi_0),  z_m = {1e3 * z_marker:.0f} mm")
-    print(f"  {'case':9}{'ax':4}{'a+ - a-':>9}{'2 zm sinφ':>11}{'l+ - l-':>9}"
-          f"{'gear [mm]':>11}{'err':>8}{'err-gear':>10}")
-    e, reg, ax_ = [], [], []
+    print("\n  signed circle centres:  l+ - l- = "
+          f"[(cx+ + cx-) + 2 z_m sin(phi_0)] / cos(phi_0),  z_m = "
+          f"{1e3 * z_marker:.0f} mm")
+    print(f"  {'case':9}{'ax':4}{'cx+':>8}{'cx-':>8}{'half-span':>11}"
+          f"{'l+ - l-':>9}{'gear [mm]':>11}{'err':>8}{'err-gear':>10}")
+    e, reg, ax_, spans = [], [], [], defaultdict(list)
     for case in sorted(MASS_KG):
         for axis in ('Mx', 'My'):
             vp, vn = grp.get((case, axis, 'pos')), grp.get((case, axis, 'neg'))
             if not vp or not vn:
                 continue
-            W, s = MASS_KG[case] * G, S_AX[axis]
-            ap = float(np.nanmean([r['arm'] for r in vp]))
-            an = float(np.nanmean([r['arm'] for r in vn]))
+            W, s_ax = MASS_KG[case] * G, S_AX[axis]
+            cp = float(np.nanmean([r['cx'] for r in vp]))
+            cn = float(np.nanmean([r['cx'] for r in vn]))
+            if not (np.isfinite(cp) and np.isfinite(cn)):
+                continue
+            # the two tip directions must pivot about OPPOSITE contact
+            # lines; normalise to distances a_+ = l_+ cos - z_m sin and
+            # a_- = l_- cos + z_m sin (same form on both axes)
+            o = np.sign(cp)
+            if np.sign(cn) == o:
+                print(f"  [skip] {case}/{axis}: cx same sign both directions")
+                continue
+            a_p, a_n = o * cp, -o * cn
             f = 0.5 * (np.mean([r['f'] for r in vp])
                        + np.mean([r['f'] for r in vn]))
             t0 = float(np.mean([r['tilt'] for r in vp + vn]))
-            corr = 2.0 * z_marker * np.sin(t0)
-            dl = (ap - an) + corr
-            gear = s * 0.5 * (W - f) * dl / W * 1e3
+            # the tilt enters the arms with the same sign as it enters the
+            # offset, i.e. through o * s_ax_of_the_axis convention
+            half = 0.5 * (a_p + a_n)
+            dl = ((a_p - a_n) + 2.0 * z_marker * np.sin(t0)) / np.cos(t0)
+            spans[axis].append(half)
+            gear = s_ax * 0.5 * (W - f) * dl / W * 1e3
             Mff = 0.5 * (np.mean([r['M'] for r in vp])
                          + np.mean([r['M'] for r in vn]))
-            err = s * Mff / W * 1e3 - OFF_MM[(case, axis)]
+            err = s_ax * Mff / W * 1e3 - OFF_MM[(case, axis)]
             e.append(err - gear)
-            reg.append(-s * np.sin(t0))
+            reg.append(-s_ax * np.sin(t0))
             ax_.append(0.0 if axis == 'Mx' else 1.0)
-            print(f"  {case:9}{axis:4}{1e3 * (ap - an):9.1f}{1e3 * corr:11.1f}"
-                  f"{1e3 * dl:9.1f}{gear:11.2f}{err:8.2f}{err - gear:10.2f}")
+            print(f"  {case:9}{axis:4}{1e3 * cp:8.1f}{1e3 * cn:8.1f}"
+                  f"{1e3 * half:11.1f}{1e3 * dl:9.1f}{gear:11.2f}{err:8.2f}"
+                  f"{err - gear:10.2f}")
+    for axis, geo in (('Mx', 144.0), ('My', 125.0)):
+        a = 1e3 * np.abs(np.array(spans[axis]))
+        print(f"  contact half-span {axis}: {a.mean():.1f} ± {a.std(ddof=1):.1f}"
+              f" mm  (frame half-dimension {geo:.0f} mm)")
     e, reg, ax_ = np.array(e), np.array(reg), np.array(ax_)
     print("\n  model:  err - gear = const - z_CoM * s_ax * sin(phi_0)")
     for name, X, cols in (
-            ('marker frame = truth frame ',
+            ('contact-midpoint frame = truth frame',
              reg[:, None], ['z_CoM [mm]']),
-            ('+ one frame constant       ',
+            ('+ one frame constant                ',
              np.column_stack([np.ones(len(e)), reg]),
              ['const [mm]', 'z_CoM [mm]']),
-            ('+ per-axis frame constants ',
+            ('+ per-axis frame constants          ',
              np.column_stack([1 - ax_, ax_, reg]),
              ['c_Mx [mm]', 'c_My [mm]', 'z_CoM [mm]'])):
         c, se, r, dof = _ols(X, e)
@@ -490,9 +526,9 @@ def gear_corrected(rows, z_marker):
                          for n, v, s in zip(cols, c, se))
         print(f"  {name}: {txt}   (resid RMS {np.std(r, ddof=1):.2f} mm)")
     print("  -> measuring the gear asymmetry instead of leaving it free is "
-          "what turns\n     this channel positive; it stays degenerate with a "
-          "frame offset between\n     the mocap marker and the load-cell "
-          "reference, so quote it as conditional.")
+          "what turns\n     this channel positive; what remains degenerate "
+          "is only a constant\n     offset between the contact-midpoint "
+          "frame and the load-cell reference.")
 
 
 def between_group(rows):

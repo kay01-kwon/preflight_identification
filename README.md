@@ -252,14 +252,24 @@ to the resting marker height and to the `h = 0.315 m` hub height the GE model
 assumes, with a `0.14 mm` fit residual — the `cz = 0` pin lands on the contact
 plane and the post-onset motion is a rigid rotation about a fixed line.
 
-That fixes the reference frame of the arm, which matters: `pivot_abs` is a
+That fixes the reference frame of the arm, which matters: `cx` is a
 *world-horizontal* distance from the marker's rest position, so at a resting
-tilt it already carries a `z_marker sin φ₀` term,
+tilt it already carries a `z_marker sin φ₀` term. Work from the **signed**
+centre — the two tip directions pivot about opposite contact lines, and the fit
+confirms it in all ten groups (`cx₊ < 0 < cx₋` in roll, `cx₊ > 0 > cx₋` in
+pitch, i.e. the pos roll tip pivots about the `−y` contact and the pos pitch tip
+about the front one). With `o = sign(cx₊)` absorbing that convention,
 
 ```
-a₊ = l₊ cos φ₀ − z_m sin φ₀ ,   a₋ = l₋ cos φ₀ + z_m sin φ₀
-⇒  l₊ − l₋ = (a₊ − a₋) + 2 z_m sin φ₀
+a₊ =  o·cx₊ = l₊ cos φ₀ − z_m sin φ₀
+a₋ = −o·cx₋ = l₋ cos φ₀ + z_m sin φ₀
+⇒  half-span = (a₊ + a₋)/2   (tilt cancels — pure geometry)
+⇒  l₊ − l₋   = [(a₊ − a₋) + 2 z_m sin φ₀] / cos φ₀
 ```
+
+The half-span comes out `140.4 ± 1.0` mm (roll) and `112.7 ± 1.5` mm (pitch)
+against frame half-dimensions of 144 and 125 mm — the pitch contacts sit 12 mm
+inboard of the nominal geometry.
 
 and `l₊ − l₋` is exactly the landing-gear asymmetry that was degenerate with
 `z_CoM` in `M_ff`. Measured this way it is small and consistent — roll `−0.9`
