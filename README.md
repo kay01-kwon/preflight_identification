@@ -303,20 +303,31 @@ things had to be right first, all of them from the manuscript's own equations:
    different heights while the vehicle is still sitting still. Worth ~3% of the
    GE level here (`--abs-attitude` restores the old behaviour).
 
-Median over runs, in mN·m, after all three:
+4. **The window ends at 5° of absolute tilt** (`--tilt-cap`), the rotor-stop
+   setting. The logged cut lands later — total tilt `8.0°` median, `6.5–9.3°`
+   over the runs, from trigger latency plus rotor spin-down — so a window run
+   to the moment peak reaches 6.3° of accumulated tilt (median) and drags in
+   the part of the trajectory the excitation was never meant to cover.
 
-| model | theory @8° | difference @8° | difference level | shape-only RMS |
+Median over runs, in mN·m, over `δφ` = 1–4° (= 5° absolute):
+
+| model | theory | difference @4° | **difference level** | shape-only RMS |
 |---|---|---|---|---|
-| single-rotor | `29` | `−96` | `−63` | `184` |
-| interference | `136` | `−197` | `−183` | `184` |
-| Garofano | `280` | `−341` | `−344` | `182` |
+| **single-rotor** | `34` | `−167` | **`−7`** | `142` |
+| interference | `154` | `−286` | `−113` | `142` |
+| Garofano | `345` | `−434` | `−273` | `141` |
 
-The level now lands within `−63` mN·m for the single-rotor model (it was `−238`
-before the three fixes). What does not close is the *shape*: the residual runs
-from `+110` mN·m at 1° of tilt to `−270` at 9.3° — slope `−40` mN·m/deg —
-while every model stays flat within `±20` mN·m of its own mean (panel c). That
-tilt-proportional term is 14× the largest model's gradient and is a `W·z_CoM`
-stiffness error of about 72 mm, not a ground effect.
+**The single-rotor (Cheeseman) model matches the measured residual's level to
+7 mN·m** — it was `−238` mN·m before these fixes. In panel (a) the residual
+crosses the single-rotor curve around 2.5–3° of tilt. The interference and
+Garofano models over-predict by 113 and 273 mN·m.
+
+What still does not close is the *shape*: the residual runs from `+120` mN·m at
+1.2° to `−140` at 4°, while all three models are flat to within `±20` mN·m of
+their own mean (panel c). That tilt-proportional term is a `W·z_CoM` stiffness
+error rather than a ground effect — at `z_CoM = 267` mm it corresponds to about
+120 mm of height error, in the same direction as the free tip-over's `207` mm
+(pitch).
 
 **Which way does the GE moment push?** Across all 140 runs, both axes and both
 directions, `sgn·ΔM_GE > 0` in **100.0%** of samples — the ground effect always

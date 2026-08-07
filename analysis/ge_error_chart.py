@@ -92,10 +92,16 @@ def main():
                         "during the fast fall, which biases phi'' here.")
     p.add_argument('--lpf-cutoff', type=float, default=15.0)
     p.add_argument('--savgol', type=int, default=15)
-    p.add_argument('--grid-max', type=float, default=10.0,
+    p.add_argument('--grid-max', type=float, default=4.0,
                    help="tilt grid upper edge [deg]")
     p.add_argument('--grid-step', type=float, default=0.25)
     p.add_argument('--min-samples', type=int, default=20)
+    p.add_argument('--tilt-cap', type=float, default=5.0,
+                   help="end the window at this ABSOLUTE total tilt "
+                        "|(roll, pitch)| [deg] — the rotor-stop setting.  "
+                        "Beyond it the run is outside the intended envelope "
+                        "(the logged cut lands at 8.0 deg median: trigger "
+                        "latency plus spin-down).  0 disables.")
     p.add_argument('--dphi-min', type=float, default=1.0,
                    help="start the window at this accumulated tilt [deg]; "
                         "below it the vehicle is still static and the "
@@ -138,6 +144,8 @@ def main():
             # truncate so it stays aligned with the chosen rate channel
             phi = np.interp(t, b.odom.t - b.odom.t[0],
                             roll if axis == 'x' else pitch)
+            tilt_abs = np.interp(t, b.odom.t - b.odom.t[0],
+                                 np.degrees(np.sqrt(roll ** 2 + pitch ** 2)))
             n = len(t)
             i0, i1 = detect_excitation_window(M,
                                               moment_cap=MOMENT_CAP.get(axis))
@@ -162,6 +170,10 @@ def main():
                 qr = qr / np.linalg.norm(qr)
             ge, okge, m = ge_moment(b, axis, pos, t, n, args, qr)
             k1 = min(i1, m - 1)
+            if args.tilt_cap > 0:
+                cap = np.where(tilt_abs[i0:k1 + 1] > args.tilt_cap)[0]
+                if len(cap):
+                    k1 = i0 + int(cap[0]) - 1
             k0 = i0
             if k1 - k0 < args.min_samples or not okge[k0:k1 + 1].all():
                 continue
@@ -226,21 +238,23 @@ def main():
     xr, medr, nrun = band(ax, grid, R, INK, 'dynamics residual', lw=2.4)
     for m in MODELS:
         band(ax, grid, T[m], COL[m], LBL[m])
-    ax.set_ylim(-700, 700)
+    ax.set_ylim(-500, 550)
     ax.set_ylabel('moment about the contact line  [mN·m]')
     ax.set_title('(a)  what the dynamics is missing,\nand what the GE models '
                  'predict', color=INK, loc='left', fontsize=10)
+    xend8 = grid[np.where(np.sum(np.isfinite(R), axis=0) >= 5)[0][-1]] * 0.82
     for m in MODELS:
-        yv = np.nanmedian(T[m][:, np.argmin(np.abs(grid - 8.0))])
-        ax.annotate(LBL[m].replace('GE: ', ''), (8.0, yv), xytext=(2, 7),
+        yv = np.nanmedian(T[m][:, np.argmin(np.abs(grid - xend8))])
+        ax.annotate(LBL[m].replace('GE: ', ''), (xend8, yv), xytext=(2, 7),
                     textcoords='offset points', color=COL[m], fontsize=8,
                     va='bottom', ha='left')
-    yv = np.nanmedian(R[:, np.argmin(np.abs(grid - 6.0))])
-    ax.annotate('dynamics residual', (6.0, yv), xytext=(4, -12),
+    yv = np.nanmedian(R[:, np.argmin(np.abs(grid - 0.7 * xend8))])
+    ax.annotate('dynamics residual', (0.7 * xend8, yv), xytext=(4, -12),
                 textcoords='offset points', color=INK, fontsize=8)
-    j2 = np.argmin(np.abs(grid - 2.0))
-    j8a = np.argmin(np.abs(grid - 8.0))
-    ax.annotate(f'runs pooled: {int(nrun[j2])} at 2°, {int(nrun[j8a])} at 8°'
+    j2 = np.argmin(np.abs(grid - 1.5))
+    j8a = min(np.argmin(np.abs(grid - xend8)), len(nrun) - 1)
+    ax.annotate(f'runs pooled: {int(nrun[j2])} at 1.5°, '
+                f'{int(nrun[j8a])} at {xend8:.1f}°'
                 f'   ·   band = IQR (clipped by the axis)', (0.02, 0.03),
                 xycoords='axes fraction', color=MUTED, fontsize=7.5)
 
@@ -248,12 +262,12 @@ def main():
     ax = axs[1]
     for m in MODELS:
         band(ax, grid, R - T[m], COL[m], LBL[m])
-    ax.set_ylim(-900, 500)
+    ax.set_ylim(-700, 400)
     ax.set_ylabel('residual − theory  [mN·m]')
     ax.set_title('(b)  difference, as it stands\n(no fitting)', color=INK,
                  loc='left', fontsize=10)
     for k, m in enumerate(MODELS):
-        xa = 8.6
+        xa = xend8
         yv = np.nanmedian((R - T[m])[:, np.argmin(np.abs(grid - xa))])
         ax.annotate(LBL[m].replace('GE: ', ''), (xa, yv), xytext=(2, 7),
                     textcoords='offset points', color=COL[m], fontsize=8,
@@ -271,12 +285,13 @@ def main():
     ax.set_ylabel('same, per-run mean removed  [mN·m]')
     ax.set_title('(c)  shape alone — the part no arm\nerror can absorb',
                  color=INK, loc='left', fontsize=10)
-    yv = np.nanmedian(Rd[:, np.argmin(np.abs(grid - 7.0))])
-    ax.annotate('dynamics residual', (7.0, yv), xytext=(2, -13),
+    yv = np.nanmedian(Rd[:, np.argmin(np.abs(grid - 0.85 * xend8))])
+    ax.annotate('dynamics residual', (0.85 * xend8, yv), xytext=(2, -13),
                 textcoords='offset points', color=INK, fontsize=8)
     ax.annotate('all three GE models\n(within ±20 mN·m of zero)',
-                (4.0, 0), xytext=(0, 26), textcoords='offset points',
-                color=COL['interf'], fontsize=8, ha='center')
+                (0.95 * xend8, 0), xytext=(0, -34),
+                textcoords='offset points',
+                color=COL['interf'], fontsize=8, ha='right')
 
     fig.text(0.008, 0.965, "Rotation-dynamics moment residual vs the "
              "theoretical rotor ground-effect moment", color=INK,
@@ -284,8 +299,8 @@ def main():
     fig.text(0.008, 0.925, f"{len(R)} runs · 5 configurations · both axes   |   "
              f"z_CoM = {1e3 * args.z_com:.0f} mm, J_P = {args.jp:.3f} kg·m², "
              f"collective through l_p = {1e3 * args.lp_roll:.0f}/"
-             f"{1e3 * args.lp_pitch:.0f} mm (Eq. 43), gravity through the "
-             f"mocap arm — no free parameter",
+             f"{1e3 * args.lp_pitch:.0f} mm (Eq. 43), window capped at "
+             f"{args.tilt_cap:.0f}° absolute tilt — no free parameter",
              color=INK2, fontsize=9, ha='left', va='top')
     fig.tight_layout(rect=(0, 0, 1, 0.90))
     out = Path(args.output_dir)
@@ -312,9 +327,11 @@ def main():
             w.writerow(row)
     print(f"Table  -> {out / 'ge_error_by_tilt.csv'}")
 
-    print(f"\n  {'model':11}{'theory @8°':>12}{'diff @8°':>11}"
+    jok = np.where(np.sum(np.isfinite(R), axis=0) >= 5)[0]
+    xend = grid[jok[-1]]
+    print(f"\n  {'model':11}{f'theory @{xend:.1f}°':>12}{f'diff @{xend:.1f}°':>11}"
           f"{'diff level':>12}{'diff RMS':>11}{'demeaned RMS':>14}")
-    j8 = np.argmin(np.abs(grid - 8.0))
+    j8 = int(jok[-1])
     for m in MODELS:
         E = R - T[m]
         print(f"  {m:11}{np.nanmedian(T[m][:, j8]):12.0f}"
