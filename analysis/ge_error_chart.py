@@ -103,8 +103,13 @@ def main():
     p.add_argument('--arm', type=float, default=0.265)
     p.add_argument('--radius', type=float, default=0.127)
     p.add_argument('--hub-height', type=float, default=0.315)
-    p.add_argument('--lp-roll', type=float, default=0.140)
-    p.add_argument('--lp-pitch', type=float, default=0.110)
+    p.add_argument('--lp-roll', type=float, default=0.130,
+                   help="manuscript Eq. (38): conservative half-span, roll")
+    p.add_argument('--lp-pitch', type=float, default=0.100,
+                   help="manuscript Eq. (39): conservative half-span, pitch")
+    p.add_argument('--abs-attitude', action='store_true',
+                   help="rotor heights from the gravity-referenced attitude "
+                        "instead of the attitude relative to rest")
     p.add_argument('--frame-width', type=float, default=0.22)
     p.add_argument('--jk', type=float, default=2.2)
     p.add_argument('--c-t', type=float, default=1.3175e-7)
@@ -150,7 +155,12 @@ def main():
                 continue
             alpha = savgol_filter(om, wl, 2, deriv=1,
                                   delta=float(np.median(np.diff(t))))
-            ge, okge, m = ge_moment(b, axis, pos, t, n, args)
+            qr = None
+            if not args.abs_attitude:
+                j = max(1, min(i0, len(b.odom.t)))
+                qr = b.odom.quaternion[:j].mean(axis=0)
+                qr = qr / np.linalg.norm(qr)
+            ge, okge, m = ge_moment(b, axis, pos, t, n, args, qr)
             k1 = min(i1, m - 1)
             k0 = i0
             if k1 - k0 < args.min_samples or not okge[k0:k1 + 1].all():
@@ -164,7 +174,10 @@ def main():
             if k1 - k0 < args.min_samples:
                 continue
             s = slice(k0, k1 + 1)
-            r = (args.jp * sgn * alpha[s] - sgn * M[s] - f[s] * a
+            # Eq. (43)/(44): the collective acts through l_p, the same arm
+            # the GE model uses; gravity acts through the CoM arm a
+            lp = args.lp_roll if axis == 'x' else args.lp_pitch
+            r = (args.jp * sgn * alpha[s] - sgn * M[s] - f[s] * lp
                  + W * (a * np.cos(dphi[s]) - args.z_com * np.sin(dphi[s])))
             x = np.degrees(dphi[s])
             keep = np.concatenate([[True], np.diff(x) > 1e-6])
@@ -213,6 +226,7 @@ def main():
     xr, medr, nrun = band(ax, grid, R, INK, 'dynamics residual', lw=2.4)
     for m in MODELS:
         band(ax, grid, T[m], COL[m], LBL[m])
+    ax.set_ylim(-700, 700)
     ax.set_ylabel('moment about the contact line  [mN·m]')
     ax.set_title('(a)  what the dynamics is missing,\nand what the GE models '
                  'predict', color=INK, loc='left', fontsize=10)
@@ -227,13 +241,14 @@ def main():
     j2 = np.argmin(np.abs(grid - 2.0))
     j8a = np.argmin(np.abs(grid - 8.0))
     ax.annotate(f'runs pooled: {int(nrun[j2])} at 2°, {int(nrun[j8a])} at 8°'
-                f'   ·   band = IQR', (0.02, 0.03), xycoords='axes fraction',
-                color=MUTED, fontsize=7.5)
+                f'   ·   band = IQR (clipped by the axis)', (0.02, 0.03),
+                xycoords='axes fraction', color=MUTED, fontsize=7.5)
 
     # (b) raw difference
     ax = axs[1]
     for m in MODELS:
         band(ax, grid, R - T[m], COL[m], LBL[m])
+    ax.set_ylim(-900, 500)
     ax.set_ylabel('residual − theory  [mN·m]')
     ax.set_title('(b)  difference, as it stands\n(no fitting)', color=INK,
                  loc='left', fontsize=10)
@@ -268,7 +283,9 @@ def main():
              fontsize=11.5, ha='left', va='top')
     fig.text(0.008, 0.925, f"{len(R)} runs · 5 configurations · both axes   |   "
              f"z_CoM = {1e3 * args.z_com:.0f} mm, J_P = {args.jp:.3f} kg·m², "
-             f"pivot arm from the mocap circle fit — no free parameter",
+             f"collective through l_p = {1e3 * args.lp_roll:.0f}/"
+             f"{1e3 * args.lp_pitch:.0f} mm (Eq. 43), gravity through the "
+             f"mocap arm — no free parameter",
              color=INK2, fontsize=9, ha='left', va='top')
     fig.tight_layout(rect=(0, 0, 1, 0.90))
     out = Path(args.output_dir)

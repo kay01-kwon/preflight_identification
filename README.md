@@ -278,22 +278,45 @@ ever be separated, against a 181 mN·m fit RMS. The 3σ detection floor is
 1.4–3.9 N·m — 4 to 100× above what the models predict.
 
 **Chart, whole dataset.** `analysis/ge_error_chart.py` draws the same comparison
-with no free parameter at all — `z_CoM` and `J_P` pinned, the arm taken from the
-mocap circle fit — pooled over all 139 runs as a function of accumulated tilt:
+with no free parameter at all — `z_CoM` and `J_P` pinned, the collective acting
+through `l_p` and gravity through the mocap arm — pooled over all 139 runs
+against accumulated tilt:
 
 ```bash
 python analysis/ge_error_chart.py DataSet/exp --z-com 0.267 --jp 0.311
 ```
 
-→ `docs/fig_ge_error.pdf` (+ `.png`) and `docs/ge_error_by_tilt.csv`. The window
-starts at 1° of tilt, below which the vehicle is still static and the rotational
-balance does not apply. Median over runs, in mN·m:
+→ `docs/fig_ge_error.pdf` (+ `.png`) and `docs/ge_error_by_tilt.csv`. Three
+things had to be right first, all of them from the manuscript's own equations:
 
-| model | theory @8° | difference @8° | difference level | difference RMS | shape-only RMS |
-|---|---|---|---|---|---|
-| single-rotor | `32` | `−442` | `−238` | `398` | `105` |
-| interference | `148` | `−551` | `−350` | `429` | `103` |
-| Garofano | `307` | `−711` | `−513` | `526` | `101` |
+1. **The collective acts through `l_p`, not through the CoM arm.** Eq. (43),
+   `ΔM_GE = Σ (b_i + l_p) η_i T_i`, uses the *measured per-rotor* thrusts, so
+   `Σ (b_i + l_p) T_i = M_cmd + f·l_p` — both channels of the affine form (44),
+   `η_M M_cmd + η_f f l_p`. The balance must therefore carry `f·l_p` with the
+   same `l_p`. Using the mocap arm (113/148 mm) instead of `l_p` (100/130 mm)
+   put `f·(a − l_p) ≈ 0.27–0.38` N·m into the residual.
+2. **`l_p = 0.130 / 0.100` m** (Eqs. 38–39, conservative), not the 0.140/0.110
+   the analysis scripts had been using.
+3. **Rotor heights go with the attitude *relative to rest*.** Eq. (37) is a
+   height above the *ground*, and the floor is tilted — the vehicle sits flat
+   on it. Referencing the gravity vertical instead puts the six rotors at
+   different heights while the vehicle is still sitting still. Worth ~3% of the
+   GE level here (`--abs-attitude` restores the old behaviour).
+
+Median over runs, in mN·m, after all three:
+
+| model | theory @8° | difference @8° | difference level | shape-only RMS |
+|---|---|---|---|---|
+| single-rotor | `29` | `−96` | `−63` | `184` |
+| interference | `136` | `−197` | `−183` | `184` |
+| Garofano | `280` | `−341` | `−344` | `182` |
+
+The level now lands within `−63` mN·m for the single-rotor model (it was `−238`
+before the three fixes). What does not close is the *shape*: the residual runs
+from `+110` mN·m at 1° of tilt to `−270` at 9.3° — slope `−40` mN·m/deg —
+while every model stays flat within `±20` mN·m of its own mean (panel c). That
+tilt-proportional term is 14× the largest model's gradient and is a `W·z_CoM`
+stiffness error of about 72 mm, not a ground effect.
 
 **Which way does the GE moment push?** Across all 140 runs, both axes and both
 directions, `sgn·ΔM_GE > 0` in **100.0%** of samples — the ground effect always

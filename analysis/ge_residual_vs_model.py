@@ -76,8 +76,27 @@ MODELS = ('single', 'interf', 'garofano')
 #  (same construction as analysis/ge_trajectory.py)
 # ═════════════════════════════════════════════════════════════
 
-def ge_moment(bag, axis, pos, t, n, args):
+def ge_moment(bag, axis, pos, t, n, args, phi_rest_quat=None):
     """dM_GE(t) [N m] about the active pivot line, for each model.
+
+    Implements Eq. (43) directly,
+
+        dM_GE = sum_i (b_i + l_p) eta_i^GE T_i ,   eta_i = gamma_i - 1,
+
+    with b_i = l_y,i (roll) / -l_x,i (pitch) and T_i the MEASURED per-rotor
+    thrust.  Because T_i is the actual per-rotor thrust rather than the
+    commanded differential, the collective is already in it: summing
+    (b_i + l_p) T_i gives M_cmd + f l_p, so Eq. (43) carries both channels
+    of the affine form (44), eta_M M_cmd + eta_f f l_p, with no extra
+    term needed.
+
+    ``phi_rest_quat`` is the resting attitude.  The rotor heights of
+    Eq. (37) are heights above the GROUND, and the ground here is a
+    tilted floor the vehicle rests flat on — so the attitude must be
+    taken RELATIVE to the resting one.  Using the gravity-referenced
+    attitude instead puts the six rotors at different heights while the
+    vehicle is still sitting still, which is a spurious differential.
+    Passing None restores the absolute-attitude behaviour.
 
     Everything is put on the caller's clock ``t`` by interpolation — with
     --omega-source imu that clock is the IMU's, not the odometry's, and
@@ -101,7 +120,18 @@ def ge_moment(bag, axis, pos, t, n, args):
     Ti = np.vstack([np.interp(t, bag.rpm.t - t0, T6[:, j])
                     for j in range(6)]).T[:n]
 
-    qw, qx, qy, qz = bag.odom.quaternion.T
+    q = bag.odom.quaternion
+    if phi_rest_quat is not None:
+        # q_rel = conj(q_rest) * q  ->  heights above the resting (ground)
+        # plane instead of above the gravity horizontal
+        aw, ax_, ay_, az_ = phi_rest_quat
+        bw, bx, by, bz = q[:, 0], q[:, 1], q[:, 2], q[:, 3]
+        q = np.column_stack([
+            aw * bw + ax_ * bx + ay_ * by + az_ * bz,
+            aw * bx - ax_ * bw - ay_ * bz + az_ * by,
+            aw * by + ax_ * bz - ay_ * bw - az_ * bx,
+            aw * bz - ax_ * by + ay_ * bx - az_ * bw])
+    qw, qx, qy, qz = q.T
     tq = bag.odom.t - t0
     r31 = np.interp(t, tq, 2 * (qx * qz - qw * qy))[:n]
     r32 = np.interp(t, tq, 2 * (qy * qz + qw * qx))[:n]
@@ -186,8 +216,15 @@ def main():
     p.add_argument('--arm', type=float, default=0.265)
     p.add_argument('--radius', type=float, default=0.127)
     p.add_argument('--hub-height', type=float, default=0.315)
-    p.add_argument('--lp-roll', type=float, default=0.140)
-    p.add_argument('--lp-pitch', type=float, default=0.110)
+    p.add_argument('--lp-roll', type=float, default=0.130,
+                   help="half landing-gear span, roll [m] — the manuscript's "
+                        "conservative value (Eq. 38/39)")
+    p.add_argument('--lp-pitch', type=float, default=0.100,
+                   help="half landing-gear span, pitch [m] — manuscript value")
+    p.add_argument('--abs-attitude', action='store_true',
+                   help="use the gravity-referenced attitude for the rotor "
+                        "heights instead of the attitude relative to rest "
+                        "(wrong when the floor is tilted; kept for comparison)")
     p.add_argument('--frame-width', type=float, default=0.22)
     p.add_argument('--jk', type=float, default=2.2)
     p.add_argument('--c-t', type=float, default=1.3175e-7)
