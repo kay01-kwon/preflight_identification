@@ -197,6 +197,104 @@ plus the error map when `--truth-com` is given). On the reference dataset a
 ±20 % mis-specification of either constant moves the CoM by < 0.9 mm, and the
 constant choice moves the ground-truth error by < 0.9 mm over the whole box.
 
+### Dynamics residual vs the theoretical rotor GE moment
+
+With `z_CoM` and `J_P` pinned, every term of the contact-phase rotational
+balance is known except the ground effect, so the residual should *be* it:
+
+```
+r(t) = J_P φ̈ − M − f·a_t + W[a_c cos δφ − z_CoM sin δφ]   ≟   ΔM_GE(t)
+```
+
+The throttle cut makes the calibration possible — the coasting pendulum is
+GE-free, so it fixes the CoM arm where the ground effect cannot touch it — and
+the theoretical moment is evaluated on the same measured trajectory with the
+three models of `analysis/ge_linearity.py`.
+
+```bash
+python analysis/ge_residual_vs_model.py DataSet/exp --z-com 0.267 --jp 0.311
+```
+
+Over the powered window (`δφ` 0.5° → 8.9°, 87 samples, 20 runs):
+
+| | level | span |
+|---|---|---|
+| dynamics residual | `−209 ± 152` mN·m | `874 ± 179` mN·m |
+| GE, single (Cheeseman) | `37 ± 4` | `7 ± 2` |
+| GE, interference | `156 ± 16` | `18 ± 4` |
+| GE, Garofano adaptation | `336 ± 37` | `29 ± 9` |
+
+**The comparison has no power either way.** Adding `g·ΔM_GE` to the rigid model
+(one free arm, `z_CoM` and `J_P` pinned) returns `g = +28 ± 13` (single),
+`−16 ± 3.6` (interference) and `+2.3 ± 3.9` (Garofano), where `g = +1` would
+mean the theory is exactly what the dynamics is missing — i.e. 2.1σ, 4.6σ and
+0.3σ from it. With per-run standard errors of 3.6–13, `g = 1` and `g = 0` are
+not distinguishable, so the Garofano agreement is not evidence for it either.
+The `lp` placement behind these numbers is verified run by run against the
+mocap pivot side (roll pos → pivot at `−lp`, pitch pos → `+lp`, matching the
+sign of the measured `cx`), and `sgn·ΔM_GE > 0` throughout: the ground effect
+aids the tip and lowers `M_crit`, as the thrust channel `a = c_a f l` requires.
+The reason the test is powerless is
+structural: over this window the theoretical GE moment is **almost a constant**
+(span/level = 20 / 12 / 9%), and a constant is precisely what the arm absorbs —
+156 mN·m of GE is the same as a 14.7 mm error on the gravity arm or 7.4 mm on
+the thrust arm, while the arm itself is only known to ~15 mm (free phase 92 mm,
+model fit 112 ± 15 mm, mocap 113 mm). Only the 18 mN·m of *curvature* could
+ever be separated, against a 181 mN·m fit RMS. The 3σ detection floor is
+1.4–3.9 N·m — 4 to 100× above what the models predict.
+
+Note also that `z_CoM = 267` mm and `J_P = 0.311` kg·m² over-determine the
+pendulum: the free phase measures `A = 2W·z_CoM/J_P` directly, and at
+`J_P = 0.311` that implies `z_CoM = 167 ± 10` mm. Self-consistency at
+`z_CoM = 267` mm needs `J_P ≈ 0.48` kg·m². Pass `--jp 0` to derive `J_P` from
+the pinned height instead; the GE conclusion is unchanged either way (the
+out-of-parameter-span content is identical, because `α`, `f`, `cos δφ` and
+`sin δφ` are all in the span the fit removes).
+
+### CoM height from the free tip-over (no load cell, no truth)
+
+At the moment peak the throttle is cut — collective 21 N → 0 in ~0.25 s — and
+the vehicle finishes falling over **under gravity alone**, still rotating about
+the same contact line. On the runs that pass the balance point that is a
+large-amplitude pendulum, 36–47° of travel, and it contains `z_CoM` outright:
+
+```
+J_P (φ̈)  =  W ρ sin(δφ − ψ)      ⇒   ω² = C − A cos δφ − B sin δφ
+A = 2 W z_CoM / J_P = 2 C₂²          B = 2 W h₀ / J_P        tan ψ = B/A
+```
+
+a linear fit in `(C, A, B)` on the measured rate and attitude — no
+differentiation, no mass, no inertia, no onset model, no load cell, and no
+ground-effect model (the rotors are stopped). `δφ` must be referenced to the
+**resting** attitude: the cut happens ~25° into the tip-over, already past the
+balance point.
+
+```bash
+python analysis/zcom_freefall.py DataSet/exp --save-csv
+```
+
+| axis | n | `z_CoM = h₀·A/B` | balance angle `ψ` | `C₂ = √(A/2)` | `J_P` |
+|---|---|---|---|---|---|
+| pitch (rigid gear) | 13 | **`205 ± 4` mm** | `28.8°` | `4.15 ± 0.14` rad/s | `0.378 ± 0.042` kg·m² |
+| roll (compliant gear) | 6 | `267 ± 6` mm | `29.1°` | `4.04 ± 0.04` rad/s | `0.516 ± 0.031` kg·m² |
+
+The pitch figure matches the CAD value (`≥ 0.2 m`). Both axes agree on `ψ ≈ 29°`
+so `z = h₀/tan ψ` inherits the arm: the roll result is 30% high because its `h₀`
+comes from the landing gear the pipeline already documents as compliant
+(`analysis/com_estimator.py` refuses to use the geometric `y_p` for the same
+reason). The parallel-axis closure works — `J_cm = J_P − m(h₀² + z²)` gives
+`0.216 ± 0.014` (roll) against `0.201 ± 0.028` (pitch), consistent at 0.5σ as a
+six-fold symmetric airframe requires, which resolves the 5.2σ axis failure the
+`(C₂, K)` ridge constants produced. Only systematic: `h₀` carries the unknown
+CoM offset (`|λ| ≤ 20` mm on `h₀ ≈ 113` mm → ≤ 18% on `z_CoM`); the pos/neg
+pair would remove it, but the sloped surface means only one direction tips over
+per axis.
+
+`C₂ = 4.11 ± 0.13` rad/s over all 19 runs is also the rig constant the ramp
+calibration searches for — measured here directly, at 3% scatter, against the
+`3.5–8.0` spread the ramp-invariance criterion returns over the ten case–axis
+groups.
+
 ### CoM height (`z_CoM`) from the resting tilt
 
 Asks whether the ground data can measure `z_CoM` — and whether the ground-effect
@@ -220,28 +318,79 @@ python analysis/zcom_tilt.py --collect DataSet/exp --output-dir .   # 140 runs
 python analysis/zcom_tilt.py --table zcom_tilt_runs.csv            # re-analyse
 python analysis/zcom_tilt.py --table zcom_tilt_runs.csv --inject 0.30
 python analysis/zcom_tilt.py --table zcom_tilt_runs.csv --dynamic DataSet/exp
+python analysis/zcom_tilt.py --table zcom_tilt_runs.csv --budget DataSet/exp
 ```
 
 | Estimator | What it uses | Result |
 |---|---|---|
-| A within-group | run-to-run variation of `φ₀`, with case×axis×direction fixed effects — **truth-free**, and GE-proof (the GE moment is constant within a group, so the fixed effect absorbs it) | `z_CoM = +1 ± 27` mm (mocap attitude, errors-in-variables corrected); `−32 ± 38` mm (odom) |
-| B between-group | offset error of `M_ff` against the load-cell truth, on `−s_ax sin φ₀` | `z_CoM = −23 ± 48` mm |
+| A within-group | run-to-run variation of `φ₀`, with case×axis×direction fixed effects — truth-free, but see the exogeneity check | **no valid lever** — the within-group resting tilt correlates with the *commanded ramp rate* (`+0.60` roll), which cannot move the vehicle, so the spread is a pre-excitation-window artefact. Diagnostic only |
+| B between-group | offset error of `M_ff` against the load-cell truth, on `−s_ax sin φ₀`, gear asymmetry left free | `z_CoM = −23 ± 48` mm |
+| B′ gear-measured | same channel, but the landing-gear asymmetry **measured** from the circle fit — see below | `z_CoM = +67 ± 25` mm if the marker and load-cell frames share an origin; `+4 ± 51` mm if they may differ by a constant |
 | C rig constant | `W z_CoM = 1/K` from the ramp-invariance calibration | 61–554 mm over the ten case–axis groups — the `(C₂, K)` ridge, a 9× spread |
 | E truth-pinned dynamics | the truth pins `½(M₊ + M₋)` exactly, so the onset needs no sweep; then a 2-parameter `ω = C₁(cosh C₂τ − 1)` fit per run | `C₂` runs to a bound on 49% of the 134 fitted runs, `z_CoM` median 1 mm with IQR `[0, 166]` and range up to 12.6 m — only `C₁C₂² = Ṁ/J_P` is determined (`J_P` median `0.123` kg·m², IQR `[0.074, 0.267]`) |
 
-A and B agree on a null: the identified threshold does not respond to the
-resting tilt the way an `O(0.1–0.3 m)` CoM height demands. The estimators are
-not blind — `--inject 0.30` puts a synthetic `z_CoM = 300` mm into every
-`M_crit` and is recovered as `299 ± 42` mm (A) and `277 ± 48` mm (B) — and the
-orthogonal-axis placebo returns `+9 ± 14` mm. The limitation is the **lever**:
-the resting tilt is `+0.5°` (roll) / `−1.5°` (pitch) on every run and varies by
-only `0.21°` within a group, and the odom/mocap cross-check attributes just
-`44%` of the odom spread to a real attitude change (the rest is
-attitude-estimate noise, which attenuates the slope). Read the result as a
-bound rather than a measurement: `|z_CoM| ≲ 55` mm at 95%, in tension with the
-`0.3 m` used a priori — which is why the resting attitude belongs in the error
-budget, and why a deliberate `±5°` wedge is the fix (same per-run residual and
-run count → `SE(z_CoM) ≈ 1` mm).
+**What the static channel actually measures.** Folding the arm bookkeeping
+back in, the tilt-modulated coefficient is not `z_CoM` but
+
+```
+err − gear_asym = const + s_ax sin φ₀ · [ (W−f)/W · z_m − z_CoM ]
+```
+
+and the known part `(W−f)/W · z_m = 0.335 × 316 = 104` mm is the *same order*
+as `z_CoM` itself. The channel therefore measures a difference of two similar
+numbers, `+36 ± 25` mm, and a 1 mm systematic on `M_ff/W` moves the inferred
+`z_CoM` by 37–110 mm. Against that:
+
+| hypothesis | predicted coefficient | vs measured `+36 ± 25` mm |
+|---|---|---|
+| `z_CoM = 200` mm (CAD), truth body-referenced | `−96` mm | 5.3σ |
+| `z_CoM` cancels — truth taken in the same resting posture | `+104` mm | 2.7σ |
+
+Neither closes, so **the static channel is a consistency check, not a
+measurement competing with CAD.** The `J_P` channel, by contrast, gives
+`214 ± 13` mm (roll) and agrees with CAD. Settling it needs one experimental
+fact — whether the load-cell truth was taken with the vehicle on its own gear
+(gravity-referenced, in which case the tilt term cancels and this channel is
+vacuous by construction) or levelled/fixtured (body-referenced) — and, for a
+real measurement, a deliberate `±5°` wedge, where the lever is 45× larger and
+the `(W−f)z_m/W` term no longer competes with the signal.
+
+The estimators are not blind: `--inject 0.30` puts a synthetic `z_CoM = 300` mm
+into every `M_crit` and it is recovered as `299 ± 42` mm (A) and `277 ± 48` mm
+(B), and the orthogonal-axis placebo returns `+9 ± 14` mm.
+
+**The circle fit gives a height, not just an arm.** `estimate_pivot_from_mocap`
+pins the fitted circle's centre to the contact plane (`cz = 0`), so its radius
+closes the triangle: `z_marker = √(R² − cx²) = 316 ± 1 mm` over 138 runs, equal
+to the resting marker height and to the `h = 0.315 m` hub height the GE model
+assumes, with a `0.14 mm` fit residual — the `cz = 0` pin lands on the contact
+plane and the post-onset motion is a rigid rotation about a fixed line.
+
+That fixes the reference frame of the arm, which matters: `cx` is a
+*world-horizontal* distance from the marker's rest position, so at a resting
+tilt it already carries a `z_marker sin φ₀` term. Work from the **signed**
+centre — the two tip directions pivot about opposite contact lines, and the fit
+confirms it in all ten groups (`cx₊ < 0 < cx₋` in roll, `cx₊ > 0 > cx₋` in
+pitch, i.e. the pos roll tip pivots about the `−y` contact and the pos pitch tip
+about the front one). With `o = sign(cx₊)` absorbing that convention,
+
+```
+a₊ =  o·cx₊ = l₊ cos φ₀ − z_m sin φ₀
+a₋ = −o·cx₋ = l₋ cos φ₀ + z_m sin φ₀
+⇒  half-span = (a₊ + a₋)/2   (tilt cancels — pure geometry)
+⇒  l₊ − l₋   = [(a₊ − a₋) + 2 z_m sin φ₀] / cos φ₀
+```
+
+The half-span comes out `140.4 ± 1.0` mm (roll) and `112.7 ± 1.5` mm (pitch)
+against frame half-dimensions of 144 and 125 mm — the pitch contacts sit 12 mm
+inboard of the nominal geometry.
+
+and `l₊ − l₋` is exactly the landing-gear asymmetry that was degenerate with
+`z_CoM` in `M_ff`. Measured this way it is small and consistent — roll `−0.9`
+to `+4.1` mm, pitch `−3.1` to `−7.2` mm — where the raw arm difference
+(`−6` roll, `+12` pitch) is dominated by the tilt term. Removing it turns the
+offset channel positive for the first time (`B′` above). The `2 z_m sin φ₀`
+correction is the same size as the signal, so this bookkeeping is not optional.
 
 **The ground-effect residual is not separable here.** Within a group `ΔM_GE` is
 a constant (same collective, same tilt) sharing a fixed effect with the arm, the
@@ -251,6 +400,65 @@ antisymmetric and hence degenerate with the pivot arm / contact lever, and
 residual and a 52 mN·m group-to-group scatter. The static data bound the
 combined ground-contact budget; they cannot attribute it
 (`analysis/static_attribution.py`).
+
+Reading it off the post-onset balance instead does not work either, and
+`--budget` says why: `ΔM_res = J_P α − M − f l + W(l + λ) cos δφ − W z_CoM sin δφ`
+leaves `J_P` and `W z_CoM` as the only unmeasured coefficients, and each is
+multiplied by a large measured signal — `|δφ| = 5.95°` at the window edge,
+`|α| = 2.24` rad/s² at the moment peak (medians). A 2 mN·m readout therefore
+needs `z_CoM` to `±0.6` mm and `J_P` to `0.7%`; what the dataset supplies
+(`±27` mm and an IQR half-width of `0.097` kg·m²) propagates to `88` and `216`
+mN·m — which is why the GE moment is bounded by forward modelling
+(`analysis/ge_trajectory.py`) rather than read off the balance.
+
+### GE pinned by the model: are `J_P` and `z_CoM` then consistent?
+
+The reverse of the section above — instead of leaving the ground effect as an
+unknown residual, pin it with the parameter-free rotor-interference model and
+ask what the data then say about the two mechanical constants:
+
+```bash
+python analysis/ge_pinned_consistency.py --table zcom_tilt_runs.csv --verbose
+```
+
+**Static.** With GE pinned, the onset balance leaves only the CoM height and
+the contact-lever offset `dl`, and they sit in *orthogonal* channels: `dl` and
+the GE thrust term `sgn·c_a f l` are antisymmetric between the tip directions,
+`z_CoM sin φ₀` is symmetric. So the GE model can only move `dl`:
+
+| GE model | `dl` roll [mm] | `dl` pitch [mm] | `z_CoM` [mm] | resid |
+|---|---|---|---|---|
+| none | `17.5 ± 2.6` | `20.7 ± 2.6` | `−39 ± 29` | 78 mN·m |
+| single (Cheeseman) | `13.3 ± 2.5` | `17.4 ± 2.5` | `−35 ± 28` | 76 mN·m |
+| interference | `−0.1 ± 2.5` | `6.8 ± 2.5` | `−23 ± 28` | 71 mN·m |
+
+The interference model absorbs the entire deficit that the rigid fit otherwise
+has to buy with a 17–21 mm inboard contact shift — consistency, not
+attribution, since the two stay degenerate in that channel. `z_CoM` moves by
+only 16 mm across the whole GE bracket, inside its own ±28 mm standard error:
+**pinning GE cannot inform the CoM height.**
+
+**Dynamic.** The parallel-axis theorem is a free, GE-independent and
+truth-independent constraint on every calibrated pair: `J_P = J_cm + m(l² +
+z_CoM²) ≥ m(l² + z_CoM²)`. **4 of the 10 pairs violate it** — the ridge wanders
+where the claimed height alone would need more inertia than the same pair's
+`J_P` supplies, so the `(C₂, K)` box should be carrying this inequality as a
+constraint and currently is not.
+
+| axis | `J_P` [kg·m²] | `z_CoM` from `1/K` [mm] | `z_CoM` from `J_P` [mm] |
+|---|---|---|---|
+| roll | `0.249 ± 0.016` (CV 6.5%) | `271 ± 181` (CV 67%) | `214 ± 13` |
+| pitch | `0.140 ± 0.034` (CV 24%) | `106 ± 51` (CV 48%) | `131 ± 43` |
+
+So the ridge's invariant is `J_P`, not `W z_CoM`: the same pairs that repeat
+`J_P` to 6.5% scatter `z_CoM` by 67%. Across axes neither closes. `z_CoM`
+cancels in the axis *difference*, giving a parameter-free test — `J_P(roll) −
+J_P(pitch)` must equal `(J_xx − J_yy) + m(l_r² − l_p²)`, i.e. `+0.022` kg·m²
+on a six-fold symmetric airframe; measured `+0.109 ± 0.017`, which would demand
+`J_xx − J_yy = 0.087` kg·m² (5.2σ, a 165 mm difference in mass spread between
+two nominally identical body axes). The roll pivot is the compliant one
+(`analysis/com_estimator.py`), so its `J_P` is an effective constant, not a
+rigid-body pivot inertia.
 
 ### Model-fidelity analysis
 

@@ -75,7 +75,8 @@ OFF_MM = {('case_01', 'Mx'): -2.90,  ('case_01', 'My'): -11.45,
           ('case_05', 'Mx'): 10.91,  ('case_05', 'My'): -10.89}
 S_AX = {'Mx': +1.0, 'My': -1.0}       # W y_off = +M_ff ; W x_off = -M_ff
 FIELDS = ['case', 'axis', 'bag', 'dir', 'rate', 'M', 'f', 'arm', 'tilt',
-          'tilt_mc', 'tilt_on', 'tilt_orth', 'c2', 'k']
+          'tilt_mc', 'tilt_on', 'tilt_orth', 'onset_t', 'cx', 'R', 'res',
+          'c2', 'k']
 
 
 # ═════════════════════════════════════════════════════════════
@@ -121,12 +122,13 @@ def collect(root: Path, out: Path) -> list[dict]:
                 dir='pos' if c.bag_name.startswith('pos') else 'neg',
                 rate=cvp.commanded_ramp_rate(c.bag_name) or np.nan,
                 M=c.onset_moment, f=c.onset_thrust,
-                arm=piv['pivot_abs'] * 1e-3,
+                arm=piv['pivot_abs'] * 1e-3, cx=piv['cx'] * 1e-3,
+                R=piv['R'] * 1e-3, res=piv['residual'],
                 tilt=float(np.median(exc[:n])),
                 tilt_mc=float(np.median(exc_mc[:nm])),
                 tilt_on=float(exc[j]),
                 tilt_orth=float(np.median(orth[:n])),
-                c2=c2, k=k))
+                onset_t=c.onset_time, c2=c2, k=k))
         print(f"  collected {d} ({len(rows)} runs)", flush=True)
 
     out.mkdir(parents=True, exist_ok=True)
@@ -244,12 +246,92 @@ def dynamic(root: Path, rows: list[dict], c2_bounds=(0.2, 25.0)) -> None:
           "in the dynamic channel too.")
 
 
+def budget(root: Path, rows: list[dict], target_mnm=2.0) -> None:
+    """F: what J_P and W z_CoM precision a residual-moment readout needs.
+
+    Reading a residual moment straight off the post-onset balance,
+
+        dM_res = J_P alpha - M - f l + W(l + lam) cos(dphi)
+                 - W z_CoM sin(dphi) ,
+
+    leaves J_P and W z_CoM as the only unmeasured coefficients, so both
+    are required and both enter multiplied by a *large* measured signal:
+    alpha at the moment peak and the tilt excursion dphi at the window
+    edge.  This reports those two levers and the precision they demand of
+    a ``target_mnm`` residual readout, against what the dataset supplies.
+    """
+    import critical_value_getter_piecewise as cvp
+    from utils.extractor import load_excitation_dataset
+    from utils import math_tools
+
+    on = {(r['case'], r['axis'], r['bag']): r['onset_t'] for r in rows
+          if np.isfinite(r.get('onset_t', np.nan))}
+    if not on:
+        print("\n[F] skipped: the table carries no onset_t column "
+              "(re-run --collect)")
+        return
+    dphi, alpha = [], []
+    for d in sorted(root.glob('case_*/M[xy]')):
+        axis = 'x' if d.name == 'Mx' else 'y'
+        with contextlib.redirect_stdout(io.StringIO()):
+            bags = load_excitation_dataset(d)
+        for b in bags:
+            t_on = on.get((d.parent.name, d.name, b.name))
+            if t_on is None:
+                continue
+            sig = cvp.prepare_signals(b, axis)
+            t, om, M = sig['t'], sig['omega'], sig['moment']
+            i0, i1 = cvp.detect_excitation_window(
+                M, moment_cap=cvp.MOMENT_CAP.get(axis))
+            j = int(np.searchsorted(t, t_on))
+            if i1 - j < 6:
+                continue
+            roll, pitch = math_tools.quaternion_to_euler_vectorized(
+                b.odom.quaternion)
+            phi = (roll if axis == 'x' else pitch)[:len(t)]
+            dphi.append(abs(phi[i1] - phi[j]))
+            m = (t >= t[i1] - 0.06) & (t <= t[i1] + 0.06)
+            if m.sum() >= 4:
+                alpha.append(abs(float(np.polyfit(t[m], om[m], 1)[0])))
+    dphi, alpha = np.array(dphi), np.array(alpha)
+    dp, al = float(np.median(dphi)), float(np.median(alpha))
+    W = float(np.mean([MASS_KG[r['case']] * G for r in rows]))
+    tgt = target_mnm * 1e-3
+
+    print("\n" + "=" * 70)
+    print("F.  Precision a residual-moment readout would demand")
+    print(f"  levers at the median operating point: |dphi| at the window "
+          f"edge {np.degrees(dp):.2f} deg")
+    print(f"  (p90 {np.degrees(np.percentile(dphi, 90)):.2f}, max "
+          f"{np.degrees(dphi.max()):.2f}),  |alpha| at the moment peak "
+          f"{al:.2f} rad/s^2")
+    print(f"\n  {'coefficient':16}{'needed for':>13}{'available here':>28}"
+          f"{'-> error':>12}")
+    print(f"  {'W z_CoM':16}{tgt / dp:9.3f} N·m"
+          f"{27e-3 * W:16.2f} N·m (+-27 mm)"
+          f"{1e3 * 27e-3 * W * dp:9.0f} mN·m")
+    print(f"  {'':16}{'':13}{0.5 * (554 - 61) * 1e-3 * W:16.2f} N·m (1/K "
+          f"spread){1e3 * 0.5 * (554 - 61) * 1e-3 * W * dp:6.0f} mN·m")
+    print(f"  {'J_P':16}{tgt / al:9.3f} kg m^2"
+          f"{0.5 * (0.267 - 0.074):14.3f} kg m^2 (IQR/2)"
+          f"{1e3 * 0.5 * (0.267 - 0.074) * al:11.0f} mN·m")
+    print(f"\n  i.e. {target_mnm:.0f} mN·m of residual needs W z_CoM to "
+          f"+-{tgt / dp / W * 1e3:.2f} mm of z_CoM "
+          f"({tgt / dp / 4.5 * 100:.2f}% of a nominal 4.5 N·m) and J_P to "
+          f"{tgt / al / 0.123 * 100:.1f}%\n  of the 0.123 kg m^2 median — two "
+          f"orders beyond what this experiment determines,\n  which is why "
+          f"the GE moment is bounded by forward modelling "
+          f"(analysis/ge_trajectory.py)\n  rather than read off the "
+          f"balance.")
+
+
 def load(path: Path) -> list[dict]:
     rows = []
     for r in csv.DictReader(open(path)):
         for k in FIELDS:
             if k not in ('case', 'axis', 'bag', 'dir'):
-                r[k] = float(r[k]) if r[k] not in ('', 'nan') else np.nan
+                r[k] = (float(r[k]) if r.get(k) not in (None, '', 'nan')
+                        else np.nan)
         rows.append(r)
     return rows
 
@@ -311,6 +393,161 @@ def within_group(rows, key, max_disagree_deg=3.0):
                     X[:, :-1], np.array(x), rcond=None)[0])))
 
 
+def pivot_geometry(rows):
+    """The circle fit gives the tracked point's HEIGHT as well as the arm.
+
+    ``estimate_pivot_from_mocap`` fits the tip-over arc with the circle
+    centre pinned to the contact plane (cz = 0), so its radius closes the
+    triangle: z_marker = sqrt(R^2 - cx^2) is the height of the tracked
+    point above the pivot line, measured by the same fit that supplies
+    the arm.  Two consequences, both used below:
+
+    * it validates the cz = 0 pin (z_marker must equal the resting marker
+      height) and the rigid-rotation premise (fit residual);
+    * it fixes the reference frame of the arm.  ``pivot_abs`` is a
+      WORLD-HORIZONTAL distance from the marker's rest position, so at a
+      resting tilt it already carries a z_marker sin(phi_0) term:
+
+          a_+ = l_+ cos(phi_0) - z_m sin(phi_0)
+          a_- = l_- cos(phi_0) + z_m sin(phi_0)
+
+      and the body-frame landing-gear asymmetry the pivot-free average
+      needs is  l_+ - l_-  =  (a_+ - a_-) + 2 z_m sin(phi_0).
+    """
+    R = np.array([r['R'] for r in rows], float)
+    a = np.array([r['arm'] for r in rows], float)
+    res = np.array([r['res'] for r in rows], float)
+    ok = np.isfinite(R) & np.isfinite(a)
+    if not ok.any():
+        return np.nan
+    zm = np.sqrt(np.maximum(R[ok] ** 2 - a[ok] ** 2, 0.0))
+    print("\n" + "=" * 70)
+    print("B'. Circle-fit geometry (estimate_pivot_from_mocap)")
+    print(f"  n = {ok.sum()} runs;  arm |cx| = {1e3 * a[ok].mean():.1f} mm, "
+          f"radius R = {1e3 * R[ok].mean():.0f} mm")
+    print(f"  -> tracked-point height z_marker = sqrt(R^2 - cx^2) = "
+          f"{1e3 * zm.mean():.0f} ± {1e3 * zm.std(ddof=1):.0f} mm")
+    print(f"  circle-fit residual {np.nanmean(res):.2f} mm: the "
+          f"post-onset motion is a rigid\n  rotation about a fixed line, and "
+          f"the cz = 0 pin lands on the contact plane.")
+    return float(zm.mean())
+
+
+def gear_corrected(rows, z_marker):
+    """B': the same offset channel, with the gear asymmetry MEASURED.
+
+    M_ff = 1/2 (W cos(phi_0) - f)(l_+ - l_-) + W lambda cos(phi_0)
+           - W z_CoM sin(phi_0)
+
+    left the landing-gear asymmetry as a free constant degenerate with
+    z_CoM.  The circle fit measures it.  Work from the SIGNED centre cx,
+    not |cx|: the two tip directions pivot about opposite contact lines,
+    so cx changes sign between them and the two combinations separate
+    cleanly.  With the contact at body (+-l, -z_m) relative to the marker
+    and d_horiz measured world-horizontally,
+
+        a_+ =  o cx_+ = l_+ cos(phi_0) - z_m sin(phi_0)
+        a_- = -o cx_- = l_- cos(phi_0) + z_m sin(phi_0)
+
+    with o = sign(cx_+) absorbing the axis convention (the pos roll tip
+    pivots about the -y contact, the pos pitch tip about the +x one, and
+    the fit confirms cx_+ and cx_- always come out with opposite signs).
+    Then  (a_+ + a_-)/2  is the contact half-span, pure geometry with the
+    tilt term cancelled, and
+          l_+ - l_- = [(a_+ - a_-) + 2 z_m sin(phi_0)] / cos(phi_0).
+
+    That asymmetry is measured in the SAME frame as the arms, so
+    subtracting it re-references the estimated offset from the marker to
+    the contact midpoint — which is where the load-cell truth is expected
+    to live.
+    """
+    grp = defaultdict(list)
+    for r in rows:
+        grp[(r['case'], r['axis'], r['dir'])].append(r)
+    print("\n  signed circle centres:  l+ - l- = "
+          f"[(cx+ + cx-) + 2 z_m sin(phi_0)] / cos(phi_0),  z_m = "
+          f"{1e3 * z_marker:.0f} mm")
+    print(f"  {'case':9}{'ax':4}{'cx+':>8}{'cx-':>8}{'half-span':>11}"
+          f"{'l+ - l-':>9}{'gear [mm]':>11}{'err':>8}{'err-gear':>10}")
+    e, reg, ax_, spans = [], [], [], defaultdict(list)
+    for case in sorted(MASS_KG):
+        for axis in ('Mx', 'My'):
+            vp, vn = grp.get((case, axis, 'pos')), grp.get((case, axis, 'neg'))
+            if not vp or not vn:
+                continue
+            W, s_ax = MASS_KG[case] * G, S_AX[axis]
+            cp = float(np.nanmean([r['cx'] for r in vp]))
+            cn = float(np.nanmean([r['cx'] for r in vn]))
+            if not (np.isfinite(cp) and np.isfinite(cn)):
+                continue
+            # the two tip directions must pivot about OPPOSITE contact
+            # lines; normalise to distances a_+ = l_+ cos - z_m sin and
+            # a_- = l_- cos + z_m sin (same form on both axes)
+            o = np.sign(cp)
+            if np.sign(cn) == o:
+                print(f"  [skip] {case}/{axis}: cx same sign both directions")
+                continue
+            a_p, a_n = o * cp, -o * cn
+            f = 0.5 * (np.mean([r['f'] for r in vp])
+                       + np.mean([r['f'] for r in vn]))
+            t0 = float(np.mean([r['tilt'] for r in vp + vn]))
+            # the tilt enters the arms with the same sign as it enters the
+            # offset, i.e. through o * s_ax_of_the_axis convention
+            half = 0.5 * (a_p + a_n)
+            dl = ((a_p - a_n) + 2.0 * z_marker * np.sin(t0)) / np.cos(t0)
+            spans[axis].append(half)
+            gear = s_ax * 0.5 * (W - f) * dl / W * 1e3
+            Mff = 0.5 * (np.mean([r['M'] for r in vp])
+                         + np.mean([r['M'] for r in vn]))
+            err = s_ax * Mff / W * 1e3 - OFF_MM[(case, axis)]
+            e.append(err - gear)
+            reg.append(-s_ax * np.sin(t0))
+            ax_.append(0.0 if axis == 'Mx' else 1.0)
+            print(f"  {case:9}{axis:4}{1e3 * cp:8.1f}{1e3 * cn:8.1f}"
+                  f"{1e3 * half:11.1f}{1e3 * dl:9.1f}{gear:11.2f}{err:8.2f}"
+                  f"{err - gear:10.2f}")
+    for axis, geo in (('Mx', 144.0), ('My', 125.0)):
+        a = 1e3 * np.abs(np.array(spans[axis]))
+        print(f"  contact half-span {axis}: {a.mean():.1f} ± {a.std(ddof=1):.1f}"
+              f" mm  (frame half-dimension {geo:.0f} mm)")
+    e, reg, ax_ = np.array(e), np.array(reg), np.array(ax_)
+    print("\n  model:  err - gear = const - z_CoM * s_ax * sin(phi_0)")
+    for name, X, cols in (
+            ('contact-midpoint frame = truth frame',
+             reg[:, None], ['z_CoM [mm]']),
+            ('+ one frame constant                ',
+             np.column_stack([np.ones(len(e)), reg]),
+             ['const [mm]', 'z_CoM [mm]']),
+            ('+ per-axis frame constants          ',
+             np.column_stack([1 - ax_, ax_, reg]),
+             ['c_Mx [mm]', 'c_My [mm]', 'z_CoM [mm]'])):
+        c, se, r, dof = _ols(X, e)
+        txt = ',  '.join(f"{n} = {v:+.1f} ± {s:.1f}"
+                         for n, v, s in zip(cols, c, se))
+        print(f"  {name}: {txt}   (resid RMS {np.std(r, ddof=1):.2f} mm)")
+    # what the tilt-modulated coefficient actually contains
+    W = float(np.mean([MASS_KG[r['case']] * G for r in rows]))
+    f = float(np.mean([r['f'] for r in rows]))
+    known = (W - f) / W * z_marker * 1e3
+    c, se, _, _ = _ols(reg[:, None], e)
+    comb = known - c[0]
+    print(f"\n  WHAT THIS CHANNEL MEASURES.  Folding the arm bookkeeping back "
+          f"in,\n    err - gear_asym = const + s_ax sin(phi_0) "
+          f"[ (W-f)/W z_m  -  z_CoM ]")
+    print(f"  The known part (W-f)/W z_m = {known:.0f} mm is of the SAME order "
+          f"as z_CoM, so\n  the channel measures a DIFFERENCE of two similar "
+          f"numbers: {comb:+.0f} ± {se[0]:.0f} mm.")
+    for lbl, pred in (('z_CoM = 200 mm (CAD), truth body-referenced',
+                       known - 200.0),
+                      ('z_CoM cancels (truth taken in the SAME resting '
+                       'posture)', known)):
+        print(f"    {lbl}\n      predicts {pred:+.0f} mm  -> "
+              f"{abs(pred - comb) / se[0]:.1f} sigma from the measurement")
+    print("  A 1 mm systematic on M_ff/W moves z_CoM by 37-110 mm through this "
+          "lever,\n  so quote the static channel as a consistency check, not "
+          "as a measurement\n  competing with CAD or with the J_P channel.")
+
+
 def between_group(rows):
     """B: pivot-free offset error vs the load-cell truth, on -s_ax sin(phi_0)."""
     grp = defaultdict(list)
@@ -349,6 +586,8 @@ def main():
                    help="wedge inclination of the proposed design [deg]")
     p.add_argument('--dynamic', metavar='ROOT',
                    help="also run the truth-pinned post-onset fit over ROOT")
+    p.add_argument('--budget', metavar='ROOT',
+                   help="also run the residual-moment precision budget")
     p.add_argument('--inject', type=float, default=None, metavar='Z',
                    help="injection-recovery self-test: add a synthetic "
                         "-W*Z*sin(phi_0) term [m] to every M_crit and check "
@@ -418,6 +657,33 @@ def main():
               f"   |  z = {args.z_nominal * 1e3:.0f} mm rejected at "
               f"{abs(args.z_nominal * 1e3 - za) / sa:.1f} sigma")
 
+    print("  EXOGENEITY CHECK — the within-group lever is only valid if the")
+    print("  resting tilt varies because the vehicle was RE-PLACED, not "
+          "because of\n  the run condition:")
+    bad = False
+    for ax in ('Mx', 'My'):
+        dt, dr = [], []
+        for k, v in grp.items():
+            if k[1] != ax:
+                continue
+            t = np.array([r['tilt'] for r in v])
+            rt = np.array([r['rate'] for r in v])
+            dt.append(t - t.mean())
+            dr.append(rt - np.nanmean(rt))
+        dt, dr = np.concatenate(dt), np.concatenate(dr)
+        ok = np.isfinite(dr)
+        c = float(np.corrcoef(dt[ok], dr[ok])[0, 1])
+        bad |= abs(c) > 0.4
+        print(f"    {ax}: corr(resting tilt, commanded ramp rate) = {c:+.3f}"
+              + ("   <-- NOT exogenous" if abs(c) > 0.4 else ""))
+    if bad:
+        print("  The commanded rate cannot change where the vehicle was put "
+              "down, so a\n  correlation means the 'resting tilt' spread is "
+              "an artefact of the\n  pre-excitation window (which shortens "
+              "with rate) rather than real\n  placement variation.  "
+              "Estimator A therefore has NO valid lever and its\n  null is "
+              "not evidence about z_CoM.  It is kept as a diagnostic only.")
+
     # ── B. between-group, against the load-cell truth ──────────────
     print("\n" + "=" * 70)
     print("B.  Between-group: pivot-free offset error vs truth")
@@ -446,6 +712,10 @@ def main():
                          for n, v, s in zip(cols, c, se))
         print(f"  {name}: {txt}   (resid RMS {np.std(r, ddof=1):.2f} mm, "
               f"dof {dof})")
+
+    zm = pivot_geometry(rows)
+    if np.isfinite(zm):
+        gear_corrected(rows, zm)
 
     # ── C. the rig constant, for comparison ────────────────────────
     print("\n" + "=" * 70)
@@ -490,6 +760,8 @@ def main():
               f"group")
     if args.dynamic:
         dynamic(Path(args.dynamic), rows)
+    if args.budget:
+        budget(Path(args.budget), rows)
 
     print("\n  GE residual: within a group the ground-effect moment is a")
     print("  constant (same collective, same tilt) and is absorbed by the")
