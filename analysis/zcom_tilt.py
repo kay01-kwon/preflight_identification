@@ -75,7 +75,8 @@ OFF_MM = {('case_01', 'Mx'): -2.90,  ('case_01', 'My'): -11.45,
           ('case_05', 'Mx'): 10.91,  ('case_05', 'My'): -10.89}
 S_AX = {'Mx': +1.0, 'My': -1.0}       # W y_off = +M_ff ; W x_off = -M_ff
 FIELDS = ['case', 'axis', 'bag', 'dir', 'rate', 'M', 'f', 'arm', 'tilt',
-          'tilt_mc', 'tilt_on', 'tilt_orth', 'onset_t', 'c2', 'k']
+          'tilt_mc', 'tilt_on', 'tilt_orth', 'onset_t', 'R', 'res', 'c2',
+          'k']
 
 
 # ═════════════════════════════════════════════════════════════
@@ -122,6 +123,7 @@ def collect(root: Path, out: Path) -> list[dict]:
                 rate=cvp.commanded_ramp_rate(c.bag_name) or np.nan,
                 M=c.onset_moment, f=c.onset_thrust,
                 arm=piv['pivot_abs'] * 1e-3,
+                R=piv['R'] * 1e-3, res=piv['residual'],
                 tilt=float(np.median(exc[:n])),
                 tilt_mc=float(np.median(exc_mc[:nm])),
                 tilt_on=float(exc[j]),
@@ -391,6 +393,108 @@ def within_group(rows, key, max_disagree_deg=3.0):
                     X[:, :-1], np.array(x), rcond=None)[0])))
 
 
+def pivot_geometry(rows):
+    """The circle fit gives the tracked point's HEIGHT as well as the arm.
+
+    ``estimate_pivot_from_mocap`` fits the tip-over arc with the circle
+    centre pinned to the contact plane (cz = 0), so its radius closes the
+    triangle: z_marker = sqrt(R^2 - cx^2) is the height of the tracked
+    point above the pivot line, measured by the same fit that supplies
+    the arm.  Two consequences, both used below:
+
+    * it validates the cz = 0 pin (z_marker must equal the resting marker
+      height) and the rigid-rotation premise (fit residual);
+    * it fixes the reference frame of the arm.  ``pivot_abs`` is a
+      WORLD-HORIZONTAL distance from the marker's rest position, so at a
+      resting tilt it already carries a z_marker sin(phi_0) term:
+
+          a_+ = l_+ cos(phi_0) - z_m sin(phi_0)
+          a_- = l_- cos(phi_0) + z_m sin(phi_0)
+
+      and the body-frame landing-gear asymmetry the pivot-free average
+      needs is  l_+ - l_-  =  (a_+ - a_-) + 2 z_m sin(phi_0).
+    """
+    R = np.array([r['R'] for r in rows], float)
+    a = np.array([r['arm'] for r in rows], float)
+    res = np.array([r['res'] for r in rows], float)
+    ok = np.isfinite(R) & np.isfinite(a)
+    if not ok.any():
+        return np.nan
+    zm = np.sqrt(np.maximum(R[ok] ** 2 - a[ok] ** 2, 0.0))
+    print("\n" + "=" * 70)
+    print("B'. Circle-fit geometry (estimate_pivot_from_mocap)")
+    print(f"  n = {ok.sum()} runs;  arm |cx| = {1e3 * a[ok].mean():.1f} mm, "
+          f"radius R = {1e3 * R[ok].mean():.0f} mm")
+    print(f"  -> tracked-point height z_marker = sqrt(R^2 - cx^2) = "
+          f"{1e3 * zm.mean():.0f} ± {1e3 * zm.std(ddof=1):.0f} mm")
+    print(f"  circle-fit residual {np.nanmean(res):.2f} mm: the "
+          f"post-onset motion is a rigid\n  rotation about a fixed line, and "
+          f"the cz = 0 pin lands on the contact plane.")
+    return float(zm.mean())
+
+
+def gear_corrected(rows, z_marker):
+    """B': the same offset channel, with the gear asymmetry MEASURED.
+
+    M_ff = 1/2 (W cos(phi_0) - f)(l_+ - l_-) + W lambda cos(phi_0)
+           - W z_CoM sin(phi_0)
+
+    left the landing-gear asymmetry as a free constant degenerate with
+    z_CoM.  The circle fit measures it, so the only unknowns left are
+    z_CoM and whatever constant separates the mocap marker frame from the
+    load-cell reference.
+    """
+    grp = defaultdict(list)
+    for r in rows:
+        grp[(r['case'], r['axis'], r['dir'])].append(r)
+    print("\n  body-frame gear asymmetry  l+ - l-  =  (a+ - a-) "
+          f"+ 2 z_m sin(phi_0),  z_m = {1e3 * z_marker:.0f} mm")
+    print(f"  {'case':9}{'ax':4}{'a+ - a-':>9}{'2 zm sinφ':>11}{'l+ - l-':>9}"
+          f"{'gear [mm]':>11}{'err':>8}{'err-gear':>10}")
+    e, reg, ax_ = [], [], []
+    for case in sorted(MASS_KG):
+        for axis in ('Mx', 'My'):
+            vp, vn = grp.get((case, axis, 'pos')), grp.get((case, axis, 'neg'))
+            if not vp or not vn:
+                continue
+            W, s = MASS_KG[case] * G, S_AX[axis]
+            ap = float(np.nanmean([r['arm'] for r in vp]))
+            an = float(np.nanmean([r['arm'] for r in vn]))
+            f = 0.5 * (np.mean([r['f'] for r in vp])
+                       + np.mean([r['f'] for r in vn]))
+            t0 = float(np.mean([r['tilt'] for r in vp + vn]))
+            corr = 2.0 * z_marker * np.sin(t0)
+            dl = (ap - an) + corr
+            gear = s * 0.5 * (W - f) * dl / W * 1e3
+            Mff = 0.5 * (np.mean([r['M'] for r in vp])
+                         + np.mean([r['M'] for r in vn]))
+            err = s * Mff / W * 1e3 - OFF_MM[(case, axis)]
+            e.append(err - gear)
+            reg.append(-s * np.sin(t0))
+            ax_.append(0.0 if axis == 'Mx' else 1.0)
+            print(f"  {case:9}{axis:4}{1e3 * (ap - an):9.1f}{1e3 * corr:11.1f}"
+                  f"{1e3 * dl:9.1f}{gear:11.2f}{err:8.2f}{err - gear:10.2f}")
+    e, reg, ax_ = np.array(e), np.array(reg), np.array(ax_)
+    print("\n  model:  err - gear = const - z_CoM * s_ax * sin(phi_0)")
+    for name, X, cols in (
+            ('marker frame = truth frame ',
+             reg[:, None], ['z_CoM [mm]']),
+            ('+ one frame constant       ',
+             np.column_stack([np.ones(len(e)), reg]),
+             ['const [mm]', 'z_CoM [mm]']),
+            ('+ per-axis frame constants ',
+             np.column_stack([1 - ax_, ax_, reg]),
+             ['c_Mx [mm]', 'c_My [mm]', 'z_CoM [mm]'])):
+        c, se, r, dof = _ols(X, e)
+        txt = ',  '.join(f"{n} = {v:+.1f} ± {s:.1f}"
+                         for n, v, s in zip(cols, c, se))
+        print(f"  {name}: {txt}   (resid RMS {np.std(r, ddof=1):.2f} mm)")
+    print("  -> measuring the gear asymmetry instead of leaving it free is "
+          "what turns\n     this channel positive; it stays degenerate with a "
+          "frame offset between\n     the mocap marker and the load-cell "
+          "reference, so quote it as conditional.")
+
+
 def between_group(rows):
     """B: pivot-free offset error vs the load-cell truth, on -s_ax sin(phi_0)."""
     grp = defaultdict(list)
@@ -528,6 +632,10 @@ def main():
                          for n, v, s in zip(cols, c, se))
         print(f"  {name}: {txt}   (resid RMS {np.std(r, ddof=1):.2f} mm, "
               f"dof {dof})")
+
+    zm = pivot_geometry(rows)
+    if np.isfinite(zm):
+        gear_corrected(rows, zm)
 
     # ── C. the rig constant, for comparison ────────────────────────
     print("\n" + "=" * 70)

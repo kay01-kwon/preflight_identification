@@ -226,7 +226,8 @@ python analysis/zcom_tilt.py --table zcom_tilt_runs.csv --budget DataSet/exp
 | Estimator | What it uses | Result |
 |---|---|---|
 | A within-group | run-to-run variation of `φ₀`, with case×axis×direction fixed effects — **truth-free**, and GE-proof (the GE moment is constant within a group, so the fixed effect absorbs it) | `z_CoM = +1 ± 27` mm (mocap attitude, errors-in-variables corrected); `−32 ± 38` mm (odom) |
-| B between-group | offset error of `M_ff` against the load-cell truth, on `−s_ax sin φ₀` | `z_CoM = −23 ± 48` mm |
+| B between-group | offset error of `M_ff` against the load-cell truth, on `−s_ax sin φ₀`, gear asymmetry left free | `z_CoM = −23 ± 48` mm |
+| B′ gear-measured | same channel, but the landing-gear asymmetry **measured** from the circle fit — see below | `z_CoM = +67 ± 25` mm if the marker and load-cell frames share an origin; `+4 ± 51` mm if they may differ by a constant |
 | C rig constant | `W z_CoM = 1/K` from the ramp-invariance calibration | 61–554 mm over the ten case–axis groups — the `(C₂, K)` ridge, a 9× spread |
 | E truth-pinned dynamics | the truth pins `½(M₊ + M₋)` exactly, so the onset needs no sweep; then a 2-parameter `ω = C₁(cosh C₂τ − 1)` fit per run | `C₂` runs to a bound on 49% of the 134 fitted runs, `z_CoM` median 1 mm with IQR `[0, 166]` and range up to 12.6 m — only `C₁C₂² = Ṁ/J_P` is determined (`J_P` median `0.123` kg·m², IQR `[0.074, 0.267]`) |
 
@@ -243,6 +244,29 @@ bound rather than a measurement: `|z_CoM| ≲ 55` mm at 95%, in tension with the
 `0.3 m` used a priori — which is why the resting attitude belongs in the error
 budget, and why a deliberate `±5°` wedge is the fix (same per-run residual and
 run count → `SE(z_CoM) ≈ 1` mm).
+
+**The circle fit gives a height, not just an arm.** `estimate_pivot_from_mocap`
+pins the fitted circle's centre to the contact plane (`cz = 0`), so its radius
+closes the triangle: `z_marker = √(R² − cx²) = 316 ± 1 mm` over 138 runs, equal
+to the resting marker height and to the `h = 0.315 m` hub height the GE model
+assumes, with a `0.14 mm` fit residual — the `cz = 0` pin lands on the contact
+plane and the post-onset motion is a rigid rotation about a fixed line.
+
+That fixes the reference frame of the arm, which matters: `pivot_abs` is a
+*world-horizontal* distance from the marker's rest position, so at a resting
+tilt it already carries a `z_marker sin φ₀` term,
+
+```
+a₊ = l₊ cos φ₀ − z_m sin φ₀ ,   a₋ = l₋ cos φ₀ + z_m sin φ₀
+⇒  l₊ − l₋ = (a₊ − a₋) + 2 z_m sin φ₀
+```
+
+and `l₊ − l₋` is exactly the landing-gear asymmetry that was degenerate with
+`z_CoM` in `M_ff`. Measured this way it is small and consistent — roll `−0.9`
+to `+4.1` mm, pitch `−3.1` to `−7.2` mm — where the raw arm difference
+(`−6` roll, `+12` pitch) is dominated by the tilt term. Removing it turns the
+offset channel positive for the first time (`B′` above). The `2 z_m sin φ₀`
+correction is the same size as the signal, so this bookkeeping is not optional.
 
 **The ground-effect residual is not separable here.** Within a group `ΔM_GE` is
 a constant (same collective, same tilt) sharing a fixed effect with the arm, the
