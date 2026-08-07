@@ -131,6 +131,15 @@ def main():
     p.add_argument('--mass', type=float, default=3.22,
                    help="vehicle mass [kg], only for J_P and the W z_CoM "
                         "readout; z_CoM itself does not use it")
+    p.add_argument('--omega-source', choices=['odom', 'imu'], default='imu',
+                   help="rate channel.  DEFAULT imu: /mavros/local_position/"
+                        "odom's twist.angular is an EKF output and under-reads "
+                        "by ~23%% at the 1-3 rad/s of the free fall (it tracks "
+                        "d(attitude)/dt with slope 0.66-0.87, against 0.95-1.05 "
+                        "for the raw gyro), which biases this fit.")
+    p.add_argument('--lpf-cutoff', type=float, default=15.0,
+                   help="low-pass for the raw IMU rate [Hz] (propeller "
+                        "vibration); None-like 0 disables")
     p.add_argument('--save-csv', action='store_true')
     p.add_argument('--output-dir', default=None)
     args = p.parse_args()
@@ -143,13 +152,20 @@ def main():
         with contextlib.redirect_stdout(io.StringIO()):
             bags = load_excitation_dataset(d)
         for b in bags:
-            sig = prepare_signals(b, axis)
+            sig = prepare_signals(
+                b, axis, omega_source=args.omega_source,
+                lpf_cutoff=(args.lpf_cutoff
+                            if args.omega_source == 'imu'
+                            and args.lpf_cutoff > 0 else None))
             t, om, M, f = sig['t'], sig['omega'], sig['moment'], sig['f_col']
             roll, pitch = math_tools.quaternion_to_euler_vectorized(
                 b.odom.quaternion)
-            phi = (roll if axis == 'x' else pitch)
-            n = min(len(t), len(phi))
-            t, om, M, f, phi = t[:n], om[:n], M[:n], f[:n], phi[:n]
+            # the attitude lives on the odom clock; with --omega-source imu
+            # the rate lives on the IMU clock, so put the attitude on t
+            # rather than truncating (that would silently misalign them)
+            phi = np.interp(t, b.odom.t - b.odom.t[0],
+                            roll if axis == 'x' else pitch)
+            n = len(t)
             i0, i1 = detect_excitation_window(M, moment_cap=MOMENT_CAP.get(axis))
             sgn = +1.0 if b.name.startswith('pos') else -1.0
             sl = free_phase(t, om, f, phi, i1, args.thrust_frac,

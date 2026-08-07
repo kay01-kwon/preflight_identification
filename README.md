@@ -197,6 +197,40 @@ plus the error map when `--truth-com` is given). On the reference dataset a
 ±20 % mis-specification of either constant moves the CoM by < 0.9 mm, and the
 constant choice moves the ground-truth error by < 0.9 mm over the whole box.
 
+### The rate channel: `odom` twist.angular under-reads
+
+`/mavros/local_position/odom`'s `twist.angular` is an EKF output, not the raw
+gyro, and it **under-reads the true body rate**. Integrated over a window and
+compared with the attitude change on the same clock, over 70 runs:
+
+| window | `∫ω_odom dt / Δφ` | `∫ω_imu dt / Δφ` |
+|---|---|---|
+| powered ramp (onset → peak, ω < 0.1 rad/s) | `0.914 ± 0.060` | `0.993 ± 0.064` |
+| free tip-over (ω up to 3 rad/s) | `0.66 – 0.87` | `0.95 – 1.05` |
+
+The raw gyro integrates to the attitude; the odometry rate does not, and the
+shortfall grows with rate. A *uniform* scale error is absorbed by the
+ramp-invariance calibration of `K`, which is why the identification's CoM
+results are unaffected — but anything that uses `ω` or `φ̈` in absolute terms
+inherits it. `analysis/zcom_freefall.py` and `analysis/ge_error_chart.py`
+therefore default to `--omega-source imu` (15 Hz low-pass for propeller
+vibration), and both interpolate the attitude onto the rate's clock rather than
+truncating, which would silently misalign the two.
+
+What that changes, on the free tip-over:
+
+| | rate channel | `z_CoM` | `C₂` | `J_P` | `J_cm = J_P − m(h₀² + z²)` |
+|---|---|---|---|---|---|
+| pitch | odom | 205 ± 4 mm | 4.15 | 0.378 | `0.201 ± 0.028` |
+| pitch | **raw IMU** | **207 ± 4 mm** | **5.52** | **0.217** | **`0.038 ± 0.022`** |
+| roll | odom | 267 ± 6 mm | 4.04 | 0.516 | `0.216 ± 0.014` |
+| roll | **raw IMU** | **269 ± 5 mm** | **5.37** | **0.296** | **`−0.009 ± 0.026`** |
+
+`z_CoM` and the balance angle are unchanged — they come from the *ratio* `A/B`,
+which a common rate error cancels — but `C₂`, `J_P` and the about-CoM inertia
+move by a factor of ~1.7, and only the raw-gyro column is compatible with a CAD
+`J_cm ≈ 0.06` kg·m² for this airframe.
+
 ### Dynamics residual vs the theoretical rotor GE moment
 
 With `z_CoM` and `J_P` pinned, every term of the contact-phase rotational
@@ -242,6 +276,49 @@ the thrust arm, while the arm itself is only known to ~15 mm (free phase 92 mm,
 model fit 112 ± 15 mm, mocap 113 mm). Only the 18 mN·m of *curvature* could
 ever be separated, against a 181 mN·m fit RMS. The 3σ detection floor is
 1.4–3.9 N·m — 4 to 100× above what the models predict.
+
+**Chart, whole dataset.** `analysis/ge_error_chart.py` draws the same comparison
+with no free parameter at all — `z_CoM` and `J_P` pinned, the arm taken from the
+mocap circle fit — pooled over all 139 runs as a function of accumulated tilt:
+
+```bash
+python analysis/ge_error_chart.py DataSet/exp --z-com 0.267 --jp 0.311
+```
+
+→ `docs/fig_ge_error.pdf` (+ `.png`) and `docs/ge_error_by_tilt.csv`. The window
+starts at 1° of tilt, below which the vehicle is still static and the rotational
+balance does not apply. Median over runs, in mN·m:
+
+| model | theory @8° | difference @8° | difference level | difference RMS | shape-only RMS |
+|---|---|---|---|---|---|
+| single-rotor | `32` | `−442` | `−238` | `398` | `105` |
+| interference | `148` | `−551` | `−350` | `429` | `103` |
+| Garofano | `307` | `−711` | `−513` | `526` | `101` |
+
+**Which way does the GE moment push?** Across all 140 runs, both axes and both
+directions, `sgn·ΔM_GE > 0` in **100.0%** of samples — the ground effect always
+acts *with* the tip-over, lowering `M_crit`, as its thrust channel `a = c_a f l`
+requires. Only its *gradient* opposes further tilting:
+
+| model | level | slope | vs the gravitational term |
+|---|---|---|---|
+| single-rotor | `+36 ± 6` mN·m | `−0.8 ± 0.4` mN·m/deg | `−0.57%` |
+| interference | `+157 ± 26` | `−1.4 ± 1.7` | `−0.92%` |
+| Garofano | `+343 ± 45` | `−3.3 ± 1.9` | `−2.26%` |
+
+against `W·z_CoM = 147` mN·m/deg at `z_CoM = 267` mm — the "ground-induced
+restoring spring" of `docs/response_ge_comment.md`, now measured along all 140
+trajectories rather than at an operating point. The residual's own slope is
+`−61` mN·m/deg: the same sign, but **18× the largest model**, which is a
+`z_CoM` error of 111 mm rather than a ground effect.
+
+The residual runs from `−50` mN·m at 1° of tilt to `−650` mN·m at 9.5°, while
+every model stays flat at `+32…+310`: they differ in sign and in slope, not
+merely in size. Panel (c) removes each run's own mean — the only part an arm
+error cannot absorb — and there the residual still sweeps 150 → −300 mN·m while
+all three models stay inside ±20 mN·m. So the shape of what the dynamics is
+missing is a tilt-proportional term ~5× larger than the ground effect, i.e. a
+`W·z_CoM`-like stiffness error, not the ground effect.
 
 Note also that `z_CoM = 267` mm and `J_P = 0.311` kg·m² over-determine the
 pendulum: the free phase measures `A = 2W·z_CoM/J_P` directly, and at

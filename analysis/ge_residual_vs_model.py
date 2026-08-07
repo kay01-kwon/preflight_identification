@@ -77,7 +77,13 @@ MODELS = ('single', 'interf', 'garofano')
 # ═════════════════════════════════════════════════════════════
 
 def ge_moment(bag, axis, pos, t, n, args):
-    """dM_GE(t) [N m] about the active pivot line, for each model."""
+    """dM_GE(t) [N m] about the active pivot line, for each model.
+
+    Everything is put on the caller's clock ``t`` by interpolation — with
+    --omega-source imu that clock is the IMU's, not the odometry's, and
+    truncating instead of interpolating would silently misalign the
+    attitude with the rates.
+    """
     L, R, H = args.arm, args.radius, args.hub_height
     lp = args.lp_roll if axis == 'x' else args.lp_pitch
     ang = np.deg2rad(30 + 60 * np.arange(6))
@@ -96,12 +102,13 @@ def ge_moment(bag, axis, pos, t, n, args):
                     for j in range(6)]).T[:n]
 
     qw, qx, qy, qz = bag.odom.quaternion.T
-    r31 = 2 * (qx * qz - qw * qy)
-    r32 = 2 * (qy * qz + qw * qx)
-    r33 = 1 - 2 * (qx * qx + qy * qy)
-    m = min(len(r31), n)
-    h_it = (np.outer(r31[:m], pP[0]) + np.outer(r32[:m], pP[1])
-            + np.outer(r33[:m], pP[2]))
+    tq = bag.odom.t - t0
+    r31 = np.interp(t, tq, 2 * (qx * qz - qw * qy))[:n]
+    r32 = np.interp(t, tq, 2 * (qy * qz + qw * qx))[:n]
+    r33 = np.interp(t, tq, 1 - 2 * (qx * qx + qy * qy))[:n]
+    m = n
+    h_it = (np.outer(r31, pP[0]) + np.outer(r32, pP[1])
+            + np.outer(r33, pP[2]))
     ok = np.all(h_it > R / 4 + 0.01, axis=1)
 
     out = {}
@@ -117,7 +124,7 @@ def ge_moment(bag, axis, pos, t, n, args):
     lp_signed = arm[0] - (LY[0] if axis == 'x' else -LX[0])
     cx = 0.0 if axis == 'x' else -lp_signed
     cy = lp_signed if axis == 'x' else 0.0
-    zc = r31[:m] * cx + r32[:m] * cy + r33[:m] * H
+    zc = r31 * cx + r32 * cy + r33 * H
     dists2 = np.array([0.0, L ** 2, L ** 2, 3 * L ** 2, 3 * L ** 2, 4 * L ** 2])
     s_lvl = (R ** 2 / 4) * np.sum(
         2 * zc[:, None] / (dists2[None, :] + 4 * zc[:, None] ** 2) ** 1.5,
