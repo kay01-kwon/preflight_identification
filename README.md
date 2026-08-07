@@ -309,25 +309,34 @@ things had to be right first, all of them from the manuscript's own equations:
    to the moment peak reaches 6.3° of accumulated tilt (median) and drags in
    the part of the trajectory the excitation was never meant to cover.
 
+5. **The circle fit must be called once the vehicle is turning.** Called at the
+   excitation-window start — before any rotation — it fits noise and returns a
+   meaningless centre on part of the runs. Called at `δφ ≥ 1°` the signed
+   centres tighten to `−138.1 ± 1.2` / `+141.3 ± 4.2` mm (roll pos/neg) and
+   `+120.9 ± 23.3` / `−105.6 ± 3.8` mm (pitch pos/neg).
+
 Median over runs, in mN·m, over `δφ` = 1–4° (= 5° absolute):
 
-| model | theory | difference @4° | **difference level** | shape-only RMS |
+| model | theory | difference @4° | difference level | shape-only RMS |
 |---|---|---|---|---|
-| **single-rotor** | `34` | `−167` | **`−7`** | `142` |
-| interference | `154` | `−286` | `−113` | `142` |
-| Garofano | `345` | `−434` | `−273` | `141` |
+| single-rotor | `34` | `+247` | `+319` | `140` |
+| interference | `154` | `+124` | `+222` | `140` |
+| **Garofano** | `345` | `−66` | **`+48`** | `140` |
 
-**The single-rotor (Cheeseman) model matches the measured residual's level to
-7 mN·m** — it was `−238` mN·m before these fixes. In panel (a) the residual
-crosses the single-rotor curve around 2.5–3° of tilt. The interference and
-Garofano models over-predict by 113 and 273 mN·m.
+**Do not read the level column as a ranking.** It is arm-dominated: `W·Δa = 32`
+mN·m per mm of gravity arm, so the 20–30 mm the circle-fit bug was worth on part
+of the runs moved the whole column by ~600 mN·m and swapped which model looked
+closest (before fix 5 the single-rotor model sat at `−7`; after it, Garofano
+sits at `+48`). Any model can be made to "match" by moving the arm a few mm,
+which is well inside what is known about it.
 
-What still does not close is the *shape*: the residual runs from `+120` mN·m at
-1.2° to `−140` at 4°, while all three models are flat to within `±20` mN·m of
-their own mean (panel c). That tilt-proportional term is a `W·z_CoM` stiffness
-error rather than a ground effect — at `z_CoM = 267` mm it corresponds to about
-120 mm of height error, in the same direction as the free tip-over's `207` mm
-(pitch).
+The shape column does not move: `140` mN·m RMS for all three, unchanged by any
+of the five fixes. The residual sweeps `+50 → −55` mN·m over `δφ` = 1.2–4°
+(slope `−51` mN·m/deg) while every model stays within `±20` mN·m of its own
+mean (panel c). That tilt-proportional term is a `W·z_CoM` stiffness error of
+about 93 mm — the same direction as the free tip-over's `207` mm (pitch) — and
+not a ground effect. Until `(z_CoM, J_P)` are pinned to better than that, this
+comparison bounds the ground effect rather than testing it.
 
 **Which way does the GE moment push?** Across all 140 runs, both axes and both
 directions, `sgn·ΔM_GE > 0` in **100.0%** of samples — the ground effect always

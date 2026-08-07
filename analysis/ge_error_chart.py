@@ -154,10 +154,6 @@ def main():
             pos = b.name.startswith('pos')
             sgn = +1.0 if pos else -1.0
             dphi = sgn * (phi - float(np.median(phi[:max(1, i0)])))
-            piv = estimate_pivot_from_mocap(b, t[i0], axis)
-            a = piv['pivot_abs'] * 1e-3
-            if not np.isfinite(a):
-                continue
             wl = args.savgol if args.savgol % 2 else args.savgol + 1
             if i1 - i0 < wl + 2:
                 continue
@@ -184,6 +180,13 @@ def main():
                 continue
             k0 = k0 + int(over[0])
             if k1 - k0 < args.min_samples:
+                continue
+            # the circle fit needs the vehicle to be TURNING: called at the
+            # window start (before any rotation) it fits noise and returns a
+            # meaningless centre on part of the runs
+            piv = estimate_pivot_from_mocap(b, t[k0], axis)
+            a = piv['pivot_abs'] * 1e-3
+            if not np.isfinite(a) or not 0.05 < a < 0.25:
                 continue
             s = slice(k0, k1 + 1)
             # Eq. (43)/(44): the collective acts through l_p, the same arm
