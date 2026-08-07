@@ -90,6 +90,49 @@ The rotor heights entering `η_i^GE = γ_i^GE − 1` are heights above the
 `h_i = (R_rest^T R(t) · p_i^P)_z` with `p_i^P` the pivot-relative hub position
 of Eqs. (38)/(39), `z`-component `h = 0.315` m.
 
+## Why `ΔM_GE` comes out almost flat over the window
+
+Split Eq. (43) with `η_i = η̄ + δη_i`:
+
+```
+ΔM_GE = η̄ · Σ_i b_i T_i  +  Σ_i b_i δη_i T_i
+      = η̄ · (M_cmd + f·l_p)   +   [differential]
+        └── common channel ──┘
+```
+
+Measured over the 68 pitch runs, `δφ` = 1–4°, interference model:
+
+| channel | level | slope |
+|---|---|---|
+| common `η̄ (M_cmd + f l_p)` | `127.2` mN·m | `+3.72` mN·m/deg |
+| differential `Σ b_i δη_i T_i` | `−0.1` | `−2.77` |
+| **total** | **`127.1`** | **`+0.95`** |
+
+Four things conspire:
+
+1. **GE is weak and slowly varying here.** `h/R = 2.48`, so
+   `η = R²/(16h² − R²) = 1.03%`, and `d ln η / d ln h = −2.02` — a 1% height
+   change buys only a 2% change in `η`.
+2. **The level is `η̄` times a constant.** `f·l_p = 21 × 0.10 = 2.1` N·m against
+   `M_cmd ≈ 0.9–1.4` N·m, and the excitation *holds the collective fixed* by
+   design. The dominant factor in the product does not move.
+3. **Turning about a pivot at the vehicle's own edge barely moves the mean
+   rotor height.** Only the pivot offset survives the average:
+   `dh̄/dδφ = l_p ≈ 1.7` mm/deg on 315 mm, i.e. `0.6%`/deg, so `η̄` moves
+   `1.2%`/deg — a few mN·m/deg on a 127 mN·m level.
+4. **The differential channel cancels most of what is left.** The pivot arms
+   are `−129, +100, +329, +329, +100, −129` mm (pitch, pos): the two front
+   rotors sit at *negative* arm and descend as it tips (their `η` rises), the
+   two rear rotors carry the largest arm and rise (their `η` falls). The two
+   contributions are of opposite sign and comparable size — `+3.72` against
+   `−2.77` mN·m/deg.
+
+So the flatness is structural, not an artefact: at `h/R ≈ 2.5`, with the
+collective pinned and the rotation taken about a contact line 0.1 m from the
+body centre, `ΔM_GE` *is* essentially a constant over a 4° sweep. Making it
+inform anything would need a lower hover height, a much larger tilt, or a
+deliberately varied collective.
+
 ## After the throttle cut
 
 The excitation stops the rotors at 5° of absolute tilt (the logged cut lands at
