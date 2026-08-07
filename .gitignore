@@ -26,6 +26,7 @@ ramp_quality_*.png
 ge_trajectory_runs*.csv
 small_angle_runs.csv
 tilt_range_runs.csv
+zcom_tilt_runs.csv
 cosh_fidelity_runs.csv
 postonset_linearity_runs.csv
 tiltcap_mcrit.csv
