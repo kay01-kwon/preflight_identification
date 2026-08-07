@@ -31,6 +31,9 @@
 %   signal level at the peak ............... analysis/alpha_at_peak.py
 %   bilinear tau*dphi term 0.04/0.17 ....... analysis/ge_bilinear.py
 %   GE vs contact-lever attribution ........ analysis/static_attribution.py
+%   error budget rho -> onset -> M_ff -> mm  analysis/error_budget.py
+%     (Table tab:budget; total 1.30/4.28 um of CoM offset, and the
+%      equivalent |dC2/C2| <= eps/2 = 0.13%/2.96%)
 %   GE shift of (C2, K): dC2/C2 >= -1.7%, dK/K <= +8.0% — closed form
 %     eq:ge-constant-shift; J_P cancels, so no inertia estimate enters.
 % Constants: conservative l_p = 0.140/0.110 m (roll/pitch), hub height
@@ -457,6 +460,120 @@ excursion & \raggedright $1.2\;/\;12.3$ &
 \end{table}
 
 % ==================================================================
+\subsubsection{Error budget: from the residual forcing to millimetres}
+\label{sec:fid-budget}
+
+Table~\ref{tab:rho} bounds each channel in moment units; the deliverable
+is a length. The two are joined in closed form, with no free step, so
+every entry of Table~\ref{tab:rho} can be read directly as an error of
+the identified CoM offset.
+
+\paragraph{Propagation.} The zero onset conditions leave no homogeneous
+part in \eqref{eq:deviation}. The position kernel satisfies
+$h_\phi(0)=0$, so the Leibniz boundary term in
+$\dot e_\phi = h_\phi(0)\rho(\tau)
+ + \int_0^\tau \dot h_\phi(\tau{-}s)\rho(s)\,ds$
+vanishes for \emph{any} forcing --- no assumption on $\rho(0)$ is needed
+--- and $e_\phi(0)=\dot e_\phi(0)=0$ then forces both constants of the
+complementary solution to zero. The deviation is the Duhamel integral
+\eqref{eq:duhamel-bound} alone, evaluated with
+$J_P = 1/(K C_2^2)$ from the calibrated constants, so no independent
+inertia estimate enters.
+
+\paragraph{Translation.} The onset is the argument minimizing the
+two-segment residual. Perturbing the data by $\delta\omega$,
+linearizing the stationarity condition about the unperturbed optimum,
+and using
+$\partial\hat\omega/\partial t_0 = -C_1 C_2 \sinh(C_2\tau)$ gives
+\begin{equation}
+  \Delta t_0 = -\frac{\langle\delta\omega,\ \sinh C_2\tau\rangle}
+                     {C_1C_2\,\|\sinh C_2\tau\|^2},
+  \qquad
+  \Delta M_{\mathrm{crit}} = \dot M\,\Delta t_0
+    = -\frac{\langle\delta\omega,\ \sinh C_2\tau\rangle}
+            {K\,C_2\,\|\sinh C_2\tau\|^2},
+  \label{eq:onset-translation}
+\end{equation}
+the ramp rate cancelling because $C_1 = K\dot M$: the exchange rate from
+residual forcing to identified threshold is a constant of the
+calibration, not of the run. The deliverable follows the pipeline
+exactly, $M_{\mathrm{ff}} = \pm\tfrac12(M_+ + M_-)$ and
+$\lambda_{\mathrm{off}} = M_{\mathrm{ff}}/W$. The estimate is
+conservative three times over: it forwards the \emph{peak} of each
+channel, it uses the plain $L^2$ Gauss--Newton curvature whereas the
+implemented cost is Huber-robust and also refits the pre-onset segment
+(both stiffen the minimum), and it omits the antisymmetry that removes
+part of the result at the pairing step.
+
+\paragraph{Budget.} Table~\ref{tab:budget} carries every channel of
+Table~\ref{tab:rho} through \eqref{eq:duhamel-bound} and
+\eqref{eq:onset-translation} on all $140$ gate-passing runs
+(\texttt{analysis/error\_budget.py}). The total coherent modelling
+error of the identified CoM offset is $1.3\,\mu$m (median) and
+$4.3\,\mu$m (worst configuration) --- roughly $400\times$ below the
+$1.6$--$1.8$~mm load-cell validation RMS of the identified offset, and
+$100\times$ below the $0.39$~mm that the $3^\circ$ window ablation
+moves. The identification is therefore \emph{noise-limited, not
+model-limited}, which is the same conclusion the rate-invariance
+certificate reaches from the opposite direction. The channel ranking is
+also informative: the gravity curvature dominates and is common-mode,
+so the pivot-free pairing does not reduce it ($0.99\times$), whereas the
+ground-effect channels are antisymmetric between tip directions and are
+partly removed by it ($1.3$--$1.4\times$) --- the structural statement of
+Sec.~\ref{sec:fid-transfer}, now with a number.
+
+Finally, the same table settles how much of $\rho$ could be mistaken for
+a mis-calibrated $C_2$. Since
+$\partial\ln(\cosh x - 1)/\partial\ln x = x\coth(x/2) \ge 2$ for all
+$x>0$ (and $\in[2.2,5.3]$ over the measured
+$C_2\tau_{\mathrm{end}} \in [1.08, 5.20]$), a relative shape deviation
+$\varepsilon$ can masquerade as at most an $\varepsilon/2$ relative
+change of the exponent. With the measured
+$\varepsilon$ ($0.26\%$ median, $5.9\%$ worst run) this is
+$|\Delta C_2/C_2| \le 0.13\%$ (median) and $3.0\%$ (worst) --- below
+the $12.5\%$ a priori spread the calibration already has to resolve, and
+in any case unreachable, since $C_2$ is not re-estimated per run: the
+sole per-run degree of freedom is the onset index, which is exactly what
+\eqref{eq:onset-translation} quantifies.
+
+\begin{table}[t]
+\centering
+\caption{Error budget of the coherent modelling residuals, evaluated on
+all $140$ gate-passing runs. Each channel of Table~\ref{tab:rho} is
+propagated through the Duhamel integral \eqref{eq:duhamel-bound} and the
+onset sensitivity \eqref{eq:onset-translation}. ``Shape dev.'' is
+$|\delta\omega|_{\max}$ relative to the nominal rate at the window edge.
+The last column is the resulting error of the delivered CoM offset,
+$\Delta M_{\mathrm{ff}}/W$, after the pivot-free pairing.}
+\label{tab:budget}
+\small
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}lcccc@{}}
+\hline
+& $|\rho|_{\max}$ [mN\,m] & Shape dev.\ [\%]
+& $|\Delta M_{\mathrm{crit}}|$ [mN\,m] & $|\Delta\lambda_{\mathrm{off}}|$
+[$\mu$m] \\
+Channel & median\,/\,max & median\,/\,max & median\,/\,max &
+median\,/\,max \\
+\hline
+Gravity curvature      & $2.75\;/\;12.3$ & $0.10\;/\;2.17$
+                       & $0.037\;/\;0.300$ & $1.14\;/\;3.74$ \\
+Ground effect (interf.)& $0.42\;/\;3.20$ & $0.01\;/\;0.34$
+                       & $0.003\;/\;0.046$ & $0.11\;/\;0.15$ \\
+Bilinear $\tau\,\delta\phi$ & $0.04\;/\;0.17$ & $0.001\;/\;0.007$
+                       & $0.0005\;/\;0.007$ & $0.01\;/\;0.03$ \\
+Ramp nonlinearity      & $3.93\;/\;15.9$ & $0.12\;/\;3.98$
+                       & $0.035\;/\;0.604$ & $0.58\;/\;1.24$ \\
+\hline
+\textbf{Total}         & --- & $0.26\;/\;5.92$
+                       & $0.048\;/\;0.900$ &
+                         $\mathbf{1.30\;/\;4.28}$ \\
+\hline
+\end{tabular}
+\end{table}
+
+% ==================================================================
 \subsubsection{Empirical verification: a prediction test, not a fit}
 \label{sec:fid-verify}
 
@@ -499,8 +616,11 @@ the data select the cosh member, not merely any smooth monotone curve.
 In summary: structurally, every modeled effect renames the effective
 constants $(C_2,K)$ that the calibration estimates, so to first order
 the response cannot leave the cosh family; the sole escape channel is
-measured — not merely bounded — at a few mN\,m and propagates to a
-sub-$1\%$, sub-noise shape deviation. Empirically, the zero-freedom
+measured — not merely bounded — at a few mN\,m, and its exact
+propagation through the deviation dynamics and the onset sensitivity
+(Table~\ref{tab:budget}) moves the delivered CoM offset by at most
+$4.3\,\mu$m, some $400\times$ below the achieved accuracy: the method
+is noise-limited, not model-limited. Empirically, the zero-freedom
 family predicts the response across all runs with a noise-dominated,
 rate-invariant residual, is insensitive to the window extent, and
 decisively outperforms its own quadratic limit. The theoretical bounds
