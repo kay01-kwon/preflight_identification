@@ -193,6 +193,17 @@ def analyse(bag, crit, axis, sig, phi_all, n, z_com, j_p, savgol=9):
     piv = cvp.estimate_pivot_from_mocap(bag, crit.onset_time, axis)
     lp = (piv['pivot_abs'] * 1e-3 if not np.isnan(piv['pivot_abs'])
           else LP[axis])
+    # SIGN CONVENTION.  Everything below (m, phi, om) is multiplied by s, so
+    # the balance is written in the TIPPING-POSITIVE frame.  In the raw frame
+    # the static threshold is
+    #     M_crit = s (W - f) l_p + W lam,
+    # where the pivot arm flips with the tip direction -- it is the restoring
+    # term -- and the CoM offset does not.  Multiplying through by s moves the
+    # direction dependence off l_p and onto lam:
+    #     s M_crit = W (l_p + s lam) - f l_p,
+    # which is why the gravity arm below is l_p + s*lam with l_p unsigned.
+    # The two forms are identical (verified numerically); this one matches
+    # analysis/mcrit_prediction.py at the onset, where omega_dot = phi = 0.
     a = lp + s * analyse.off_truth
 
     _, i1 = cvp.detect_excitation_window(
