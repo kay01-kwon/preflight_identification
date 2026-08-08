@@ -103,9 +103,20 @@ theorem), which are independently measured rather than fitted:
    (J_P, z_CoM) from an independent measurement and estimating
    dM_GE(t) as a state -- which needs the constants first.
 
-   What remains is unmodelled contact behaviour or a processing
-   systematic; a no-thrust release, where the ground-effect moment is
-   zero by construction, would separate the two.
+4. A migrating contact point is ruled out by the mocap.  Read as a
+   moving pivot, the residual corresponds to an arm rate of
+   1.35 mm/deg, i.e. the contact would have to travel 8.1 mm over a
+   6 deg excursion.  Over that excursion the marker sweeps an arc of
+   only 36 mm at R = 340 mm, so a centre drift of 8 mm would leave a
+   circle-fit residual of several mm.  The measured residual is
+   0.1-0.2 mm across 138 runs (analysis/pivot_geom.py).  Landing-gear
+   compliance and foot roll are therefore excluded at the size needed.
+
+   That leaves causes that scale with thrust -- aerodynamic ones, or an
+   error in the moment reconstruction M = C_T sum b Omega^2 -- and a
+   no-thrust release separates them from everything else, since the
+   ground-effect moment is then zero by construction while the leg
+   still carries the weight.
 
 This negative result is now CLEAN.  The earlier attempt used the
 calibrated J_P, which varies 2.5x across datasets and sits below the

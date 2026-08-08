@@ -15,7 +15,7 @@ import critical_value_getter_piecewise as cvp
 from utils.extractor import load_excitation_dataset
 from constrained_calibration import prepare, MASS_KG, G, ROOT, STRIDE
 
-Z_CAD = 0.256
+Z_CAD = 0.261
 J_CAD = {'x': 0.051085, 'y': 0.050564}
 LP = {'x': 0.140, 'y': 0.110}
 OFF = {('case_01','Mx'):-2.90,('case_01','My'):-11.45,('case_02','Mx'):-14.29,
