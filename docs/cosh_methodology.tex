@@ -561,7 +561,9 @@ datasets, against $\mathrm{CV} = 65\%$ and $49\%$ for $1/K$.
 
 Table~\ref{tab:phys} makes the comparison explicit against a fully
 independent reference. The CAD model gives $z_{\mathrm{CoM}} = 0.256$~m
-and the CoM inertias of Table~5, so the parallel-axis theorem fixes
+--- measured from the landing-gear contact plane, so it is already
+referred to the pivot and needs no datum correction --- together with
+the CoM inertias of Table~5, so the parallel-axis theorem fixes
 the pivot inertia without any fit,
 $J_P = J_{\mathrm{CAD}} + m(z_{\mathrm{CoM}}^2 + l_p^2)
      = 0.325$ and $0.301$~kg\,m$^2$,
@@ -581,9 +583,13 @@ $-2.3\%$), with a circle residual of $0.1$--$0.2$~mm. The same fit puts
 the marker at $0.3172 \pm 0.0012$~m above the pivot, matching the
 $\sqrt{R^2 - l_p^2} = 0.3167$~m implied by the radius and the rotor-hub
 height $h = 0.315$~m used in the ground-effect model. The geometry is
-therefore consistent to about a millimetre, and the CAD CoM sits
-$61$~mm below the marker plane --- as it should for an airframe carrying
-its battery low.
+therefore consistent to about a millimetre: the mocap heights are
+referred to the ground contact, the CAD height is referred to the
+landing gear, and the CAD CoM lands $61$~mm below the marker plane, as
+it should for an airframe carrying its battery low. Both geometric
+inputs to the parallel-axis floor are thus independently confirmed, and
+the identified $J_P$ is the only quantity left that can account for the
+gap.
 
 The disagreement is not spread evenly over the $(C_2, K)$ plane, and
 that is the substance of the remark. The constant the deliverable is
