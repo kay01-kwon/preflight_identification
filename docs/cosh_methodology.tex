@@ -97,8 +97,9 @@ moment peak, truncated at the allocator cap.
 the slope-error ($3\%$), sample-count ($38$) or linearity-RMSE
 ($30$~mN\,m) gates; moment trace only, so no circularity.
 \item \textbf{Calibration, once per configuration and axis}
-(Sec.~\ref{sec:calibration}) — Algorithm~\ref{alg:calib} scans
-$(C_2, K)$ coarse-to-fine; each candidate is scored by
+(Sec.~\ref{sec:calibration}) — Algorithm~\ref{alg:calib} locates
+$(C_2, K)$ from the per-run curve shape and then refines it on a grid
+about that centre; each candidate is scored by
 Algorithm~\ref{alg:score}, which runs Algorithm~\ref{alg:cosh} on
 every gated run and sums the two directional CVs of
 $M_{\mathrm{crit}}$ across ramp rates.
@@ -406,12 +407,14 @@ $r \in \{0.10,\dots,1.20\}$~N\,m/s,
 where $M_{\mathrm{crit}}^{(r)}$ is the output of
 Algorithm~\ref{alg:cosh} on the run with commanded rate $r$.
 
-\paragraph{Search ranges.} The admissible box is set so that it covers
-every physically plausible constant with margin. For
-$K = 1/(W z_{\mathrm{CoM}})$, the coarse range
-$K \in [0.10, 0.50]$~(N\,m)$^{-1}$ corresponds to
-$z_{\mathrm{CoM}} \in [0.06, 0.32]$~m at the vehicle weight — bracketing
-the plausible CoM heights — with the refinement allowed to move within
+\paragraph{Search ranges.} The stage-2 grid is centred on the stage-1
+medians and spans $\pm25\%$ in $C_2$ and $[-40\%, +40\%]$ in $K$, which
+is wide enough to absorb the scatter of the per-run fits (interquartile
+ranges of roughly $\pm10\%$ in $C_2$) without reaching the unphysical
+extremes a fixed box admits. For reference, the earlier fixed box was
+$K \in [0.10, 0.50]$~(N\,m)$^{-1}$, i.e.\
+$z_{\mathrm{CoM}} \in [0.06, 0.32]$~m at the vehicle weight, with the
+refinement allowed to move within
 the wider clip box $[0.05, 0.70]$ ($z_{\mathrm{CoM}}$ up to
 $0.63$~m). For $C_2 \in [3, 8]$~rad/s, the implied pivot inertia
 $J_P = 1/(K C_2^2)$ spans roughly $[0.03, 1.1]$~kg\,m$^2$, bracketing
@@ -494,16 +497,11 @@ away from the shape-based centre.
 Algorithm~\ref{alg:score} states the consistency criterion as a
 stand-alone routine — it wraps Algorithm~\ref{alg:cosh} and returns the
 directional sum of coefficients of variation — and
-Algorithm~\ref{alg:calib} performs the search over it. The coarse scan
-evaluates
-\eqref{eq:score} on an $11 \times 11$ grid
-($\Delta C_2 = 0.5$~rad/s, $\Delta K = 0.04$~(N\,m)$^{-1}$;
-$121$ evaluations). A single refinement pass then re-scans a
-$9 \times 9$ uniform grid spanning $\pm$ one coarse step about the
-coarse minimizer ($\pm 0.5$~rad/s, $\pm 0.04$~(N\,m)$^{-1}$, clipped to
-the box), i.e.\ final resolutions of $0.125$~rad/s and
-$0.01$~(N\,m)$^{-1}$ — so the reported constants are not quantized to
-the coarse step. One pass suffices because the objective is flat along
+Algorithm~\ref{alg:calib} performs the search over it. Stage~2
+evaluates \eqref{eq:score} on a $9 \times 9$ uniform grid about the
+stage-1 centre, i.e.\ resolutions of about $0.13$~rad/s in $C_2$ and
+$0.05\,K^{0}$ in $K$ ($81$ evaluations per dataset). One pass suffices
+because the objective is flat along
 the $(C_2, K)$ ridge; it is also \emph{piecewise constant} (the onset
 is an integer index, so small parameter changes leave
 $M_{\mathrm{crit}}$ unchanged), which is why gradient-based or simplex

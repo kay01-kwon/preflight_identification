@@ -1,7 +1,7 @@
 % Pipeline-overview flowchart (drop-in for the manuscript).
 % Requires: \usepackage{tikz} \usetikzlibrary{arrows.meta, positioning, fit}
 % Algorithm numbers are literal (Alg. 1 = onset detection, 2 = consistency
-% score, 3 = coarse-to-fine calibration); adjust if the numbering differs.
+% score, 3 = two-stage calibration); adjust if the numbering differs.
 \begin{tikzpicture}[
   font=\small,
   box/.style={draw, semithick, align=center, inner sep=5pt,
@@ -18,8 +18,13 @@
   {\footnotesize slope $\le 3\%$ \,·\, $N_{\mathrm{full}} \ge 38$ \,·\,
    linearity RMSE $\le 30$~mN\,m}};
 
-\node[sub, below=18mm of gates] (cand) {candidate $(C_2, K)$\\[-1pt]
-  {\footnotesize coarse $11{\times}11$ grid $\to$ fine $9{\times}9$ (Alg.~3)}};
+\node[sub, below=18mm of gates] (locate) {\emph{stage 1} — locate\\[-1pt]
+  {\footnotesize per-run free fit of $(C_1, C_2, C)$ $\Rightarrow$
+   medians $(C_2^{0},\, K^{0} = C_1/\dot M)$}};
+\node[sub, below=of locate] (cand) {\emph{stage 2} — refine:
+  candidate $(C_2, K)$\\[-1pt]
+  {\footnotesize $9{\times}9$ grid on
+   $C_2^{0}[0.75, 1.25] \times K^{0}[0.60, 1.40]$ (Alg.~3)}};
 \node[sub, below=of cand] (alg1c) {COSH onset detection (Alg.~1)\\[-1pt]
   {\footnotesize every run $\rho$, $(C_2,K)$ pinned
    $\Rightarrow M_{\mathrm{crit}}^{(\rho)}$}};
@@ -27,9 +32,9 @@
   {\footnotesize $s = \mathrm{CV}_{+} + \mathrm{CV}_{-}$ of
    $M_{\mathrm{crit}}$ across ramp rates}};
 \node[inner sep=0, right=7mm of alg1c] (loopx) {};
-\node[inner sep=0, above=10mm of cand] (topx) {};
+\node[inner sep=0, above=10mm of locate] (topx) {};
 \node[draw, dashed, semithick, inner sep=3.5mm,
-      fit=(cand)(alg1c)(score)(loopx)(topx)] (calib) {};
+      fit=(locate)(cand)(alg1c)(score)(loopx)(topx)] (calib) {};
 \node[anchor=north, yshift=-1mm, align=center]
       at (calib.north) {\small\bfseries Effective-constant calibration\\[-2pt]
       {\footnotesize\mdseries once per configuration \& axis}};
@@ -50,6 +55,8 @@
 
 \draw[arr] (data) -- (gates);
 \draw[arr] (gates) -- node[elbl, pos=0.3] {$\mathcal{G}$} (calib);
+\draw[arr] (locate) -- node[elbl]
+  {\footnotesize shape only} (cand);
 \draw[arr] (cand) -- (alg1c);
 \draw[arr] (alg1c) -- (score);
 \draw[arr] (score.east) -| node[pos=0.72, rotate=90, above=0.6mm,
