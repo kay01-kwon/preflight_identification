@@ -1,29 +1,38 @@
-"""Which attitude does the gravity moment see: absolute or relative?
+"""Which attitude does each term see: absolute or relative?
 
 The ground is not level.  Measured before the ramp, where the vehicle is
 simply sitting there, the resting attitude is +0.5 deg in roll and
--1.5 deg in pitch, and it is the same in both tip directions to within
-0.13 deg -- so it is genuine ground slope, not a per-run artefact.
+-1.5 deg in pitch, and it agrees between the two tip directions to
+within 0.13 deg -- genuine ground slope, not a per-run artefact.
 
-The gravity moment is set by the horizontal distance from the pivot to
-the CoM, so it must use the attitude referred to TRUE VERTICAL.  The
-inversion used the attitude referred to the resting plane, which is
-wrong by W z_CoM sin(phi_0) -- up to 260 mN.m at 1.8 deg, larger than
-the whole ground-effect moment.
+The two terms take opposite references, and the inversion originally had
+both wrong:
 
-Correcting it removes the level bias: the inversion sits +87.5 mN.m
-above the model with the relative angle and -16.1 mN.m with the absolute
-one.  It does NOT touch the slope, -46.5 against -47.1, so the attitude
-reference is not what the residual slope is about.
+  GRAVITY acts along true vertical, so it takes the ABSOLUTE attitude.
+  Referring it to the resting plane is wrong by W z_CoM sin(phi_0), up
+  to 260 mN.m at 1.8 deg -- larger than the whole ground-effect moment.
+  Correcting it removes the level bias: the inversion sits +87.5 mN.m
+  above the model with the relative angle and -16.1 with the absolute
+  one.
+
+  GROUND EFFECT is set by rotor height above the GROUND, so it takes the
+  attitude referred to the resting plane.  This one barely matters:
+  taking the heights along the ground normal instead of world z moves
+  the model slope from -1.85 to -1.83 mN.m/deg and its level from 160.4
+  to 160.1.  A uniform ground tilt raises some rotors and lowers others,
+  and the image superposition sums over rotor PAIRS, so most of it
+  cancels.
+
+Neither reference touches the residual slope: -46.50 relative, -47.13
+absolute, against a model slope near -1.8.
 
 A second thing falls out.  Subtracting the resting attitude from the
-onset attitude leaves the rotation the vehicle has already made before
-the onset, and that rocking is direction-dependent as it must be:
-+-0.3 deg on roll but +1.0 to +1.8 deg on pitch.  During it the vehicle
-is transferring from several feet onto one edge, so the pivot is not yet
-the single line the cosh family assumes.  Pitch is the axis that is
-worse on every other measure too -- J_P low by 38%, the shortest
-windows, the largest residuals -- and this is a candidate cause.
+onset attitude leaves the rotation already made before the onset, and
+that rocking is direction-dependent as it must be: +-0.3 deg on roll but
++1.0 to +1.8 deg on pitch.  During it the vehicle transfers from several
+feet onto one edge, so the pivot is not yet the single line the cosh
+family assumes.  Pitch is the axis that is worse on every other measure
+too, and this is a candidate cause.
 
 None of this reaches the deliverable: cosh_onset_fit consumes omega
 alone, and attitude enters the pipeline only through the tilt-cap gate.
@@ -94,10 +103,15 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
         piv = cvp.estimate_pivot_from_mocap(bag, crit.onset_time, ax)
         lp = piv['pivot_abs'] * 1e-3 if not np.isnan(piv['pivot_abs']) else LP[ax]
         a = lp + s * OFF_SIGN[axname] * OFF_MM[(case, axname)] * 1e-3
+        i0w, _ = cvp.detect_excitation_window(
+            sig['moment'], moment_cap=cvp.MOMENT_CAP.get(ax))
+        q_rest = np.median(bag.odom.quaternion[:max(20, i0w)], axis=0)
+        q_rest = q_rest / np.linalg.norm(q_rest)
         raw = ge_moment(bag, sig, ax, n, s > 0)
-        if raw is None:
+        raw_g = ge_moment(bag, sig, ax, n, s > 0, q_rest=q_rest)
+        if raw is None or raw_g is None:
             continue
-        gem = s * raw[sl]
+        gem = s * raw[sl]; gem_g = s * raw_g[sl]
         deg = np.rad2deg(phi_rel)
         out = {}
         for lab, ph in (('rel', phi_rel), ('abs', phi_abs)):
@@ -105,9 +119,10 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
                   - W * Z * np.sin(ph))
             out[lab] = np.polyfit(deg, 1e3 * ge, 1)
         sm, im = np.polyfit(deg, 1e3 * gem, 1)
+        smg, img = np.polyfit(deg, 1e3 * gem_g, 1)
         res['pos' if s > 0 else 'neg'].append(
             (np.degrees(phi0), out['rel'][0], out['rel'][1],
-             out['abs'][0], out['abs'][1], sm, im))
+             out['abs'][0], out['abs'][1], sm, im, smg, img))
     for dirn in ('neg', 'pos'):
         v = np.array(res[dirn])
         if not len(v):
@@ -116,13 +131,15 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
         agg[(case, axname, dirn)] = mu
         print(f"{case:<9}{axname:<4}{dirn:<5}{mu[0]:7.2f} | "
               f"{mu[1]:10.2f}{mu[2]:12.1f} | {mu[3]:10.2f}{mu[4]:12.1f} | "
-              f"{mu[5]:7.2f}{mu[6]:7.1f}")
+              f"{mu[5]:7.2f}{mu[6]:7.1f} |{mu[7]:7.2f}{mu[8]:7.1f}")
 A = np.array(list(agg.values()))
 print('-' * 104)
 print(f"{'mean':<18}{A[:,0].mean():7.2f} | {A[:,1].mean():10.2f}{A[:,2].mean():12.1f}"
       f" | {A[:,3].mean():10.2f}{A[:,4].mean():12.1f} | "
-      f"{A[:,5].mean():7.2f}{A[:,6].mean():7.1f}")
-for lab, si, ii in (('relative', 1, 2), ('absolute', 3, 4)):
-    ds = A[:, si] - A[:, 5]; di = A[:, ii] - A[:, 6]
+      f"{A[:,5].mean():7.2f}{A[:,6].mean():7.1f} |{A[:,7].mean():7.2f}{A[:,8].mean():7.1f}")
+print('  model columns: world-vertical heights | ground-normal heights')
+for lab, si, ii, mi, mj in (('relative', 1, 2, 5, 6), ('absolute', 3, 4, 5, 6),
+                            ('abs vs ground-normal model', 3, 4, 7, 8)):
+    ds = A[:, si] - A[:, mi]; di = A[:, ii] - A[:, mj]
     print(f"  {lab:<9} minus model:  slope mean {ds.mean():+7.2f} RMS {np.sqrt((ds**2).mean()):6.2f}"
           f" | level mean {di.mean():+7.1f} RMS {np.sqrt((di**2).mean()):6.1f}")

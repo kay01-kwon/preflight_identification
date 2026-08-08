@@ -109,12 +109,36 @@ def duhamel(tau, rho, c2, j_p):
     return out
 
 
-def ge_moment(bag, sig, axis, n, pos):
+def _rot_matrices(qw, qx, qy, qz):
+    """Stack of body-to-world rotation matrices from a quaternion series."""
+    return np.stack([
+        np.stack([1 - 2 * (qy * qy + qz * qz), 2 * (qx * qy - qw * qz),
+                  2 * (qx * qz + qw * qy)], axis=-1),
+        np.stack([2 * (qx * qy + qw * qz), 1 - 2 * (qx * qx + qz * qz),
+                  2 * (qy * qz - qw * qx)], axis=-1),
+        np.stack([2 * (qx * qz - qw * qy), 2 * (qy * qz + qw * qx),
+                  1 - 2 * (qx * qx + qy * qy)], axis=-1),
+    ], axis=-2)
+
+
+def ge_moment(bag, sig, axis, n, pos, q_rest=None):
     """Pivot ground-effect moment along the trajectory (interference model).
 
     Image superposition over rotor-centre distances at each rotor's own
     tilted height; no empirical constant.  Mirrors the 'interf' branch of
     analysis/ge_trajectory.py.
+
+    Ground effect is set by rotor height above the GROUND, so the heights
+    must be referred to the resting plane, not to true vertical: the pad
+    is not level (roll +0.5 deg, pitch -1.5 deg, see
+    analysis/attitude_reference.py).  Pass ``q_rest``, the quaternion
+    measured before the ramp, and the heights are taken along the ground
+    normal n = R(q_rest) e_z instead of along world z.  Omitting it keeps
+    the original world-vertical convention.
+
+    (Gravity is the other way round -- it acts along true vertical and so
+    takes the absolute attitude.  The two references are not
+    interchangeable.)
     """
     ang = np.deg2rad(30 + 60 * np.arange(6))
     lx, ly = L_ARM * np.cos(ang), L_ARM * np.sin(ang)
@@ -134,11 +158,21 @@ def ge_moment(bag, sig, axis, n, pos):
                         for j in range(6)]).T
 
     qw, qx, qy, qz = bag.odom.quaternion.T
-    r31 = 2 * (qx * qz - qw * qy)
-    r32 = 2 * (qy * qz + qw * qx)
-    r33 = 1 - 2 * (qx * qx + qy * qy)
-    h_it = (np.outer(r31[:n], p_p[0]) + np.outer(r32[:n], p_p[1])
-            + np.outer(r33[:n], p_p[2]))
+    if q_rest is None:
+        # height along world z: the third row of R(t)
+        nx = 2 * (qx * qz - qw * qy)
+        ny = 2 * (qy * qz + qw * qx)
+        nz = 1 - 2 * (qx * qx + qy * qy)
+        h_it = (np.outer(nx[:n], p_p[0]) + np.outer(ny[:n], p_p[1])
+                + np.outer(nz[:n], p_p[2]))
+    else:
+        # height along the ground normal: h = (R(q_rest) e_z)^T R(t) p
+        rw, rx, ry, rz = q_rest
+        gn = np.array([2 * (rx * rz + rw * ry),
+                       2 * (ry * rz - rw * rx),
+                       1 - 2 * (rx * rx + ry * ry)])          # R0[:, 2]
+        rot = _rot_matrices(qw[:n], qx[:n], qy[:n], qz[:n])   # (n, 3, 3)
+        h_it = np.einsum('k,nkj,jm->nm', gn, rot, p_p)
     if np.any(h_it <= R_ROTOR / 4 + 0.01):
         return None
     d2 = ((p_p[0][:, None] - p_p[0][None, :]) ** 2
