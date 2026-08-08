@@ -1333,9 +1333,14 @@ in a neighbourhood of them) and its intervals;
 the estimator benchmark extended with the PNLS-centred and CAD
 constants, and the full-pipeline dispersions;
 \item \texttt{analysis/ge\_dynamics\_check.py} — dynamic inversion of
-the ground-effect moment, which reduces to the static check at the
-onset and is swamped by the $W z_{\mathrm{CoM}}$ cancellation away from
-it (negative result, \texttt{-{}-z-sweep} reproduces it).
+the ground-effect moment with the CAD constants. It reduces to the
+static check at the onset, and away from it the model's attitude slope
+($-2.7$ to $-0.1$~mN\,m/deg) is $0$--$1.9\%$ of the
+$W z_{\mathrm{CoM}}$ term it must be separated from
+($-141$~mN\,m/deg, cancelled to $70\%$), so resolving it would need
+both constants to about $2\%$ against the $4\%$ CAD supports. A clean
+negative result: with $J_P$ and $z_{\mathrm{CoM}}$ pinned externally
+the limit is the experiment's, not the calibration's.
 \end{itemize}
 \endgroup
 

@@ -25,8 +25,10 @@ fit, and the CoM offset from the load-cell table.
 This is compared against the parameter-free image-superposition model
 (the 'interf' branch of analysis/ge_trajectory.py).
 
-RESULT: THE INVERSION ADDS NOTHING.  Two facts, both verified by the
---z-sweep runs, close this off.
+RESULT: THE LEVEL IS THE STATIC CHECK; THE ATTITUDE DEPENDENCE IS NOT
+RESOLVABLE.  Re-run with the CAD constants (z_CoM = 0.256 m from the
+landing-gear datum, J_P = 0.325 / 0.301 kg m^2 from the parallel-axis
+theorem), which are independently measured rather than fitted:
 
 1. At the onset the balance is STATIC, exactly.  The onset is defined by
    a vanishing net moment, so omega(0) = 0 AND omega_dot(0) = 0, and the
@@ -34,32 +36,37 @@ RESULT: THE INVERSION ADDS NOTHING.  Two facts, both verified by the
 
        dM_GE(0) = W a - M_crit - f l_p          (no J_P, no z_CoM)
 
-   which is precisely the static check of mcrit_prediction.py.  Using
-   the measured omega_dot(0) instead of zero only injects the noise of a
-   numerical derivative: the residual RMS here is 97-102 mN.m against
-   86.0 mN.m for the static check.  Strictly worse, for the same
-   quantity.
+   which is precisely the static check of mcrit_prediction.py.  The
+   fitted intercepts, 113-374 mN.m against 113-208 predicted, sit at the
+   right level (mean offset +70 mN.m, RMS 109) but are noisier than the
+   static check itself (residual RMS 88 mN.m), because using the
+   measured omega_dot(0) instead of zero only injects the noise of a
+   numerical derivative.  Nothing is gained.
 
-2. Away from the onset the model signal is buried.  Because
-   -W z_CoM sin(phi) is linear in phi to first order, it moves the
-   fitted SLOPE by exactly -W z_CoM and leaves the INTERCEPT untouched:
-   with J_P pinned, the intercept over z_CoM = 0.10/0.20/0.30 m is
-   +54.2/+49.8/+49.6 mN.m (flat) while the slope steps by -53.5 and
-   -53.2 mN.m/deg against a predicted -55.1 -- agreement to 3%.  So the
-   slope measures how well the growth of J_P omega_dot cancels W z_CoM
-   (-55 to -165 mN.m/deg), and the model's own slope is -0.2 to -2.5,
-   i.e. 1-2% of the term being cancelled.  Resolving it needs the
-   cancellation closed to ~98.5%; the best achieved is 80%.
+2. Away from the onset the model signal is buried.  With the CAD z_CoM,
+   d/dphi[-W z_CoM sin phi] = -141 mN.m/deg, which the growth of
+   J_P omega_dot must cancel; the observed slopes span -79 to -20, so
+   the cancellation closes to about 70%.  The model's own slope is
+   -2.7 to -0.1 mN.m/deg, i.e. 0.0-1.9% of the term being cancelled.
+   Resolving it needs z_CoM and J_P to roughly 2%, against the ~4% that
+   CAD plus the parallel-axis theorem support.
 
-   (An earlier reading of the parallel-axis sweep, where the intercept
-   appeared to move with z_CoM, was wrong: J_P varied by 2.5x across
-   that sweep and J_P omega_dot is NOT linear in phi near the anchor,
-   so the trend came from J_P alone.)
+   The residual slope is a fitting artefact, not a physical rate: it
+   correlates with the excursion range (the short My-negative windows,
+   2.7-4.4 deg, are steepest; the long Mx windows, 5.3-7.1 deg,
+   flattest) and varies by a factor of 4 across runs where a physical
+   contact migration would repeat.
 
-Conclusion: the attitude dependence of the ground-effect moment cannot
-be tested from this data by any choice of (z_CoM, J_P), and the level
-is better tested statically.  The method is unaffected -- it uses the
-onset alone, where the balance is the static one.
+This negative result is now CLEAN.  The earlier attempt used the
+calibrated J_P, which varies 2.5x across datasets and sits below the
+parallel-axis floor, so it could not distinguish an SNR limit from a
+bad constant.  With J_P and z_CoM pinned externally the failure
+persists with the same signature, which identifies it as a property of
+the experiment rather than of the calibration.  The attitude dependence
+of the ground-effect moment is therefore bounded by the excitation
+design -- the 5 deg tilt cap -- rather than measured, and the method is
+unaffected: it uses the onset alone, where the balance is the static
+one.
 
 Usage
 -----
@@ -99,19 +106,17 @@ OFF_MM = {('case_01', 'Mx'): -2.90,  ('case_01', 'My'): -11.45,
           ('case_05', 'Mx'): 10.91,  ('case_05', 'My'): -10.89}
 OFF_SIGN = {'Mx': +1.0, 'My': -1.0}
 
-# Physically consistent constants from analysis/constrained_calibration.py:
-# one z_CoM for the vehicle, one J_P per axis, shared by all ten datasets.
-# These replace the per-dataset (C2, K), whose 1/K implies z_CoM between
-# 0.061 and 0.554 m and so cannot be used in a dynamic inversion.
-Z_COM_SHARED = 0.174                       # m   (W z_CoM = 5.50 N.m)
-J_AXIS = {'x': 0.240, 'y': 0.153}          # kg.m^2
-
-# Sweeping z_CoM requires J_P to follow: the parallel-axis theorem forces
-# J_P = J_CoM + m (z_CoM^2 + l_p^2).  Anchoring J_CoM on the constrained fit
-# at z = 0.174 m and m = 3.220 kg gives the body-frame inertias below, from
-# which J_P at any other z_CoM follows without a second free parameter.
-J_COM = {'x': J_AXIS['x'] - 3.220 * (Z_COM_SHARED ** 2 + LP['x'] ** 2),
-         'y': J_AXIS['y'] - 3.220 * (Z_COM_SHARED ** 2 + LP['y'] ** 2)}
+# Independently measured constants -- NOT fitted to this data.  The CAD
+# model gives the CoM height above the landing-gear contact plane and the
+# CoM inertias (manuscript Table 5); the parallel-axis theorem then fixes
+# J_P.  This matters here: the inversion carries J_P omega_dot, so an
+# error in J_P propagates directly, and the earlier attempt used the
+# calibrated J_P, which varies 2.5x across datasets and sits below the
+# parallel-axis floor.
+Z_COM_SHARED = 0.256                       # m, CAD, landing-gear datum
+J_COM = {'x': 0.051085, 'y': 0.050564}     # kg.m^2, CAD Table 5
+J_AXIS = {a: J_COM[a] + 3.220 * (Z_COM_SHARED ** 2 + LP[a] ** 2)
+          for a in ('x', 'y')}             # 0.325 / 0.301 kg.m^2
 
 
 def j_parallel(axis, z_com, mass):
@@ -288,16 +293,27 @@ def report(rows):
     print(f"implied arm rate    : mean {ar.mean():+6.2f} mm/deg, "
           f"std {ar.std(ddof=1):.2f}  "
           f"-- DEGENERATE with (J_P, z_CoM), not a measurement")
+    wz_deg = 1e3 * 31.59 * Z_COM_SHARED * np.pi / 180.0
+    s_dyn = np.array([agg[k]['slope_dyn'] for k in keys])
+    s_mod = np.array([agg[k]['slope_mod'] for k in keys])
+    mdl_lo, mdl_hi = np.abs(s_mod).min(), np.abs(s_mod).max()
     print(f"\nWhy the SLOPE carries no information about the model:")
-    print(f"  d/dphi[-W z_CoM sin phi] = -W z_CoM = -96 mN.m/deg, which the")
-    print(f"  growth of J_P omega_dot must cancel.  The observed slopes span")
-    print(f"  -11 .. -100, i.e. they measure how well that cancellation")
-    print(f"  closes.  The model's OWN slope is -0.2 .. -2.5 mN.m/deg, i.e.")
-    print(f"  0.2-2.6% of the term being cancelled: testing it would need")
-    print(f"  z_CoM and J_P to ~2%, and z_CoM is not known to a factor of 2.")
+    print(f"  d/dphi[-W z_CoM sin phi] = -W z_CoM = {-wz_deg:.0f} mN.m/deg,")
+    print(f"  which the growth of J_P omega_dot must cancel.  The observed")
+    print(f"  slopes span {s_dyn.min():+.0f} .. {s_dyn.max():+.0f}, "
+          f"i.e. they measure how well that")
+    print(f"  cancellation closes -- here to "
+          f"{100 * (1 - np.abs(np.mean(d_slp)) / wz_deg):.0f}%.  The model's OWN")
+    print(f"  slope is {-mdl_hi:.1f} .. {-mdl_lo:.1f} mN.m/deg, i.e. "
+          f"{100 * mdl_lo / wz_deg:.1f}-{100 * mdl_hi / wz_deg:.1f}% of the")
+    print(f"  term being cancelled: resolving it needs z_CoM and J_P to about")
+    print(f"  {100 * mdl_hi / wz_deg:.0f}%, against the ~4% the CAD model and")
+    print(f"  the parallel-axis theorem support.")
     print(f"  The slope also correlates with the fitted excursion range")
-    print(f"  (My neg, 2.3-4.2 deg, is steepest; Mx, 5.3-7.2 deg, flattest),")
-    print(f"  the signature of a fitting artefact rather than a physical rate.")
+    print(f"  (My neg, the shortest excursions, is steepest; Mx, the longest,")
+    print(f"  flattest), the signature of a fitting artefact, and it varies")
+    print(f"  by a factor of {np.abs(s_dyn).max() / np.abs(s_dyn).min():.0f}"
+          f" across runs where a physical rate would repeat.")
     # antisymmetry test: same sign in both tip directions -> cancels in M_ff
     pairs = [(agg[(c, a, 'pos')]['a_rate_mm_per_deg'],
               agg[(c, a, 'neg')]['a_rate_mm_per_deg'])
