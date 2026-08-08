@@ -19,10 +19,10 @@ TRUTH={('case_01','Mx'):-2.90,('case_01','My'):-11.45,('case_02','Mx'):-14.29,
 SIGN={'Mx':1.0,'My':-1.0}
 # Mx (roll) senses the y-offset; My (pitch) senses the x-offset
 COMP={'Mx':'y','My':'x'}
-M=['cosh','nls','pelt_normal','pelt_rbf','cusum']
-LBL={'cosh':'COSH','nls':'NLS','pelt_normal':'CPD-N','pelt_rbf':'CPD-R','cusum':'CUSUM'}
-COL={'cosh':'#0072B2','nls':'#E69F00','pelt_normal':'#009E73','pelt_rbf':'#D55E00','cusum':'#CC79A7'}
-MRK={'cosh':'o','nls':'s','pelt_normal':'^','pelt_rbf':'v','cusum':'D'}
+M=['cosh','cosh_cad','nls','pelt_normal','pelt_rbf','cusum']
+LBL={'cosh':'COSH','cosh_cad':'COSH-CAD','nls':'NLS','pelt_normal':'CPD-N','pelt_rbf':'CPD-R','cusum':'CUSUM'}
+COL={'cosh':'#0072B2','cosh_cad':'#56B4E9','nls':'#E69F00','pelt_normal':'#009E73','pelt_rbf':'#D55E00','cusum':'#CC79A7'}
+MRK={'cosh':'o','cosh_cad':'X','nls':'s','pelt_normal':'^','pelt_rbf':'v','cusum':'D'}
 
 rows=list(csv.DictReader(open(f'{SC}/nls_comparison_runs.csv')))
 agg=defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
@@ -52,7 +52,7 @@ for ci_,case in enumerate(cases):
         for k,m in enumerate(M):
             lam,h=est(key,m)
             e=lam-TRUTH[key]
-            ax.errorbar(xi+(k-2)*0.13,e,yerr=h,fmt=MRK[m],color=COL[m],
+            ax.errorbar(xi+(k-2.5)*0.11,e,yerr=h,fmt=MRK[m],color=COL[m],
                         ms=4.5,elinewidth=1.2,capsize=2.0,zorder=3,
                         label=LBL[m] if (ci_==0 and xi==0) else None)
     ax.set_xticks([0,1]); ax.set_xticklabels([r'$x_{\mathrm{off}}$',r'$y_{\mathrm{off}}$'])
@@ -62,7 +62,7 @@ for ci_,case in enumerate(cases):
     for s in ('top','right'): ax.spines[s].set_visible(False)
 axes[0].set_ylabel('CoM offset error [mm]')
 handles,labels=axes[0].get_legend_handles_labels()
-fig.legend(handles,labels,loc='upper center',ncols=5,fontsize=8,
+fig.legend(handles,labels,loc='upper center',ncols=6,fontsize=8,
            frameon=False,bbox_to_anchor=(0.5,1.06))
 fig.tight_layout(rect=(0,0,1,0.97))
 fig.savefig('/home/user/preflight_identification/docs/fig_estimator_err.pdf',bbox_inches='tight')

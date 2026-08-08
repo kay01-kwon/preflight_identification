@@ -18,10 +18,10 @@ TRUTH={('case_01','Mx'):-2.90,('case_01','My'):-11.45,('case_02','Mx'):-14.29,
 ('case_02','My'):-9.90,('case_03','Mx'):-5.26,('case_03','My'):3.14,
 ('case_04','Mx'):6.67,('case_04','My'):2.40,('case_05','Mx'):10.91,('case_05','My'):-10.89}
 SIGN={'Mx':1.0,'My':-1.0}
-M=['cosh','nls','pelt_normal','pelt_rbf','cusum']
-LBL={'cosh':'COSH','nls':'NLS','pelt_normal':'CPD-N','pelt_rbf':'CPD-R','cusum':'CUSUM'}
-COL={'cosh':'#0072B2','nls':'#E69F00','pelt_normal':'#009E73','pelt_rbf':'#D55E00','cusum':'#CC79A7'}
-MRK={'cosh':'o','nls':'s','pelt_normal':'^','pelt_rbf':'v','cusum':'D'}
+M=['cosh','cosh_cad','nls','pelt_normal','pelt_rbf','cusum']
+LBL={'cosh':'COSH','cosh_cad':'COSH-CAD','nls':'NLS','pelt_normal':'CPD-N','pelt_rbf':'CPD-R','cusum':'CUSUM'}
+COL={'cosh':'#0072B2','cosh_cad':'#56B4E9','nls':'#E69F00','pelt_normal':'#009E73','pelt_rbf':'#D55E00','cusum':'#CC79A7'}
+MRK={'cosh':'o','cosh_cad':'X','nls':'s','pelt_normal':'^','pelt_rbf':'v','cusum':'D'}
 
 rows=list(csv.DictReader(open(f'{SC}/nls_comparison_runs.csv')))
 agg=defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
@@ -50,7 +50,7 @@ for i,key in enumerate(keys):
     ax.axhline(y0-0.5,color='0.92',lw=0.6,zorder=0)
     for k,m in enumerate(M):
         lam,h,_=ci(key,m)
-        y=y0+0.30-k*0.15
+        y=y0+0.30-k*0.12
         ax.errorbar(lam,y,xerr=h,fmt=MRK[m],color=COL[m],ms=4.5,
                     elinewidth=1.2,capsize=2.0,zorder=3,
                     label=LBL[m] if i==0 else None)

@@ -15,13 +15,13 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 SC = sys.argv[1] if len(sys.argv) > 1 else '.'
-M = ['cosh', 'nls', 'pelt_normal', 'pelt_rbf', 'cusum']
-LBL = {'cosh': 'COSH', 'nls': 'NLS', 'pelt_normal': 'CPD-N',
-       'pelt_rbf': 'CPD-R', 'cusum': 'CUSUM'}
-COL = {'cosh': '#0072B2', 'nls': '#E69F00', 'pelt_normal': '#009E73',
-       'pelt_rbf': '#D55E00', 'cusum': '#CC79A7'}
-MRK = {'cosh': 'o', 'nls': 's', 'pelt_normal': '^', 'pelt_rbf': 'v',
-       'cusum': 'D'}
+M = ['cosh', 'cosh_cad', 'nls', 'pelt_normal', 'pelt_rbf', 'cusum']
+LBL = {'cosh': 'COSH', 'cosh_cad': 'COSH-CAD', 'nls': 'NLS',
+       'pelt_normal': 'CPD-N', 'pelt_rbf': 'CPD-R', 'cusum': 'CUSUM'}
+COL = {'cosh': '#0072B2', 'cosh_cad': '#56B4E9', 'nls': '#E69F00',
+       'pelt_normal': '#009E73', 'pelt_rbf': '#D55E00', 'cusum': '#CC79A7'}
+MRK = {'cosh': 'o', 'cosh_cad': 'X', 'nls': 's', 'pelt_normal': '^',
+       'pelt_rbf': 'v', 'cusum': 'D'}
 
 pred = {(r['case'], r['axis'], r['dir']): r
         for r in csv.DictReader(open(f'{SC}/mcrit_prediction.csv'))}
