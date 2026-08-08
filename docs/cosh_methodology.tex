@@ -45,7 +45,7 @@ no stable in-flight data are used.
 Symbol & Meaning & Value & Provenance \\
 \midrule
 $W$, $z_{\mathrm{CoM}}$ & weight, CoM height & $31.59$~N, $\sim$0.3~m & measured / conservative \\
-$l_{p,\phi},\,l_{p,\theta}$ & pivot offsets (roll, pitch) & $0.140$, $0.110$~m & conservative geometry \\
+$l_{p,\phi},\,l_{p,\theta}$ & pivot offsets (roll, pitch) & $0.140$, $0.110$~m & mocap arc fit \\
 $J_P$ & inertia about the pivot line & — & never used numerically \\
 $C_T$ & thrust map, $T_i = C_T\Omega_i^2$ & $1.3175\times10^{-7}$ & bench calibration \\
 $M_{\mathrm{thr}}$ & window threshold & $0.01$~N\,m & noise floor \\
@@ -569,6 +569,21 @@ and with it both constants: $C_2 = 4.99$ and $5.19$~rad/s,
 $K = 0.124$~(N\,m)$^{-1}$. The products of inertia are four orders of
 magnitude below the diagonal, so treating the two axes independently is
 justified.
+
+The pivot arm entering that expression is measured, not assumed. The
+mocap marker traces an arc about the ground contact during the tip-over,
+and \texttt{estimate\_pivot\_from\_mocap} fits it with the circle centre
+held at ground level, leaving the horizontal offset and the radius free.
+Over the $138$ runs with a valid arc the fit returns
+$l_p = 0.1404 \pm 0.0036$~m on roll and $0.1126 \pm 0.0066$~m on pitch,
+against the $0.140$ and $0.110$~m used throughout ($-0.3\%$ and
+$-2.3\%$), with a circle residual of $0.1$--$0.2$~mm. The same fit puts
+the marker at $0.3172 \pm 0.0012$~m above the pivot, matching the
+$\sqrt{R^2 - l_p^2} = 0.3167$~m implied by the radius and the rotor-hub
+height $h = 0.315$~m used in the ground-effect model. The geometry is
+therefore consistent to about a millimetre, and the CAD CoM sits
+$61$~mm below the marker plane --- as it should for an airframe carrying
+its battery low.
 
 The disagreement is not spread evenly over the $(C_2, K)$ plane, and
 that is the substance of the remark. The constant the deliverable is
@@ -1242,6 +1257,8 @@ consistency under the free, CAD and mis-specified constants);
 floor);
 \item \texttt{analysis/cad\_reference.py} — Table~\ref{tab:cadonly}
 (the identification rerun with nothing fitted);
+\item \texttt{analysis/pivot\_geom.py} — the mocap arc fit for $l_p$
+and the marker height;
 \item \texttt{analysis/ge\_dynamics\_check.py} — dynamic inversion of
 the ground-effect moment, which reduces to the static check at the
 onset and is swamped by the $W z_{\mathrm{CoM}}$ cancellation away from
