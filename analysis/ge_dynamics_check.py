@@ -72,6 +72,14 @@ theorem), which are independently measured rather than fitted:
    slope stays flat at -45.9 / -45.3 / -44.2 / -42.3.  Along that line
    W z_CoM and J_P move together, so the trajectory-model relation
    barely changes and no choice of height rescues the measurement.
+   Neither is the derivative's source.  The bags carry
+   /mavros/imu/data_raw at 200 Hz, twice the odom rate the pipeline
+   uses, but analysis/imu_vs_odom.py shows the raw gyro is worse even at
+   a matched 90 ms window: 98.8% of its AC power sits in 50-100 Hz,
+   peaking at the 90.8 Hz blade passing, at 716 mrad/s RMS against 176
+   for odom, whose EKF has already rejected it.  Differentiating it
+   drives the slope to -139 to +40 mN.m/deg.
+
    analysis/slope_budget.py isolates the terms on a synthetic
    trajectory with a known ground-effect moment: the measured gyro
    noise contributes +-4.2 mN.m/deg of scatter and no bias, the
@@ -99,6 +107,18 @@ theorem), which are independently measured rather than fitted:
        is stronger than saying the pair is underdetermined: there is no
        pair that removes it, and inverting the residual for constants
        is not quantitatively valid in the first place.
+
+   CORRECTION to (b): that sweep moved z_CoM along the parallel axis,
+   where W z_CoM and J_P move together and their effects on the residual
+   largely cancel.  Varying J_CoM alone moves J_P without moving
+   W z_CoM, and along THAT direction the residual does respond --
+   monotonically, crossing zero at J_CoM = 0.161 kg.m^2 for the slope
+   and 0.212 for the level, against the CAD 0.051
+   (analysis/jcom_sweep.py).  So the residual is equivalent to about
+   0.11 kg.m^2 of apparent inertia about the pivot.  It cannot be real
+   inertia: Table 5 gives an rms mass height of 66 mm about the CoM
+   through Jxx + Jyy - Jzz = 2 m <z^2>, and 0.161 would need 196 mm on
+   an airframe spanning -261 to +54 mm.
 
    Consequently, choosing (J_P, z_CoM) to zero the slope cannot work.
    It is circular -- it assumes the attitude independence it would
