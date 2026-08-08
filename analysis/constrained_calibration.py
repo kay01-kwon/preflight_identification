@@ -70,6 +70,22 @@ WZ_GRID = np.linspace(4.7, 11.1, 9)
 J_GRID = {'x': np.linspace(0.15, 0.42, 10), 'y': np.linspace(0.07, 0.32, 10)}
 STRIDE = 3
 
+# ---------------------------------------------------------------- mode 3
+# Parallel-axis parametrisation: ONE free number for the whole experiment.
+# The CAD inertias (manuscript Table 5) and the landing-gear geometry are
+# independent measurements, so the pivot inertia is not free at all --
+#     J_P,axis = J_CAD,axis + m (z_CoM^2 + l_p,axis^2)
+# -- and z_CoM alone determines C2 = sqrt(W z_CoM / J_P) and K = 1/(W z_CoM)
+# for every dataset.  Twenty free numbers become one.
+J_CAD = {'x': 0.051085, 'y': 0.050564}      # Table 5, kg m^2
+LP = {'x': 0.140, 'y': 0.110}               # m, pivot offsets
+Z_GRID = np.linspace(0.10, 0.40, 16)
+
+
+def j_parallel(axis, z_com, mass):
+    """Pivot inertia forced by CAD + the parallel-axis theorem."""
+    return J_CAD[axis] + mass * (z_com ** 2 + LP[axis] ** 2)
+
 
 def prepare(bags, axis):
     """Cache the per-bag window signals the score needs."""
@@ -123,6 +139,33 @@ def main():
         print(f"  {key[0]}/{key[1]}: C2={c2:.3f} K={k:.4f} -> "
               f"W z_CoM={wz:6.2f} N.m (z={wz / (MASS_KG[key[0]] * G):.3f} m), "
               f"J_P={jp:.3f} kg.m^2")
+
+    # ------------------------------- parallel-axis search: z_CoM alone
+    print("\nparallel-axis search over z_CoM alone "
+          "(J_P = J_CAD + m(z^2 + l_p^2)) ...")
+    best_pa, pa_trace = (np.inf, None), []
+    for z in Z_GRID:
+        tot = 0.0
+        for key, (axis, _, prep) in data.items():
+            mass = MASS_KG[key[0]]
+            w = mass * G
+            jp = j_parallel(axis, z, mass)
+            tot += score(prep, float(np.sqrt(w * z / jp)), 1.0 / (w * z))
+        pa_trace.append((float(z), tot))
+        print(f"  z_CoM={z:5.3f}  J_roll={j_parallel('x', z, 3.220):.3f}  "
+              f"J_pitch={j_parallel('y', z, 3.220):.3f}  score={tot:.4f}")
+        if tot < best_pa[0]:
+            best_pa = (tot, float(z))
+    z_pa = best_pa[1]
+    print(f"\n  best: z_CoM = {z_pa:.3f} m  ->  "
+          f"J_roll={j_parallel('x', z_pa, 3.220):.3f}, "
+          f"J_pitch={j_parallel('y', z_pa, 3.220):.3f} kg.m^2")
+    pa = {}
+    for key, (axis, _, _) in data.items():
+        mass = MASS_KG[key[0]]; w = mass * G
+        jp = j_parallel(axis, z_pa, mass)
+        pa[key] = (float(np.sqrt(w * z_pa / jp)), 1.0 / (w * z_pa))
+        print(f"    {key[0]}/{key[1]}: C2={pa[key][0]:.3f}  K={pa[key][1]:.4f}")
 
     # ------------------------------------------------ constrained search
     print("\nconstrained search over (W z_CoM, J_roll, J_pitch) ...")
@@ -180,7 +223,8 @@ def main():
         return rows
 
     print("\nrerunning the identification ...")
-    rows = deliver(free, 'free') + deliver(con, 'constrained')
+    rows = (deliver(free, 'free') + deliver(con, 'constrained')
+            + deliver(pa, 'parallel'))
 
     OUT.mkdir(parents=True, exist_ok=True)
     with open(OUT / 'constrained_calibration.csv', 'w', newline='') as f:
@@ -188,25 +232,26 @@ def main():
         w.writeheader()
         w.writerows(rows)
 
-    print(f"\n{'case':9} {'ax':3} {'truth':>8} | "
-          f"{'free off':>9} {'err':>7} | {'constr off':>11} {'err':>7}")
-    print('-' * 62)
+    print(f"\n{'case':9} {'ax':3} {'truth':>8} | {'free':>8} {'err':>6} | "
+          f"{'constr':>8} {'err':>6} | {'par-axis':>9} {'err':>6}")
+    print('-' * 74)
     for key in sorted({(r['case'], r['axis']) for r in rows}):
-        fr = next(r for r in rows if (r['case'], r['axis']) == key
-                  and r['tag'] == 'free')
-        co = next(r for r in rows if (r['case'], r['axis']) == key
-                  and r['tag'] == 'constrained')
-        print(f"{key[0]:9} {key[1]:3} {fr['truth_mm']:8.2f} | "
-              f"{fr['off_mm']:9.2f} {fr['err_mm']:7.2f} | "
-              f"{co['off_mm']:11.2f} {co['err_mm']:7.2f}")
-    print('-' * 62)
-    for tag in ('free', 'constrained'):
+        g = {r['tag']: r for r in rows if (r['case'], r['axis']) == key}
+        print(f"{key[0]:9} {key[1]:3} {g['free']['truth_mm']:8.2f} | "
+              + ' | '.join(f"{g[t]['off_mm']:8.2f} {g[t]['err_mm']:6.2f}"
+                           for t in ('free', 'constrained', 'parallel')))
+    print('-' * 74)
+    for tag in ('free', 'constrained', 'parallel'):
         e = np.array([r['err_mm'] for r in rows if r['tag'] == tag])
         print(f"{tag:12}  RMS {np.sqrt(np.mean(e ** 2)):5.2f} mm   "
               f"max|e| {np.abs(e).max():5.2f} mm   "
               f"mean {e.mean():+5.2f} mm   (n={len(e)})")
-    print(f"\nfree calibration: 20 free numbers; constrained: 3 "
-          f"(W z_CoM, J_roll, J_pitch)")
+    print(f"\nfree: 20 free numbers | constrained: 3 "
+          f"(W z_CoM, J_roll, J_pitch) | parallel-axis: 1 (z_CoM), with "
+          f"J_P from CAD + geometry")
+    print(f"parallel-axis score profile (z_CoM, score):")
+    for z, sc in pa_trace:
+        print(f"   {z:5.3f}  {sc:.4f}")
     print(f"Tables -> {OUT}")
 
 
