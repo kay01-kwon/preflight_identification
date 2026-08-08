@@ -97,9 +97,9 @@ moment peak, truncated at the allocator cap.
 the slope-error ($3\%$), sample-count ($38$) or linearity-RMSE
 ($30$~mN\,m) gates; moment trace only, so no circularity.
 \item \textbf{Calibration, once per configuration and axis}
-(Sec.~\ref{sec:calibration}) — Algorithm~\ref{alg:calib} locates
-$(C_2, K)$ from the per-run curve shape and then refines it on a grid
-about that centre; each candidate is scored by
+(Sec.~\ref{sec:calibration}) — a per-run free fit (PNLS) runs first and
+its per-dataset medians locate $(C_2, K)$; Algorithm~\ref{alg:calib}
+then refines that centre on a grid, and each candidate is scored by
 Algorithm~\ref{alg:score}, which runs Algorithm~\ref{alg:cosh} on
 every gated run and sums the two directional CVs of
 $M_{\mathrm{crit}}$ across ramp rates.
@@ -458,28 +458,29 @@ harmlessly co-penalizes). Should a rate be repeated, each run enters
 individually.
 
 \begin{algorithm}[h]
-\caption{Effective-constant calibration (two-stage)}
+\caption{Effective-constant calibration (PNLS-located, then refined)}
 \label{alg:calib}
 \begin{algorithmic}[1]
 \Require gated runs of one dataset
 \Ensure calibrated pair $(C_2^\ast, K^\ast)$
-\State \textbf{stage 1 (locate):} for each run, fit $(C_1, C_2, C)$ by
-  free nonlinear least squares and record $C_2$ and $K = C_1/\dot M$
+\State \textbf{locate (PNLS, runs first):} fit $(C_1, C_2, C)$ per run
+  by free nonlinear least squares; record $C_2$ and $K = C_1/\dot M$
 \State $(C_2^{0}, K^{0}) \gets$ per-dataset medians
   \Comment{owes nothing to the ramp-invariance criterion}
-\State \textbf{stage 2 (refine):} evaluate Algorithm~\ref{alg:score} on
-  the $9{\times}9$ grid
+\State \textbf{refine:} evaluate Algorithm~\ref{alg:score} on the
+  $9{\times}9$ grid
   $C_2 \in C_2^{0}[0.75, 1.25]$, $K \in K^{0}[0.60, 1.40]$
 \State $(C_2^\ast, K^\ast) \gets \arg\min$ over that grid
 \end{algorithmic}
 \end{algorithm}
 
 \paragraph{Two-stage procedure.}
-The two stages consume independent information. Stage~1 reads the
+The two stages consume independent information. The PNLS pass reads the
 \emph{shape} of each run's post-onset curve and is blind to how the
-threshold varies with ramp rate; stage~2 reads exactly that variation
+threshold varies with ramp rate; the refinement reads exactly that
+variation
 and is nearly blind to the combination $K C_2^2 = 1/J_P$ that the shape
-fixes (Remark~\ref{rem:ridge}). Locating the pair before refining it
+fixes (Remark~\ref{rem:ridge}). Running PNLS first and refining about its medians
 keeps the search off the arbitrary edges of a fixed box: the refined
 constants land at $C_2 \in [3.52, 5.67]$~rad/s and
 $K \in [0.150, 0.338]$~(N\,m)$^{-1}$, whereas minimising the same score
