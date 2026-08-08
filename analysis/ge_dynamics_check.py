@@ -63,15 +63,49 @@ theorem), which are independently measured rather than fitted:
    slope stays flat at -45.9 / -45.3 / -44.2 / -42.3.  Along that line
    W z_CoM and J_P move together, so the trajectory-model relation
    barely changes and no choice of height rescues the measurement.
-   (analysis/slope_budget.py isolates the terms on a synthetic
+   analysis/slope_budget.py isolates the terms on a synthetic
    trajectory with a known ground-effect moment: the measured gyro
    noise contributes +-4.2 mN.m/deg of scatter and no bias, the
    Savitzky-Golay derivative +0.5, a 4% error in J_P +-7.2 and a 5 mm
    error in z_CoM +-2.8, against a signal of -2.  So neither the
-   differentiation nor the noise is the limit.)  What remains is
-   unmodelled contact behaviour or a processing systematic; a
-   no-thrust release, where the ground-effect moment is zero by
-   construction, would separate the two.
+   differentiation nor the noise is the limit.
+
+   TWO CORRECTIONS to an earlier reading of this residual, recorded so
+   the same inference is not made again:
+
+   (a) Sign.  Removing a residual of -42.3 mN.m/deg requires ADDING
+       +42.3 to the slope, so J_P would have to be 23.4% LARGER, not
+       smaller: 0.401 kg.m^2, which the parallel axis maps to
+       z_CoM = 0.299 m.  The claim that the residual implied
+       J_P = 0.249 and z_CoM = 0.205 m -- matching the calibration --
+       was a sign flip.  The inversion in fact points ABOVE the CAD
+       height while the calibration points below it, so the two
+       disagree in opposite senses and no single pair satisfies both.
+
+   (b) The sensitivities do not transfer.  Along the parallel axis the
+       synthetic budget predicts d(slope)/dz = +0.363 mN.m/deg per mm,
+       i.e. +24.0 over the 190-256 mm sweep.  The observed change is
+       +3.7, seven times smaller.  The residual therefore does not
+       respond to (J_P, z_CoM) the way the model says it should, which
+       is stronger than saying the pair is underdetermined: there is no
+       pair that removes it, and inverting the residual for constants
+       is not quantitatively valid in the first place.
+
+   Consequently, choosing (J_P, z_CoM) to zero the slope cannot work.
+   It is circular -- it assumes the attitude independence it would
+   demonstrate -- it is one scalar equation in two unknowns (the
+   intercept adds nothing, being the static balance), and by (b) the
+   residual does not live in that parameter subspace at all.  A moving
+   horizon estimator does not change this: it is a better estimator on
+   the same Fisher information, whose near-null direction is a property
+   of the data, and it assumes a model structure the evidence says is
+   incomplete.  MHE is the right tool for the OTHER problem -- fixing
+   (J_P, z_CoM) from an independent measurement and estimating
+   dM_GE(t) as a state -- which needs the constants first.
+
+   What remains is unmodelled contact behaviour or a processing
+   systematic; a no-thrust release, where the ground-effect moment is
+   zero by construction, would separate the two.
 
 This negative result is now CLEAN.  The earlier attempt used the
 calibrated J_P, which varies 2.5x across datasets and sits below the

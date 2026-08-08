@@ -1189,6 +1189,27 @@ its attribution.}
 \label{fig:static}
 \end{figure}
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.92\linewidth]{fig_ge_dynamics.pdf}
+\caption{The ground-effect moment from the parameter-free model against
+the dynamic inversion
+$J_P\dot\omega - m - f\,l_p + Wa\cos\varphi - Wz_{\mathrm{CoM}}\sin\varphi$,
+both plotted against the tilt excursion measured from the onset
+(median and interquartile band over $116$ runs, CAD constants). The
+levels agree at $\delta\varphi = 0$ because the balance there is
+static, so $J_P$ and $z_{\mathrm{CoM}}$ drop out and the inversion
+reduces to the check of Fig.~\ref{fig:static}. Past about $1^\circ$
+the inversion walks away, reaching $-90$~mN\,m by $6.5^\circ$ while the
+model stays near $+155$: that drift is the residual of the
+$Wz_{\mathrm{CoM}}\sin\varphi$ cancellation, not a measured attitude
+dependence. The model's own slope, $-2.7$ to $-0.1$~mN\,m/deg, is
+inside the linewidth. The attitude dependence of the ground-effect
+moment is therefore bounded by the excitation design --- the tilt cap
+--- rather than measured.}
+\label{fig:gedyn}
+\end{figure}
+
 \begin{table}[t]
 \centering
 \footnotesize
@@ -1337,10 +1358,19 @@ the ground-effect moment with the CAD constants. It reduces to the
 static check at the onset, and away from it the model's attitude slope
 ($-2.7$ to $-0.1$~mN\,m/deg) is $0$--$1.9\%$ of the
 $W z_{\mathrm{CoM}}$ term it must be separated from
-($-141$~mN\,m/deg, cancelled to $70\%$), so resolving it would need
-both constants to about $2\%$ against the $4\%$ CAD supports. A clean
-negative result: with $J_P$ and $z_{\mathrm{CoM}}$ pinned externally
-the limit is the experiment's, not the calibration's.
+($-141$~mN\,m/deg, cancelled to $70\%$). The residual is not a
+constants error: \texttt{-{}-z-sweep} moves the cancelled term by
+$35\%$ over $z_{\mathrm{CoM}} \in [0.190, 0.256]$~m while the residual
+slope stays within $8\%$ of $-44$~mN\,m/deg, seven times less than the
+synthetic budget of \texttt{analysis/slope\_budget.py} predicts. No
+choice of $(J_P, z_{\mathrm{CoM}})$ removes it, so the limit is a
+missing term in the contact model rather than a mis-set constant;
+\texttt{analysis/slope\_budget.py} also shows the differentiation and
+the gyro noise are not the limit ($+0.5$ bias, $\pm4.2$ scatter that
+averages to $\pm0.4$ over the runs).
+\item \texttt{analysis/ge\_dynamics\_figure.py} —
+Fig.~\ref{fig:gedyn}: the model against the inversion over the
+onset-to-peak window.
 \end{itemize}
 \endgroup
 

@@ -5,6 +5,27 @@ exact contact dynamics, sample it at the measured rate with the measured
 gyro noise, then run the same Savitzky-Golay derivative and the same
 inversion.  Whatever the inversion fails to recover is attributable,
 term by term.
+
+Result, against a true slope of -2.0 mN.m/deg:
+
+    Savitzky-Golay derivative, exact constants   +0.5 bias
+    + measured gyro noise (200 draws)            +-4.2 scatter, no bias
+    J_P off by 4%                                +-7.2
+    z_CoM off by 5 mm                            +-2.8
+    gravity arm off by 2 mm                      -0.06 (moves the level)
+
+So the differentiation and the noise are not the limit -- the noise
+averages down to +-0.4 over the 116 runs -- and J_P dominates the
+systematic budget.
+
+CAUTION: these sensitivities describe THIS synthetic trajectory and do
+not transfer to the measured runs.  Along the parallel axis they
+predict d(slope)/dz = +0.363 mN.m/deg per mm, i.e. +24.0 over the
+190-256 mm sweep of ge_dynamics_check.py --z-sweep; the observed change
+is +3.7.  Do not invert the measured residual through these numbers to
+recover (J_P, z_CoM): a first attempt to do so both flipped the sign
+and relied on a sensitivity seven times too large.  They are a budget,
+not an estimator.
 """
 import numpy as np
 from scipy.integrate import solve_ivp
