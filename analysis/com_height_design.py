@@ -1,17 +1,23 @@
 #!/usr/bin/env python3
-"""Design a two-scale tilt measurement of the CoM height.
+"""Design a two-scale tilt measurement of the CoM height z_CoM.
+
+NOTE ON SYMBOLS: the height measured here is z_CoM, the CoM height
+above the landing-gear contact plane -- the same datum the pivot uses.
+It is NOT the rotor-hub height h = 0.315 m of the ground-effect model,
+which this repository already calls h; z is used throughout below to
+keep the two apart.
 
 The vehicle rests on two scales that sit on a rigid board; the board is
 then tilted so the scales stay perpendicular to it and read the normal
 reaction.  Taking moments about support A, with the CoM a horizontal
-distance x from A (in the board plane) and a height h above the support
+distance x from A (in the board plane) and a height z above the support
 plane,
 
-    N_B = (W / d) * (x cos(phi) + h sin(phi))                        (1)
+    N_B = (W / d) * (x cos(phi) + z sin(phi))                        (1)
 
 so a single tilted reading gives
 
-    h = (N_B d / W - x cos(phi)) / sin(phi).                         (2)
+    z = (N_B d / W - x cos(phi)) / sin(phi).                         (2)
 
 x is already known: it is the load-cell CoM offset plus the support
 geometry, so the level reading is only a consistency check.  Any
@@ -19,10 +25,10 @@ restraint that stops the vehicle sliding must be placed AT support A,
 where it contributes no moment.
 
 Tilting BOTH ways removes x altogether.  Reading the downhill scale in
-each direction gives N_B(+phi) = (W/d)(x cos + h sin) and
-N_A(-phi) = (W/d)((d-x) cos + h sin), whose sum no longer contains x:
+each direction gives N_B(+phi) = (W/d)(x cos + z sin) and
+N_A(-phi) = (W/d)((d-x) cos + z sin), whose sum no longer contains x:
 
-    h = ( (N_A + N_B) d / W - d cos(phi) ) / (2 sin(phi))            (3)
+    z = ( (N_A + N_B) d / W - d cos(phi) ) / (2 sin(phi))            (3)
 
 which is the same pivot-free averaging that makes M_ff insensitive to a
 common-mode arm error.  Use (3) as the measurement and (2) per
@@ -47,15 +53,16 @@ PHI_DEG = (10, 15, 20, 25, 30, 35, 40)
 DPHI_DEG = 0.3       # Pixhawk attitude accuracy, static
 
 
-def n_b(phi, h, x=X, d=D, w=W):
-    return (w / d) * (x * np.cos(phi) + h * np.sin(phi))
+def n_b(phi, z, x=X, d=D, w=W):
+    return (w / d) * (x * np.cos(phi) + z * np.sin(phi))
 
 
-def h_from(nb, phi, x=X, d=D, w=W):
+def z_from(nb, phi, x=X, d=D, w=W):
+    """Eq. (2): one tilt direction, needs the known offset x."""
     return (nb * d / w - x * np.cos(phi)) / np.sin(phi)
 
 
-def h_two_sided(na, nb, phi, d=D, w=W):
+def z_two_sided(na, nb, phi, d=D, w=W):
     """Eq. (3): both tilt directions, independent of x."""
     return ((na + nb) * d / w - d * np.cos(phi)) / (2.0 * np.sin(phi))
 
@@ -77,7 +84,7 @@ for pd in PHI_DEG:
         dz_load = dn * D / (W * np.sin(phi))
         # angle term: differentiate (2) at fixed N_B
         z0 = Z_HYP[0]
-        dz_ang = abs(h_from(n_b(phi, z0), phi + np.radians(DPHI_DEG)) - z0)
+        dz_ang = abs(z_from(n_b(phi, z0), phi + np.radians(DPHI_DEG)) - z0)
         cells.append(1e3 * np.hypot(dz_load, dz_ang))
     print(f"{pd:5d} | {nb[0]/G:7.3f}{nb[1]/G:9.3f} | {sep:11.0f} | "
           + ''.join(f"{c:11.1f}" for c in cells))
@@ -98,12 +105,12 @@ for pd in (15, 20, 25, 30, 35):
         na = (W / D) * ((D - X) * np.cos(phi) + z * np.sin(phi))
         nb = n_b(phi, z)
         tot.append((na + nb) / G)
-        assert abs(h_two_sided(na, nb, phi) - z) < 1e-9
+        assert abs(z_two_sided(na, nb, phi) - z) < 1e-9
     dn = 10e-3 * G * np.sqrt(2)               # two independent readings
     dz_load = dn * D / (2 * W * np.sin(phi))
     z0 = Z_HYP[0]
     na0 = (W / D) * ((D - X) * np.cos(phi) + z0 * np.sin(phi))
-    dz_ang = abs(h_two_sided(na0, n_b(phi, z0), phi + np.radians(DPHI_DEG)) - z0)
+    dz_ang = abs(z_two_sided(na0, n_b(phi, z0), phi + np.radians(DPHI_DEG)) - z0)
     print(f"{pd:5d} | {tot[0]:10.3f}{tot[1]:12.3f} | "
           f"{1e3*np.hypot(dz_load, dz_ang):26.1f}")
 print("\nx is not needed for (3); the per-direction readings still test it.")
