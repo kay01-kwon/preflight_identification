@@ -51,6 +51,15 @@ theorem), which are independently measured rather than fitted:
    Resolving it needs z_CoM and J_P to roughly 2%, against the ~4% that
    CAD plus the parallel-axis theorem support.
 
+   The SIGN of the drift is not the anomaly.  Tipping about one foot
+   lifts the opposite rotors away from the ground, and those carry the
+   long moment arms, so the net ground-effect moment must FALL with
+   tilt; the model's own slope is negative too.  What does not make
+   sense is the magnitude, sixteen times the model's, and that the
+   inversion carries the level through zero to -90 mN.m: a net
+   restoring ground-effect moment would need the near-pivot rotors to
+   outweigh the far ones, which the geometry does not allow at 6 deg.
+
    The residual slope is a fitting artefact, not a physical rate: it
    correlates with the excursion range (the short My-negative windows,
    2.7-4.4 deg, are steepest; the long Mx windows, 5.3-7.1 deg,
@@ -232,8 +241,18 @@ def analyse(bag, crit, axis, sig, phi_all, n, z_com, j_p, savgol=9):
     if raw is None:
         return None
     ge_mod = s * raw[sl]
+    # The model's sign is derived, not imposed: ge_moment sums the ground
+    # effect gain over each rotor's OWN signed arm about the pivot, and the
+    # far rotors dominate, so in the tipping-positive frame the net moment is
+    # destabilising.  Verified positive on all 116 runs, both directions and
+    # both axes; an earlier version silently flipped the sign when the mean
+    # came out negative, which would have hidden a convention error rather
+    # than surfacing one.
     if np.mean(ge_mod) < 0:
-        ge_mod = -ge_mod
+        raise AssertionError(
+            f"model ground-effect moment came out restoring on {crit.bag_name}"
+            f" (mean {1e3 * float(np.mean(ge_mod)):+.1f} mN.m) -- check the"
+            f" pivot-arm convention in error_budget.ge_moment")
 
     sd, id_ = np.polyfit(phi, ge_dyn, 1)
     sm, im = np.polyfit(phi, ge_mod, 1)
