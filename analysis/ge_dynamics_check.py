@@ -51,6 +51,15 @@ theorem), which are independently measured rather than fitted:
    Resolving it needs z_CoM and J_P to roughly 2%, against the ~4% that
    CAD plus the parallel-axis theorem support.
 
+   The SIGN of the drift is not the anomaly.  Tipping about one foot
+   lifts the opposite rotors away from the ground, and those carry the
+   long moment arms, so the net ground-effect moment must FALL with
+   tilt; the model's own slope is negative too.  What does not make
+   sense is the magnitude, sixteen times the model's, and that the
+   inversion carries the level through zero to -90 mN.m: a net
+   restoring ground-effect moment would need the near-pivot rotors to
+   outweigh the far ones, which the geometry does not allow at 6 deg.
+
    The residual slope is a fitting artefact, not a physical rate: it
    correlates with the excursion range (the short My-negative windows,
    2.7-4.4 deg, are steepest; the long Mx windows, 5.3-7.1 deg,
@@ -63,15 +72,60 @@ theorem), which are independently measured rather than fitted:
    slope stays flat at -45.9 / -45.3 / -44.2 / -42.3.  Along that line
    W z_CoM and J_P move together, so the trajectory-model relation
    barely changes and no choice of height rescues the measurement.
-   (analysis/slope_budget.py isolates the terms on a synthetic
+   analysis/slope_budget.py isolates the terms on a synthetic
    trajectory with a known ground-effect moment: the measured gyro
    noise contributes +-4.2 mN.m/deg of scatter and no bias, the
    Savitzky-Golay derivative +0.5, a 4% error in J_P +-7.2 and a 5 mm
    error in z_CoM +-2.8, against a signal of -2.  So neither the
-   differentiation nor the noise is the limit.)  What remains is
-   unmodelled contact behaviour or a processing systematic; a
-   no-thrust release, where the ground-effect moment is zero by
-   construction, would separate the two.
+   differentiation nor the noise is the limit.
+
+   TWO CORRECTIONS to an earlier reading of this residual, recorded so
+   the same inference is not made again:
+
+   (a) Sign.  Removing a residual of -42.3 mN.m/deg requires ADDING
+       +42.3 to the slope, so J_P would have to be 23.4% LARGER, not
+       smaller: 0.401 kg.m^2, which the parallel axis maps to
+       z_CoM = 0.299 m.  The claim that the residual implied
+       J_P = 0.249 and z_CoM = 0.205 m -- matching the calibration --
+       was a sign flip.  The inversion in fact points ABOVE the CAD
+       height while the calibration points below it, so the two
+       disagree in opposite senses and no single pair satisfies both.
+
+   (b) The sensitivities do not transfer.  Along the parallel axis the
+       synthetic budget predicts d(slope)/dz = +0.363 mN.m/deg per mm,
+       i.e. +24.0 over the 190-256 mm sweep.  The observed change is
+       +3.7, seven times smaller.  The residual therefore does not
+       respond to (J_P, z_CoM) the way the model says it should, which
+       is stronger than saying the pair is underdetermined: there is no
+       pair that removes it, and inverting the residual for constants
+       is not quantitatively valid in the first place.
+
+   Consequently, choosing (J_P, z_CoM) to zero the slope cannot work.
+   It is circular -- it assumes the attitude independence it would
+   demonstrate -- it is one scalar equation in two unknowns (the
+   intercept adds nothing, being the static balance), and by (b) the
+   residual does not live in that parameter subspace at all.  A moving
+   horizon estimator does not change this: it is a better estimator on
+   the same Fisher information, whose near-null direction is a property
+   of the data, and it assumes a model structure the evidence says is
+   incomplete.  MHE is the right tool for the OTHER problem -- fixing
+   (J_P, z_CoM) from an independent measurement and estimating
+   dM_GE(t) as a state -- which needs the constants first.
+
+4. A migrating contact point is ruled out by the mocap.  Read as a
+   moving pivot, the residual corresponds to an arm rate of
+   1.35 mm/deg, i.e. the contact would have to travel 8.1 mm over a
+   6 deg excursion.  Over that excursion the marker sweeps an arc of
+   only 36 mm at R = 340 mm, so a centre drift of 8 mm would leave a
+   circle-fit residual of several mm.  The measured residual is
+   0.1-0.2 mm across 138 runs (analysis/pivot_geom.py).  Landing-gear
+   compliance and foot roll are therefore excluded at the size needed.
+
+   That leaves causes that scale with thrust -- aerodynamic ones, or an
+   error in the moment reconstruction M = C_T sum b Omega^2 -- and a
+   no-thrust release separates them from everything else, since the
+   ground-effect moment is then zero by construction while the leg
+   still carries the weight.
 
 This negative result is now CLEAN.  The earlier attempt used the
 calibrated J_P, which varies 2.5x across datasets and sits below the
@@ -148,6 +202,17 @@ def analyse(bag, crit, axis, sig, phi_all, n, z_com, j_p, savgol=9):
     piv = cvp.estimate_pivot_from_mocap(bag, crit.onset_time, axis)
     lp = (piv['pivot_abs'] * 1e-3 if not np.isnan(piv['pivot_abs'])
           else LP[axis])
+    # SIGN CONVENTION.  Everything below (m, phi, om) is multiplied by s, so
+    # the balance is written in the TIPPING-POSITIVE frame.  In the raw frame
+    # the static threshold is
+    #     M_crit = s (W - f) l_p + W lam,
+    # where the pivot arm flips with the tip direction -- it is the restoring
+    # term -- and the CoM offset does not.  Multiplying through by s moves the
+    # direction dependence off l_p and onto lam:
+    #     s M_crit = W (l_p + s lam) - f l_p,
+    # which is why the gravity arm below is l_p + s*lam with l_p unsigned.
+    # The two forms are identical (verified numerically); this one matches
+    # analysis/mcrit_prediction.py at the onset, where omega_dot = phi = 0.
     a = lp + s * analyse.off_truth
 
     _, i1 = cvp.detect_excitation_window(
@@ -176,8 +241,18 @@ def analyse(bag, crit, axis, sig, phi_all, n, z_com, j_p, savgol=9):
     if raw is None:
         return None
     ge_mod = s * raw[sl]
+    # The model's sign is derived, not imposed: ge_moment sums the ground
+    # effect gain over each rotor's OWN signed arm about the pivot, and the
+    # far rotors dominate, so in the tipping-positive frame the net moment is
+    # destabilising.  Verified positive on all 116 runs, both directions and
+    # both axes; an earlier version silently flipped the sign when the mean
+    # came out negative, which would have hidden a convention error rather
+    # than surfacing one.
     if np.mean(ge_mod) < 0:
-        ge_mod = -ge_mod
+        raise AssertionError(
+            f"model ground-effect moment came out restoring on {crit.bag_name}"
+            f" (mean {1e3 * float(np.mean(ge_mod)):+.1f} mN.m) -- check the"
+            f" pivot-arm convention in error_budget.ge_moment")
 
     sd, id_ = np.polyfit(phi, ge_dyn, 1)
     sm, im = np.polyfit(phi, ge_mod, 1)
