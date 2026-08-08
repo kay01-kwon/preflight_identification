@@ -72,6 +72,14 @@ theorem), which are independently measured rather than fitted:
    slope stays flat at -45.9 / -45.3 / -44.2 / -42.3.  Along that line
    W z_CoM and J_P move together, so the trajectory-model relation
    barely changes and no choice of height rescues the measurement.
+   Neither is the derivative's source.  The bags carry
+   /mavros/imu/data_raw at 200 Hz, twice the odom rate the pipeline
+   uses, but analysis/imu_vs_odom.py shows the raw gyro is worse even at
+   a matched 90 ms window: 98.8% of its AC power sits in 50-100 Hz,
+   peaking at the 90.8 Hz blade passing, at 716 mrad/s RMS against 176
+   for odom, whose EKF has already rejected it.  Differentiating it
+   drives the slope to -139 to +40 mN.m/deg.
+
    analysis/slope_budget.py isolates the terms on a synthetic
    trajectory with a known ground-effect moment: the measured gyro
    noise contributes +-4.2 mN.m/deg of scatter and no bias, the
