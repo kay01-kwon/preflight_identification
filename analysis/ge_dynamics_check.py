@@ -57,6 +57,22 @@ theorem), which are independently measured rather than fitted:
    flattest) and varies by a factor of 4 across runs where a physical
    contact migration would repeat.
 
+3. The residual is NOT a constants error.  Sweeping z_CoM along the
+   parallel axis over 0.190 / 0.205 / 0.220 / 0.256 m moves the term
+   being cancelled by 35% (-105 to -141 mN.m/deg) while the residual
+   slope stays flat at -45.9 / -45.3 / -44.2 / -42.3.  Along that line
+   W z_CoM and J_P move together, so the trajectory-model relation
+   barely changes and no choice of height rescues the measurement.
+   (analysis/slope_budget.py isolates the terms on a synthetic
+   trajectory with a known ground-effect moment: the measured gyro
+   noise contributes +-4.2 mN.m/deg of scatter and no bias, the
+   Savitzky-Golay derivative +0.5, a 4% error in J_P +-7.2 and a 5 mm
+   error in z_CoM +-2.8, against a signal of -2.  So neither the
+   differentiation nor the noise is the limit.)  What remains is
+   unmodelled contact behaviour or a processing systematic; a
+   no-thrust release, where the ground-effect moment is zero by
+   construction, would separate the two.
+
 This negative result is now CLEAN.  The earlier attempt used the
 calibrated J_P, which varies 2.5x across datasets and sits below the
 parallel-axis floor, so it could not distinguish an SNR limit from a
