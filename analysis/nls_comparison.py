@@ -6,9 +6,15 @@ allocator caps and onset-free gates (the gated run set is method-independent
 because the gates use the moment trace only).  They differ only in how the
 onset is located per run:
 
-  cosh         (reported) (C2, K) calibrated once per dataset by ramp-rate
-               invariance; amplitude pinned (C1 = K Mdot), baseline = median,
-               onset swept exhaustively.
+  cosh         (reported) (C2, K) from the two-stage calibration: the
+               per-run PNLS medians locate the pair, the ramp-invariance
+               score refines it in a neighbourhood of that centre.
+               Amplitude pinned (C1 = K Mdot), baseline = median, onset
+               swept exhaustively.
+  cosh_wide    the same score minimised over the wide box
+               [3,8] x [0.05,0.70] instead, with no PNLS centre.
+  cosh_cad     (C2, K) derived from the CAD geometry -- z_CoM = 0.256 m,
+               Table 5 inertias, parallel-axis theorem -- nothing fitted.
   nls          per-run scipy least_squares (TRF) fit of (C1, C2, C) with
                C2 in [3, 8] rad/s, onset swept locally around the quadratic
                seed (the pipeline's historical mode).
@@ -36,10 +42,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import critical_value_getter_piecewise as cvp
 from utils.extractor import load_excitation_dataset
 from analysis.pelt_crosscheck import classic_onset_index, _window, CLASSIC
+from analysis.pnls_constants import PNLS_CONSTANTS
 
 ROOT = Path(__file__).resolve().parents[1] / 'DataSet' / 'exp'
 OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('.')
-METHODS = ['cosh', 'nls'] + CLASSIC          # cosh first = reference
+METHODS = ['cosh', 'cosh_wide', 'cosh_cad', 'nls'] + CLASSIC   # cosh = reported
+
+# CAD geometry (manuscript Table 5 and the landing-gear datum), used by the
+# cosh_cad variant: J_P = J_CAD + m (z_CoM^2 + l_p^2) fixes both constants.
+Z_CAD = 0.256
+J_CAD = {'x': 0.051085, 'y': 0.050564}
+LP = {'x': 0.140, 'y': 0.110}
 
 G = 9.81
 MASS_KG = {'case_01': 3.066, 'case_02': 3.220, 'case_03': 3.220,
@@ -57,13 +70,25 @@ SIGN = {'Mx': +1.0, 'My': -1.0}
 rows = []
 for d in sorted(ROOT.glob('case_*/M[xy]')):
     axis = 'x' if d.name == 'Mx' else 'y'
+    key0 = (d.parent.name, d.name)
+    mass = MASS_KG[key0[0]]
+    c2_pn, k_pn = PNLS_CONSTANTS[key0]
+    j_cad = J_CAD[axis] + mass * (Z_CAD ** 2 + LP[axis] ** 2)
+    c2_cad = float(np.sqrt(mass * G * Z_CAD / j_cad))
+    k_cad = 1.0 / (mass * G * Z_CAD)
     with contextlib.redirect_stdout(io.StringIO()):
         bags = load_excitation_dataset(d)
-        crits_a, _ = cvp.extract_piecewise_batch(bags, axis)   # COSH + gates
+        crits_a, _ = cvp.extract_piecewise_batch(bags, axis, cosh_c2=c2_pn,
+                                                 ramp_gain=k_pn)   # reported
+        crits_w, _ = cvp.extract_piecewise_batch(bags, axis)       # wide box
+        crits_c, _ = cvp.extract_piecewise_batch(bags, axis, cosh_c2=c2_cad,
+                                                 ramp_gain=k_cad)  # CAD
     gated = {c.bag_name for c in crits_a}
     by_bag = {b.name: b for b in bags}
-    res = {'cosh': {c.bag_name: c.onset_moment for c in crits_a}}
-    res.update({m: {} for m in METHODS if m != 'cosh'})
+    res = {'cosh': {c.bag_name: c.onset_moment for c in crits_a},
+           'cosh_wide': {c.bag_name: c.onset_moment for c in crits_w},
+           'cosh_cad': {c.bag_name: c.onset_moment for c in crits_c}}
+    res.update({m: {} for m in METHODS if m not in res})
     for name in sorted(gated):
         bag = by_bag[name]
         try:

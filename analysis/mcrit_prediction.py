@@ -43,6 +43,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import critical_value_getter_piecewise as cvp
 from utils.extractor import load_excitation_dataset
+from analysis.pnls_constants import PNLS_CONSTANTS
 
 ROOT = Path(__file__).resolve().parents[1] / 'DataSet' / 'exp'
 OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('.')
@@ -64,7 +65,9 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
     axis = 'x' if d.name == 'Mx' else 'y'
     with contextlib.redirect_stdout(io.StringIO()):
         bags = load_excitation_dataset(d)
-        crits, _ = cvp.extract_piecewise_batch(bags, axis)
+        c2_pn, k_pn = PNLS_CONSTANTS[(d.parent.name, d.name)]
+        crits, _ = cvp.extract_piecewise_batch(bags, axis, cosh_c2=c2_pn,
+                                               ramp_gain=k_pn)
     by_bag = {b.name: b for b in bags}
     key = (d.parent.name, d.name)
     W = MASS_KG[key[0]] * G

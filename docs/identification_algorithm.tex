@@ -41,17 +41,29 @@ cosh family}
   \textbf{or} $N_{\mathrm{full}} < N_{\min}$ \textbf{or}
   $\mathrm{RMS}\bigl(M - \mathrm{line}\bigr) > e_{\mathrm{lin,max}}$
 
-\Statex \textit{— Stage 3: rig-constant calibration (once per dataset) —}
-\For{$(C_2, K)$ on a coarse grid, then a local refinement}
-  \State run Stage~4 on every gated run with $(C_2, K)$ pinned
+\Statex \textit{— Stage 3: per-run shape fit, PNLS (once per dataset) —}
+\For{each gated run}
+  \State fit $(C_1, C_2, C)$ by free nonlinear least squares
+\EndFor
+\State $(C_2^{0}, K^{0}) \gets$ per-dataset medians of $C_2$ and
+  $C_1/\dot M$
+  \Comment{reads the curve shape only, so it is blind to the rate
+    dependence Stage~4 measures}
+
+\Statex \textit{— Stage 4: rig-constant calibration (once per dataset) —}
+\For{$(C_2, K)$ on the $9{\times}9$ grid
+  $C_2^{0}[0.75, 1.25] \times K^{0}[0.60, 1.40]$}
+  \State run Stage~5 on every gated run with $(C_2, K)$ pinned
   \State $\mathrm{score}(C_2,K) \gets \sum_{\mathrm{dir} \in \{+,-\}}
     \mathrm{CV}\bigl(M_{\mathrm{crit}}\ \text{across ramp rates}\bigr)$
   \Comment{physical self-consistency: a static threshold must not
     depend on how fast it was approached}
 \EndFor
 \State $(C_2^\ast, K^\ast) \gets \arg\min \mathrm{score}$
+  \Comment{searching about a located centre, not inside a fixed box,
+    keeps the estimate off arbitrary search bounds}
 
-\Statex \textit{— Stage 4: constrained fit, no free shape parameter
+\Statex \textit{— Stage 5: constrained fit, no free shape parameter
   (per run) —}
 \State $C_1 \gets K^\ast \dot M$
   \Comment{amplitude fixed by the onset conditions
@@ -68,7 +80,7 @@ cosh family}
 \State $j^\ast \gets \arg\min_j \mathrm{cost}(j)$;\quad
   $M_{\mathrm{crit}} \gets M(t_{j^\ast})$
 
-\Statex \textit{— Stage 5: aggregation —}
+\Statex \textit{— Stage 6: aggregation —}
 \State $\bar M_{\pm} \gets$ directional means of $M_{\mathrm{crit}}$;
   \quad $M_{\mathrm{ff}} \gets \tfrac12 (\bar M_{+} + \bar M_{-})$
 \State CoM offset $\gets$ moment-to-offset conversion of

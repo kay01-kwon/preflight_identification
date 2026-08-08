@@ -557,6 +557,8 @@ the dataset root (e.g. `DataSet/exp`):
 | `analysis/tiltcap_ablation.py` | identification repeated with a 3° relative tilt cap — result insensitive to the window extent |
 | `analysis/alpha_at_peak.py` | signal level (angular acceleration at the moment peak) against which error bounds are compared |
 | `analysis/excitation_angle_design.py` | theoretical design tables: systematic shape deviation vs ramp rate × excursion cap (Duhamel propagation of the a-priori remainder along the nominal trajectory; no dataset needed) — shows the 5° cutoff is the largest common cap keeping the deviation ≤1% at the slowest rate |
+| `analysis/error_budget.py` | **closes the chain to millimetres**: each ρ channel → Duhamel → onset-argmin sensitivity → ΔM_crit → ΔM_ff → CoM offset. Total coherent modelling error 1.3 µm (median) / 4.3 µm (worst), ~400× below the 1.6–1.8 mm validation RMS ⇒ noise-limited, not model-limited. Also reports the equivalent exponent perturbation \|ΔC₂/C₂\| ≤ ε/2 = 0.13% / 3.0% |. `--check` verifies the weighted-average reduction (∫w=1, w≥0) with no dataset, which gives the assumption-free bound \|ΔM_crit\| ≤ max\|ρ\| ≤ 15.9 mN·m = 0.50 mm
+| `analysis/rho_onset_order.py` | how ρ behaves at the anchor: theoretical order (τ⁴ bilinear GE / τ⁶ gravity) vs what the record shows. Finds the LS-projected residual is *not* small at τ=0 (0.17–0.52 of the window peak) and the measured leading power is 1.2–1.7 — the onset-order argument is a property of the modelling error, not of the data |
 
 The full argument — proposition, Lagrange remainder, Duhamel bound, design
 consequence, ideal-vs-experimental operating point, and the four measured

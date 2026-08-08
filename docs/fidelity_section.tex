@@ -1,3 +1,8 @@
+% Preview build:  wrap this file in a minimal article shell
+%   \documentclass[10pt]{article}\usepackage[a4paper,margin=25mm]{geometry}
+%   \usepackage{amsmath,amssymb,graphicx,booktabs}
+%   \newtheorem{proposition}{Proposition}\newtheorem{remark}{Remark}
+% and run pdflatex twice -> docs/fidelity_section_preview.pdf
 % =====================================================================
 % Model-fidelity section (final draft, ideal-first structure) —
 % "Why the Response Remains of the Closed Form"
@@ -24,6 +29,14 @@
 %   3-deg ablation 0.022/0.012 N.m ......... analysis/tiltcap_ablation.py
 %   design tables, 1% crossing 4.8-8.9 deg . analysis/excitation_angle_design.py
 %   signal level at the peak ............... analysis/alpha_at_peak.py
+%   bilinear tau*dphi term 0.04/0.17 ....... analysis/ge_bilinear.py
+%   GE vs contact-lever attribution ........ analysis/static_attribution.py
+%   error budget rho -> onset -> M_ff -> mm  analysis/error_budget.py
+%   rho onset order / projection anchor .... analysis/rho_onset_order.py
+%     (Table tab:budget; total 1.30/4.28 um of CoM offset, and the
+%      equivalent |dC2/C2| <= eps/2 = 0.13%/2.96%)
+%   GE shift of (C2, K): dC2/C2 >= -1.7%, dK/K <= +8.0% — closed form
+%     eq:ge-constant-shift; J_P cancels, so no inertia estimate enters.
 % Constants: conservative l_p = 0.140/0.110 m (roll/pitch), hub height
 % h = 0.315 m, rotor radius R = 0.127 m (10-in propeller), W = 31.59 N,
 % z_CoM = 0.30 m, calibrated C2 = 5, K = 0.19 (representative).
@@ -59,56 +72,122 @@ where $\bar\gamma$ denotes the rotor-common thrust factor. The identity
 is \emph{independent of the CoM position} — $\lambda_{\mathrm{off}}$
 enters \eqref{eq:exact-dyn} only through the gravity arm — so ground
 effect biases the identified critical moment identically for every CoM
-configuration. The magnitude is evaluated with two models forming a
-bracket. The per-rotor superposition of the single-rotor
-Cheeseman--Bennett result (lower bound; neglects rotor--rotor
+configuration. The magnitude is evaluated with two models of increasing physics
+content. The per-rotor superposition of the single-rotor
+Cheeseman--Bennett result (which \emph{neglects} rotor--rotor
 interference) gives, at the measured geometry ($h=0.315$~m,
-$R=0.127$~m), $\eta(0) = 1.03\%$ independent of $l_p$. The upper bound
-is derived from first principles by the image method: each rotor is a
-three-dimensional potential source of strength $R^2 v_\infty/4$, the
-ground plane is enforced by mirror images, and only the vertical
-projection of each image-induced velocity reduces the downwash, giving
-the per-rotor interference sum
-$\delta v_i/v_\infty = (R^2/4)\sum_j (z_i{+}z_j)/[d_{ij}^2 +
-(z_i{+}z_j)^2]^{3/2}$ evaluated at each rotor's \emph{own} tilted
-height $z_i = h\cos\phi + s_i\sin\phi$ — no averaging enters, and the
+$R=0.127$~m), $\eta(0) = 1.03\%$ independent of $l_p$. The reported
+model adds the interference from first principles by the image method:
+each rotor is a three-dimensional potential source of strength
+$R^2 v_\infty/4$, the ground plane is enforced by mirror images, and
+only the vertical projection of each image-induced velocity reduces
+the downwash, giving the per-rotor sum
+\begin{equation}
+  s_{\mathrm{rot},i} \;=\; \frac{R^2}{4}\sum_j
+  \frac{z_i + z_j}{\bigl[d_{ij}^2 + (z_i+z_j)^2\bigr]^{3/2}},
+  \qquad \gamma_i = \bigl(1 - s_{\mathrm{rot},i}\bigr)^{-1},
+  \label{eq:ge-interference}
+\end{equation}
+evaluated at each rotor's \emph{own} tilted height
+$z_i = h\cos\phi + s_i\sin\phi$ — no averaging enters, and the
 attitude dependence of the model resides entirely in this term. The
-fountain-driven body lift of Garofano-Soldado
-\emph{et al.}~[RA-L 9(2), 2024] — whose hexarotor characterization was
-performed on a \emph{static test bench}, i.e.\ in the same
-quasi-static, zero-airspeed regime as the contact-phase excitation —
-acts at the body centre and therefore contributes no moment about it,
-entering the pivot moment only through the parallel-axis transfer
-$F\,l_p$:
+self term $j = i$ reduces exactly to Cheeseman--Bennett, so
+\eqref{eq:ge-interference} contains the single-rotor result as the
+zero-neighbour limit and adds \emph{no empirical constant of any
+kind}: the neighbour sum is fixed by the measured rotor geometry
+alone. Mapping the per-rotor gains to the pivot,
 \begin{equation}
   \Delta M_{\mathrm{GE}}
-  = \sum_i b_i\,(\gamma_i^{\mathrm{rot}}-1)\,T_i
-  \;+\; \Bigl[\sum_i (\gamma_i^{\mathrm{full}}-1)\,T_i\Bigr] l_p ,
+  = \sum_i b_i\,(\gamma_i-1)\,T_i
+  \;+\; \Bigl[\sum_i (\gamma_i-1)\,T_i\Bigr] l_p ,
   \label{eq:ge-mapping}
 \end{equation}
-with $b_i$ the body-centre arms, $\gamma_i^{\mathrm{rot}}$ the
-interference-only gain and $\gamma_i^{\mathrm{full}}$ the
-fountain-inclusive gain; the matching constant $k(z_c)$ that joins the
-rotor-centre construction to the published model is re-evaluated at
-the body-centre height of each attitude (changing the moment by less
-than $0.1\%$). Under constant total thrust the result is affine in the
-commanded moment, $\Delta M_{\mathrm{GE}} = a(\phi) + b(\phi)
-M_{\mathrm{cmd}}$, with fitted coefficients
-$a/(f l_p)\,[\%] = 11.59 - 0.153\,\phi$ and
-$b\,[\%] = 4.12 - 0.061\,\phi$ ($\phi$ in degrees): the constant
-channel carries the fountain contribution, while $b$ reflects
-rotor-to-rotor interference alone, since the body lift does not scale
-with the commanded moment. The boundary between the derived and the
-fitted layer is explicit — the image method captures the interference
-and its attitude dependence analytically, while wake recirculation is
-represented by the single empirical constant $J_k$ transferred from
-the authors' vehicle; an alternative distribution of the body lift
-(applying $\gamma^{\mathrm{full}}$ per rotor) brackets the fountain
-placement and is reported alongside. In both bracket models the affine
-decomposition, the restoring sign of the height-asymmetry moment, and
-the channel structure below are identical — they follow from
+with $b_i$ the body-centre arms and the second term the parallel-axis
+transfer of the net vertical surplus. Under constant total thrust the
+result is affine in the commanded moment,
+$\Delta M_{\mathrm{GE}} = a(\phi) + b(\phi) M_{\mathrm{cmd}}$, with
+fitted coefficients $a/(f l_p)\,[\%] = 4.27 - 0.086\,\phi$ and
+$b\,[\%] = 4.28 - 0.060\,\phi$ ($\phi$ in degrees) — a factor
+$\approx 4$ above the interference-free value in both channels, which
+is the quantitative statement that rotor--rotor interference is not
+negligible at this clearance. The affine decomposition, the
+anti-restoring sign of the height-asymmetry moment, and the channel
+structure below are identical in the two models — they follow from
 thrust-proportionality and smooth height dependence alone; only the
-magnitudes differ, by a factor of about four.
+magnitudes differ.
+
+How far does this move the calibrated constants? With
+$k_0^{\mathrm{GE}} \triangleq \beta_f f l_p + \beta_M M_{\mathrm{crit}}$
+the onset value of the $\phi$-slope, the effective anti-restoring
+gradient becomes $D = W z_{\mathrm{CoM}} + k_0^{\mathrm{GE}}$
+($k_0^{\mathrm{GE}} < 0$: the ground effect \emph{opposes} the tilt and
+therefore reduces $D$). Since $C_2 = \sqrt{D/J_P}$, the inertia
+cancels in the ratio and no inertia estimate is needed:
+\begin{equation}
+  \frac{\Delta C_2}{C_2} = \sqrt{1 - \frac{|k_0^{\mathrm{GE}}|}
+                                        {W z_{\mathrm{CoM}}}} - 1,
+  \qquad
+  \frac{\Delta K}{K} = \frac{1 + \alpha_M}
+       {1 - |k_0^{\mathrm{GE}}|/(W z_{\mathrm{CoM}})} - 1 .
+  \label{eq:ge-constant-shift}
+\end{equation}
+Over the operating box ($W z_{\mathrm{CoM}} \in [6.3, 9.5]$~N\,m for
+$z_{\mathrm{CoM}} \in [0.2, 0.3]$~m, measured onset thrust
+$f \approx 21$~N, $|M_{\mathrm{crit}}| \le 2.1$~N\,m) the interference
+model gives $|k_0^{\mathrm{GE}}| \le 0.217$~N\,m/rad (roll) and
+$0.172$ (pitch), i.e.\ at most $3.4\%$ and $2.7\%$ of
+$W z_{\mathrm{CoM}}$, so
+\begin{equation*}
+  \frac{\Delta C_2}{C_2} \ge -1.7\%\ \text{(roll)},\quad
+  -1.4\%\ \text{(pitch)}, \qquad
+  \frac{\Delta K}{K} \in [+6.2\%, +8.0\%] ,
+\end{equation*}
+the amplitude constant moving more because it carries the two effects
+multiplicatively, $1.0428 \times (0.96566)^{-1}$: the moment-channel
+gain $\alpha_M$ raises the effective ramp rate while the gradient
+reduction raises $1/D$, whereas $C_2$ receives only the latter and
+under a square root. The $K$ shift is one-signed over the whole box,
+so neglecting ground effect does not merely blur the amplitude constant
+— it underestimates it by at least $6\%$.
+Neither shift is an error. The calibration estimates the
+\emph{effective} constants directly, so $\alpha_M$ and
+$k_0^{\mathrm{GE}}$ are absorbed by construction — provided each is
+common to the runs that share one calibrated pair. Both are, to the
+measured precision: the moment-channel gain is rate-invariant over the
+twelvefold rate range (IQR $[4.13,4.27]\%$, a $0.14$~pp spread, i.e.\
+$0.13\%$ of $K$), and within one dataset the only run-to-run variation
+of $k_0^{\mathrm{GE}}$ enters through $M_{\mathrm{crit}}$, whose largest
+directional spread ($0.96$~N\,m) changes $D$ by $0.52\%$ and $C_2$ by
+$0.26\%$ — so a \emph{single} $C_2$ per configuration remains
+legitimate, and only those residual spreads escape absorption. What the
+shifts do say is that the calibrated constants are not their textbook
+counterparts: $1/K$ underestimates $W z_{\mathrm{CoM}}$ by $6$–$8\%$ and
+must not be reported as a measurement of $z_{\mathrm{CoM}}$. The
+$\pm20\%$ sensitivity result — a mis-specification of either constant
+moves the identified CoM offset by less than $0.9$~mm — is the fallback
+for a user who pins the constants a priori instead of calibrating; it is
+not what protects the absorbed shifts. For
+scale, the a priori uncertainty of $C_2$ from the $z_{\mathrm{CoM}}$
+box alone is $-12.5\%$ ($6.14 \to 5.37$~rad/s with
+$J_P \ge m(z_{\mathrm{CoM}}^2 + l_p^2)$), several times the
+ground-effect shift — which is precisely why $(C_2, K)$ are calibrated
+rather than computed.
+
+Everything that follows is deliberately insensitive to that magnitude.
+The absorption argument assumes only smoothness and
+thrust-proportionality, which any near-ground aerodynamic model
+shares, and the same is true of a purely geometric alternative: a
+contact-force lever displaced inboard of the kinematic pivot circle by
+a finite, compliant contact patch enters \eqref{eq:exact-dyn} in the
+same functional position as the $a$-channel. The static check of the
+identified thresholds indeed cannot separate the two — a
+$19.2 \pm 1.8$~mm inboard lever reproduces the measured deficit as
+well as the interference model does (residual RMS $82.3$ versus
+$86.0$~mN\,m), the discriminating moment-proportional channel being
+below the group-to-group scatter. This is a limitation of the
+attribution, not of the method: the bounds below hold for either
+cause, and both cancel antisymmetrically in the pivot-free
+deliverable.
 
 % ==================================================================
 \subsubsection{Ideal configuration: the cosh family and its escape channel}
@@ -130,19 +209,60 @@ ramp-invariance calibration of $K$; terms $\propto \delta\phi$ (the
 gravity slope $W z_{\mathrm{CoM}}$ — here an \emph{anti-restoring}
 gradient, i.e.\ a negative stiffness, which is what makes the response
 hyperbolic rather than oscillatory — and $\eta' M_P^*$) are absorbed by
-the calibrated $C_2$. What
-remains is the second-order Taylor remainder in Lagrange form,
+the calibrated $C_2$. What escapes is of two kinds — the linearization
+remainder of the gravity terms and, from the ground effect, the one
+product that is bilinear in two spanned coordinates. Subtracting the
+tangent $G_{\mathrm{lin}} = -Wa + W z_{\mathrm{CoM}}\,\delta\phi$ from
+the exact gravity moment leaves the remainder \emph{in closed form} —
+no Lagrange point $\xi$ and no truncation:
 \begin{equation}
-  \rho \;=\; \tfrac12\,G''(\xi)\,\delta\phi^2 + \dots,
-  \qquad
-  G''(\xi) = W(l_p+\lambda_{\mathrm{off}})\cos\xi
-             - W z_{\mathrm{CoM}}\sin\xi ,
+  \rho \;=\; \underbrace{W a\,(1-\cos\delta\phi)
+             \;+\; W z_{\mathrm{CoM}}\,(\sin\delta\phi - \delta\phi)}
+             _{\rho_\phi,\ \text{gravity (exact)}}
+     \;+\; \underbrace{\beta_M\,\dot M\,\tau\,\delta\phi}
+             _{\rho_b,\ \text{ground effect (bilinear)}} \;+\; \dots,
+  \qquad a \triangleq l_p+\lambda_{\mathrm{off}} ,
   \label{eq:lagrange}
 \end{equation}
-with $\xi$ between $0$ and $\phi$: the sine term enters at second
-order \emph{with a negative sign} and is dropped conservatively,
-$|G''| \le W(l_p+\lambda_{\mathrm{off}})$. At the $5^\circ$ excursion
-this bound evaluates to $19.2$~mN\,m (roll) / $15.6$~mN\,m (pitch).
+the second term arising because the moment-proportional ground-effect
+coefficient is itself attitude dependent: writing
+$b(\phi) = \alpha_M + \beta_M\delta\phi$ and
+$M_{\mathrm{cmd}} = M^*_{\mathrm{crit}} + \dot M\tau$, the product
+$b(\phi) M_{\mathrm{cmd}}$ splits into a constant, a term
+$\propto\dot M\tau$, a term $\propto\delta\phi$ with coefficient
+$\beta_M M^*_{\mathrm{crit}}$ — all three absorbed above — and this
+single bilinear leftover. It is quantified in
+Sec.~\ref{sec:fid-transfer} and enters Table~\ref{tab:rho} on its own
+row.
+
+In $\rho_\phi$ the two terms have opposite signs and different orders:
+the arm term is $+\tfrac12 W a\,\delta\phi^2$ to leading order, the
+$z_{\mathrm{CoM}}$ term $-\tfrac16 W z_{\mathrm{CoM}}\,\delta\phi^3$, so
+dropping the latter recovers the familiar quadratic bound
+$\tfrac12 W a\,\delta\phi^2$ conservatively. Because that third-order
+term carries the only $z_{\mathrm{CoM}}$ dependence, the whole
+$z_{\mathrm{CoM}}\in[0.2,0.3]$~m box moves $\rho_\phi$ by less than
+$4\%$; the worst case is the \emph{smallest} $z_{\mathrm{CoM}}$.
+Evaluated with $W = 31.59$~N, $a = l_p + 0.020$~m and
+$z_{\mathrm{CoM}} = 0.2$~m, Table~\ref{tab:rhophi} gives the resulting
+envelope at the design cap and at the largest absolute tilt reached.
+
+\begin{table}[h]
+\centering
+\caption{Exact gravity remainder $\rho_\phi$ [mN\,m] from
+\eqref{eq:lagrange}, at $z_{\mathrm{CoM}} = 0.2$~m (worst case).}
+\label{tab:rhophi}
+\small
+\begin{tabular}{@{}lccc@{}}
+\hline
+& $a$ [m] & $\delta\phi = 5^\circ$ (design cap)
+& $\delta\phi = 10^\circ$ (largest absolute tilt) \\
+\hline
+Roll  & $0.160$ & $18.5$ & $71.2$ \\
+Pitch & $0.130$ & $14.9$ & $56.8$ \\
+\hline
+\end{tabular}
+\end{table}
 
 \begin{proposition}
 Under (i) maintained pivot contact, (ii) gate-passing ramp execution,
@@ -268,11 +388,11 @@ $W z_{\mathrm{CoM}}$ to
 $W z_{\mathrm{CoM}}\cos\phi^* + W(l_p{+}\lambda_{\mathrm{off}})\sin\phi^*$
 — at most $+2.3\%$, absorbed by the calibrated $C_2$;
 \item the onset-instant small-angle bias grows from zero to
-$\tfrac12 W(l_p{+}\lambda_{\mathrm{off}})\phi^{*2} \le 5.4$~mN\,m per
+$\tfrac12 W(l_p{+}\lambda_{\mathrm{off}})\phi^{*2} \le 4.9$~mN\,m per
 direction — common to both tip directions, which start from the same
 rest attitude, hence cancelling in $M_{\mathrm{ff}}$;
-\item the Lagrange remainder is in fact \emph{smaller} at the tilted
-point ($18.0$ vs.\ $19.2$~mN\,m at the $5^\circ$ excursion), the
+\item the linearization remainder is in fact \emph{smaller} at the
+tilted point ($17.3$ vs.\ $18.5$~mN\,m at the $5^\circ$ excursion), the
 restoring term subtracting from the curvature; the design tables,
 functions of the excursion alone, apply unchanged.
 \end{itemize}
@@ -298,7 +418,35 @@ $K$-calibration absorption requires — and the out-of-span residual
 grows from $0.16\,/\,2.3$ to $0.67\,/\,9.3$~mN\,m (median RMS /
 max) with interference, while remaining edge-concentrated, so the
 propagated shape deviation stays at the few-percent level, below the
-noise-dominated residual. The channel fates are model-independent: the thrust channel
+noise-dominated residual. One term of the affine decomposition deserves explicit accounting.
+Because the moment coefficient is itself attitude dependent, the
+product $b(\phi) M_{\mathrm{cmd}}$ contains
+$\beta_M\,\dot M\tau\,\delta\phi$ — a bilinear term in two spanned
+coordinates, hence the one piece of the ground-effect moment that is
+\emph{not} in $\{1,\tau,\delta\phi\}$. Evaluated along the measured
+trajectories with $\beta_M = 0.0345$~rad$^{-1}$
+(\texttt{analysis/ge\_bilinear.py}), its raw peak is $3.0$~mN\,m and
+what survives the projection is $0.17$~mN\,m at most (median
+$0.04$) — the product is strongly correlated with the spanned
+coordinates along real trajectories, so it is absorbed almost
+entirely. It needs no separate treatment: propagated through the same
+Duhamel integral as every other component — and conservatively, using
+the \emph{unprojected} forcing — it deforms the rate by $0.04\%$
+(slowest ramp) to $0.09\%$ (fastest) of the nominal, against
+$0.8$--$1.9\%$ for the small-angle curvature over the same windows.
+Its smallness has a structural reading: since
+$\varphi \approx \tfrac16 C_1 C_2^2\tau^3$ near the onset, the term
+grows as $\tau^4$ and is therefore edge-concentrated where the kernel
+has no time left to amplify it; equivalently, $\beta_M\dot M\tau$ is a
+\emph{time-varying increment of the $\varphi$-coefficient}, i.e.\ the
+effective anti-restoring gradient drifts by
+$\beta_M\dot M\tau_{\mathrm{end}}/D \le 0.19\%$ across the window —
+a drift that small produces a response all but indistinguishable from
+the fixed-gradient cosh, which is why the projection removes $94\%$ of
+it. As a state-dependent term it also enters the small-gain constant,
+$\partial\rho/\partial\varphi = \beta_M\dot M\tau \le
+0.021$~N\,m/rad, raising $L$ by $2.2\%$ and leaving the closure factor
+unchanged to two digits. The channel fates are model-independent: the thrust channel
 (rotor-common and body lift alike) acts through the arm $l_p$ exactly,
 is antisymmetric between tip directions, and cancels in
 $M_{\mathrm{ff}}$ regardless of its magnitude; the moment coefficient
@@ -309,9 +457,9 @@ below the validation scatter ($52$~mN\,m RMS), which is dominated by
 the genuine contact asymmetries the pivot-free average is designed to
 capture, and present identically at lift-off, where $M_{\mathrm{ff}}$
 compensates it by design. The full chain of reductions is
-$85 \to 28 \to 12.3 \to 1.2$~mN\,m: the unconditional $\phi{=}0$
-envelope at the largest absolute tilt ($10^\circ$), the onset-anchored
-Lagrange bound at the median measured excursion, the measured
+$71.2 \to 27.3 \to 12.3 \to 1.2$~mN\,m: the exact remainder
+\eqref{eq:lagrange} at the largest absolute tilt ($10^\circ$), the same
+expression at the median measured excursion ($6.1^\circ$), the measured
 pointwise maximum after projection, and the measured window RMS.
 
 \begin{table}[t]
@@ -323,17 +471,254 @@ Sec.~\ref{sec:fid-ideal} evaluated at the measured tilt range;
 projected out of the estimator span $\{1,\tau,\delta\phi\}$. All
 values in mN\,m.}
 \label{tab:rho}
-\begin{tabular}{lccc}
+\small
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}p{0.235\linewidth} p{0.255\linewidth}
+                  p{0.185\linewidth} p{0.225\linewidth}@{}}
 \hline
-Component & A priori & Measured (RMS / max) & Character \\
+\raggedright Component & \raggedright A priori &
+\raggedright Measured (RMS\,/\,max) & \raggedright
+Character \tabularnewline
 \hline
-Small-angle curvature & $19.2$ at $5^\circ$ ($\approx 28$ at the
-median excursion) & $1.2\;/\;12.3$ & coherent, edge-concentrated \\
-Ground effect (without / with rotor interference) & $3.2\;/\;7.5$
-(tangent deviation, full range) & $0.16\,/\,2.3$ \;--\; $0.67\,/\,9.3$
-& coherent, edge-concentrated \\
-Ramp nonlinearity & $30$ (gate, full window) & $1.6\;/\;6.2$ (fit
-segment) & incoherent (noise-like) \\
+\raggedright Small-angle curvature &
+\raggedright $18.5$ at $5^\circ$; $27.3$ at the median
+excursion & \raggedright $1.2\;/\;12.3$ &
+\raggedright coherent, edge-concentrated \tabularnewline
+\raggedright Ground effect, without\,/\,with rotor interference &
+\raggedright $3.2\;/\;7.5$ (tangent deviation, full range) &
+\raggedright $0.16/2.3 \rightarrow 0.67/9.3$ &
+\raggedright coherent, edge-concentrated \tabularnewline
+\raggedright Bilinear $\tau\,\delta\phi$ (GE moment channel) &
+\raggedright $3.9$ (envelope of the factor maxima) &
+\raggedright $0.04\;/\;0.17$ &
+\raggedright coherent, almost fully absorbed \tabularnewline
+\raggedright Ramp nonlinearity &
+\raggedright $30$ (gate, full window) &
+\raggedright $1.6\;/\;6.2$ (fit segment) &
+\raggedright incoherent (noise-like) \tabularnewline
+\hline
+\end{tabular}
+\end{table}
+
+% ==================================================================
+\subsubsection{Error budget: from the residual forcing to millimetres}
+\label{sec:fid-budget}
+
+Table~\ref{tab:rho} bounds each channel in moment units; the deliverable
+is a length. The two are joined in closed form, with no free step, so
+every entry of Table~\ref{tab:rho} can be read directly as an error of
+the identified CoM offset.
+
+\paragraph{Propagation.} The zero onset conditions leave no homogeneous
+part in \eqref{eq:deviation}. The position kernel satisfies
+$h_\phi(0)=0$, so the Leibniz boundary term in
+$\dot e_\phi = h_\phi(0)\rho(\tau)
+ + \int_0^\tau \dot h_\phi(\tau{-}s)\rho(s)\,ds$
+vanishes for \emph{any} forcing --- no assumption on $\rho(0)$ is needed
+--- and $e_\phi(0)=\dot e_\phi(0)=0$ then forces both constants of the
+complementary solution to zero. The deviation is the Duhamel integral
+\eqref{eq:duhamel-bound} alone, evaluated with
+$J_P = 1/(K C_2^2)$ from the calibrated constants, so no independent
+inertia estimate enters.
+
+\paragraph{Translation.} The onset is the argument minimizing the
+two-segment residual. Perturbing the data by $\delta\omega$,
+linearizing the stationarity condition about the unperturbed optimum,
+and using
+$\partial\hat\omega/\partial t_0 = -C_1 C_2 \sinh(C_2\tau)$ gives
+\begin{equation}
+  \Delta t_0 = -\frac{\langle\delta\omega,\ \sinh C_2\tau\rangle}
+                     {C_1C_2\,\|\sinh C_2\tau\|^2},
+  \qquad
+  \Delta M_{\mathrm{crit}} = \dot M\,\Delta t_0
+    = -\frac{\langle\delta\omega,\ \sinh C_2\tau\rangle}
+            {K\,C_2\,\|\sinh C_2\tau\|^2},
+  \label{eq:onset-translation}
+\end{equation}
+the ramp rate cancelling because $C_1 = K\dot M$: the exchange rate from
+residual forcing to identified threshold is a constant of the
+calibration, not of the run.
+
+Two identities make this concrete. First, the deviation is not a member
+of the cosh family: expanding the kernel,
+\begin{equation}
+  \delta\omega(\tau) = \frac{1}{J_P}\Bigl[P(\tau)\cosh C_2\tau
+    - Q(\tau)\sinh C_2\tau\Bigr],
+  \quad
+  \begin{aligned}
+    P(\tau) &= \textstyle\int_0^\tau \cosh(C_2 s)\rho(s)\,ds,\\
+    Q(\tau) &= \textstyle\int_0^\tau \sinh(C_2 s)\rho(s)\,ds,
+  \end{aligned}
+  \label{eq:drifting-coeffs}
+\end{equation}
+whose coefficients drift with $\tau$; they are constant only for
+$\rho\equiv0$. This makes the escape channel explicit, and its structure follows from
+the spanned directions: solving \eqref{eq:deviation} for each
+spanned forcing shows that the three absorbable directions are exactly
+the three deformations of the family — $\rho\propto1$ gives
+$\delta\omega = \rho_0\sinh(C_2\tau)/(J_PC_2)$, an onset shift;
+$\rho\propto\tau$ gives $\delta\omega = (c/D)(\cosh C_2\tau - 1)$, an
+amplitude ($C_1$) change; $\rho\propto\delta\phi$ moves the gradient and
+hence $C_2$. Since $\rho$ is \emph{defined} as what remains after those
+are removed, its response has no fixed-coefficient family component.
+
+Second, \eqref{eq:onset-translation} passes an exact check. Substituting
+the constant-forcing response above,
+$\Delta M_{\mathrm{crit}} = -\rho_0/(J_PC_2^2 K) = -\rho_0$, since
+$J_PC_2^2 = D$ and $K = 1/D$: a constant residual moment displaces the
+identified threshold by exactly itself, which is what the physics
+requires — the vehicle tips on $\rho_0$ less commanded moment. The
+translation is therefore unit-faithful, and it bounds the general case:
+only the projection of $\delta\omega$ on the onset direction
+$\sinh(C_2\tau)$ biases the result; the rest appears as fit residual,
+which the NRMSE certificate of Sec.~\ref{sec:fid-verify} measures.
+
+\paragraph{An unconditional bound.} Exchanging the order of integration
+in \eqref{eq:onset-translation} reduces the entire propagation to a
+weighted average of the forcing,
+\begin{equation}
+  \Delta M_{\mathrm{crit}} = -\!\int_0^{\tau_{\mathrm{end}}}\!\!\!
+    \rho(s)\,w(s)\,ds,
+  \quad
+  w(s) = \frac{\int_s^{\tau_{\mathrm{end}}}\!
+               \sinh(C_2\tau)\cosh\bigl(C_2(\tau{-}s)\bigr)d\tau}
+              {J_P K C_2\,\|\sinh C_2\tau\|^2},
+  \label{eq:rho-weight}
+\end{equation}
+whose kernel is non-negative on the window and \emph{normalized}:
+$\int_0^{\tau_{\mathrm{end}}} w = 1$ is precisely the constant-forcing
+identity $\Delta M_{\mathrm{crit}} = -\rho_0$ just established (verified
+to $5\times10^{-4}$ on the discrete operators actually used,
+\texttt{analysis/error\_budget.py -{}-check}). Consequently
+\begin{equation*}
+  |\Delta M_{\mathrm{crit}}| \;\le\; \max_{[0,\tau_{\mathrm{end}}]}|\rho|
+\end{equation*}
+holds without further assumptions --- no envelope, no $\coth$ factor and
+no small-gain closure are needed, and nothing is assumed about the
+\emph{shape} of $\rho$, only about its magnitude. Across all $140$ runs $\max|\rho| \le 15.9$~mN\,m, so
+no coherent modelling residual of any profile can bias the identified
+offset by more than $0.50$~mm.
+
+The measured value is a further $18\times$ smaller ($0.90$~mN\,m,
+$5.7\%$ of the bound), because $\rho$ changes sign within the window and
+the weighted mean largely cancels: $|\langle\rho\rangle_w|/\max|\rho|$
+is $0.5$--$1.6\%$ in median by channel and at most $12.6\%$. The
+resulting ladder --- $15.9 \to 0.90 \to 0.14$~mN\,m, equivalently
+$0.50$~mm $\to 28\,\mu$m $\to 4.3\,\mu$m --- separates cleanly what is
+bounded by magnitude alone, what the measured sign structure adds, and
+what the pivot-free pairing removes. (The envelope of
+Sec.~\ref{sec:fid-ideal} is not superseded: it bounds the \emph{shape}
+deviation $\delta\omega/\omega$, which is what the excitation design
+tables and the NRMSE comparison need, whereas \eqref{eq:rho-weight}
+bounds the deliverable directly.)
+
+The deliverable follows the pipeline
+exactly, $M_{\mathrm{ff}} = \pm\tfrac12(M_+ + M_-)$ and
+$\lambda_{\mathrm{off}} = M_{\mathrm{ff}}/W$. The estimate is
+conservative three times over: it forwards the \emph{peak} of each
+channel, it uses the plain $L^2$ Gauss--Newton curvature whereas the
+implemented cost is Huber-robust and also refits the pre-onset segment
+(both stiffen the minimum), and it omits the antisymmetry that removes
+part of the result at the pairing step.
+
+\paragraph{Budget.} Table~\ref{tab:budget} carries every channel of
+Table~\ref{tab:rho} through \eqref{eq:duhamel-bound} and
+\eqref{eq:onset-translation} on all $140$ gate-passing runs
+(\texttt{analysis/error\_budget.py}). The total coherent modelling
+error of the identified CoM offset is $1.3\,\mu$m (median) and
+$4.3\,\mu$m (worst configuration) --- roughly $400\times$ below the
+$1.6$--$1.8$~mm load-cell validation RMS of the identified offset, and
+$100\times$ below the $0.39$~mm that the $3^\circ$ window ablation
+moves. Over this dataset the identification is therefore limited by
+measurement noise rather than by the closed form, which is also what
+the rate-invariance certificate indicates. The channel ranking is
+also informative: the gravity curvature dominates and is common-mode,
+so the pivot-free pairing does not reduce it ($0.99\times$), whereas the
+ground-effect channels are antisymmetric between tip directions and are
+partly removed by it ($1.3$--$1.4\times$) --- the structural statement of
+Sec.~\ref{sec:fid-transfer}, now with a number.
+
+Finally, the same table settles how much of $\rho$ could be mistaken for
+a mis-calibrated $C_2$. Since
+$\partial\ln(\cosh x - 1)/\partial\ln x = x\coth(x/2) \ge 2$ for all
+$x>0$ (and $\in[2.2,5.3]$ over the measured
+$C_2\tau_{\mathrm{end}} \in [1.08, 5.20]$), a relative shape deviation
+$\varepsilon$ can masquerade as at most an $\varepsilon/2$ relative
+change of the exponent. With the measured
+$\varepsilon$ ($0.26\%$ median, $5.9\%$ worst run) this is
+$|\Delta C_2/C_2| \le 0.13\%$ (median) and $3.0\%$ (worst) --- below
+the $12.5\%$ a priori spread the calibration already has to resolve, and
+in any case unreachable, since $C_2$ is not re-estimated per run: the
+sole per-run degree of freedom is the onset index, which is exactly what
+\eqref{eq:onset-translation} quantifies.
+
+That bound is moreover loose near the anchor, where the coherent model
+error and an exponent error differ not in size but in \emph{order}.
+Along the nominal trajectory $\delta\phi \sim \tau^3$, so the
+lowest-order surviving channel is the bilinear ground-effect term,
+$\beta_M\dot M\tau\,\delta\phi \sim \tau^4$ — the smallest channel
+overall is the slowest to vanish, the gravity curvature
+($\propto\delta\phi^2$) being $\tau^6$. Convolved with
+$h_\phi(u)\simeq u/J_P$ this gives $e_\phi\sim\tau^6$, i.e.\
+$\delta\omega\sim\tau^5$, against $C_1\,\Delta C_2\,C_2\,\tau^2$ for a
+genuine exponent error. Equivalently, the forcing that would produce an
+exact $A(\cosh C_2'\tau - 1)$ response is
+$\rho = A(J_PC_2'^2 - D)\cosh C_2'\tau + AD$, which requires
+$\rho(0) = A J_P C_2'^2 \neq 0$: a forcing alive \emph{at} the onset,
+which the onset conditions forbid. This, rather than the vanishing of
+$A_1$ and $A_2$ — a condition the $\cosh-1$ shape itself satisfies — is
+the structural obstruction, and it confines exponent mimicry to the
+window edge, where both shapes have relaxed into exponentials and only
+the amplitude distinguishes them; that is the regime the
+$\varepsilon/2$ bound covers.
+
+Two qualifications keep this a statement about the coherent model error
+alone. It is an anchored statement, the absorbable coefficients being
+matched at $\tau=0$; the least-squares projection used for the measured
+residuals instead trades anchor accuracy for window-wide RMS, so
+$|\rho(0)|$ is not small there ($0.17$–$0.52$ of the window peak in
+median). And near the anchor the measured residual is noise-dominated,
+its fitted leading power being $1.2$–$1.7$ rather than $4$: the record
+does not resolve the order separation, which is a property of the
+modelling error and is certified instead by the rate invariance of
+Sec.~\ref{sec:fid-verify}. Neither qualification touches
+Table~\ref{tab:budget}, which forwards the projected \emph{peak}
+through the Duhamel integral and invokes no onset-order argument.
+
+\begin{table}[t]
+\centering
+\caption{Error budget of the coherent modelling residuals, evaluated on
+all $140$ gate-passing runs. Each channel of Table~\ref{tab:rho} is
+propagated through the Duhamel integral \eqref{eq:duhamel-bound} and the
+onset sensitivity \eqref{eq:onset-translation}. ``Shape dev.'' is
+$|\delta\omega|_{\max}$ relative to the nominal rate at the window edge.
+The last column is the resulting error of the delivered CoM offset,
+$\Delta M_{\mathrm{ff}}/W$, after the pivot-free pairing.}
+\label{tab:budget}
+\small
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}lcccc@{}}
+\hline
+& $|\rho|_{\max}$ [mN\,m] & Shape dev.\ [\%]
+& $|\Delta M_{\mathrm{crit}}|$ [mN\,m] & $|\Delta\lambda_{\mathrm{off}}|$
+[$\mu$m] \\
+Channel & median\,/\,max & median\,/\,max & median\,/\,max &
+median\,/\,max \\
+\hline
+Gravity curvature      & $2.75\;/\;12.3$ & $0.10\;/\;2.17$
+                       & $0.037\;/\;0.300$ & $1.14\;/\;3.74$ \\
+Ground effect (interf.)& $0.42\;/\;3.20$ & $0.01\;/\;0.34$
+                       & $0.003\;/\;0.046$ & $0.11\;/\;0.15$ \\
+Bilinear $\tau\,\delta\phi$ & $0.04\;/\;0.17$ & $0.001\;/\;0.007$
+                       & $0.0005\;/\;0.007$ & $0.01\;/\;0.03$ \\
+Ramp nonlinearity      & $3.93\;/\;15.9$ & $0.12\;/\;3.98$
+                       & $0.035\;/\;0.604$ & $0.58\;/\;1.24$ \\
+\hline
+\textbf{Total}         & --- & $0.26\;/\;5.92$
+                       & $0.048\;/\;0.900$ &
+                         $\mathbf{1.30\;/\;4.28}$ \\
 \hline
 \end{tabular}
 \end{table}
@@ -351,7 +736,7 @@ $\mathrm{NRMSE} = [\tfrac1N\sum_k(\omega_k-\hat\omega_k)^2]^{1/2}
 / \max_k|\omega_k - C|$, four measured, model-independent certificates
 close the claim:
 \begin{enumerate}
-\item \emph{Rate invariance.} Across all $132$ gate-passing runs the
+\item \emph{Rate invariance.} Across all $140$ gate-passing runs the
 NRMSE is $6.3\%$ (median; $R^2=0.95$) and flat from $0.10$ to
 $1.20$~N\,m/s ($5.5$–$6.6\%$): a state-dependent deformation would
 grow with amplitude, and none does. The residual sits at $2.2\times$
@@ -381,8 +766,12 @@ the data select the cosh member, not merely any smooth monotone curve.
 In summary: structurally, every modeled effect renames the effective
 constants $(C_2,K)$ that the calibration estimates, so to first order
 the response cannot leave the cosh family; the sole escape channel is
-measured — not merely bounded — at a few mN\,m and propagates to a
-sub-$1\%$, sub-noise shape deviation. Empirically, the zero-freedom
+measured — not merely bounded — at a few mN\,m, and its exact
+propagation through the deviation dynamics and the onset sensitivity
+(Table~\ref{tab:budget}) moves the delivered CoM offset by at most
+$4.3\,\mu$m, some $400\times$ below the achieved accuracy: over this
+dataset the accuracy is set by measurement noise rather than by the
+closed form. Empirically, the zero-freedom
 family predicts the response across all runs with a noise-dominated,
 rate-invariant residual, is insensitive to the window extent, and
 decisively outperforms its own quadratic limit. The theoretical bounds

@@ -45,7 +45,7 @@ no stable in-flight data are used.
 Symbol & Meaning & Value & Provenance \\
 \midrule
 $W$, $z_{\mathrm{CoM}}$ & weight, CoM height & $31.59$~N, $\sim$0.3~m & measured / conservative \\
-$l_{p,\phi},\,l_{p,\theta}$ & pivot offsets (roll, pitch) & $0.140$, $0.110$~m & conservative geometry \\
+$l_{p,\phi},\,l_{p,\theta}$ & pivot offsets (roll, pitch) & $0.140$, $0.110$~m & mocap arc fit \\
 $J_P$ & inertia about the pivot line & — & never used numerically \\
 $C_T$ & thrust map, $T_i = C_T\Omega_i^2$ & $1.3175\times10^{-7}$ & bench calibration \\
 $M_{\mathrm{thr}}$ & window threshold & $0.01$~N\,m & noise floor \\
@@ -97,8 +97,9 @@ moment peak, truncated at the allocator cap.
 the slope-error ($3\%$), sample-count ($38$) or linearity-RMSE
 ($30$~mN\,m) gates; moment trace only, so no circularity.
 \item \textbf{Calibration, once per configuration and axis}
-(Sec.~\ref{sec:calibration}) — Algorithm~\ref{alg:calib} scans
-$(C_2, K)$ coarse-to-fine; each candidate is scored by
+(Sec.~\ref{sec:calibration}) — a per-run free fit (PNLS) runs first and
+its per-dataset medians locate $(C_2, K)$; Algorithm~\ref{alg:calib}
+then refines that centre on a grid, and each candidate is scored by
 Algorithm~\ref{alg:score}, which runs Algorithm~\ref{alg:cosh} on
 every gated run and sums the two directional CVs of
 $M_{\mathrm{crit}}$ across ramp rates.
@@ -406,12 +407,14 @@ $r \in \{0.10,\dots,1.20\}$~N\,m/s,
 where $M_{\mathrm{crit}}^{(r)}$ is the output of
 Algorithm~\ref{alg:cosh} on the run with commanded rate $r$.
 
-\paragraph{Search ranges.} The admissible box is set so that it covers
-every physically plausible constant with margin. For
-$K = 1/(W z_{\mathrm{CoM}})$, the coarse range
-$K \in [0.10, 0.50]$~(N\,m)$^{-1}$ corresponds to
-$z_{\mathrm{CoM}} \in [0.06, 0.32]$~m at the vehicle weight — bracketing
-the plausible CoM heights — with the refinement allowed to move within
+\paragraph{Search ranges.} The stage-2 grid is centred on the stage-1
+medians and spans $\pm25\%$ in $C_2$ and $[-40\%, +40\%]$ in $K$, which
+is wide enough to absorb the scatter of the per-run fits (interquartile
+ranges of roughly $\pm10\%$ in $C_2$) without reaching the unphysical
+extremes a fixed box admits. For reference, the earlier fixed box was
+$K \in [0.10, 0.50]$~(N\,m)$^{-1}$, i.e.\
+$z_{\mathrm{CoM}} \in [0.06, 0.32]$~m at the vehicle weight, with the
+refinement allowed to move within
 the wider clip box $[0.05, 0.70]$ ($z_{\mathrm{CoM}}$ up to
 $0.63$~m). For $C_2 \in [3, 8]$~rad/s, the implied pivot inertia
 $J_P = 1/(K C_2^2)$ spans roughly $[0.03, 1.1]$~kg\,m$^2$, bracketing
@@ -455,38 +458,51 @@ harmlessly co-penalizes). Should a rate be repeated, each run enters
 individually.
 
 \begin{algorithm}[h]
-\caption{Effective-constant calibration (coarse-to-fine)}
+\caption{Effective-constant calibration (PNLS-located, then refined)}
 \label{alg:calib}
 \begin{algorithmic}[1]
-\Require gated runs; box $C_2 \in [3,8]$~rad/s,
-  $K \in [0.05,0.70]$~(N\,m)$^{-1}$
+\Require gated runs of one dataset
 \Ensure calibrated pair $(C_2^\ast, K^\ast)$
-\State \textbf{coarse:} evaluate Algorithm~\ref{alg:score} on the
-  $11{\times}11$ grid $C_2 = 3.0\!:\!0.5\!:\!8.0$,
-  $K = 0.10\!:\!0.04\!:\!0.50$
-\State $(C_2^{b}, K^{b}) \gets \arg\min$ over the coarse grid
-\State \textbf{fine:} evaluate Algorithm~\ref{alg:score} on a
-  $9{\times}9$ uniform grid over
-  $[C_2^{b} \pm 0.5] \times [K^{b} \pm 0.04]$, clipped to the box
-  \Comment{resolution $0.125$~rad/s, $0.01$~(N\,m)$^{-1}$}
-\State $(C_2^\ast, K^\ast) \gets \arg\min$ over the fine grid
+\State \textbf{locate (PNLS, runs first):} fit $(C_1, C_2, C)$ per run
+  by free nonlinear least squares; record $C_2$ and $K = C_1/\dot M$
+\State $(C_2^{0}, K^{0}) \gets$ per-dataset medians
+  \Comment{owes nothing to the ramp-invariance criterion}
+\State \textbf{refine:} evaluate Algorithm~\ref{alg:score} on the
+  $9{\times}9$ grid
+  $C_2 \in C_2^{0}[0.75, 1.25]$, $K \in K^{0}[0.60, 1.40]$
+\State $(C_2^\ast, K^\ast) \gets \arg\min$ over that grid
 \end{algorithmic}
 \end{algorithm}
 
-\paragraph{Coarse-to-fine procedure.}
+\paragraph{Two-stage procedure.}
+The two stages consume independent information. The PNLS pass reads the
+\emph{shape} of each run's post-onset curve and is blind to how the
+threshold varies with ramp rate; the refinement reads exactly that
+variation
+and is nearly blind to the combination $K C_2^2 = 1/J_P$ that the shape
+fixes (Remark~\ref{rem:ridge}). Running PNLS first and refining about its medians
+keeps the search off the arbitrary edges of a fixed box: the refined
+constants land at $C_2 \in [3.52, 5.67]$~rad/s and
+$K \in [0.150, 0.338]$~(N\,m)$^{-1}$, whereas minimising the same score
+over the wide box $[3,8]\times[0.05,0.70]$ puts case~1/$M_x$ on the
+upper bound at $C_2 = 8.000$ and spreads $K$ over $0.060$--$0.520$, a
+factor of $8.7$. Accuracy and consistency are unaffected --- RMS
+$1.65$~mm against $1.64$, median CV $2.5\%$ against $2.5\%$
+(Tables~\ref{tab:nls} and~\ref{tab:nls-disp}) --- so the gain is
+interpretability, not performance. Three of the twenty refined
+coordinates still sit on their local grid edge (case~3/$M_x$ in $C_2$,
+cases~4 and~5/$M_y$ in $K$), where the score genuinely prefers to move
+away from the shape-based centre.
+
+\paragraph{Grid resolution.}
 Algorithm~\ref{alg:score} states the consistency criterion as a
 stand-alone routine — it wraps Algorithm~\ref{alg:cosh} and returns the
 directional sum of coefficients of variation — and
-Algorithm~\ref{alg:calib} performs the search over it. The coarse scan
-evaluates
-\eqref{eq:score} on an $11 \times 11$ grid
-($\Delta C_2 = 0.5$~rad/s, $\Delta K = 0.04$~(N\,m)$^{-1}$;
-$121$ evaluations). A single refinement pass then re-scans a
-$9 \times 9$ uniform grid spanning $\pm$ one coarse step about the
-coarse minimizer ($\pm 0.5$~rad/s, $\pm 0.04$~(N\,m)$^{-1}$, clipped to
-the box), i.e.\ final resolutions of $0.125$~rad/s and
-$0.01$~(N\,m)$^{-1}$ — so the reported constants are not quantized to
-the coarse step. One pass suffices because the objective is flat along
+Algorithm~\ref{alg:calib} performs the search over it. Stage~2
+evaluates \eqref{eq:score} on a $9 \times 9$ uniform grid about the
+stage-1 centre, i.e.\ resolutions of about $0.13$~rad/s in $C_2$ and
+$0.05\,K^{0}$ in $K$ ($81$ evaluations per dataset). One pass suffices
+because the objective is flat along
 the $(C_2, K)$ ridge; it is also \emph{piecewise constant} (the onset
 is an integer index, so small parameter changes leave
 $M_{\mathrm{crit}}$ unchanged), which is why gradient-based or simplex
@@ -498,16 +514,298 @@ speed; the final identification runs at full resolution with the
 selected pair. Each evaluation is an arithmetic sweep, so no iterative
 optimizer is involved anywhere in the pipeline.
 
-\begin{remark}
-The objective \eqref{eq:score} retains a shallow valley, so the
-individual constants are only loosely determined:
-$W z_{\mathrm{CoM}} = 1/K$ and $J_P = 1/(K C_2^2)$ are
-order-of-magnitude sanity checks, not precision measurements. What the
-criterion pins down — by construction — is the identified onset:
-$M_{\mathrm{crit}}$ is robust along the valley, and a $\pm 20\%$
-mis-specification of either constant moves the identified CoM by less
-than $0.9$~mm.
+\paragraph{What the criterion buys.}
+Table~\ref{tab:cv} reports the quantity \eqref{eq:score} is built from:
+the coefficient of variation of $|M_{\mathrm{crit}}|$ within a tip
+direction, over a rate sweep spanning a factor of $12.4$
+($\dot M = 0.10$ to $1.24$~N\,m/s, $14$ runs per dataset, $140$ runs in
+total). The calibrated constants hold the threshold to $2.4\%$ in the
+mean and $4.2\%$ at worst. The criterion is not flat in $K$: halving it
+about the CAD point nearly doubles the dispersion, to $7.9\%$ in the
+mean and $14.5\%$ at worst. Doubling it instead \emph{improves} the
+CAD figures, to $3.0\%$ and $4.8\%$ --- the calibration's own
+preference showing through, since every fitted $K$ on the pitch axis
+exceeds the CAD value. That asymmetry is the disagreement of
+Table~\ref{tab:phys} seen from the objective's side.
+
+\begin{table}[h]
+\centering
+\caption{Coefficient of variation of $|M_{\mathrm{crit}}|$ within a tip
+direction [\%], averaged over the two directions. \emph{Free}:
+$(C_2, K)$ calibrated per dataset (twenty free numbers).
+\emph{CAD}: constants derived from $z_{\mathrm{CoM}} = 0.256$~m and
+the Table~5 inertias by the parallel-axis theorem, with nothing fitted.
+Last two columns: $K$ mis-specified about the CAD point.}
+\label{tab:cv}
+\small
+\setlength{\tabcolsep}{7pt}
+\begin{tabular}{@{}llcccc@{}}
+\hline
+Case & Axis & Free & CAD & $K/2$ & $2K$ \\
+\hline
+1 & $M_x$ & $4.2$ & $5.1$ & $8.6$  & $4.8$ \\
+1 & $M_y$ & $2.5$ & $7.1$ & $14.5$ & $2.9$ \\
+2 & $M_x$ & $0.9$ & $2.2$ & $5.5$  & $2.0$ \\
+2 & $M_y$ & $1.4$ & $5.3$ & $10.1$ & $2.1$ \\
+3 & $M_x$ & $1.8$ & $2.0$ & $4.5$  & $3.1$ \\
+3 & $M_y$ & $1.8$ & $3.4$ & $7.3$  & $2.1$ \\
+4 & $M_x$ & $2.4$ & $2.7$ & $4.6$  & $3.3$ \\
+4 & $M_y$ & $2.9$ & $4.3$ & $8.1$  & $3.0$ \\
+5 & $M_x$ & $2.6$ & $3.5$ & $5.9$  & $3.1$ \\
+5 & $M_y$ & $3.8$ & $5.2$ & $9.7$  & $4.0$ \\
+\hline
+\multicolumn{2}{@{}l}{mean}  & $2.4$ & $4.1$ & $7.9$  & $3.0$ \\
+\multicolumn{2}{@{}l}{worst} & $4.2$ & $7.1$ & $14.5$ & $4.8$ \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{remark}[What the valley does and does not determine]
+\label{rem:ridge}
+The objective \eqref{eq:score} retains a shallow valley, and the two
+constants are \emph{not} equally determined along it. Read literally,
+$1/K$ would be $W z_{\mathrm{CoM}}$; across the ten datasets it implies
+$z_{\mathrm{CoM}}$ between $0.061$ and $0.554$~m, and the roll and pitch
+datasets of \emph{the same airframe} disagree by up to a factor $8$
+(case~1: $0.554$ versus $0.068$~m). Since only horizontal masses are
+moved between configurations, $z_{\mathrm{CoM}}$ is common across them,
+so $1/K$ is better read as an effective gain than as a CoM height.
+The combination $J_P = 1/(K C_2^2)$ behaves quite differently:
+$0.249 \pm 0.016$~kg\,m$^2$ over the five roll datasets
+($\mathrm{CV} = 6.5\%$) and $0.140 \pm 0.034$ over the five pitch
+datasets, against $\mathrm{CV} = 65\%$ and $49\%$ for $1/K$.
+
+Table~\ref{tab:phys} makes the comparison explicit against a fully
+independent reference. The CAD model gives $z_{\mathrm{CoM}} = 0.256$~m
+--- measured from the landing-gear contact plane, so it is already
+referred to the pivot and needs no datum correction --- together with
+the CoM inertias of Table~5, so the parallel-axis theorem fixes
+the pivot inertia without any fit,
+$J_P = J_{\mathrm{CAD}} + m(z_{\mathrm{CoM}}^2 + l_p^2)
+     = 0.325$ and $0.301$~kg\,m$^2$,
+and with it both constants: $C_2 = 4.99$ and $5.19$~rad/s,
+$K = 0.124$~(N\,m)$^{-1}$. The products of inertia are four orders of
+magnitude below the diagonal, so treating the two axes independently is
+justified.
+
+The pivot arm entering that expression is measured, not assumed. The
+mocap marker traces an arc about the ground contact during the tip-over,
+and \texttt{estimate\_pivot\_from\_mocap} fits it with the circle centre
+held at ground level, leaving the horizontal offset and the radius free.
+Over the $138$ runs with a valid arc the fit returns
+$l_p = 0.1404 \pm 0.0036$~m on roll and $0.1126 \pm 0.0066$~m on pitch,
+against the $0.140$ and $0.110$~m used throughout ($-0.3\%$ and
+$-2.3\%$), with a circle residual of $0.1$--$0.2$~mm. The same fit puts
+the marker at $0.3172 \pm 0.0012$~m above the pivot, matching the
+$\sqrt{R^2 - l_p^2} = 0.3167$~m implied by the radius and the rotor-hub
+height $h = 0.315$~m used in the ground-effect model. The geometry is
+therefore consistent to about a millimetre: the mocap heights are
+referred to the ground contact, the CAD height is referred to the
+landing gear, and the CAD CoM lands $61$~mm below the marker plane, as
+it should for an airframe carrying its battery low. Both geometric
+inputs to the parallel-axis floor are thus independently confirmed, and
+the identified $J_P$ is the only quantity left that can account for the
+gap.
+
+The disagreement is not spread evenly over the $(C_2, K)$ plane, and
+that is the substance of the remark. The constant the deliverable is
+sensitive to, $C_2$, agrees: the per-run nonlinear least squares gives
+a median of $4.765$~rad/s, $4.4\%$ and $8.1\%$ below the CAD values,
+and the calibrated means are within $13\%$. The scale of the pair does
+not: read literally the calibration puts $J_P$ at $0.249$ and
+$0.140$~kg\,m$^2$, which are $23\%$ and $53\%$ below CAD and --- more
+tellingly --- $9\%$ and $44\%$ below the parallel-axis floor
+$m(z_{\mathrm{CoM}}^2 + l_p^2)$ obtained by setting $J_{\mathrm{CAD}}$
+to zero. \emph{The identified inertia is not physically attainable.}
+Since $C_2^2 = W z_{\mathrm{CoM}}/J_P$ is confirmed while $J_P$ is not,
+what the calibration fails to resolve is the scale of the pair, not
+their ratio --- exactly the $K$ direction that the log sensitivities
+below identify as the weak one.
+
+\begin{table}[h]
+\centering
+\caption{Calibrated constants against the CAD reference
+($z_{\mathrm{CoM}} = 0.256$~m, Table~5 inertias, parallel-axis
+theorem; nothing fitted). CV and spread are over the five datasets of
+the axis. The last row of each block also gives the parallel-axis
+floor, the value $J_P$ would take if the CoM inertia were zero.}
+\label{tab:phys}
+\small
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{@{}llrrrrr@{}}
+\hline
+Axis & Quantity & mean & CV & spread & CAD & difference \\
+\hline
+Roll  & $C_2$ [rad/s]                     & $5.65$  & $34.8\%$ & $2.29\times$ & $4.99$  & $+13.3\%$ \\
+      & $1/K = W z_{\mathrm{CoM}}$ [N\,m] & $8.71$  & $64.7\%$ & $5.00\times$ & $8.09$  & $+7.7\%$ \\
+      & $J_P = 1/(K C_2^2)$ [kg\,m$^2$]   & $0.249$ & $6.5\%$  & $1.16\times$ & $0.325$ & $-23.3\%$ \\
+      & \quad (floor $0.274$)             &         &          &              &         & $-9.0\%$ \\
+\hline
+Pitch & $C_2$ [rad/s]                     & $4.90$  & $24.5\%$ & $1.71\times$ & $5.19$  & $-5.5\%$ \\
+      & $1/K = W z_{\mathrm{CoM}}$ [N\,m] & $3.46$  & $49.2\%$ & $2.89\times$ & $8.09$  & $-57.2\%$ \\
+      & $J_P = 1/(K C_2^2)$ [kg\,m$^2$]   & $0.140$ & $24.1\%$ & $1.95\times$ & $0.301$ & $-53.4\%$ \\
+      & \quad (floor $0.250$)             &         &          &              &         & $-44.0\%$ \\
+\hline
+\end{tabular}
+\end{table}
+
+Pitch is the weaker axis throughout, and its error is systematic rather
+than scattered: all five pitch datasets put $1/K$ below the CAD value
+($1.92$ to $5.56$ against $8.09$~N\,m), whereas the roll datasets
+bracket it. The excitation window is shortest on that axis ---
+$\tau_{\mathrm{end}}$ has a median of $0.450$~s against $0.555$~s for
+roll, and falls to $0.23$~s at the highest rates --- so
+$x = C_2\tau_{\mathrm{end}}$ is smallest there and the curvature
+information that separates $J_P$ from $W z_{\mathrm{CoM}}$ is
+correspondingly weakest.
+
+This is structural, not accidental. At the window edge, with
+$x = C_2\tau_{\mathrm{end}}$, the log sensitivities are
+\begin{equation*}
+  \frac{\partial\ln\omega}{\partial\ln C_2} = x\coth\frac{x}{2} \;\ge\; 2,
+  \qquad
+  \frac{\partial\ln\omega}{\partial\ln K} = 1 ,
+\end{equation*}
+so the two cancel along
+$\delta\ln K = -x\coth(x/2)\,\delta\ln C_2$, which for small $x$ is
+exactly $\delta\ln K = -2\,\delta\ln C_2$, i.e.\
+$K C_2^2 = 1/J_P$ constant. The valley therefore runs along the direction in which
+$C_2$ carries twice the leverage of $K$; equivalently, near the onset
+$\omega \simeq (\dot M/J_P)\tau^2/2$ depends on the pair only through
+$J_P$. The measured spread confirms the factor: over the search box
+$1/K$ moves by $2.36\times$ while $C_2$ moves by $1.54\times$, and
+$\ln 2.36/\ln 1.54 = 1.99$.
 \end{remark}
+
+\paragraph{Robustness certificate: three constants for ten datasets.}
+Because the individual constants are weakly determined, it is
+reasonable to ask whether $(C_2, K)$ are doing the work of a
+two-parameter curve family rather than of the geometry they name. A
+direct test is to remove the freedom. Physics requires $z_{\mathrm{CoM}}$ to be shared
+by the whole vehicle and $J_P$ to be shared by all datasets on a given
+axis, so we reparametrize by
+\begin{equation}
+  \bigl(W z_{\mathrm{CoM}},\; J_{P,\mathrm{roll}},\;
+        J_{P,\mathrm{pitch}}\bigr),
+  \qquad
+  C_2 = \sqrt{\frac{W z_{\mathrm{CoM}}}{J_{P,\mathrm{axis}}}},
+  \qquad
+  K = \frac{1}{W z_{\mathrm{CoM}}},
+  \label{eq:constrained}
+\end{equation}
+minimize the \emph{same} score \eqref{eq:score} summed over all ten
+datasets, and rerun the identification. Twenty free numbers become
+three; the roll and pitch inertias decouple, so the inner search is two
+independent scalar minimizations per candidate $W z_{\mathrm{CoM}}$.
+The optimum is $W z_{\mathrm{CoM}} = 5.50$~N\,m
+($z_{\mathrm{CoM}} = 0.174$~m), $J_{P,\mathrm{roll}} = 0.240$ and
+$J_{P,\mathrm{pitch}} = 0.153$~kg\,m$^2$, giving $C_2 = 4.79$ and
+$6.00$~rad/s and $K = 0.182$~(N\,m)$^{-1}$ — close to the
+representative values quoted throughout. Table~\ref{tab:constrained}
+compares the delivered CoM offsets.
+
+\begin{table}[h]
+\centering
+\caption{Identified CoM offset [mm] against the load-cell truth, with
+the constants calibrated per dataset (twenty free numbers) and with the
+physically shared parametrization \eqref{eq:constrained} (three).}
+\label{tab:constrained}
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}llrrrrr@{}}
+\hline
+Case & Axis & Truth & Free & error & Constrained & error \\
+\hline
+1 & $M_x$ & $-2.90$  & $-1.73$  & $+1.17$ & $-1.64$  & $+1.26$ \\
+1 & $M_y$ & $-11.45$ & $-11.13$ & $+0.32$ & $-11.25$ & $+0.20$ \\
+2 & $M_x$ & $-14.29$ & $-15.17$ & $-0.88$ & $-15.16$ & $-0.87$ \\
+2 & $M_y$ & $-9.90$  & $-10.49$ & $-0.59$ & $-10.53$ & $-0.63$ \\
+3 & $M_x$ & $-5.26$  & $-8.62$  & $-3.36$ & $-8.66$  & $-3.40$ \\
+3 & $M_y$ & $3.14$   & $0.73$   & $-2.41$ & $0.63$   & $-2.51$ \\
+4 & $M_x$ & $6.67$   & $5.26$   & $-1.41$ & $5.23$   & $-1.44$ \\
+4 & $M_y$ & $2.40$   & $0.16$   & $-2.24$ & $0.11$   & $-2.29$ \\
+5 & $M_x$ & $10.91$  & $10.70$  & $-0.21$ & $10.79$  & $-0.12$ \\
+5 & $M_y$ & $-10.89$ & $-10.73$ & $+0.16$ & $-10.62$ & $+0.27$ \\
+\hline
+\multicolumn{3}{@{}l}{RMS error}   & \multicolumn{2}{r}{$1.64$}
+                                   & \multicolumn{2}{r}{$1.67$} \\
+\multicolumn{3}{@{}l}{max $|$error$|$} & \multicolumn{2}{r}{$3.36$}
+                                   & \multicolumn{2}{r}{$3.40$} \\
+\multicolumn{3}{@{}l}{mean error}  & \multicolumn{2}{r}{$-0.95$}
+                                   & \multicolumn{2}{r}{$-0.95$} \\
+\hline
+\end{tabular}
+\end{table}
+
+Collapsing the twenty free numbers to three changes the RMS error by
+$0.03$~mm and no individual case by more than $0.11$~mm. The identical
+mean error, $-0.95$~mm in both columns, further shows that the residual
+bias is a property of the physics — the ground-contact budget of
+Sec.~\ref{sec:static} — and not of the calibration. In the constrained form $C_2$ is also derived rather
+than searched, so it cannot settle on a search bound.
+
+One caution completes the picture: this does \emph{not} measure
+$z_{\mathrm{CoM}}$. The score varies by only $3.6\%$ across the whole
+box $z_{\mathrm{CoM}} \in [0.15, 0.35]$~m, so every physically
+plausible height performs comparably. The identification therefore does
+not depend on knowing $z_{\mathrm{CoM}}$, which is also why the
+individual constants are best reported as effective values rather than
+as geometry.
+
+\paragraph{The same test with no fitted number at all.}
+The three-constant form above still minimizes \eqref{eq:score}. The
+strictest variant fits nothing: CAD supplies $z_{\mathrm{CoM}}$ and the
+CoM inertias, the parallel-axis theorem supplies $J_P$, and both
+constants follow. Table~\ref{tab:cadonly} reruns the identification on
+that point.
+
+\begin{table}[h]
+\centering
+\caption{Identified CoM offset [mm] with the constants taken entirely
+from CAD --- $z_{\mathrm{CoM}} = 0.256$~m, Table~5 inertias, no
+quantity fitted to anything. \emph{CV}: rate consistency of
+$|M_{\mathrm{crit}}|$ as in Table~\ref{tab:cv}.}
+\label{tab:cadonly}
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}llrrrrrr@{}}
+\hline
+Case & Axis & $J_P$ & $C_2$ & $K$ & CV [\%] & Truth & Identified (error) \\
+\hline
+1 & $M_x$ & $0.312$ & $4.97$ & $0.130$ & $5.1$ & $-2.90$  & $-1.63$ \ ($+1.27$) \\
+1 & $M_y$ & $0.289$ & $5.17$ & $0.130$ & $7.1$ & $-11.45$ & $-11.12$ \ ($+0.33$) \\
+2 & $M_x$ & $0.325$ & $4.99$ & $0.124$ & $2.2$ & $-14.29$ & $-15.18$ \ ($-0.89$) \\
+2 & $M_y$ & $0.301$ & $5.19$ & $0.124$ & $5.3$ & $-9.90$  & $-10.36$ \ ($-0.46$) \\
+3 & $M_x$ & $0.325$ & $4.99$ & $0.124$ & $2.0$ & $-5.26$  & $-8.68$ \ ($-3.42$) \\
+3 & $M_y$ & $0.301$ & $5.19$ & $0.124$ & $3.4$ & $3.14$   & $0.73$ \ ($-2.41$) \\
+4 & $M_x$ & $0.325$ & $4.99$ & $0.124$ & $2.7$ & $6.67$   & $5.24$ \ ($-1.43$) \\
+4 & $M_y$ & $0.301$ & $5.19$ & $0.124$ & $4.3$ & $2.40$   & $0.33$ \ ($-2.07$) \\
+5 & $M_x$ & $0.325$ & $4.99$ & $0.124$ & $3.5$ & $10.91$  & $10.78$ \ ($-0.13$) \\
+5 & $M_y$ & $0.301$ & $5.19$ & $0.124$ & $5.2$ & $-10.89$ & $-10.30$ \ ($+0.59$) \\
+\hline
+\multicolumn{6}{@{}l}{CAD only (nothing fitted)}
+  & \multicolumn{2}{r}{RMS $1.64$, max $3.42$, mean $-0.86$} \\
+\multicolumn{6}{@{}l}{Free calibration (twenty fitted numbers)}
+  & \multicolumn{2}{r}{RMS $1.64$, max $3.36$, mean $-0.95$} \\
+\hline
+\end{tabular}
+\end{table}
+
+The RMS error is $1.64$~mm either way. Twenty fitted numbers and none
+deliver the same offset, and the mean error stays near $-0.9$~mm in
+both --- a residual belonging to the ground-contact budget of
+Sec.~\ref{sec:static}, not to the calibration. What the fitting does
+buy is rate consistency: the CV rises from $2.4\%$ to $4.1\%$ in the
+mean and from $4.2\%$ to $7.1\%$ at worst when the constants are taken
+from CAD.
+
+This is the sharpest available statement of what the constants are for.
+The calibration cannot be measuring the rig geometry --- its $J_P$ is
+below the parallel-axis floor --- yet the geometry it fails to recover
+can be substituted wholesale without moving the deliverable. Both facts
+follow from the same structure: the identified threshold responds to
+$C_2$, which the two routes agree on, and only weakly to $K$, which is
+where they part.
 
 \section{Aggregation and deliverables}
 \label{sec:aggregation}
@@ -534,17 +832,22 @@ $M_{\mathrm{ff},y} = -W x_{\mathrm{off}}$.
 \section{Comparison with per-run estimators: NLS, CPD, CUSUM}
 \label{sec:nls}
 
-Four per-run alternatives were run on \emph{identical} inputs — same
+Six alternatives were run on \emph{identical} inputs — same
 signals, excitation windows, allocator caps and onset-free gates (the
 gated run set is method-independent because the gates use the moment
 trace only), $140$ runs in total
 (\texttt{analysis/nls\_comparison.py}):
 \begin{itemize}
-\item \textbf{NLS} — the predecessor of Algorithm~\ref{alg:cosh}:
-per-run nonlinear least squares (\textsc{scipy}
-\texttt{least\_squares}, trust-region reflective), free
-$(C_1, C_2, C)$ with $C_2$ bounded to $[3, 8]$~rad/s, onset swept
-locally around a quadratic-model seed;
+\item \textbf{COSH}$_{\mathrm{wide}}$, \textbf{COSH}$_{\mathrm{CAD}}$ —
+the same detector with the constants chosen differently: the score
+minimised over the wide box $[3,8]\times[0.05,0.70]$ instead of around
+the PNLS centre, and the constants derived from CAD geometry with
+nothing fitted (Sec.~\ref{sec:calibration});
+\item \textbf{NLS} — the per-run stage-1 fit used on its own:
+nonlinear least squares (\textsc{scipy} \texttt{least\_squares},
+trust-region reflective) for free $(C_1, C_2, C)$, with $C_2$ bounded
+to $[3, 8]$~rad/s and the onset swept locally around a quadratic-model
+seed;
 \item \textbf{CPD$_{\mathrm{N}}$ / CPD$_{\mathrm{R}}$} — optimal
 single change-point detection (\texttt{ruptures}; with one break the
 search over all admissible splits is exact) under the Gaussian
@@ -554,12 +857,13 @@ respectively;
 $k = 2\sigma$ against the pre-onset vibration.
 \end{itemize}
 Figure~\ref{fig:forest} is the readable summary: per case--axis pair
-it shows each estimator's CoM offset with its $95\%$ confidence
+it shows six estimators' CoM offset with its $95\%$ confidence
 interval (Welch $t$ on the pivot-free average, run-to-run scatter)
 against the load-cell truth. The full data sit in the tables:
 Table~\ref{tab:nls} compares the deliverable — the CoM offset from the
 pivot-free average \eqref{eq:mff} — against the load-cell ground
-truth; Table~\ref{tab:nls-mom} lists the underlying directional
+truth; Table~\ref{tab:mff} gives the feed-forward compensation moment
+itself; Table~\ref{tab:nls-mom} lists the underlying directional
 critical-moment means, pivot-free offsets and their confidence
 intervals; and Table~\ref{tab:nls-disp} compares the ramp-rate
 dispersion of the directional critical moments.
@@ -567,13 +871,17 @@ dispersion of the directional critical moments.
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.92\linewidth]{fig_estimator_ci.pdf}
-\caption{Estimated CoM offset with $95\%$ confidence intervals for the
-five estimators, against the load-cell truth (black tick), per
-case--axis pair. COSH (blue) has the narrowest interval in $9$ of $10$
-pairs ($\pm0.3$--$0.9$~mm); the nonparametric detectors blow up to
-$\pm4$--$5$~mm on the pairs where they misplace onsets
-(CPD$_{\mathrm{R}}$ at 2x, 3x, 5x; CUSUM at 1y, 2y, 3y). Marker
-shapes duplicate the color coding.}
+\caption{Estimated CoM offset with $95\%$ confidence intervals for six
+estimators, against the load-cell truth (black tick), per case--axis
+pair. COSH (dark blue) has the narrowest interval in $9$ of $10$ pairs
+($\pm0.36$--$0.94$~mm); COSH$_{\mathrm{CAD}}$ (light blue) tracks it
+closely in the offset while carrying a wider interval, which is the
+rate-consistency penalty of Table~\ref{tab:nls-disp}. The nonparametric
+detectors blow up to $\pm4$--$5$~mm on the pairs where they misplace
+onsets (CPD$_{\mathrm{R}}$ at 2x, 3x, 5x; CUSUM at 1y, 2y, 3y).
+COSH$_{\mathrm{wide}}$ is omitted here because it is visually
+indistinguishable from COSH; it appears in the tables. Marker shapes
+duplicate the color coding.}
 \label{fig:forest}
 \end{figure}
 
@@ -584,56 +892,94 @@ shapes duplicate the color coding.}
 (estimate $-$ truth) with $95\%$ confidence intervals, grouped by
 component within each case ($x_{\mathrm{off}}$ from the pitch
 excitation, $y_{\mathrm{off}}$ from the roll excitation). The residual
-biases of cases~3 and~4 are \emph{common to all five estimators} — a
+biases of cases~3 and~4 are \emph{common to every estimator} — a
 vehicle--contact asymmetry, not a detection artifact — while the
 estimator-to-estimator differences stay within about $\pm1$~mm.}
 \label{fig:err}
 \end{figure}
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering
 \footnotesize
 \setlength{\tabcolsep}{2.6pt}
-\begin{tabular}{cc r rrrrr}
+\begin{tabular}{cc r rrrrrrr}
 \toprule
  & & $\lambda_{\mathrm{truth}}$ &
-\multicolumn{5}{c}{estimated CoM offset $\hat\lambda \pm$ CI$_{95}$ [mm]} \\
-\cmidrule(lr){4-8}
-case & axis & [mm] & COSH & NLS & CPD$_{\mathrm{N}}$ &
-CPD$_{\mathrm{R}}$ & CUSUM \\
+\multicolumn{7}{c}{estimated CoM offset $\hat\lambda \pm$ CI$_{95}$ [mm]} \\
+\cmidrule(lr){4-10}
+case & axis & [mm] & COSH & COSH$_{\rm wide}$ & COSH$_{\rm CAD}$ & NLS & CPD$_{\mathrm{N}}$ & CPD$_{\mathrm{R}}$ & CUSUM \\
 \midrule
-1 & x & $-2.90$ & $-1.73\,{\scriptstyle\pm0.93}$ & $-2.05\,{\scriptstyle\pm1.30}$ & $-1.46\,{\scriptstyle\pm1.03}$ & $-1.20\,{\scriptstyle\pm1.51}$ & $-1.15\,{\scriptstyle\pm1.24}$ \\
-1 & y & $-11.45$ & $-11.13\,{\scriptstyle\pm0.43}$ & $-11.35\,{\scriptstyle\pm1.37}$ & $-11.21\,{\scriptstyle\pm0.61}$ & $-10.79\,{\scriptstyle\pm0.80}$ & $-9.59\,{\scriptstyle\pm3.88}$ \\
+1 & x & $-2.90$ & $-1.65\,{\scriptstyle\pm0.94}$ & $-1.73\,{\scriptstyle\pm0.93}$ & $-1.63\,{\scriptstyle\pm1.02}$ & $-2.05\,{\scriptstyle\pm1.30}$ & $-1.46\,{\scriptstyle\pm1.03}$ & $-1.20\,{\scriptstyle\pm1.51}$ & $-1.15\,{\scriptstyle\pm1.24}$ \\
+1 & y & $-11.45$ & $-11.18\,{\scriptstyle\pm0.42}$ & $-11.13\,{\scriptstyle\pm0.43}$ & $-11.12\,{\scriptstyle\pm0.78}$ & $-11.35\,{\scriptstyle\pm1.37}$ & $-11.21\,{\scriptstyle\pm0.61}$ & $-10.79\,{\scriptstyle\pm0.80}$ & $-9.59\,{\scriptstyle\pm3.88}$ \\
 \addlinespace[2pt]
-2 & x & $-14.29$ & $-15.17\,{\scriptstyle\pm0.36}$ & $-15.03\,{\scriptstyle\pm0.76}$ & $-15.09\,{\scriptstyle\pm0.70}$ & $-14.10\,{\scriptstyle\pm4.15}$ & $-15.00\,{\scriptstyle\pm0.52}$ \\
-2 & y & $-9.90$ & $-10.49\,{\scriptstyle\pm0.42}$ & $-9.60\,{\scriptstyle\pm1.13}$ & $-9.91\,{\scriptstyle\pm0.52}$ & $-9.61\,{\scriptstyle\pm0.46}$ & $-8.54\,{\scriptstyle\pm4.02}$ \\
+2 & x & $-14.29$ & $-15.15\,{\scriptstyle\pm0.36}$ & $-15.17\,{\scriptstyle\pm0.36}$ & $-15.18\,{\scriptstyle\pm0.64}$ & $-15.03\,{\scriptstyle\pm0.76}$ & $-15.09\,{\scriptstyle\pm0.70}$ & $-14.10\,{\scriptstyle\pm4.15}$ & $-15.00\,{\scriptstyle\pm0.52}$ \\
+2 & y & $-9.90$ & $-10.57\,{\scriptstyle\pm0.41}$ & $-10.49\,{\scriptstyle\pm0.42}$ & $-10.36\,{\scriptstyle\pm0.80}$ & $-9.60\,{\scriptstyle\pm1.13}$ & $-9.91\,{\scriptstyle\pm0.52}$ & $-9.61\,{\scriptstyle\pm0.46}$ & $-8.54\,{\scriptstyle\pm4.02}$ \\
 \addlinespace[2pt]
-3 & x & $-5.26$ & $-8.62\,{\scriptstyle\pm0.46}$ & $-8.54\,{\scriptstyle\pm0.74}$ & $-8.11\,{\scriptstyle\pm1.20}$ & $-4.63\,{\scriptstyle\pm4.72}$ & $-8.45\,{\scriptstyle\pm0.92}$ \\
-3 & y & $+3.14$ & $+0.73\,{\scriptstyle\pm0.39}$ & $+1.06\,{\scriptstyle\pm0.97}$ & $+0.71\,{\scriptstyle\pm0.82}$ & $+0.94\,{\scriptstyle\pm1.00}$ & $+1.12\,{\scriptstyle\pm3.39}$ \\
+3 & x & $-5.26$ & $-8.60\,{\scriptstyle\pm0.45}$ & $-8.62\,{\scriptstyle\pm0.46}$ & $-8.68\,{\scriptstyle\pm0.48}$ & $-8.54\,{\scriptstyle\pm0.74}$ & $-8.11\,{\scriptstyle\pm1.20}$ & $-4.63\,{\scriptstyle\pm4.72}$ & $-8.45\,{\scriptstyle\pm0.92}$ \\
+3 & y & $+3.14$ & $+0.72\,{\scriptstyle\pm0.40}$ & $+0.73\,{\scriptstyle\pm0.39}$ & $+0.73\,{\scriptstyle\pm0.60}$ & $+1.06\,{\scriptstyle\pm0.97}$ & $+0.71\,{\scriptstyle\pm0.82}$ & $+0.94\,{\scriptstyle\pm1.00}$ & $+1.12\,{\scriptstyle\pm3.39}$ \\
 \addlinespace[2pt]
-4 & x & $+6.67$ & $+5.26\,{\scriptstyle\pm0.65}$ & $+4.94\,{\scriptstyle\pm0.88}$ & $+5.57\,{\scriptstyle\pm0.72}$ & $+3.58\,{\scriptstyle\pm2.19}$ & $+5.01\,{\scriptstyle\pm0.91}$ \\
-4 & y & $+2.40$ & $+0.16\,{\scriptstyle\pm0.61}$ & $-0.64\,{\scriptstyle\pm1.49}$ & $-0.66\,{\scriptstyle\pm1.39}$ & $-0.60\,{\scriptstyle\pm1.36}$ & $-0.22\,{\scriptstyle\pm1.36}$ \\
+4 & x & $+6.67$ & $+5.24\,{\scriptstyle\pm0.65}$ & $+5.26\,{\scriptstyle\pm0.65}$ & $+5.24\,{\scriptstyle\pm0.66}$ & $+4.94\,{\scriptstyle\pm0.88}$ & $+5.57\,{\scriptstyle\pm0.72}$ & $+3.58\,{\scriptstyle\pm2.19}$ & $+5.01\,{\scriptstyle\pm0.91}$ \\
+4 & y & $+2.40$ & $+0.14\,{\scriptstyle\pm0.61}$ & $+0.16\,{\scriptstyle\pm0.61}$ & $+0.33\,{\scriptstyle\pm0.79}$ & $-0.64\,{\scriptstyle\pm1.49}$ & $-0.66\,{\scriptstyle\pm1.39}$ & $-0.60\,{\scriptstyle\pm1.36}$ & $-0.22\,{\scriptstyle\pm1.36}$ \\
 \addlinespace[2pt]
-5 & x & $+10.91$ & $+10.70\,{\scriptstyle\pm0.69}$ & $+10.05\,{\scriptstyle\pm1.10}$ & $+10.29\,{\scriptstyle\pm0.65}$ & $+11.16\,{\scriptstyle\pm3.75}$ & $+10.25\,{\scriptstyle\pm0.74}$ \\
-5 & y & $-10.89$ & $-10.73\,{\scriptstyle\pm0.70}$ & $-11.11\,{\scriptstyle\pm1.68}$ & $-10.84\,{\scriptstyle\pm0.98}$ & $-10.95\,{\scriptstyle\pm0.95}$ & $-10.84\,{\scriptstyle\pm1.00}$ \\
+5 & x & $+10.91$ & $+10.78\,{\scriptstyle\pm0.73}$ & $+10.70\,{\scriptstyle\pm0.69}$ & $+10.78\,{\scriptstyle\pm0.80}$ & $+10.05\,{\scriptstyle\pm1.10}$ & $+10.29\,{\scriptstyle\pm0.65}$ & $+11.16\,{\scriptstyle\pm3.75}$ & $+10.25\,{\scriptstyle\pm0.74}$ \\
+5 & y & $-10.89$ & $-10.57\,{\scriptstyle\pm0.68}$ & $-10.73\,{\scriptstyle\pm0.70}$ & $-10.31\,{\scriptstyle\pm0.93}$ & $-11.11\,{\scriptstyle\pm1.68}$ & $-10.84\,{\scriptstyle\pm0.98}$ & $-10.95\,{\scriptstyle\pm0.95}$ & $-10.84\,{\scriptstyle\pm1.00}$ \\
 \midrule
-\multicolumn{3}{r}{median $|\mathrm{err}|$ [mm]} &
-$1.02$ & $0.86$ & $0.95$ & $0.64$ & $1.70$ \\
-\multicolumn{3}{r}{RMS $|\mathrm{err}|$ [mm]} &
-$1.64$ & $1.72$ & $1.67$ & $1.65$ & $1.82$ \\
-\multicolumn{3}{r}{max $|\mathrm{err}|$ [mm]} &
-$3.36$ & $3.28$ & $3.06$ & $3.09$ & $3.19$ \\
+\multicolumn{3}{@{}l}{component RMS [mm]} & $1.65$ & $1.64$ & $1.64$ & $1.72$ & $1.67$ & $1.65$ & $1.82$ \\
+\multicolumn{3}{@{}l}{max $|$component$|$ [mm]} & $3.34$ & $3.36$ & $3.42$ & $3.28$ & $3.06$ & $3.09$ & $3.19$ \\
+\multicolumn{3}{@{}l}{mean component [mm]} & $-0.93$ & $-0.95$ & $-0.86$ & $-1.07$ & $-0.91$ & $-0.46$ & $-0.58$ \\
+\multicolumn{3}{@{}l}{\emph{radial} RMS [mm]} & $2.33$ & $2.31$ & $2.32$ & $2.43$ & $2.36$ & $2.34$ & $2.57$ \\
+\multicolumn{3}{@{}l}{\emph{radial} max [mm]} & $4.12$ & $4.14$ & $4.18$ & $3.89$ & $3.74$ & $4.31$ & $3.77$ \\
 \bottomrule
 \end{tabular}
-\caption{CoM offset from the pivot-free average \eqref{eq:mff} against
-the load-cell ground truth (manuscript Table~7; per-case weight
-$3.066$~kg for case~1, $3.220$~kg otherwise), for the five onset
-estimators on identical inputs. $M_{\mathrm{ff}} = \pm W\hat\lambda$
-per the axis mapping of Sec.~\ref{sec:aggregation}.}
+\caption{Identified CoM offset against the load-cell truth, on identical
+inputs ($140$ gated runs). \textbf{COSH} is the reported estimator, its
+constants calibrated in a neighbourhood of the per-run PNLS medians;
+COSH$_{\rm wide}$ minimises the same score over the box
+$[3,8]\times[0.05,0.70]$; COSH$_{\rm CAD}$ derives the constants from CAD
+geometry with nothing fitted. A roll excitation ($M_x$) senses
+$y_{\mathrm{off}}$ and a pitch excitation ($M_y$) senses
+$x_{\mathrm{off}}$, so each case contributes both components; the
+\emph{radial} rows combine them per case as $\sqrt{e_x^2+e_y^2}$.}
 \label{tab:nls}
-\end{table}
+\end{table*}
 
-\begin{table}[t]
+\begin{table*}[t]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3.2pt}
+\begin{tabular}{cc r rrrrrrr}
+\toprule
+ & & truth &
+\multicolumn{7}{c}{feed-forward compensation moment $M_{\mathrm{ff}} \pm$ CI$_{95}$ [mN\,m]} \\
+\cmidrule(lr){4-10}
+case & axis & [mN\,m] & COSH & COSH$_{\rm wide}$ & COSH$_{\rm CAD}$ & NLS & CPD$_{\mathrm{N}}$ & CPD$_{\mathrm{R}}$ & CUSUM \\
+\midrule
+1 & x & $-87.2$ & $-49.6\,{\scriptstyle\pm28.3}$ & $-52.2\,{\scriptstyle\pm28.1}$ & $-49.1\,{\scriptstyle\pm30.8}$ & $-61.7\,{\scriptstyle\pm39.1}$ & $-43.9\,{\scriptstyle\pm30.9}$ & $-36.1\,{\scriptstyle\pm45.4}$ & $-34.5\,{\scriptstyle\pm37.2}$ \\
+1 & y & $+344.4$ & $+336.3\,{\scriptstyle\pm12.6}$ & $+334.8\,{\scriptstyle\pm12.8}$ & $+334.5\,{\scriptstyle\pm23.5}$ & $+341.4\,{\scriptstyle\pm41.1}$ & $+337.0\,{\scriptstyle\pm18.2}$ & $+324.6\,{\scriptstyle\pm24.2}$ & $+288.6\,{\scriptstyle\pm116.8}$ \\
+\addlinespace[2pt]
+2 & x & $-451.4$ & $-478.6\,{\scriptstyle\pm11.5}$ & $-479.3\,{\scriptstyle\pm11.3}$ & $-479.4\,{\scriptstyle\pm20.3}$ & $-474.8\,{\scriptstyle\pm23.9}$ & $-476.8\,{\scriptstyle\pm22.0}$ & $-445.4\,{\scriptstyle\pm131.1}$ & $-473.7\,{\scriptstyle\pm16.6}$ \\
+2 & y & $+312.7$ & $+334.0\,{\scriptstyle\pm13.0}$ & $+331.4\,{\scriptstyle\pm13.4}$ & $+327.4\,{\scriptstyle\pm25.4}$ & $+303.3\,{\scriptstyle\pm35.8}$ & $+313.0\,{\scriptstyle\pm16.6}$ & $+303.7\,{\scriptstyle\pm14.6}$ & $+269.8\,{\scriptstyle\pm126.9}$ \\
+\addlinespace[2pt]
+3 & x & $-166.2$ & $-271.7\,{\scriptstyle\pm14.3}$ & $-272.4\,{\scriptstyle\pm14.5}$ & $-274.0\,{\scriptstyle\pm15.2}$ & $-269.9\,{\scriptstyle\pm23.5}$ & $-256.0\,{\scriptstyle\pm37.8}$ & $-146.3\,{\scriptstyle\pm149.0}$ & $-266.8\,{\scriptstyle\pm29.2}$ \\
+3 & y & $-99.2$ & $-22.8\,{\scriptstyle\pm12.5}$ & $-23.1\,{\scriptstyle\pm12.3}$ & $-23.0\,{\scriptstyle\pm18.8}$ & $-33.5\,{\scriptstyle\pm30.7}$ & $-22.4\,{\scriptstyle\pm25.8}$ & $-29.6\,{\scriptstyle\pm31.5}$ & $-35.3\,{\scriptstyle\pm107.2}$ \\
+\addlinespace[2pt]
+4 & x & $+210.7$ & $+165.5\,{\scriptstyle\pm20.6}$ & $+166.1\,{\scriptstyle\pm20.6}$ & $+165.6\,{\scriptstyle\pm20.9}$ & $+155.9\,{\scriptstyle\pm27.9}$ & $+176.0\,{\scriptstyle\pm22.6}$ & $+113.2\,{\scriptstyle\pm69.0}$ & $+158.3\,{\scriptstyle\pm28.7}$ \\
+4 & y & $-75.8$ & $-4.3\,{\scriptstyle\pm19.3}$ & $-5.1\,{\scriptstyle\pm19.4}$ & $-10.3\,{\scriptstyle\pm25.0}$ & $+20.1\,{\scriptstyle\pm47.2}$ & $+21.0\,{\scriptstyle\pm43.9}$ & $+19.0\,{\scriptstyle\pm43.1}$ & $+6.9\,{\scriptstyle\pm43.1}$ \\
+\addlinespace[2pt]
+5 & x & $+344.6$ & $+340.7\,{\scriptstyle\pm22.9}$ & $+338.1\,{\scriptstyle\pm21.9}$ & $+340.7\,{\scriptstyle\pm25.4}$ & $+317.4\,{\scriptstyle\pm34.7}$ & $+325.1\,{\scriptstyle\pm20.7}$ & $+352.5\,{\scriptstyle\pm118.3}$ & $+323.8\,{\scriptstyle\pm23.5}$ \\
+5 & y & $+344.0$ & $+333.8\,{\scriptstyle\pm21.5}$ & $+338.9\,{\scriptstyle\pm22.0}$ & $+325.5\,{\scriptstyle\pm29.4}$ & $+351.0\,{\scriptstyle\pm53.0}$ & $+342.3\,{\scriptstyle\pm30.8}$ & $+346.0\,{\scriptstyle\pm30.1}$ & $+342.3\,{\scriptstyle\pm31.6}$ \\
+\bottomrule
+\end{tabular}
+\caption{The quantity actually compensated,
+$M_{\mathrm{ff}} = \pm\tfrac12(M_+ + M_-)$, for the same runs. Changing
+the COSH constants moves it by at most $5.1$~mN\,m (PNLS-centred versus
+wide box) and $13.4$~mN\,m (CAD versus wide box), against magnitudes up
+to $479$~mN\,m --- the compensation is insensitive to which of the three
+constant choices is adopted.}
+\label{tab:mff}
+\end{table*}
+
+\begin{table*}[t]
 \centering
 \footnotesize
 \setlength{\tabcolsep}{3.2pt}
@@ -641,10 +987,20 @@ per the axis mapping of Sec.~\ref{sec:aggregation}.}
 \toprule
 method & & 1x & 1y & 2x & 2y & 3x & 3y & 4x & 4y & 5x & 5y \\
 \midrule
-COSH & $\bar M_-$ & $-1.054$ & $-0.421$ & $-1.829$ & $-0.675$ & $-1.542$ & $-0.983$ & $-1.136$ & $-0.998$ & $-1.019$ & $-0.645$ \\
+COSH & $\bar M_-$ & $-1.043$ & $-0.423$ & $-1.824$ & $-0.675$ & $-1.538$ & $-0.983$ & $-1.138$ & $-0.999$ & $-1.016$ & $-0.633$ \\
+ & $\bar M_+$ & $+0.944$ & $+1.096$ & $+0.867$ & $+1.343$ & $+0.995$ & $+0.938$ & $+1.469$ & $+0.991$ & $+1.698$ & $+1.301$ \\
+ & $M_{\mathrm{ff}}$ & $-0.050$ & $+0.336$ & $-0.479$ & $+0.334$ & $-0.272$ & $-0.023$ & $+0.165$ & $-0.004$ & $+0.341$ & $+0.334$ \\
+ & CI$_{95}$ & $\pm0.028$ & $\pm0.013$ & $\pm0.011$ & $\pm0.013$ & $\pm0.014$ & $\pm0.013$ & $\pm0.021$ & $\pm0.019$ & $\pm0.023$ & $\pm0.022$ \\
+\midrule
+COSH$_{\rm wide}$ & $\bar M_-$ & $-1.054$ & $-0.421$ & $-1.829$ & $-0.675$ & $-1.542$ & $-0.983$ & $-1.136$ & $-0.998$ & $-1.019$ & $-0.645$ \\
  & $\bar M_+$ & $+0.950$ & $+1.090$ & $+0.870$ & $+1.338$ & $+0.997$ & $+0.937$ & $+1.468$ & $+0.988$ & $+1.695$ & $+1.323$ \\
  & $M_{\mathrm{ff}}$ & $-0.052$ & $+0.335$ & $-0.479$ & $+0.331$ & $-0.272$ & $-0.023$ & $+0.166$ & $-0.005$ & $+0.338$ & $+0.339$ \\
  & CI$_{95}$ & $\pm0.028$ & $\pm0.013$ & $\pm0.011$ & $\pm0.013$ & $\pm0.014$ & $\pm0.012$ & $\pm0.021$ & $\pm0.019$ & $\pm0.022$ & $\pm0.022$ \\
+\midrule
+COSH$_{\rm CAD}$ & $\bar M_-$ & $-0.992$ & $-0.372$ & $-1.787$ & $-0.597$ & $-1.552$ & $-0.959$ & $-1.128$ & $-0.949$ & $-0.963$ & $-0.584$ \\
+ & $\bar M_+$ & $+0.894$ & $+1.041$ & $+0.828$ & $+1.252$ & $+1.004$ & $+0.913$ & $+1.459$ & $+0.928$ & $+1.644$ & $+1.235$ \\
+ & $M_{\mathrm{ff}}$ & $-0.049$ & $+0.334$ & $-0.479$ & $+0.327$ & $-0.274$ & $-0.023$ & $+0.166$ & $-0.010$ & $+0.341$ & $+0.326$ \\
+ & CI$_{95}$ & $\pm0.031$ & $\pm0.024$ & $\pm0.020$ & $\pm0.025$ & $\pm0.015$ & $\pm0.019$ & $\pm0.021$ & $\pm0.025$ & $\pm0.025$ & $\pm0.029$ \\
 \midrule
 NLS & $\bar M_-$ & $-1.018$ & $-0.373$ & $-1.792$ & $-0.641$ & $-1.573$ & $-0.990$ & $-1.151$ & $-0.928$ & $-0.989$ & $-0.539$ \\
  & $\bar M_+$ & $+0.894$ & $+1.056$ & $+0.843$ & $+1.248$ & $+1.033$ & $+0.923$ & $+1.463$ & $+0.969$ & $+1.624$ & $+1.241$ \\
@@ -668,63 +1024,50 @@ CUSUM & $\bar M_-$ & $-1.046$ & $-0.476$ & $-1.861$ & $-0.714$ & $-1.608$ & $-1.
 \bottomrule
 \end{tabular}
 \caption{Directional critical-moment means $\bar M_{\pm}$, pivot-free
-offset $M_{\mathrm{ff}}$ and its $95\%$ confidence interval (Welch
-$t$) [N\,m] per estimator. Columns are case--axis pairs (e.g.\ 1x $=$
-case~1, roll). Note the signed signatures relative to COSH: NLS
-magnitudes sit low (early onsets), CPD$_{\mathrm{N}}$/CUSUM high
-(detection lag), while $M_{\mathrm{ff}}$ stays nearly
-method-invariant.}
+offset $M_{\mathrm{ff}}$ and its $95\%$ confidence interval (Welch $t$)
+[N\,m] per estimator. Columns are case--axis pairs (e.g.\ 1x $=$ case~1,
+roll). The three COSH variants track each other closely, while NLS
+magnitudes sit low (early onsets) and CPD$_{\mathrm{N}}$/CUSUM high
+(detection lag); $M_{\mathrm{ff}}$ stays nearly method-invariant
+throughout.}
 \label{tab:nls-mom}
-\end{table}
+\end{table*}
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering
-\small
-\setlength{\tabcolsep}{3.6pt}
-\begin{tabular}{cc rr rr rr rr rr}
+\footnotesize
+\setlength{\tabcolsep}{2.2pt}
+\begin{tabular}{cc rr rr rr rr rr rr rr}
 \toprule
- & & \multicolumn{2}{c}{COSH} & \multicolumn{2}{c}{NLS} &
-\multicolumn{2}{c}{CPD$_{\mathrm{N}}$} &
-\multicolumn{2}{c}{CPD$_{\mathrm{R}}$} &
-\multicolumn{2}{c}{CUSUM} \\
-\cmidrule(lr){3-4} \cmidrule(lr){5-6} \cmidrule(lr){7-8}
-\cmidrule(lr){9-10} \cmidrule(lr){11-12}
-case & axis & $\mathrm{CV}_{-}$ & $\mathrm{CV}_{+}$ &
-$\mathrm{CV}_{-}$ & $\mathrm{CV}_{+}$ &
-$\mathrm{CV}_{-}$ & $\mathrm{CV}_{+}$ &
-$\mathrm{CV}_{-}$ & $\mathrm{CV}_{+}$ &
-$\mathrm{CV}_{-}$ & $\mathrm{CV}_{+}$ \\
+ & & \multicolumn{2}{c}{COSH} & \multicolumn{2}{c}{COSH$_{\rm wide}$} & \multicolumn{2}{c}{COSH$_{\rm CAD}$} & \multicolumn{2}{c}{NLS} & \multicolumn{2}{c}{CPD$_{\mathrm{N}}$} & \multicolumn{2}{c}{CPD$_{\mathrm{R}}$} & \multicolumn{2}{c}{CUSUM} \\
+\cmidrule(lr){3-4} \cmidrule(lr){5-6} \cmidrule(lr){7-8} \cmidrule(lr){9-10} \cmidrule(lr){11-12} \cmidrule(lr){13-14} \cmidrule(lr){15-16}
+case & axis & $\mathrm{CV}_{-}$ & $\mathrm{CV}_{+}$ & $\mathrm{CV}_{-}$ & $\mathrm{CV}_{+}$ & $\mathrm{CV}_{-}$ & $\mathrm{CV}_{+}$ & $\mathrm{CV}_{-}$ & $\mathrm{CV}_{+}$ & $\mathrm{CV}_{-}$ & $\mathrm{CV}_{+}$ & $\mathrm{CV}_{-}$ & $\mathrm{CV}_{+}$ & $\mathrm{CV}_{-}$ & $\mathrm{CV}_{+}$ \\
 \midrule
-1 & x & $\mathbf{3.8}$ & $\mathbf{5.7}$ & $6.4$ & $7.7$ & $4.4$ & $6.1$ & $7.3$ & $8.6$ & $5.9$ & $6.7$ \\
-1 & y & $\mathbf{4.2}$ & $\mathbf{2.3}$ & $17.1$ & $7.2$ & $5.0$ & $3.3$ & $7.0$ & $4.4$ & $4.8$ & $24.0$ \\
-2 & x & $\mathbf{1.2}$ & $\mathbf{1.6}$ & $2.5$ & $4.2$ & $2.5$ & $2.2$ & $15.5$ & $22.1$ & $1.8$ & $2.4$ \\
-2 & y & $\mathbf{1.5}$ & $2.1$ & $7.1$ & $5.8$ & $3.1$ & $2.5$ & $3.3$ & $\mathbf{2.0}$ & $3.0$ & $21.9$ \\
-3 & x & $\mathbf{1.7}$ & $\mathbf{2.4}$ & $2.4$ & $4.1$ & $4.9$ & $4.2$ & $23.9$ & $8.5$ & $3.1$ & $4.7$ \\
-3 & y & $\mathbf{1.7}$ & $\mathbf{2.6}$ & $3.2$ & $7.0$ & $4.4$ & $4.1$ & $4.4$ & $6.0$ & $12.4$ & $22.8$ \\
-4 & x & $\mathbf{3.4}$ & $2.2$ & $3.8$ & $3.5$ & $4.0$ & $\mathbf{1.6}$ & $5.6$ & $10.3$ & $3.9$ & $3.5$ \\
-4 & y & $\mathbf{2.9}$ & $\mathbf{3.7}$ & $10.3$ & $6.1$ & $7.5$ & $7.2$ & $7.8$ & $6.9$ & $6.7$ & $7.3$ \\
-5 & x & $3.9$ & $2.1$ & $7.2$ & $2.6$ & $\mathbf{3.6}$ & $\mathbf{2.0}$ & $27.4$ & $3.0$ & $4.0$ & $2.3$ \\
-5 & y & $\mathbf{5.3}$ & $\mathbf{3.1}$ & $19.8$ & $5.4$ & $8.6$ & $3.8$ & $8.4$ & $3.8$ & $8.3$ & $4.0$ \\
+1 & x & $3.9$ & $5.8$ & $\mathbf{3.8}$ & $5.7$ & $5.6$ & $\mathbf{5.5}$ & $6.4$ & $7.7$ & $4.4$ & $6.1$ & $7.3$ & $8.6$ & $5.9$ & $6.7$ \\
+1 & y & $4.4$ & $\mathbf{2.2}$ & $\mathbf{4.2}$ & $2.3$ & $12.3$ & $3.2$ & $17.1$ & $7.2$ & $5.0$ & $3.3$ & $7.0$ & $4.4$ & $4.8$ & $24.0$ \\
+2 & x & $1.3$ & $\mathbf{1.6}$ & $\mathbf{1.2}$ & $1.6$ & $2.3$ & $2.9$ & $2.5$ & $4.2$ & $2.5$ & $2.2$ & $15.5$ & $22.1$ & $1.8$ & $2.4$ \\
+2 & y & $1.6$ & $2.1$ & $\mathbf{1.5}$ & $2.1$ & $8.1$ & $3.0$ & $7.1$ & $5.8$ & $3.1$ & $2.5$ & $3.3$ & $\mathbf{2.0}$ & $3.0$ & $21.9$ \\
+3 & x & $\mathbf{1.7}$ & $\mathbf{2.3}$ & $1.7$ & $2.4$ & $1.7$ & $2.5$ & $2.4$ & $4.1$ & $4.9$ & $4.2$ & $23.9$ & $8.5$ & $3.1$ & $4.7$ \\
+3 & y & $\mathbf{1.7}$ & $2.6$ & $1.7$ & $\mathbf{2.6}$ & $2.9$ & $3.9$ & $3.2$ & $7.0$ & $4.4$ & $4.1$ & $4.4$ & $6.0$ & $12.4$ & $22.8$ \\
+4 & x & $3.3$ & $2.2$ & $3.4$ & $2.2$ & $\mathbf{3.1}$ & $2.5$ & $3.8$ & $3.5$ & $4.0$ & $\mathbf{1.6}$ & $5.6$ & $10.3$ & $3.9$ & $3.5$ \\
+4 & y & $\mathbf{2.8}$ & $\mathbf{3.7}$ & $2.9$ & $3.7$ & $4.3$ & $4.8$ & $10.3$ & $6.1$ & $7.5$ & $7.2$ & $7.8$ & $6.9$ & $6.7$ & $7.3$ \\
+5 & x & $3.8$ & $2.4$ & $3.9$ & $2.1$ & $5.6$ & $\mathbf{1.5}$ & $7.2$ & $2.6$ & $\mathbf{3.6}$ & $2.0$ & $27.4$ & $3.0$ & $4.0$ & $2.3$ \\
+5 & y & $5.3$ & $\mathbf{3.1}$ & $\mathbf{5.3}$ & $3.1$ & $7.1$ & $4.6$ & $19.8$ & $5.4$ & $8.6$ & $3.8$ & $8.4$ & $3.8$ & $8.3$ & $4.0$ \\
 \midrule
-\multicolumn{2}{r}{median / worst [\%]} &
-\multicolumn{2}{c}{$\mathbf{2.5}$ / $\mathbf{5.7}$} &
-\multicolumn{2}{c}{$5.9$ / $19.8$} &
-\multicolumn{2}{c}{$4.1$ / $8.6$} &
-\multicolumn{2}{c}{$7.1$ / $27.4$} &
-\multicolumn{2}{c}{$4.7$ / $24.0$} \\
+\multicolumn{2}{r}{median / worst [\%]} & \multicolumn{2}{c}{$2.5$ / $5.8$} & \multicolumn{2}{c}{$2.5$ / $5.7$} & \multicolumn{2}{c}{$3.5$ / $12.3$} & \multicolumn{2}{c}{$5.9$ / $19.8$} & \multicolumn{2}{c}{$4.1$ / $8.6$} & \multicolumn{2}{c}{$7.1$ / $27.4$} & \multicolumn{2}{c}{$4.7$ / $24.0$} \\
 \bottomrule
 \end{tabular}
 \caption{Ramp-rate dispersion (CV [\%]) of the directional critical
-moments under the five estimators. Bold marks the lowest CV in each
-of the $20$ direction groups: COSH in $16$, CPD$_{\mathrm{N}}$ in
-$3$, CPD$_{\mathrm{R}}$ in $1$, the rest in none. The underlying directional means are in
+moments. Bold marks the lowest CV in each of the $20$ direction groups:
+COSH in 8, COSH$_{\rm wide}$ in 6, COSH$_{\rm CAD}$ in 3, CPD$_{\mathrm{N}}$ in 2, CPD$_{\mathrm{R}}$ in 1. The underlying directional means are in
 Table~\ref{tab:nls-mom}.}
 \label{tab:nls-disp}
-\end{table}
+\end{table*}
 
 Three observations. \emph{(i) The deliverable is detector-agnostic:}
 against the load-cell truth all five estimators land at RMS
-$1.6$--$1.8$~mm (Table~\ref{tab:nls}, bottom rows) — the pivot-free
+$1.6$--$1.8$~mm per component, equivalently $2.3$--$2.6$~mm radial
+(Table~\ref{tab:nls}, bottom rows) — the pivot-free
 average \eqref{eq:mff} cancels each method's largely common-mode onset
 bias between the $+$ and $-$ directions, and $5$--$7$ runs per
 direction average the rest. That the final CoM offset does not depend
@@ -946,6 +1289,7 @@ internal split this experiment cannot resolve.
 \section{Reproducibility}
 
 Every number in this document is reproducible from the repository:
+\begingroup\sloppy
 \begin{itemize}
 \item \texttt{critical\_value\_getter\_piecewise.py} — pipeline,
 gates, caps, calibration, Algorithm~\ref{alg:cosh};
@@ -968,7 +1312,36 @@ Tables~\ref{tab:nls}--\ref{tab:nls-disp};
 (static-threshold check, arms, attribution limits,
 Fig.~\ref{fig:static});
 \item \texttt{analysis/ge\_bilinear.py} — the bilinear $\tau\varphi$
-ground-effect term along measured trajectories.
+ground-effect term along measured trajectories;
+\item \texttt{analysis/constrained\_calibration.py} —
+Remark~\ref{rem:ridge} and Table~\ref{tab:constrained} (the shared
+$(W z_{\mathrm{CoM}}, J_{P,\mathrm{roll}}, J_{P,\mathrm{pitch}})$
+reparametrization and the rerun identification);
+\item \texttt{analysis/cv\_table.py} — Table~\ref{tab:cv} (rate
+consistency under the free, CAD and mis-specified constants);
+\item \texttt{analysis/phys\_compare.py} — Table~\ref{tab:phys}
+(calibrated constants against the CAD reference and the parallel-axis
+floor);
+\item \texttt{analysis/cad\_reference.py} — Table~\ref{tab:cadonly}
+(the identification rerun with nothing fitted);
+\item \texttt{analysis/pivot\_geom.py} — the mocap arc fit for $l_p$
+and the marker height;
+\item \texttt{analysis/pnls\_centred.py}, \texttt{analysis/pnls\_ci.py} —
+the two-stage calibration (per-run PNLS medians, then the score refined
+in a neighbourhood of them) and its intervals;
+\item \texttt{analysis/mff\_table.py}, \texttt{analysis/cv\_full.py} —
+the estimator benchmark extended with the PNLS-centred and CAD
+constants, and the full-pipeline dispersions;
+\item \texttt{analysis/ge\_dynamics\_check.py} — dynamic inversion of
+the ground-effect moment with the CAD constants. It reduces to the
+static check at the onset, and away from it the model's attitude slope
+($-2.7$ to $-0.1$~mN\,m/deg) is $0$--$1.9\%$ of the
+$W z_{\mathrm{CoM}}$ term it must be separated from
+($-141$~mN\,m/deg, cancelled to $70\%$), so resolving it would need
+both constants to about $2\%$ against the $4\%$ CAD supports. A clean
+negative result: with $J_P$ and $z_{\mathrm{CoM}}$ pinned externally
+the limit is the experiment's, not the calibration's.
 \end{itemize}
+\endgroup
 
 \end{document}
