@@ -4,8 +4,9 @@ The calibration's stated purpose is to make the identified threshold
 reproducible across ramp rates and tip directions -- not to measure
 W z_CoM.  This tabulates the quantity that purpose names: the coefficient
 of variation of |M_crit| within each tip direction, per dataset, for
-(a) the free per-dataset calibration, (b) constants forced to the
-physical values, and (c) deliberately mis-specified constants.
+(a) the free per-dataset calibration, (b) constants taken
+entirely from CAD, and (c) K deliberately mis-specified about the CAD
+point.
 """
 import contextlib, io, sys
 from pathlib import Path
@@ -17,8 +18,11 @@ import critical_value_getter_piecewise as cvp
 from utils.extractor import load_excitation_dataset
 from constrained_calibration import prepare, MASS_KG, G, ROOT, STRIDE
 
-JP_NLS = {'x': 0.257, 'y': 0.225}
-Z_PHYS = 0.208
+# CAD reference: z_CoM = 0.256 m and the Table 5 CoM inertias fix J_P by
+# the parallel-axis theorem, hence both constants, with nothing fitted.
+Z_CAD = 0.256
+J_CAD = {'x': 0.051085, 'y': 0.050564}
+LP = {'x': 0.140, 'y': 0.110}
 
 CAL = {('case_01','Mx'):(8.000,0.0600), ('case_01','My'):(3.875,0.4900),
        ('case_02','Mx'):(6.125,0.1100), ('case_02','My'):(4.500,0.5200),
@@ -55,7 +59,7 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
         bags = load_excitation_dataset(d)
     data[(d.parent.name, d.name)] = (ax, prepare(bags, ax))
 
-VARIANTS = [('free', None), ('physical', 1.0),
+VARIANTS = [('free', None), ('CAD', 1.0),
             ('K x0.5', 0.5), ('K x2', 2.0)]
 hdr = (f"{'case':<9}{'ax':<4}{'n':>3}{'Mdot range':>13}"
        + ''.join(f"{lab:>11}" for lab, _ in VARIANTS))
@@ -70,8 +74,9 @@ for key in sorted(data):
         if fac is None:
             c2, k = CAL[key]
         else:
-            k = fac / (w * Z_PHYS)
-            c2 = float(np.sqrt(w * Z_PHYS / JP_NLS[ax]))
+            j = J_CAD[ax] + MASS_KG[key[0]] * (Z_CAD ** 2 + LP[ax] ** 2)
+            k = fac / (w * Z_CAD)
+            c2 = float(np.sqrt(w * Z_CAD / j))
         g, rates = onsets(prep, c2, k)
         c = cv(g)
         row.append(100 * float(np.mean(c)) if c else float('nan'))
