@@ -1265,6 +1265,12 @@ floor);
 (the identification rerun with nothing fitted);
 \item \texttt{analysis/pivot\_geom.py} — the mocap arc fit for $l_p$
 and the marker height;
+\item \texttt{analysis/pnls\_centred.py}, \texttt{analysis/pnls\_ci.py} —
+the two-stage calibration (per-run PNLS medians, then the score refined
+in a neighbourhood of them) and its intervals;
+\item \texttt{analysis/mff\_table.py}, \texttt{analysis/cv\_full.py} —
+the estimator benchmark extended with the PNLS-centred and CAD
+constants, and the full-pipeline dispersions;
 \item \texttt{analysis/ge\_dynamics\_check.py} — dynamic inversion of
 the ground-effect moment, which reduces to the static check at the
 onset and is swamped by the $W z_{\mathrm{CoM}}$ cancellation away from
