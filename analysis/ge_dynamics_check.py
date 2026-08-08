@@ -170,12 +170,15 @@ def analyse(bag, crit, axis, sig, phi_all, n, z_com, j_p, savgol=9):
     # with an error in (J_P, z_CoM) -- see the batch summary -- and is
     # reported only to expose that degeneracy, not as a measurement.
     a_rate = -(sd - sm) / case_w              # m/rad
-    return dict(bag=crit.bag_name, dir='pos' if pos else 'neg',
-                lp_mm=1e3 * lp, dphi_deg=float(np.rad2deg(phi[-1])),
-                int_dyn=1e3 * id_, int_mod=1e3 * im,
-                slope_dyn=1e3 * sd * np.pi / 180,
-                slope_mod=1e3 * sm * np.pi / 180,
-                a_rate_mm_per_deg=1e3 * a_rate * np.pi / 180)
+    res = dict(bag=crit.bag_name, dir='pos' if pos else 'neg',
+               lp_mm=1e3 * lp, dphi_deg=float(np.rad2deg(phi[-1])),
+               int_dyn=1e3 * id_, int_mod=1e3 * im,
+               slope_dyn=1e3 * sd * np.pi / 180,
+               slope_mod=1e3 * sm * np.pi / 180,
+               a_rate_mm_per_deg=1e3 * a_rate * np.pi / 180)
+    if getattr(analyse, 'keep_traces', False):
+        res['trace'] = (np.rad2deg(phi), 1e3 * ge_dyn, 1e3 * ge_mod)
+    return res
 
 
 def batch(z_list, savgol, jp_mode='parallel'):

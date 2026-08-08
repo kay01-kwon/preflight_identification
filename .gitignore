@@ -33,3 +33,6 @@ alpha_at_peak_runs.csv
 *.aux
 *.out
 *.toc
+
+# cached traces for analysis/ge_dynamics_figure.py (regenerable, ~MBs)
+analysis/.ge_dynamics_traces.npz
