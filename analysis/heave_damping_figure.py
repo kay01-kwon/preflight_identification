@@ -20,13 +20,13 @@ rather than per-run regression lines -- R^2 is 0.21, so the trend is an
 ensemble property and the figure should not suggest otherwise.
 
 The figure is deliberately built so the weak part shows.  Subtracting
-the a-priori term moves the median slope from -41.5 to -0.2 mN.m/deg
-but does NOT narrow the run-to-run scatter (IQR 47.4 -> 49.4), and the
-predicted damping is nearly a constant across runs (10% spread) while
-the required damping varies by 90%, the two being negatively correlated
-(-0.44).  So the agreement is between medians, not run by run: the
+the a-priori term moves the median within-run slope essentially to
+zero but does not narrow the run-to-run scatter, and the predicted
+damping is nearly constant across runs while the required damping
+varies several times more, the two being NEGATIVELY correlated
+(-0.48).  So the agreement is between medians, not run by run: the
 mechanism accounts for the level of the residual, not for its
-structure.
+run-to-run structure.
 
 Usage: python analysis/heave_damping_figure.py hd.npz out.pdf
 """
@@ -98,10 +98,25 @@ def centre(y):
             out[s_] -= out[s_].mean()
     return out
 
+# within-run slopes, computed rather than quoted, so the annotations
+# cannot go stale when the pipeline changes
+def slope_stats(y):
+    v = []
+    for i in range(rid.max() + 1):
+        s_ = rid == i
+        if s_.any() and np.ptp(phi[s_]) >= 0.2:
+            v.append(np.polyfit(phi[s_], y[s_], 1)[0])
+    v = np.asarray(v)
+    return np.median(v), np.percentile(v, 25), np.percentile(v, 75)
+
+
+SL_BEFORE = slope_stats(resid)
+SL_AFTER = slope_stats(resid - reg)
+
 for k, (ax, y, ttl, slope) in enumerate([
-        (axes[0], centre(resid), 'residual, as inverted', -41.5),
+        (axes[0], centre(resid), 'residual, as inverted', SL_BEFORE),
         (axes[1], centre(resid - reg),
-         'minus a-priori heave damping', -0.2)]):
+         'minus a-priori heave damping', SL_AFTER)]):
     ax.axhline(0, color=MUTED, lw=0.6, zorder=1)
     ax.scatter(phi, y, s=1.4, c=MUTED, alpha=0.30, lw=0, zorder=2,
                rasterized=True)
@@ -125,9 +140,10 @@ for k, (ax, y, ttl, slope) in enumerate([
     ax.set_ylim(*YLIM)
     ax.set_xlabel(r'tip angle $\delta\varphi$  [deg]', color=INK2)
     ax.set_title(f'({"ab"[k]})  {ttl}', color=INK, loc='left', pad=6)
-    iqr = '−63.6 … −16.2' if k == 0 else '−21.9 … +27.5'
+    med_, q1_, q3_ = slope
     ax.text(0.035, 0.045,
-            f'within-run slope  {slope:+.1f}\nIQR  {iqr}   mN·m/deg',
+            f'within-run slope  {med_:+.1f}\n'
+            f'IQR  {q1_:+.1f} … {q3_:+.1f}   mN·m/deg',
             transform=ax.transAxes, fontsize=7, color=INK, linespacing=1.35,
             bbox=dict(fc=SURF, ec=MUTED, lw=0.5, pad=2.6, alpha=0.92))
     for sp in ('top', 'right'):

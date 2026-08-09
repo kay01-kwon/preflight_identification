@@ -28,6 +28,7 @@ import contextlib, io, sys
 from pathlib import Path
 import numpy as np
 from scipy.signal import savgol_filter
+from analysis.rate_derivative import omega_dot
 sys.path.insert(0, str(Path(__file__).resolve().parent) + '/stubs')
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -80,6 +81,10 @@ for name in ('pos_Mx_01', 'pos_Mx_045', 'pos_Mx_120'):
         tt = sig['t'][k0:k1 + 1]
         om = sig['omega'][k0:k1 + 1]
         dt = float(np.median(np.diff(tt)))
+        # the derivative is taken on the WHOLE trace of this source and
+        # sliced afterwards; taken on the slice, both edges would be
+        # extrapolated (analysis/rate_derivative.py)
+        om_src_full = sig['omega']
         tau = tt - tt[0]
         # everything else resampled onto this clock
         phi = np.interp(tt, sig_o['t'][:n], phi_all[:n] - phi_all[crit.onset_idx])
@@ -88,7 +93,7 @@ for name in ('pos_Mx_01', 'pos_Mx_045', 'pos_Mx_120'):
         gem = np.interp(tt, sig_o['t'][:n], raw)
         om = om - om[0] + sig_o['omega'][crit.onset_idx]
         wid = 9 if src == 'odom' else 19        # matched to ~90 ms
-        omd = savgol_filter(om, wid, 2, deriv=1, delta=dt)
+        omd = omega_dot(om_src_full, dt, wid)[k0:k1 + 1]
         mdot = float(np.polyfit(tau, m, 1)[0])
         omd_fit = kf * mdot * c2f * np.sinh(np.clip(c2f * tau, 0, 30))
         ge = j_p * omd - m - f * lp + W * a * np.cos(phi) - W * Z * np.sin(phi)

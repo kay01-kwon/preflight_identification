@@ -70,6 +70,9 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
             continue
 
         # --- source 1: odom rate, one differentiation ----------------
+        # both sources are differentiated over the FULL trace and
+        # sampled afterwards, so neither is read on an extrapolated
+        # filter edge (analysis/rate_derivative.py)
         om_od = sig['omega']
         omd_od = savgol_filter(om_od, 9, 2, deriv=1, delta=dt_od)
 
