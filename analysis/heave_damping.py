@@ -168,7 +168,7 @@ print(f"ideal heave damping  |D| = {dmed:.3f} N.m/(rad/s)  (momentum "
 # 2. what damping would the residual need?
 print("per-run single-regressor fits (no intercept beyond a constant):")
 print(f"{'regressor':<26}{'unit':>14}{'all':>10}"
-      + ''.join(f"{lab:>9}" for _, _, lab in BINS) + f"{'fast/slow':>11}"
+      + ''.join(f"{lab:>9}" for _, _, lab in BINS) + f"{'max/min':>11}"
       + f"{'R^2':>7}")
 for name, key, unit in [('phi   (stiffness)', 'phi', 'N.m/rad'),
                         ('omega (damping)', 'om', 'N.m/(rad/s)'),
@@ -188,7 +188,8 @@ for name, key, unit in [('phi   (stiffness)', 'phi', 'N.m/rad'),
             if lo <= r['mdot'] < hi:
                 per[lab].append(c[0])
     mu = [np.mean(per[lab]) if per[lab] else np.nan for _, _, lab in BINS]
-    ratio = mu[-1] / mu[0] if mu[0] else np.inf
+    am = [abs(v) for v in mu]
+    ratio = max(am) / min(am) if min(am) else np.inf
     print(f"{name:<26}{unit:>14}{np.mean(coefs):10.3f}"
           + ''.join(f"{v:9.3f}" for v in mu)
           + f"{ratio:11.2f}{np.mean(r2s):7.2f}")
@@ -205,7 +206,7 @@ for lo, hi, lab in BINS:
     b, a_ = [], []
     for r in sel:
         deg = np.rad2deg(r['phi'])
-        if deg.ptp() < 0.2:
+        if np.ptp(deg) < 0.2:
             continue
         b.append(1e3 * np.polyfit(deg, r['resid'], 1)[0])
         a_.append(1e3 * np.polyfit(deg, r['resid'] - r['reg'], 1)[0])
@@ -213,9 +214,9 @@ for lo, hi, lab in BINS:
     print(f"{'':10}{lab:>8}{len(b):5d}{np.median(b):12.1f} mN.m/deg"
           f"{np.median(a_):11.1f}{rem:9.0f}%")
 allb = [1e3 * np.polyfit(np.rad2deg(r['phi']), r['resid'], 1)[0]
-        for r in rows if np.rad2deg(r['phi']).ptp() >= 0.2]
+        for r in rows if np.ptp(np.rad2deg(r['phi'])) >= 0.2]
 alla = [1e3 * np.polyfit(np.rad2deg(r['phi']), r['resid'] - r['reg'], 1)[0]
-        for r in rows if np.rad2deg(r['phi']).ptp() >= 0.2]
+        for r in rows if np.ptp(np.rad2deg(r['phi'])) >= 0.2]
 print(f"{'':10}{'ALL':>8}{len(allb):5d}{np.median(allb):12.1f} mN.m/deg"
       f"{np.median(alla):11.1f}"
       f"{100 * (1 - abs(np.median(alla)) / abs(np.median(allb))):9.0f}%")
