@@ -1,14 +1,37 @@
 #!/usr/bin/env python3
-"""One figure: the ground-effect moment from the model against the
-dynamic inversion, over the onset-to-peak window.
+"""SUPERSEDED.  The UNCORRECTED dynamic inversion, kept as the record.
 
-Both curves are plotted against the tilt excursion measured from the
-onset, so the two questions separate visually: the intercept is the
-LEVEL of the ground-effect moment (which the static check already
-gives, since the balance at the onset is static) and the slope is its
-ATTITUDE DEPENDENCE.  The levels agree; the slopes do not, because the
-model's own slope is a per-cent-level feature of the
-W z_CoM sin(phi) term the inversion has to cancel.
+This draws the ground-effect moment from the model against the dynamic
+inversion as the raw balance gives it, with none of the three measures
+that were later found to be necessary:
+
+  (i)   the Savitzky-Golay derivative is taken on the SLICED window, so
+        the onset sits on the filter's extrapolated edge -- worth 1.23
+        N.m of fabricated offset on one measured run;
+  (ii)  phi comes from the attitude while omega_dot comes from a
+        smoothed rate, so the two are not one consistent motion;
+  (iii) the reported rate is used as reported, though it carries a
+        scale of 0.890 and a bias, both measurable
+        (omega_true = (omega_meas - b) / g).
+
+The result is a model that misses badly: gradient -43.5 mN.m/deg
+against the model's -2.0, and level 0.77 of it.  That is what this
+script is FOR -- it is the "before" panel of that story -- but it is
+not the manuscript figure.
+
+FOR THE MANUSCRIPT FIGURE USE INSTEAD:
+
+    HD_DERIV=polyk:6 HD_GAIN=0.890 HD_DUMP=hd.npz \
+        python analysis/heave_damping.py
+    python analysis/ge_dynamics_rate_figure.py hd.npz docs 9.9
+
+which gives gradient -9.1 and level 1.04 of the model.  See
+analysis/rate_derivative.py for (i) and (ii) and the heave_damping
+docstring for (iii).
+
+This script writes fig_ge_dynamics_UNCORRECTED.pdf.  It used to write
+fig_ge_dynamics.pdf, the same name the corrected script uses, so
+running it silently replaced the manuscript figure with this one.
 
 Usage: PYTHONPATH=<stubs> python analysis/ge_dynamics_figure.py [outdir]
 """
@@ -26,6 +49,19 @@ from analysis import ge_dynamics_check as gd
 OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('docs')
 Z = 0.261
 
+print('=' * 70)
+print('NOTE: this is the SUPERSEDED, UNCORRECTED inversion.')
+print('      For the manuscript figure run instead:')
+print('        HD_DERIV=polyk:6 HD_GAIN=0.890 HD_DUMP=hd.npz \\')
+print('            python analysis/heave_damping.py')
+print('        python analysis/ge_dynamics_rate_figure.py hd.npz docs 9.9')
+print('      Output here goes to fig_ge_dynamics_UNCORRECTED.pdf')
+print('=' * 70)
+
+# The cache holds traces computed with the settings below.  It is
+# reused blindly if present, so delete it after changing anything --
+# z_CoM, the Savitzky-Golay width, the J_P mode -- or the figure will
+# silently keep showing the old ones.
 CACHE = Path(__file__).resolve().parent / '.ge_dynamics_traces.npz'
 if CACHE.exists():
     z = np.load(CACHE, allow_pickle=True)
@@ -90,5 +126,6 @@ for sp in ('top', 'right'):
 ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.19), ncol=1,
           fontsize=8, frameon=False)
 fig.tight_layout()
-fig.savefig(OUT / 'fig_ge_dynamics.pdf', bbox_inches='tight')
-print(f"-> {OUT / 'fig_ge_dynamics.pdf'}")
+fig.savefig(OUT / 'fig_ge_dynamics_UNCORRECTED.pdf',
+            bbox_inches='tight')
+print(f"-> {OUT / 'fig_ge_dynamics_UNCORRECTED.pdf'}")
