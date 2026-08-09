@@ -121,8 +121,7 @@ ax.annotate('at the onset the balance is static:\n'
             xytext=(1.05, 395), fontsize=8, color=INK2, linespacing=1.35,
             arrowprops=dict(arrowstyle='->', color=MUTED, lw=0.9))
 ax.text(0.03, 0.045,
-        'the flatness here is a pooling artefact,\nnot the within-run '
-        'trend — see (b)',
+        'a pooled median; the within-run trend\nis the one to read — see (b)',
         transform=ax.transAxes, fontsize=7.5, color=INK, linespacing=1.35,
         bbox=dict(fc=SURF, ec=MUTED, lw=0.5, pad=3, alpha=0.93))
 ax.set_xlabel(r'tilt excursion from the onset, $\delta\varphi$  [deg]',
@@ -171,9 +170,11 @@ for sp in ('top', 'right'):
     ax.spines[sp].set_visible(False)
 ax.set_title('(b)  attitude dependence', fontsize=9, color=INK, loc='left',
              pad=6)
-ax.text(0.03, 0.80,
+se = np.std(si) / np.sqrt(len(si))
+ax.text(0.03, 0.78,
         f'IQR {np.percentile(si, 25):.0f} … {np.percentile(si, 75):.0f}\n'
-        f'off by ×{abs(np.median(si) / np.median(sm)):.0f}',
+        f'SE of the median  {se:.1f}\n'
+        f'model − inversion  {np.median(sm) - np.median(si):+.1f}',
         transform=ax.transAxes, fontsize=7.5, color=INK, linespacing=1.35,
         bbox=dict(fc=SURF, ec=MUTED, lw=0.5, pad=3, alpha=0.93))
 print(f"  within-run slope: inversion {np.median(si):+.1f}, "
