@@ -215,7 +215,8 @@ import matplotlib.pyplot as plt
 import critical_value_getter_piecewise as cvp
 from utils.extractor import load_excitation_dataset
 from utils import math_tools
-from error_budget import ge_moment, LP
+from error_budget import ge_moment
+from analysis.rate_derivative import omega_dot, edge_margin, LP
 
 G = 9.81
 MASS_KG = {'case_01': 3.066, 'case_02': 3.220, 'case_03': 3.220,
@@ -275,7 +276,6 @@ def analyse(bag, crit, axis, sig, phi_all, n, z_com, j_p, savgol=9):
     sl = slice(j, i1 + 1)
     tau = sig['t'][sl] - sig['t'][j]
     phi = s * (phi_all[sl] - phi_all[j])
-    om = s * sig['omega'][sl]
     m = s * sig['moment'][sl]
     f = sig['f_col'][sl]
 
@@ -284,7 +284,14 @@ def analyse(bag, crit, axis, sig, phi_all, n, z_com, j_p, savgol=9):
     if w < 5:
         return None
     dt = float(np.median(np.diff(tau)))
-    om_dot = savgol_filter(om, w, 2, deriv=1, delta=dt)
+    # full-trace derivative, then slice: slicing first puts the onset on
+    # the differentiator's extrapolated edge, exactly where omega_dot
+    # must vanish (analysis/rate_derivative.py)
+    if not edge_margin(n, j, i1, w)['ok']:
+        return None
+    om_full = s * sig['omega'][:n]
+    om = om_full[sl]
+    om_dot = omega_dot(om_full, dt, w)[sl]
 
     ge_dyn = (j_p * om_dot - m - f * lp
               + case_w * a * np.cos(phi) - case_w * z_com * np.sin(phi))
@@ -555,14 +562,18 @@ def main():
 
     tau = t[sl] - t[j]
     phi = s * (phi_all[sl] - phi_all[j])      # excursion, tipping-positive
-    om = s * om_s[sl]
     m = s * mom_s[sl]
     f = f_s[sl]
 
     w = min(args.savgol if args.savgol % 2 else args.savgol + 1,
             len(tau) - (1 - len(tau) % 2))
     dt = float(np.median(np.diff(tau)))
-    om_dot = savgol_filter(om, w, 2, deriv=1, delta=dt)
+    # full-trace derivative, then slice (analysis/rate_derivative.py)
+    om_full = s * om_s[:n]
+    om = om_full[sl]
+    om_dot = omega_dot(om_full, dt, w)[sl]
+    if not edge_margin(n, j, i1, w)['ok']:
+        return None
 
     # ------------------------------------------- dynamic inversion vs model
     ge_dyn = (j_p * om_dot - m - f * lp

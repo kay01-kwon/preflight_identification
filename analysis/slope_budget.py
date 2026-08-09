@@ -52,19 +52,36 @@ def rhs(t, y):
 
 sol = solve_ivp(rhs, (0, 0.60), [0.0, 0.0], max_step=DT / 4, rtol=1e-10,
                 atol=1e-12, dense_output=True)
-t = np.arange(0, 0.60, DT)
-phi, om = sol.sol(t)
-keep = np.rad2deg(phi) < 7.2
-t, phi, om = t[keep], phi[keep], om[keep]
+t_full = np.arange(0, 0.60, DT)
+phi_full, om_full = sol.sol(t_full)
+KEEP = np.rad2deg(phi_full) < 7.2
+t, phi, om = t_full[KEEP], phi_full[KEEP], om_full[KEEP]
 deg = np.rad2deg(phi)
 m = MDOT * t + (W * A_ARM - GE0 - F_THRUST * LP)
 
+# The differentiator must not see the onset as an edge.  The simulated
+# trace begins AT the onset, so pad on the left with the exact pre-onset
+# state -- the vehicle is at rest there, omega = 0, which is not an
+# approximation for this model -- and differentiate past the analysis
+# window on the right, where the solution is still available.  Without
+# this the SG filter extrapolates a quadratic through the first samples
+# and fabricates omega_dot at tau = 0; on the measured data that same
+# mistake was worth 1.23 N.m (analysis/rate_derivative.py).
+PAD = SAVGOL
 
-def invert(om_series, jp, z, a_arm, use_exact_dot=False):
-    if use_exact_dot:
-        omd = np.gradient(om_series, DT)          # noise-free reference
+
+def _deriv(series_full, exact):
+    padded = np.concatenate([np.zeros(PAD), series_full])
+    if exact:
+        d = np.gradient(padded, DT)               # noise-free reference
     else:
-        omd = savgol_filter(om_series, SAVGOL, 2, deriv=1, delta=DT)
+        d = savgol_filter(padded, SAVGOL, 2, deriv=1, delta=DT)
+    return d[PAD:]
+
+
+def invert(om_series_full, jp, z, a_arm, use_exact_dot=False):
+    """om_series_full spans t_full; the analysis window is KEEP."""
+    omd = _deriv(om_series_full, use_exact_dot)[KEEP]
     ge = (jp * omd - m - F_THRUST * LP
           + W * a_arm * np.cos(phi) - W * z * np.sin(phi))
     sel = deg > 0.3
@@ -76,22 +93,21 @@ print(f"truth: level {1e3*GE0:.0f} mN.m, slope {1e3*GE_SLOPE:+.1f} mN.m/deg")
 print(f"excursion reached {deg[-1]:.1f} deg in {t[-1]:.2f} s\n")
 print(f"{'case':<44}{'slope':>9}{'level':>9}")
 print('-' * 62)
-s, i = invert(om, JP, Z, A_ARM, use_exact_dot=True)
+s, i = invert(om_full, JP, Z, A_ARM, use_exact_dot=True)
 print(f"{'exact constants, exact derivative':<44}{s:9.2f}{i:9.1f}")
-s, i = invert(om, JP, Z, A_ARM)
+s, i = invert(om_full, JP, Z, A_ARM)
 print(f"{'exact constants, Savitzky-Golay derivative':<44}{s:9.2f}{i:9.1f}")
-noisy = om + RNG.normal(0, SIG_GYRO, len(om))
-ss = [invert(om + RNG.normal(0, SIG_GYRO, len(om)), JP, Z, A_ARM)
-      for _ in range(200)]
+ss = [invert(om_full + RNG.normal(0, SIG_GYRO, len(om_full)),
+             JP, Z, A_ARM) for _ in range(200)]
 sa = np.array([v[0] for v in ss]); ia = np.array([v[1] for v in ss])
 print(f"{'+ measured gyro noise (200 draws)':<44}"
       f"{sa.mean():9.2f}{ia.mean():9.1f}   +-{sa.std():.2f} / +-{ia.std():.1f}")
 for dj, lab in ((0.04, 'J_P +4%'), (-0.04, 'J_P -4%'),
                 (0.23, 'J_P -23% (roll calibration)'),):
-    s, i = invert(om, JP * (1 + dj if dj < 0.2 else -dj), Z, A_ARM)
+    s, i = invert(om_full, JP * (1 + dj if dj < 0.2 else -dj), Z, A_ARM)
     print(f"{'exact derivative, ' + lab:<44}{s:9.2f}{i:9.1f}")
 for dz, lab in ((0.005, 'z_CoM +5 mm'), (-0.005, 'z_CoM -5 mm')):
-    s, i = invert(om, JP, Z + dz, A_ARM)
+    s, i = invert(om_full, JP, Z + dz, A_ARM)
     print(f"{'exact derivative, ' + lab:<44}{s:9.2f}{i:9.1f}")
-s, i = invert(om, JP, Z, A_ARM + 0.002)
+s, i = invert(om_full, JP, Z, A_ARM + 0.002)
 print(f"{'exact derivative, gravity arm +2 mm':<44}{s:9.2f}{i:9.1f}")

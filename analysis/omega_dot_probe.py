@@ -14,6 +14,7 @@ from pathlib import Path
 
 import numpy as np
 from scipy.signal import savgol_filter
+from analysis.rate_derivative import omega_dot
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -63,7 +64,8 @@ _, i1 = cvp.detect_excitation_window(sig['moment'],
 j = crit.onset_idx; i1 = min(i1, n - 1); sl = slice(j, i1 + 1)
 tau = sig['t'][sl] - sig['t'][j]
 phi = s * (phi_all[sl] - phi_all[j]); deg = np.rad2deg(phi)
-om = s * sig['omega'][sl]; m = s * sig['moment'][sl]; f = sig['f_col'][sl]
+om_full = s * sig['omega'][:n]
+om = om_full[sl]; m = s * sig['moment'][sl]; f = sig['f_col'][sl]
 dt = float(np.median(np.diff(tau)))
 piv = cvp.estimate_pivot_from_mocap(bag, crit.onset_time, axis)
 lp = piv['pivot_abs'] * 1e-3 if not np.isnan(piv['pivot_abs']) else LP[axis]
@@ -87,7 +89,9 @@ print(f"{'SG width':>9}{'[ms]':>7}{'peak om_dot':>13}{'vs fit':>9}"
 res = {}
 for w in WIDTHS:
     ww = min(w if w % 2 else w + 1, len(tau) - (1 - len(tau) % 2))
-    omd = savgol_filter(om, ww, 2, deriv=1, delta=dt)
+    # differentiate the full trace, then slice, so that widening
+    # the window does not simply widen the extrapolated edge
+    omd = omega_dot(om_full, dt, ww)[sl]
     ge = (j_p * omd - m - f * lp + W * a * np.cos(phi) - W * Z * np.sin(phi))
     sd, id_ = np.polyfit(deg, 1e3 * ge, 1)
     res[w] = (omd, sd, id_)
