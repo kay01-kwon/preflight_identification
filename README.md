@@ -61,6 +61,22 @@ pip install ruptures        # only for the change-point benchmark
 Reading the bags needs a sourced **ROS 2** environment (`rosbag2_py`, `rclpy`)
 and the `ros2_libcanard_msgs` package for `/uav/actual_rpm`.
 
+**Target versions.** The analysis is developed and verified against
+`python 3.10.12`, `numpy 1.21.5`, `scipy 1.8.0`, `matplotlib 3.5.1` — see
+[`requirements-lab.txt`](requirements-lab.txt), which also records how to
+rebuild that environment for a compatibility check. These are older than a
+fresh install gives, so two API changes are worked around in the code rather
+than by upgrading:
+
+| newer API | version | what the code uses instead |
+|---|---|---|
+| `legend(ncols=)` | matplotlib ≥ 3.6 | `legend(ncol=)`, valid in both |
+| `np.trapezoid` | numpy ≥ 2.0, which removed `np.trapz` | binds whichever name exists |
+
+Every script in `analysis/` has been run end to end on both stacks, and
+`heave_damping.py` gives identical output on each, so results do not depend on
+the choice. If you upgrade, do not "modernise" those two spellings.
+
 ---
 
 ## Data layout
