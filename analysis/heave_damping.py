@@ -221,6 +221,13 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
         # where omega_dot must be zero (analysis/rate_derivative.py)
         dt = float(np.median(np.diff(sig['t'][:n])))
         om_full = s * sig['omega'][:n] / GYRO_GAIN
+        # Bias from the PRE-ONSET MEAN, where the vehicle is at rest.
+        # Using the single onset sample instead leaves that sample's
+        # noise (scatter ~19 mrad/s) as a constant offset, which over a
+        # 0.7 s window integrates to ~0.7 deg -- 11% of the excursion,
+        # and exactly the size of the discrepancy it was blamed for.
+        pre = slice(max(0, j - 100), j)
+        bias = float(np.mean(om_full[pre])) if j >= 20 else om_full[j]
         if DERIV.startswith('polyphi'):
             # everything from the ATTITUDE, which mocap corroborates:
             # no rate scale factor is involved at all
@@ -229,8 +236,7 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
             phi_rel = ph_fit
             phi_abs = phi_abs[0] + ph_fit
         elif DERIV.startswith('poly'):
-            om = om_full[sl]
-            om = om - om[0]          # anchor the rate at the onset
+            om = om_full[sl] - bias
             ph_fit, om_fit, omd = omega_dot_poly(
                 tau, om, int(DERIV.split(':')[1]))
             if DERIV.startswith('polyk'):
