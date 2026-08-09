@@ -59,9 +59,20 @@ gradient and 23% low in level.  Polynomial order is now the limiting
 systematic, about +-7 mN.m/deg; quoting order 6 alone would be
 choosing the order that matches.
 
-One caveat on the gain: mocap and odometry attitudes agree to 0.999 on
-roll but 1.056 on pitch, so 0.890 is well determined on roll and less
-so on pitch, where a single global factor is the weaker assumption.
+On the gain being a single global factor: measured per axis it is
+0.891 on roll and 0.890 on pitch, and per case/axis group it spans
+0.880-0.907 with no structure, so one number is justified.  The check
+was done twice, because comparing the reported p with d(euler roll)/dt
+is not automatically the same quantity -- the vehicle turns about the
+ground contact line, a world-fixed axis, which in a ZYX decomposition
+couples the three Euler rates.  Deriving the body rate exactly from the
+attitude instead, omega = 2 vec(conj(q) (x) qdot), gives the same
+0.891 / 0.890, so the Euler route was not misleading here.
+
+Separately, mocap and odometry attitudes agree to 0.999 on roll but
+1.056 on pitch.  That is a discrepancy between the two ATTITUDE
+sources and does not bear on the gain, since both of them place the
+rate about 10% low.
 
 Environment: HD_SAVGOL (width, default 9), HD_DERIV ('sg' | 'poly:K' |
 'polyk:K'), HD_GAIN (rate divisor, default 1.0), HD_DUMP (npz path).
