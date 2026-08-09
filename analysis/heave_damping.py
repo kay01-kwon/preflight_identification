@@ -54,6 +54,7 @@ from utils.extractor import load_excitation_dataset
 from utils import math_tools
 from error_budget import ge_moment
 from analysis.pnls_constants import PNLS_CONSTANTS
+from analysis.rate_derivative import omega_dot, edge_margin
 
 ROOT = Path(__file__).resolve().parents[1] / 'DataSet' / 'exp'
 G, Z = 9.81, 0.261
@@ -115,11 +116,17 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
 
         phi_abs = s * phi_all[sl]
         phi_rel = s * (phi_all[sl] - phi_all[j])
-        om = s * sig['omega'][sl]
         m = s * sig['moment'][sl]
         f = sig['f_col'][sl]
-        omd = savgol_filter(om, w, 2, deriv=1,
-                            delta=float(np.median(np.diff(tau))))
+        # differentiate the FULL trace, then slice: slicing first would
+        # put the onset on the filter's extrapolated left edge, exactly
+        # where omega_dot must be zero (analysis/rate_derivative.py)
+        dt = float(np.median(np.diff(sig['t'][:n])))
+        om_full = s * sig['omega'][:n]
+        omd_full = omega_dot(om_full, dt, w)
+        om, omd = om_full[sl], omd_full[sl]
+        if not edge_margin(n, j, i1, w)['ok']:
+            continue
 
         piv = cvp.estimate_pivot_from_mocap(bag, crit.onset_time, ax)
         lp = piv['pivot_abs'] * 1e-3 if not np.isnan(piv['pivot_abs']) \

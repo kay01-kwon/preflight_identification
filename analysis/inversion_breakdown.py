@@ -53,6 +53,7 @@ from utils.extractor import load_excitation_dataset
 from utils import math_tools
 from error_budget import ge_moment
 from analysis.pnls_constants import PNLS_CONSTANTS
+from analysis.rate_derivative import omega_dot, edge_margin
 
 OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('inversion.pdf')
 CASE = sys.argv[2] if len(sys.argv) > 2 else 'case_03'
@@ -108,11 +109,16 @@ def decompose(crit):
         return None
     phi_abs = s * phi_all[sl]
     phi_rel = s * (phi_all[sl] - phi_all[j])
-    om = s * sig['omega'][sl]
     m = s * sig['moment'][sl]
     f = sig['f_col'][sl]
-    omd = savgol_filter(om, w, 2, deriv=1,
-                        delta=float(np.median(np.diff(tau))))
+    # differentiate the full trace, then slice -- see
+    # analysis/rate_derivative.py for why slicing first breaks the onset
+    dt = float(np.median(np.diff(sig['t'][:n])))
+    om_full = s * sig['omega'][:n]
+    omd_full = omega_dot(om_full, dt, w)
+    om, omd = om_full[sl], omd_full[sl]
+    if not edge_margin(n, j, i1, w)['ok']:
+        return None
     piv = cvp.estimate_pivot_from_mocap(bag, crit.onset_time, ax)
     lp = piv['pivot_abs'] * 1e-3 if not np.isnan(piv['pivot_abs']) \
         else LP[ax]
