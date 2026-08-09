@@ -266,5 +266,7 @@ if os.environ.get('HD_DUMP'):
              reg=np.concatenate([1e3 * r['reg'] for r in rows]),
              mdot=np.array([r['mdot'] for r in rows]),
              d_fit=np.array(d_fit),
-             d_ideal=np.array([np.median(r['d_ideal']) for r in rows]))
+             d_ideal=np.array([np.median(r['d_ideal']) for r in rows]),
+             case=np.array([r['case'] for r in rows]),
+             axis=np.array([r['ax'] for r in rows]))
     print(f"\ndumped -> {os.environ['HD_DUMP']}")
