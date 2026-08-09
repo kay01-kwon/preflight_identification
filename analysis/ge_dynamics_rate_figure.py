@@ -179,8 +179,12 @@ ax.text(0.03, 0.80,
 print(f"  within-run slope: inversion {np.median(si):+.1f}, "
       f"model {np.median(sm):+.1f}")
 
-fig.suptitle(rf'ramp rates $\dot M \leq {MAX_RATE:g}$ N$\cdot$m/s '
-             rf'({n_run} runs) — no heave-damping correction',
+cap_txt = (rf'all {n_run} runs, $\dot M$ = {mdot.min():.2f}–{mdot.max():.2f}'
+           rf' N$\cdot$m/s'
+           if MAX_RATE >= mdot.max() else
+           rf'ramp rates $\dot M \leq {MAX_RATE:g}$ N$\cdot$m/s '
+           rf'({n_run} runs)')
+fig.suptitle(cap_txt + ' — no heave-damping correction',
              fontsize=9.5, color=INK, x=0.085, ha='left', y=0.975)
 
 OUT.mkdir(parents=True, exist_ok=True)

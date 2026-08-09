@@ -39,6 +39,7 @@ Usage: PYTHONPATH=<stubs> python analysis/heave_damping.py
 """
 import contextlib
 import io
+import os
 import sys
 from pathlib import Path
 
@@ -70,6 +71,13 @@ OFF_MM = {('case_01', 'Mx'): -2.90, ('case_01', 'My'): -11.45,
           ('case_05', 'Mx'): 10.91, ('case_05', 'My'): -10.89}
 OFF_SIGN = {'Mx': +1.0, 'My': -1.0}
 BINS = [(0.0, 0.2, 'slow'), (0.2, 0.6, 'mid'), (0.6, 9.9, 'fast')]
+
+# Savitzky-Golay width for omega_dot, in samples at 100 Hz.  Not a free
+# choice: the data carry a real ~10 Hz component (period 97 ms), so any
+# window wider than that smooths away the very acceleration being
+# measured -- 9 samples is 90 ms, right on it.  Overridable so the
+# sensitivity can be swept (analysis/omega_dot_probe.py).
+SAVGOL_W = int(os.environ.get('HD_SAVGOL', 9))
 
 
 def pivot_arms(axis, pos, lp):
@@ -110,7 +118,7 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
             continue
         sl = slice(j, i1 + 1)
         tau = sig['t'][sl] - sig['t'][j]
-        w = min(9, len(tau) - (1 - len(tau) % 2))
+        w = min(SAVGOL_W, len(tau) - (1 - len(tau) % 2))
         if w < 5:
             continue
 
