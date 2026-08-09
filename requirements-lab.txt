@@ -23,3 +23,21 @@ matplotlib==3.5.1
 
 # Reading the bags needs rosbag2_py, which comes from a sourced ROS 2
 # installation and is not a pip dependency.
+
+# ---------------------------------------------------------------------
+# Reproducing this environment for a compatibility check
+#
+#   python3.10 -m venv /tmp/labenv
+#   /tmp/labenv/bin/pip install --only-binary=:all: \
+#       numpy==1.21.5 scipy==1.8.0 matplotlib==3.5.1
+#   /tmp/labenv/bin/pip install rosbags      # only if ROS 2 is not sourced
+#
+# Then run any script with /tmp/labenv/bin/python instead of python3.
+# Compiling everything is a cheap first pass and catches syntax-level
+# regressions across Python versions:
+#
+#   /tmp/labenv/bin/python -m py_compile analysis/*.py utils/*.py *.py
+#
+# It will NOT catch keyword arguments that only exist in newer
+# matplotlib -- those need the script to actually run, because the
+# error comes from Legend.__init__ at call time.
