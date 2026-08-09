@@ -23,6 +23,12 @@ onset the balance is static, so the agreement there is the LEVEL of the
 ground-effect moment -- the same quantity the static check already
 reports, not independent evidence.
 
+The band in panel (a) is the interquartile range across runs at each
+tilt bin.  It is the run-to-run DISPERSION and must not be read as a
+confidence interval on the median: with 116 runs the standard error of
+the median is smaller by roughly sqrt(n), so two medians can be
+distinguished far more finely than the overlap of the bands suggests.
+
 Panel (b) is the attitude dependence, and it needs its own panel
 because the pooled trend in (a) is NOT the within-run trend.  Runs
 differ in offset and in how far they tip, so pooling them flattens the
@@ -121,7 +127,9 @@ ax.annotate('at the onset the balance is static:\n'
             xytext=(1.05, 395), fontsize=8, color=INK2, linespacing=1.35,
             arrowprops=dict(arrowstyle='->', color=MUTED, lw=0.9))
 ax.text(0.03, 0.045,
-        'a pooled median; the within-run trend\nis the one to read — see (b)',
+        'lines: median over runs, binned in tilt\n'
+        'band: interquartile range ACROSS RUNS —\n'
+        'dispersion, not an uncertainty on the median',
         transform=ax.transAxes, fontsize=7.5, color=INK, linespacing=1.35,
         bbox=dict(fc=SURF, ec=MUTED, lw=0.5, pad=3, alpha=0.93))
 ax.set_xlabel(r'tilt excursion from the onset, $\delta\varphi$  [deg]',
