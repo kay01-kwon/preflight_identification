@@ -128,7 +128,7 @@ a0.set_ylabel(r'excursion $\delta\varphi$  [deg]', color=INK2)
 a0.set_title('(a)  attitude, measured and integrated', color=INK,
              loc='left', pad=6)
 a0.legend(fontsize=8, frameon=False, loc='upper center',
-          bbox_to_anchor=(0.5, 1.30), ncols=2, labelcolor=INK2)
+          bbox_to_anchor=(0.5, 1.30), ncol=2, labelcolor=INK2)
 a0.grid(alpha=0.22, lw=0.6, color=MUTED)
 a0.set_axisbelow(True)
 

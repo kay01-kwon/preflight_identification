@@ -143,7 +143,7 @@ ax.set_axisbelow(True)
 for sp in ('top', 'right'):
     ax.spines[sp].set_visible(False)
 ax.set_title('(a)  levels', fontsize=9, color=INK, loc='left', pad=6)
-ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.20), ncols=2,
+ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.20), ncol=2,
           fontsize=8, frameon=False, labelcolor=INK2)
 
 # ---- (b) within-run attitude slope ----------------------------------

@@ -66,7 +66,7 @@ for ci_,case in enumerate(cases):
     for s in ('top','right'): ax.spines[s].set_visible(False)
 axes[0].set_ylabel('CoM offset error [mm]')
 handles,labels=axes[0].get_legend_handles_labels()
-fig.legend(handles,labels,loc='upper center',ncols=6,fontsize=8,
+fig.legend(handles,labels,loc='upper center',ncol=6,fontsize=8,
            frameon=False,bbox_to_anchor=(0.5,1.06))
 fig.tight_layout(rect=(0,0,1,0.97))
 fig.savefig(REPO / 'docs' / 'fig_estimator_err.pdf', bbox_inches='tight')

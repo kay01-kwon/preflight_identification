@@ -1,0 +1,25 @@
+# The stack the analysis is developed against and verified on.
+#
+# These are the versions on the lab machine, and they are OLDER than
+# what a fresh install gives, so two API changes matter and are worked
+# around in the code rather than by upgrading:
+#
+#   matplotlib >= 3.6  renamed legend(ncol=) to legend(ncols=).
+#                      The code uses ncol=, which works on both.
+#   numpy      >= 2.0  renamed trapz to trapezoid and REMOVED trapz.
+#                      analysis/error_budget.py and
+#                      analysis/excitation_angle_design.py bind
+#                      whichever name the installed numpy has.
+#
+# Every script in analysis/ was run end to end on exactly these
+# versions, and heave_damping.py produces output identical to the
+# newer stack (matplotlib 3.11 / numpy 2.4 / scipy 1.17), so the
+# results do not depend on the choice.
+#
+# python 3.10.12
+numpy==1.21.5
+scipy==1.8.0
+matplotlib==3.5.1
+
+# Reading the bags needs rosbag2_py, which comes from a sourced ROS 2
+# installation and is not a pip dependency.
