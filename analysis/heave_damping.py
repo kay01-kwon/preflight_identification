@@ -152,7 +152,8 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
         mdot = abs(float(np.polyfit(tau, m, 1)[0])) or np.nan
         rows.append(dict(case=case, ax=axname, mdot=mdot, tau=tau,
                          phi=phi_rel, om=om, omd=omd, resid=resid,
-                         reg=reg, d_ideal=d_ideal, arms=arms))
+                         reg=reg, d_ideal=d_ideal, arms=arms,
+                         model=s * raw[sl]))
     print(f"  loaded {case}/{axname}", flush=True)
 
 print(f"\n{len(rows)} runs\n")
@@ -220,3 +221,27 @@ alla = [1e3 * np.polyfit(np.rad2deg(r['phi']), r['resid'] - r['reg'], 1)[0]
 print(f"{'':10}{'ALL':>8}{len(allb):5d}{np.median(allb):12.1f} mN.m/deg"
       f"{np.median(alla):11.1f}"
       f"{100 * (1 - abs(np.median(alla)) / abs(np.median(allb))):9.0f}%")
+
+# ---------------------------------------------------------------------
+# 4. LEVEL, not just slope.  The per-run regressions above carry a free
+#    intercept, so they test only the attitude gradient.  Does the
+#    heave-corrected inversion also agree with the GE model in
+#    magnitude?  Compare
+#        inv_corrected = inversion - dM_damp   against   model
+#    over the window, and separately at the onset itself (tau = 0, where
+#    omega = 0 so the damping term is identically zero and the balance
+#    reduces to the static threshold check).
+print("\nLEVEL comparison [mN.m], median over runs:")
+print(f"{'':4}{'GE model':>12}{'inversion':>12}{'inv - model':>13}"
+      f"{'inv-damp-model':>16}{'at onset':>11}")
+mod = np.array([1e3 * np.median(r['model']) for r in rows])
+inv = np.array([1e3 * np.median(r['resid'] + r['model']) for r in rows])
+d0 = np.array([1e3 * np.median(r['resid']) for r in rows])
+d1 = np.array([1e3 * np.median(r['resid'] - r['reg']) for r in rows])
+on = np.array([1e3 * float(r['resid'][0]) for r in rows])
+print(f"{'':4}{np.median(mod):12.1f}{np.median(inv):12.1f}"
+      f"{np.median(d0):13.1f}{np.median(d1):16.1f}{np.median(on):11.1f}")
+print(f"{'RMS':>4}{'':12}{'':12}{np.sqrt(np.mean(d0**2)):13.1f}"
+      f"{np.sqrt(np.mean(d1**2)):16.1f}{np.sqrt(np.mean(on**2)):11.1f}")
+print(f"\nratio (heave-corrected inversion) / (GE model): "
+      f"median {np.median((inv - 1e3*np.array([np.median(r['reg']) for r in rows])) / mod):.2f}")
