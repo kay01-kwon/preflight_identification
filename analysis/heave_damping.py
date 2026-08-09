@@ -84,6 +84,16 @@ SAVGOL_W = int(os.environ.get('HD_SAVGOL', 9))
 # instead of Savitzky-Golay (analysis/rate_derivative.py).
 DERIV = os.environ.get('HD_DERIV', 'sg')
 
+# Scale applied to the reported rate.  The odometry angular_vel reads
+# about 10% low against the derivative of the attitude, and mocap
+# arbitrates in the attitude's favour: d(odom phi)/dt agrees with
+# d(mocap phi)/dt to 0.999 on roll, while the gyro sits at 0.890 of the
+# first and 0.904 of the second.  The identification does not care --
+# the cosh fit is exactly scale-invariant in omega and the calibrated K
+# absorbs the factor -- but the dynamic inversion does, because it puts
+# J_P omega_dot and W z sin(phi) in the same balance.
+GYRO_GAIN = float(os.environ.get('HD_GAIN', 1.0))
+
 
 def pivot_arms(axis, pos, lp):
     """Horizontal rotor arms about the contact line, tipping-positive."""
@@ -135,7 +145,7 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
         # put the onset on the filter's extrapolated left edge, exactly
         # where omega_dot must be zero (analysis/rate_derivative.py)
         dt = float(np.median(np.diff(sig['t'][:n])))
-        om_full = s * sig['omega'][:n]
+        om_full = s * sig['omega'][:n] / GYRO_GAIN
         if DERIV.startswith('poly'):
             om = om_full[sl]
             om = om - om[0]          # anchor the rate at the onset
