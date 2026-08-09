@@ -10,7 +10,11 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-import sys; SC=sys.argv[1] if len(sys.argv)>1 else '.'
+import sys
+from pathlib import Path; SC=sys.argv[1] if len(sys.argv)>1 else '.'
+
+# figures belong to this repository, wherever it is checked out
+REPO = Path(__file__).resolve().parents[1]
 G=9.81
 MASS={'case_01':3.066,'case_02':3.220,'case_03':3.220,'case_04':3.220,'case_05':3.220}
 TRUTH={('case_01','Mx'):-2.90,('case_01','My'):-11.45,('case_02','Mx'):-14.29,
@@ -65,5 +69,5 @@ handles,labels=axes[0].get_legend_handles_labels()
 fig.legend(handles,labels,loc='upper center',ncols=6,fontsize=8,
            frameon=False,bbox_to_anchor=(0.5,1.06))
 fig.tight_layout(rect=(0,0,1,0.97))
-fig.savefig('/home/user/preflight_identification/docs/fig_estimator_err.pdf',bbox_inches='tight')
+fig.savefig(REPO / 'docs' / 'fig_estimator_err.pdf', bbox_inches='tight')
 print('saved')

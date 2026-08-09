@@ -3,12 +3,12 @@ pre-onset segment (|M| < 0.3 N·m, below any plausible M_crit)."""
 import contextlib, io, sys
 from pathlib import Path
 import numpy as np
-sys.path.insert(0, '/home/user/preflight_identification')
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import critical_value_getter_piecewise as cvp
 from utils.extractor import load_excitation_dataset
 
 drifts, spans, deltas = [], [], []
-for d in sorted(Path('/home/user/preflight_identification/DataSet/exp').glob('case_*/M[xy]')):
+for d in sorted(Path(__file__).resolve().parents[1] / 'DataSet' / 'exp'.glob('case_*/M[xy]')):
     axis = 'x' if d.name == 'Mx' else 'y'
     with contextlib.redirect_stdout(io.StringIO()):
         bags = load_excitation_dataset(d)

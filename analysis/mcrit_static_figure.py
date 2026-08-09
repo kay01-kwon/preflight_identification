@@ -7,6 +7,7 @@ argv[1]; writes docs/fig_mcrit_static.pdf and prints the LaTeX rows.
 """
 import csv
 import sys
+from pathlib import Path
 from collections import defaultdict
 
 import numpy as np
@@ -98,6 +99,9 @@ for ci, case in enumerate(cases):
 axes[0].set_ylabel(r'$M_{\mathrm{crit}}$ [N$\cdot$m]')
 h, l = axes[0].get_legend_handles_labels()
 import matplotlib.lines as mlines
+
+# figures belong to this repository, wherever it is checked out
+REPO = Path(__file__).resolve().parents[1]
 h += [mlines.Line2D([], [], color='k', lw=1.5),
       mlines.Line2D([], [], color='0.45', lw=1.2, ls=(0, (1.6, 1.6))),
       mlines.Line2D([], [], color='#009E73', lw=2.0, ls=(0, (4.5, 1.8)))]
@@ -106,6 +110,6 @@ l += ['no ground effect', 'GE without rotor interference',
 fig.legend(h, l, loc='upper center', ncols=7, fontsize=7.5,
            frameon=False, bbox_to_anchor=(0.5, 1.08))
 fig.tight_layout(rect=(0, 0, 1, 0.96))
-fig.savefig('/home/user/preflight_identification/docs/fig_mcrit_static.pdf',
+fig.savefig(REPO / 'docs' / 'fig_mcrit_static.pdf',
             bbox_inches='tight')
 print('figure saved')
