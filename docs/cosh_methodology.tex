@@ -44,7 +44,8 @@ no stable in-flight data are used.
 \toprule
 Symbol & Meaning & Value & Provenance \\
 \midrule
-$W$, $z_{\mathrm{CoM}}$ & weight, CoM height & $31.59$~N, $\sim$0.3~m & measured / conservative \\
+$W$, $z_{\mathrm{CoM}}$ & weight, CoM height & $31.59$~N, $0.261$~m & measured / CAD \\
+& \quad (case~1, unloaded) & $30.08$~N & measured \\
 $l_{p,\phi},\,l_{p,\theta}$ & pivot offsets (roll, pitch) & $0.140$, $0.110$~m & mocap arc fit \\
 $J_P$ & inertia about the pivot line & — & never used numerically \\
 $C_T$ & thrust map, $T_i = C_T\Omega_i^2$ & $1.3175\times10^{-7}$ & bench calibration \\
@@ -909,24 +910,24 @@ estimator-to-estimator differences stay within about $\pm1$~mm.}
 \cmidrule(lr){4-10}
 case & axis & [mm] & COSH & COSH$_{\rm wide}$ & COSH$_{\rm CAD}$ & NLS & CPD$_{\mathrm{N}}$ & CPD$_{\mathrm{R}}$ & CUSUM \\
 \midrule
-1 & x & $-2.90$ & $-1.65\,{\scriptstyle\pm0.94}$ & $-1.73\,{\scriptstyle\pm0.93}$ & $-1.63\,{\scriptstyle\pm1.02}$ & $-2.05\,{\scriptstyle\pm1.30}$ & $-1.46\,{\scriptstyle\pm1.03}$ & $-1.20\,{\scriptstyle\pm1.51}$ & $-1.15\,{\scriptstyle\pm1.24}$ \\
-1 & y & $-11.45$ & $-11.18\,{\scriptstyle\pm0.42}$ & $-11.13\,{\scriptstyle\pm0.43}$ & $-11.12\,{\scriptstyle\pm0.78}$ & $-11.35\,{\scriptstyle\pm1.37}$ & $-11.21\,{\scriptstyle\pm0.61}$ & $-10.79\,{\scriptstyle\pm0.80}$ & $-9.59\,{\scriptstyle\pm3.88}$ \\
+1 & x & $-2.90$ & $-1.65\,{\scriptstyle\pm0.94}$ & $-1.73\,{\scriptstyle\pm0.93}$ & $-1.61\,{\scriptstyle\pm1.02}$ & $-2.05\,{\scriptstyle\pm1.30}$ & $-1.46\,{\scriptstyle\pm1.03}$ & $-1.20\,{\scriptstyle\pm1.51}$ & $-1.15\,{\scriptstyle\pm1.24}$ \\
+1 & y & $-11.45$ & $-11.18\,{\scriptstyle\pm0.42}$ & $-11.13\,{\scriptstyle\pm0.43}$ & $-11.16\,{\scriptstyle\pm0.78}$ & $-11.35\,{\scriptstyle\pm1.37}$ & $-11.21\,{\scriptstyle\pm0.61}$ & $-10.79\,{\scriptstyle\pm0.80}$ & $-9.59\,{\scriptstyle\pm3.88}$ \\
 \addlinespace[2pt]
-2 & x & $-14.29$ & $-15.15\,{\scriptstyle\pm0.36}$ & $-15.17\,{\scriptstyle\pm0.36}$ & $-15.18\,{\scriptstyle\pm0.64}$ & $-15.03\,{\scriptstyle\pm0.76}$ & $-15.09\,{\scriptstyle\pm0.70}$ & $-14.10\,{\scriptstyle\pm4.15}$ & $-15.00\,{\scriptstyle\pm0.52}$ \\
-2 & y & $-9.90$ & $-10.57\,{\scriptstyle\pm0.41}$ & $-10.49\,{\scriptstyle\pm0.42}$ & $-10.36\,{\scriptstyle\pm0.80}$ & $-9.60\,{\scriptstyle\pm1.13}$ & $-9.91\,{\scriptstyle\pm0.52}$ & $-9.61\,{\scriptstyle\pm0.46}$ & $-8.54\,{\scriptstyle\pm4.02}$ \\
+2 & x & $-14.29$ & $-15.15\,{\scriptstyle\pm0.36}$ & $-15.17\,{\scriptstyle\pm0.36}$ & $-15.16\,{\scriptstyle\pm0.64}$ & $-15.03\,{\scriptstyle\pm0.76}$ & $-15.09\,{\scriptstyle\pm0.70}$ & $-14.10\,{\scriptstyle\pm4.15}$ & $-15.00\,{\scriptstyle\pm0.52}$ \\
+2 & y & $-9.90$ & $-10.57\,{\scriptstyle\pm0.41}$ & $-10.49\,{\scriptstyle\pm0.42}$ & $-10.37\,{\scriptstyle\pm0.80}$ & $-9.60\,{\scriptstyle\pm1.13}$ & $-9.91\,{\scriptstyle\pm0.52}$ & $-9.61\,{\scriptstyle\pm0.46}$ & $-8.54\,{\scriptstyle\pm4.02}$ \\
 \addlinespace[2pt]
 3 & x & $-5.26$ & $-8.60\,{\scriptstyle\pm0.45}$ & $-8.62\,{\scriptstyle\pm0.46}$ & $-8.68\,{\scriptstyle\pm0.48}$ & $-8.54\,{\scriptstyle\pm0.74}$ & $-8.11\,{\scriptstyle\pm1.20}$ & $-4.63\,{\scriptstyle\pm4.72}$ & $-8.45\,{\scriptstyle\pm0.92}$ \\
-3 & y & $+3.14$ & $+0.72\,{\scriptstyle\pm0.40}$ & $+0.73\,{\scriptstyle\pm0.39}$ & $+0.73\,{\scriptstyle\pm0.60}$ & $+1.06\,{\scriptstyle\pm0.97}$ & $+0.71\,{\scriptstyle\pm0.82}$ & $+0.94\,{\scriptstyle\pm1.00}$ & $+1.12\,{\scriptstyle\pm3.39}$ \\
+3 & y & $+3.14$ & $+0.72\,{\scriptstyle\pm0.40}$ & $+0.73\,{\scriptstyle\pm0.39}$ & $+0.74\,{\scriptstyle\pm0.60}$ & $+1.06\,{\scriptstyle\pm0.97}$ & $+0.71\,{\scriptstyle\pm0.82}$ & $+0.94\,{\scriptstyle\pm1.00}$ & $+1.12\,{\scriptstyle\pm3.39}$ \\
 \addlinespace[2pt]
 4 & x & $+6.67$ & $+5.24\,{\scriptstyle\pm0.65}$ & $+5.26\,{\scriptstyle\pm0.65}$ & $+5.24\,{\scriptstyle\pm0.66}$ & $+4.94\,{\scriptstyle\pm0.88}$ & $+5.57\,{\scriptstyle\pm0.72}$ & $+3.58\,{\scriptstyle\pm2.19}$ & $+5.01\,{\scriptstyle\pm0.91}$ \\
-4 & y & $+2.40$ & $+0.14\,{\scriptstyle\pm0.61}$ & $+0.16\,{\scriptstyle\pm0.61}$ & $+0.33\,{\scriptstyle\pm0.79}$ & $-0.64\,{\scriptstyle\pm1.49}$ & $-0.66\,{\scriptstyle\pm1.39}$ & $-0.60\,{\scriptstyle\pm1.36}$ & $-0.22\,{\scriptstyle\pm1.36}$ \\
+4 & y & $+2.40$ & $+0.14\,{\scriptstyle\pm0.61}$ & $+0.16\,{\scriptstyle\pm0.61}$ & $+0.34\,{\scriptstyle\pm0.79}$ & $-0.64\,{\scriptstyle\pm1.49}$ & $-0.66\,{\scriptstyle\pm1.39}$ & $-0.60\,{\scriptstyle\pm1.36}$ & $-0.22\,{\scriptstyle\pm1.36}$ \\
 \addlinespace[2pt]
 5 & x & $+10.91$ & $+10.78\,{\scriptstyle\pm0.73}$ & $+10.70\,{\scriptstyle\pm0.69}$ & $+10.78\,{\scriptstyle\pm0.80}$ & $+10.05\,{\scriptstyle\pm1.10}$ & $+10.29\,{\scriptstyle\pm0.65}$ & $+11.16\,{\scriptstyle\pm3.75}$ & $+10.25\,{\scriptstyle\pm0.74}$ \\
-5 & y & $-10.89$ & $-10.57\,{\scriptstyle\pm0.68}$ & $-10.73\,{\scriptstyle\pm0.70}$ & $-10.31\,{\scriptstyle\pm0.93}$ & $-11.11\,{\scriptstyle\pm1.68}$ & $-10.84\,{\scriptstyle\pm0.98}$ & $-10.95\,{\scriptstyle\pm0.95}$ & $-10.84\,{\scriptstyle\pm1.00}$ \\
+5 & y & $-10.89$ & $-10.57\,{\scriptstyle\pm0.68}$ & $-10.73\,{\scriptstyle\pm0.70}$ & $-10.34\,{\scriptstyle\pm0.93}$ & $-11.11\,{\scriptstyle\pm1.68}$ & $-10.84\,{\scriptstyle\pm0.98}$ & $-10.95\,{\scriptstyle\pm0.95}$ & $-10.84\,{\scriptstyle\pm1.00}$ \\
 \midrule
 \multicolumn{3}{@{}l}{component RMS [mm]} & $1.65$ & $1.64$ & $1.64$ & $1.72$ & $1.67$ & $1.65$ & $1.82$ \\
 \multicolumn{3}{@{}l}{max $|$component$|$ [mm]} & $3.34$ & $3.36$ & $3.42$ & $3.28$ & $3.06$ & $3.09$ & $3.19$ \\
-\multicolumn{3}{@{}l}{mean component [mm]} & $-0.93$ & $-0.95$ & $-0.86$ & $-1.07$ & $-0.91$ & $-0.46$ & $-0.58$ \\
+\multicolumn{3}{@{}l}{mean component [mm]} & $-0.93$ & $-0.95$ & $-0.87$ & $-1.07$ & $-0.91$ & $-0.46$ & $-0.58$ \\
 \multicolumn{3}{@{}l}{\emph{radial} RMS [mm]} & $2.33$ & $2.31$ & $2.32$ & $2.43$ & $2.36$ & $2.34$ & $2.57$ \\
 \multicolumn{3}{@{}l}{\emph{radial} max [mm]} & $4.12$ & $4.14$ & $4.18$ & $3.89$ & $3.74$ & $4.31$ & $3.77$ \\
 \bottomrule
