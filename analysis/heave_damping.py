@@ -262,6 +262,7 @@ if os.environ.get('HD_DUMP'):
              phi=np.concatenate([np.rad2deg(r['phi']) for r in rows]),
              om=np.concatenate([r['om'] for r in rows]),
              resid=np.concatenate([1e3 * r['resid'] for r in rows]),
+             model=np.concatenate([1e3 * r['model'] for r in rows]),
              reg=np.concatenate([1e3 * r['reg'] for r in rows]),
              mdot=np.array([r['mdot'] for r in rows]),
              d_fit=np.array(d_fit),
