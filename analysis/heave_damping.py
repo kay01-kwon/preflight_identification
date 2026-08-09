@@ -55,7 +55,8 @@ from utils.extractor import load_excitation_dataset
 from utils import math_tools
 from error_budget import ge_moment
 from analysis.pnls_constants import PNLS_CONSTANTS
-from analysis.rate_derivative import omega_dot, edge_margin
+from analysis.rate_derivative import (omega_dot, edge_margin,
+                                      omega_dot_poly)
 
 ROOT = Path(__file__).resolve().parents[1] / 'DataSet' / 'exp'
 G, Z = 9.81, 0.261
@@ -78,6 +79,10 @@ BINS = [(0.0, 0.2, 'slow'), (0.2, 0.6, 'mid'), (0.6, 9.9, 'fast')]
 # measured -- 9 samples is 90 ms, right on it.  Overridable so the
 # sensitivity can be swept (analysis/omega_dot_probe.py).
 SAVGOL_W = int(os.environ.get('HD_SAVGOL', 9))
+
+# HD_DERIV='poly:5' switches to the onset-anchored polynomial fit
+# instead of Savitzky-Golay (analysis/rate_derivative.py).
+DERIV = os.environ.get('HD_DERIV', 'sg')
 
 
 def pivot_arms(axis, pos, lp):
@@ -131,10 +136,24 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
         # where omega_dot must be zero (analysis/rate_derivative.py)
         dt = float(np.median(np.diff(sig['t'][:n])))
         om_full = s * sig['omega'][:n]
-        omd_full = omega_dot(om_full, dt, w)
-        om, omd = om_full[sl], omd_full[sl]
-        if not edge_margin(n, j, i1, w)['ok']:
-            continue
+        if DERIV.startswith('poly'):
+            om = om_full[sl]
+            om = om - om[0]          # anchor the rate at the onset
+            ph_fit, om_fit, omd = omega_dot_poly(
+                tau, om, int(DERIV.split(':')[1]))
+            if DERIV.startswith('polyk'):
+                # take the ATTITUDE from the same polynomial as well, so
+                # phi, omega and omega_dot are one consistent kinematic
+                # description; otherwise the oscillation is smoothed out
+                # of J_P omega_dot and left in W z sin(phi)
+                phi_rel = ph_fit
+                phi_abs = phi_abs[0] + ph_fit
+                om = om_fit
+        else:
+            omd = omega_dot(om_full, dt, w)[sl]
+            om = om_full[sl]
+            if not edge_margin(n, j, i1, w)['ok']:
+                continue
 
         piv = cvp.estimate_pivot_from_mocap(bag, crit.onset_time, ax)
         lp = piv['pivot_abs'] * 1e-3 if not np.isnan(piv['pivot_abs']) \

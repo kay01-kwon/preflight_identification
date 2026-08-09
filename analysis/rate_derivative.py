@@ -73,3 +73,62 @@ def edge_margin(n_total, onset, end, window):
     half = (int(window) - 1) // 2
     return dict(before=onset, after=n_total - 1 - end, needed=half,
                 ok=onset >= half and (n_total - 1 - end) >= half)
+
+
+def omega_dot_poly(tau, omega, order=5, anchored=True):
+    """omega_dot from a polynomial fit in time, differentiated analytically.
+
+    An alternative to local differentiation that uses the onset
+    conditions instead of a filter window.  At the onset the physics
+    fixes omega(0) = omega_dot(0) = 0, so the polynomial has no constant
+    and no linear term:
+
+        omega(tau) = sum_{k=2}^{order} a_k tau^k
+        omega_dot  = sum_{k=2}^{order} k a_k tau^(k-1)
+
+    which is the same structure the cosh solution has --
+    omega = C1 (cosh C2 tau - 1) = C1 (C2^2 tau^2/2 + C2^4 tau^4/24 + ...)
+    -- so the basis is not an arbitrary choice.  Three properties follow:
+    the derivative is exact rather than differenced, so no window is
+    involved and neither edge is extrapolated; omega_dot(0) = 0 holds by
+    construction rather than by luck; and the fit averages over the
+    whole window instead of 9 samples, which is where the noise
+    reduction comes from.
+
+    The cost is that a polynomial of this order cannot represent the
+    real ~10 Hz content in the rate, so this deliberately estimates the
+    SMOOTH tipping motion and discards the oscillation.  Whether that is
+    the right thing to do depends on the question being asked; it is not
+    free, because the other terms of the balance still carry the
+    oscillation.
+
+    Parameters
+    ----------
+    tau : (N,) array, time from the onset (tau[0] = 0).
+    omega : (N,) array, rate in the tipping-positive sense.
+    order : highest power retained.
+    anchored : impose omega(0) = omega_dot(0) = 0.  With False the fit
+        is an ordinary polynomial of the same order, for comparison.
+
+    Returns
+    -------
+    (phi_fit, omega_fit, omega_dot_fit) : each (N,)
+        phi_fit is the integral of omega_fit with phi(0) = 0, so all
+        three kinematic quantities come from ONE polynomial and all
+        three onset conditions hold at once.  Using the smoothed
+        omega_dot with the raw measured attitude would be inconsistent:
+        the oscillation would be removed from the inertia term and left
+        in the gravity term, where nothing cancels it.
+    """
+    tau = np.asarray(tau, dtype=float)
+    omega = np.asarray(omega, dtype=float)
+    ks = np.arange(2, order + 1) if anchored else np.arange(0, order + 1)
+    A = np.vstack([tau ** k for k in ks]).T
+    coef, *_ = np.linalg.lstsq(A, omega, rcond=None)
+    fit = A @ coef
+    dks = ks[ks >= 1]
+    D = np.vstack([tau ** (k - 1) for k in dks]).T
+    dot = D @ (coef[ks >= 1] * dks)
+    I = np.vstack([tau ** (k + 1) for k in ks]).T
+    phi = I @ (coef / (ks + 1))
+    return phi, fit, dot
