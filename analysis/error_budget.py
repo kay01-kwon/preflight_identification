@@ -68,6 +68,11 @@ from pathlib import Path
 
 import numpy as np
 
+# numpy 2.0 renamed trapz to trapezoid and dropped the old name, so
+# neither spelling works on both.  Bind whichever this numpy has.
+_trapezoid = getattr(np, 'trapezoid', None) or np.trapz
+
+
 from utils.extractor import load_excitation_dataset
 from utils import math_tools
 from critical_value_getter_piecewise import (
@@ -110,7 +115,7 @@ def duhamel(tau, rho, c2, j_p):
     for i in range(1, n):
         s = tau[:i + 1]
         integrand = np.cosh(np.clip(c2 * (tau[i] - s), 0, 30)) * rho[:i + 1]
-        out[i] = np.trapezoid(integrand, s) / j_p
+        out[i] = _trapezoid(integrand, s) / j_p
     return out
 
 

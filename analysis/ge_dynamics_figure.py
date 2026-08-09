@@ -87,7 +87,7 @@ ax.grid(alpha=0.22, lw=0.6)
 ax.set_axisbelow(True)
 for sp in ('top', 'right'):
     ax.spines[sp].set_visible(False)
-ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.19), ncols=1,
+ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.19), ncol=1,
           fontsize=8, frameon=False)
 fig.tight_layout()
 fig.savefig(OUT / 'fig_ge_dynamics.pdf', bbox_inches='tight')

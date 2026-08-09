@@ -185,7 +185,7 @@ a0.set_ylabel(r'change from the onset  [mN$\cdot$m]', color=INK2)
 a0.set_title('(a)  the five terms of the inversion', color=INK, loc='left',
              pad=6)
 a0.legend(fontsize=8, frameon=False, loc='upper center',
-          bbox_to_anchor=(0.5, 1.26), ncols=5, labelcolor=INK2,
+          bbox_to_anchor=(0.5, 1.26), ncol=5, labelcolor=INK2,
           columnspacing=0.9, handlelength=1.3)
 a0.grid(alpha=0.22, lw=0.6, color=MUTED)
 a0.set_axisbelow(True)

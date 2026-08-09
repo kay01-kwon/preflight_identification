@@ -107,7 +107,7 @@ h += [mlines.Line2D([], [], color='k', lw=1.5),
       mlines.Line2D([], [], color='#009E73', lw=2.0, ls=(0, (4.5, 1.8)))]
 l += ['no ground effect', 'GE without rotor interference',
       'GE with rotor interference (parameter-free)']
-fig.legend(h, l, loc='upper center', ncols=7, fontsize=7.5,
+fig.legend(h, l, loc='upper center', ncol=7, fontsize=7.5,
            frameon=False, bbox_to_anchor=(0.5, 1.08))
 fig.tight_layout(rect=(0, 0, 1, 0.96))
 fig.savefig(REPO / 'docs' / 'fig_mcrit_static.pdf',

@@ -52,6 +52,11 @@ python analysis/excitation_angle_design.py --criterion 1.0 --caps 2 3 4 5 6 7 8 
 import argparse
 
 import numpy as np
+
+# numpy 2.0 renamed trapz to trapezoid and dropped the old name, so
+# neither spelling works on both.  Bind whichever this numpy has.
+_trapezoid = getattr(np, 'trapezoid', None) or np.trapz
+
 from scipy.optimize import brentq
 
 
@@ -96,7 +101,7 @@ def main():
         s = np.linspace(0, te, 3000)
         dphi = C1 * (np.sinh(C2 * s) / C2 - s)
         rho = 0.5 * G2 * dphi**2
-        dom = np.trapezoid(np.cosh(C2 * (te - s)) * rho, s) / J
+        dom = _trapezoid(np.cosh(C2 * (te - s)) * rho, s) / J
         omn = C1 * (np.cosh(C2 * te) - 1)
         return te, dom, omn, 100.0 * dom / omn
 
