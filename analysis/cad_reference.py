@@ -1,6 +1,6 @@
 """Run the identification with constants taken entirely from CAD.
 
-CAD gives z_CoM = 0.256 m and the CoM inertias of Table 5, so the
+CAD gives z_CoM = 0.261 m and the CoM inertias of Table 5, so the
 parallel-axis theorem fixes J_P and hence BOTH constants:
     C2 = sqrt(W z / J_P),   K = 1/(W z).
 Nothing is fitted.  This reports the rate-consistency CV and the

@@ -26,8 +26,8 @@ This is compared against the parameter-free image-superposition model
 (the 'interf' branch of analysis/ge_trajectory.py).
 
 RESULT: THE LEVEL IS THE STATIC CHECK; THE ATTITUDE DEPENDENCE IS NOT
-RESOLVABLE.  Re-run with the CAD constants (z_CoM = 0.256 m from the
-landing-gear datum, J_P = 0.325 / 0.301 kg m^2 from the parallel-axis
+RESOLVABLE.  Re-run with the CAD constants (z_CoM = 0.261 m from the
+landing-gear datum, J_P = 0.334 / 0.309 kg m^2 from the parallel-axis
 theorem), which are independently measured rather than fitted:
 
 1. At the onset the balance is STATIC, exactly.  The onset is defined by
@@ -72,6 +72,9 @@ theorem), which are independently measured rather than fitted:
    slope stays flat at -45.9 / -45.3 / -44.2 / -42.3.  Along that line
    W z_CoM and J_P move together, so the trajectory-model relation
    barely changes and no choice of height rescues the measurement.
+   (That sweep was run before the CAD datum was settled at 0.261 m, so
+   its top point is 0.256; the trend is flat to within 3.6 mN.m/deg
+   across the whole 66 mm span, and 5 mm past its end changes nothing.)
    Neither is the derivative's source.  The bags carry
    /mavros/imu/data_raw at 200 Hz, twice the odom rate the pipeline
    uses, but analysis/imu_vs_odom.py shows the raw gyro is worse even at
@@ -231,10 +234,10 @@ OFF_SIGN = {'Mx': +1.0, 'My': -1.0}
 # error in J_P propagates directly, and the earlier attempt used the
 # calibrated J_P, which varies 2.5x across datasets and sits below the
 # parallel-axis floor.
-Z_COM_SHARED = 0.256                       # m, CAD, landing-gear datum
+Z_COM_SHARED = 0.261                       # m, CAD, landing-gear datum
 J_COM = {'x': 0.051085, 'y': 0.050564}     # kg.m^2, CAD Table 5
 J_AXIS = {a: J_COM[a] + 3.220 * (Z_COM_SHARED ** 2 + LP[a] ** 2)
-          for a in ('x', 'y')}             # 0.325 / 0.301 kg.m^2
+          for a in ('x', 'y')}             # 0.334 / 0.309 kg.m^2
 
 
 def j_parallel(axis, z_com, mass):

@@ -18,9 +18,9 @@ import critical_value_getter_piecewise as cvp
 from utils.extractor import load_excitation_dataset
 from constrained_calibration import prepare, MASS_KG, G, ROOT, STRIDE
 
-# CAD reference: z_CoM = 0.256 m and the Table 5 CoM inertias fix J_P by
+# CAD reference: z_CoM = 0.261 m and the Table 5 CoM inertias fix J_P by
 # the parallel-axis theorem, hence both constants, with nothing fitted.
-Z_CAD = 0.256
+Z_CAD = 0.261
 J_CAD = {'x': 0.051085, 'y': 0.050564}
 LP = {'x': 0.140, 'y': 0.110}
 

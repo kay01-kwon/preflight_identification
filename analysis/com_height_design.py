@@ -47,7 +47,7 @@ W = 31.59            # N, vehicle weight
 D = 0.28             # m, support separation along the tilt direction
 X = 0.150            # m, CoM horizontal distance from support A
 G = 9.81
-Z_HYP = (0.205, 0.256)          # the two hypotheses to separate
+Z_HYP = (0.205, 0.261)          # the two hypotheses to separate
 SCALE_G = (1.0, 5.0, 10.0)      # scale resolution [g]
 PHI_DEG = (10, 15, 20, 25, 30, 35, 40)
 DPHI_DEG = 0.3       # Pixhawk attitude accuracy, static
@@ -96,7 +96,7 @@ print(f"The two hypotheses differ by {1e3*(Z_HYP[1]-Z_HYP[0]):.0f} mm, so any "
 
 print("\ntwo-sided reading, Eq. (3) -- x drops out:")
 print(f"{'tilt':>5} | {'N_A + N_B [kg]':>22} | {'sigma_z [mm], 10 g scale':>26}")
-print(f"{'[deg]':>5} | {'z=0.205':>10}{'z=0.256':>12} |")
+print(f"{'[deg]':>5} | {'z=0.205':>10}{'z=0.261':>12} |")
 print('-' * 60)
 for pd in (15, 20, 25, 30, 35):
     phi = np.radians(pd)

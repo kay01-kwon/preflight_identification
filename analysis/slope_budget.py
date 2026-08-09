@@ -31,7 +31,8 @@ import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.signal import savgol_filter
 
-W, Z, JP = 31.59, 0.256, 0.3252          # CAD truth
+W, Z, JP = 31.59, 0.261, 0.3335          # CAD truth
+# JP = J_CAD_x + m (z^2 + l_p^2) = 0.051085 + 3.220 (0.261^2 + 0.140^2)
 LP, A_ARM = 0.140, 0.150                 # pivot arm, gravity arm
 MDOT = 0.65                              # N.m/s
 DT, SIG_GYRO = 0.010, 0.00313            # 100 Hz, measured pre-onset std

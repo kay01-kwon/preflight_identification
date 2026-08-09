@@ -13,7 +13,7 @@ onset is located per run:
                swept exhaustively.
   cosh_wide    the same score minimised over the wide box
                [3,8] x [0.05,0.70] instead, with no PNLS centre.
-  cosh_cad     (C2, K) derived from the CAD geometry -- z_CoM = 0.256 m,
+  cosh_cad     (C2, K) derived from the CAD geometry -- z_CoM = 0.261 m,
                Table 5 inertias, parallel-axis theorem -- nothing fitted.
   nls          per-run scipy least_squares (TRF) fit of (C1, C2, C) with
                C2 in [3, 8] rad/s, onset swept locally around the quadratic
@@ -50,7 +50,7 @@ METHODS = ['cosh', 'cosh_wide', 'cosh_cad', 'nls'] + CLASSIC   # cosh = reported
 
 # CAD geometry (manuscript Table 5 and the landing-gear datum), used by the
 # cosh_cad variant: J_P = J_CAD + m (z_CoM^2 + l_p^2) fixes both constants.
-Z_CAD = 0.256
+Z_CAD = 0.261
 J_CAD = {'x': 0.051085, 'y': 0.050564}
 LP = {'x': 0.140, 'y': 0.110}
 
