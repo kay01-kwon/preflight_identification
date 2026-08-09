@@ -1,7 +1,7 @@
 """Feed-forward compensation moment and CoM offset, all five estimators.
 
 Adds a sixth column to the benchmark of analysis/nls_comparison.py: COSH
-run on constants derived from CAD alone (z_CoM = 0.256 m, Table 5
+run on constants derived from CAD alone (z_CoM = 0.261 m, Table 5
 inertias, parallel-axis theorem; nothing fitted).  The per-run
 estimators -- NLS, the two change-point detectors and CUSUM -- do not
 consume (C2, K) at all, so only the COSH column can move; the table
@@ -32,7 +32,7 @@ TRUTH_MM = {('case_01', 'Mx'): -2.90,  ('case_01', 'My'): -11.45,
             ('case_04', 'Mx'): 6.67,   ('case_04', 'My'): 2.40,
             ('case_05', 'Mx'): 10.91,  ('case_05', 'My'): -10.89}
 SIGN = {'Mx': +1.0, 'My': -1.0}
-Z_CAD = 0.256
+Z_CAD = 0.261
 J_CAD = {'x': 0.051085, 'y': 0.050564}
 LP = {'x': 0.140, 'y': 0.110}
 METHODS = ['cosh', 'cosh_cad', 'nls'] + CLASSIC

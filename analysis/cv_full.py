@@ -10,7 +10,7 @@ import critical_value_getter_piecewise as cvp
 from utils.extractor import load_excitation_dataset
 from constrained_calibration import MASS_KG, G, ROOT
 
-Z_CAD = 0.256
+Z_CAD = 0.261
 J_CAD = {'x': 0.051085, 'y': 0.050564}
 LP = {'x': 0.140, 'y': 0.110}
 acc = {'cal': [], 'cad': []}

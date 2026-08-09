@@ -3,7 +3,7 @@
 The manuscript defines C2 = sqrt(W z_CoM / J_P) and K = 1/(W z_CoM), so the
 calibrated numbers are not free knobs and the comparison has to be reported.
 
-Reference: the CAD model gives z_CoM = 0.256 m and the Table 5 CoM
+Reference: the CAD model gives z_CoM = 0.261 m and the Table 5 CoM
 inertias, so the parallel-axis theorem fixes J_P and with it both
 constants -- nothing is fitted.  Also printed is the parallel-axis FLOOR
 m (z_CoM^2 + l_p^2), the value J_P would take if the CoM inertia were
@@ -21,7 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from constrained_calibration import MASS_KG, G, J_CAD, LP
 
-Z_CAD = 0.256
+Z_CAD = 0.261
 M_REF = 3.220
 W_REF = M_REF * G
 JP_FLOOR = {a: M_REF * (Z_CAD ** 2 + LP[a] ** 2) for a in 'xy'}

@@ -24,7 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from analysis import ge_dynamics_check as gd
 
 OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('docs')
-Z = 0.256
+Z = 0.261
 
 CACHE = Path(__file__).resolve().parent / '.ge_dynamics_traces.npz'
 if CACHE.exists():
