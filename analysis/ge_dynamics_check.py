@@ -215,8 +215,8 @@ import matplotlib.pyplot as plt
 import critical_value_getter_piecewise as cvp
 from utils.extractor import load_excitation_dataset
 from utils import math_tools
-from error_budget import ge_moment
-from analysis.rate_derivative import omega_dot, edge_margin, LP
+from error_budget import ge_moment, LP
+from analysis.rate_derivative import omega_dot, edge_margin
 
 G = 9.81
 MASS_KG = {'case_01': 3.066, 'case_02': 3.220, 'case_03': 3.220,
