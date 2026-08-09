@@ -245,3 +245,25 @@ print(f"{'RMS':>4}{'':12}{'':12}{np.sqrt(np.mean(d0**2)):13.1f}"
       f"{np.sqrt(np.mean(d1**2)):16.1f}{np.sqrt(np.mean(on**2)):11.1f}")
 print(f"\nratio (heave-corrected inversion) / (GE model): "
       f"median {np.median((inv - 1e3*np.array([np.median(r['reg']) for r in rows])) / mod):.2f}")
+
+# ---------------------------------------------------------------------
+# 5. dump for the figure (analysis/heave_damping_figure.py)
+import os
+if os.environ.get('HD_DUMP'):
+    rid = np.concatenate([np.full(len(r['phi']), i)
+                          for i, r in enumerate(rows)])
+    d_fit = []
+    for r in rows:
+        A = np.column_stack([r['om'], np.ones_like(r['om'])])
+        c, *_ = np.linalg.lstsq(A, r['resid'], rcond=None)
+        d_fit.append(c[0])
+    np.savez(os.environ['HD_DUMP'],
+             rid=rid,
+             phi=np.concatenate([np.rad2deg(r['phi']) for r in rows]),
+             om=np.concatenate([r['om'] for r in rows]),
+             resid=np.concatenate([1e3 * r['resid'] for r in rows]),
+             reg=np.concatenate([1e3 * r['reg'] for r in rows]),
+             mdot=np.array([r['mdot'] for r in rows]),
+             d_fit=np.array(d_fit),
+             d_ideal=np.array([np.median(r['d_ideal']) for r in rows]))
+    print(f"\ndumped -> {os.environ['HD_DUMP']}")
