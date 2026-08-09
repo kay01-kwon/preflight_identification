@@ -1,39 +1,70 @@
 #!/usr/bin/env python3
-"""Is the dynamic-inversion residual the rotors' own heave damping?
+"""Anatomy of the dynamic-inversion residual.  RESULT: instrumentation.
 
-The applied moment is reconstructed from a STATIC thrust map,
-m = C_T sum_i b_i Omega_i^2.  That map is blind to the vehicle's motion.
-While the airframe tips at rate omega about the contact line, rotor i --
-sitting a horizontal distance r_i from that line -- climbs (or descends)
-at v_i = omega * r_i.  A climbing rotor at fixed RPM makes LESS thrust,
-so the reconstructed moment overstates the real one by
+This script was written to test whether the residual was the rotors'
+own heave damping -- the static thrust map m = C_T sum b_i Omega_i^2 is
+blind to the fact that a rotor at horizontal distance r_i from the
+contact line climbs at omega r_i while the airframe tips, and loses
+thrust doing so, which would put an omega-proportional term
+omega * sum_i k_i r_i^2 into the balance.
 
-    dM_damp = sum_i (dT/dv_c)_i * (omega r_i) * r_i
-            = omega * sum_i k_i r_i^2 ,        k_i = (dT/dv_c)_i < 0.
+THAT ACCOUNT IS RETRACTED.  It fitted well (eta = required/predicted
+damping had median 0.96 against momentum theory, with the predicted
+0.477 N.m/(rad/s) against 0.514 required) but it was absorbing an
+omega-proportional ARTEFACT of two instrumentation errors, which has
+the same shape.  Both are now fixed, and with them fixed the a-priori
+damping term overshoots by +39 to +55 mN.m/deg -- there is nothing left
+for it to explain.
 
-This is a genuine unmodelled term, it is NOT ground effect and NOT an
-inertia error -- which is why the (J_P, z_CoM) and C_T sweeps could not
-absorb it.  Two properties make it the natural suspect:
+The two errors were:
 
-  * sign.  k_i < 0, so the term is negative for omega > 0.  The measured
-    residual falls with attitude.
-  * it vanishes at the onset.  omega = 0 there by definition, so however
-    large this term is, it cannot move M_crit.
+1. The Savitzky-Golay differentiator was applied to the SLICED window,
+   putting the onset on its extrapolated left edge -- exactly where the
+   physics says omega = omega_dot = 0.  Worth 1.23 N.m of fabricated
+   offset on one measured run.  See analysis/rate_derivative.py.
 
-The a-priori magnitude has no free constant beyond the inflow model.
-Momentum theory at fixed RPM gives the hover heave derivative
+2. The reported angular rate reads about 10% low.  omega / (d phi/dt)
+   is 0.890 (IQR 0.868-0.907) over 137 runs, by three independent
+   comparison methods, and mocap arbitrates against the gyro: the odom
+   and mocap attitudes agree to 0.999 on roll while the rate sits at
+   0.890 of the first and 0.904 of the second.  HD_GAIN divides it out.
 
-    k_i = -2 T_i / v_h,i ,    v_h,i = sqrt(T_i / (2 rho A)),
+Neither touches the identification.  The constrained cosh fit is
+exactly scale-invariant in omega -- scaling the data by g scales C_1
+and the baseline by g, leaves C_2 alone, and multiplies every residual
+by g^2, so the onset argmin does not move -- and the calibrated K
+absorbs g outright.  Both errors act only on J_P omega_dot, which the
+identification never forms.
 
-which is the ideal (upper-bound) value; blade-element-momentum with
-finite solidity reduces it by a factor eta in [0.3, 1].  So the test is:
-regress the residual on the PREDICTED damping regressor and read eta
-off.  If eta lands inside the aerodynamically admissible band AND is
-invariant across ramp rates, the residual is explained.
+With both removed, and phi, omega, omega_dot taken from one
+onset-anchored polynomial so the kinematics are self-consistent
+(HD_DERIV=polyk:K):
 
-phi, omega and omega_dot are collinear over a ramp window, so a good fit
-alone proves nothing -- the discriminator is that eta must not drift
-with ramp rate, and must agree with the aerodynamics in magnitude.
+  method                          slope   level ratio    RMS
+  Savitzky-Golay 9, as it was     -42.0      0.77       229.8
+  + gyro gain only                -25.5      1.00       216.6
+  polynomial kinematics only       -5.5      0.93       207.1
+  both, polynomial order 4         -3.4      1.07
+  both, polynomial order 5        -13.3      1.13
+  both, polynomial order 6         +1.4      1.06       203.5
+  both, polynomial order 7        -11.7      1.09
+  image-superposition model        -1.9      1.00
+
+The claim is the BRACKET, not any single row.  Across orders 4-7 the
+attitude gradient spans -13.3 to +1.4 mN.m/deg with the model's -1.9
+inside it, and the level ratio sits at 1.06-1.13.  The inversion is
+therefore no longer inconsistent with the parameter-free ground-effect
+model in either level or gradient, where before it was 22x off in
+gradient and 23% low in level.  Polynomial order is now the limiting
+systematic, about +-7 mN.m/deg; quoting order 6 alone would be
+choosing the order that matches.
+
+One caveat on the gain: mocap and odometry attitudes agree to 0.999 on
+roll but 1.056 on pitch, so 0.890 is well determined on roll and less
+so on pitch, where a single global factor is the weaker assumption.
+
+Environment: HD_SAVGOL (width, default 9), HD_DERIV ('sg' | 'poly:K' |
+'polyk:K'), HD_GAIN (rate divisor, default 1.0), HD_DUMP (npz path).
 
 Usage: PYTHONPATH=<stubs> python analysis/heave_damping.py
 """
