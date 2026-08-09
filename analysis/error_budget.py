@@ -77,7 +77,12 @@ from critical_value_getter_piecewise import (
 # geometry / aero constants, identical to ge_trajectory.py and
 # small_angle_trajectory.py so the components stay comparable
 W_DEFAULT = 31.59          # N
-Z_COM = 0.30               # m, conservative
+Z_COM = 0.30               # m -- deliberately ABOVE the CAD value
+# CAD gives z_CoM = 0.261 m; 0.30 is kept here on purpose.  The
+# gravity channel of rho is the out-of-span part of W z sin(phi),
+# whose curvature grows with z, so overstating z overstates the
+# bound.  This is a budget, not an estimate -- do not 'correct'
+# it to 0.261 without also relabelling what the table reports.
 LP = dict(x=0.140, y=0.110)
 OFFSET_MARGIN = 0.020      # m, worst |CoM offset| added to the gravity arm
 R_ROTOR = 0.127            # m

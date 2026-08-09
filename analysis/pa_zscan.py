@@ -43,11 +43,11 @@ PYTHONPATH=<stubs> python analysis/pa_zscan.py
 import contextlib, io, sys
 from pathlib import Path
 import numpy as np
-sys.path.insert(0, '/home/user/preflight_identification')
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import critical_value_getter_piecewise as cvp
 from utils.extractor import load_excitation_dataset
 
-ROOT = Path('/home/user/preflight_identification/DataSet/exp')
+ROOT = Path(__file__).resolve().parents[1] / 'DataSet' / 'exp'
 G = 9.81
 MASS = {'case_01':3.066,'case_02':3.220,'case_03':3.220,'case_04':3.220,'case_05':3.220}
 OFF  = {('case_01','Mx'):-2.90,('case_01','My'):-11.45,('case_02','Mx'):-14.29,

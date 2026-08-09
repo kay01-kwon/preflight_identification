@@ -132,3 +132,46 @@ def omega_dot_poly(tau, omega, order=5, anchored=True):
     I = np.vstack([tau ** (k + 1) for k in ks]).T
     phi = I @ (coef / (ks + 1))
     return phi, fit, dot
+
+
+def kinematics_from_phi(tau, phi, order=6):
+    """phi, omega, omega_dot from a polynomial fit to the ATTITUDE.
+
+    The companion of omega_dot_poly, fitted to the angle instead of the
+    rate, and the preferable one when the two disagree.
+
+    The onset conditions are conditions on the ANGLE --
+    phi(0) = phi'(0) = phi''(0) = 0 -- so imposing them deletes the k =
+    0, 1, 2 terms and the series starts at cubic:
+
+        phi(tau)  = sum_{k=3}^{order} b_k tau^k
+        omega     = sum_{k=3}^{order} k b_k tau^(k-1)
+        omega_dot = sum_{k=3}^{order} k(k-1) b_k tau^(k-2)
+
+    which is again the cosh structure: phi = integral of
+    C1(cosh C2 tau - 1) starts at tau^3.
+
+    Why fit the angle rather than the rate.  On this vehicle the
+    reported body rate is about 0.890 of the rate implied by the
+    attitude, and motion capture corroborates the ATTITUDE (the odom and
+    mocap attitudes agree to 0.999 in roll).  Fitting the angle
+    therefore uses the corroborated signal and needs no scale factor at
+    all, where fitting the rate needs an empirical 0.890 divisor.  The
+    discrepancy is not a kinematic identity -- it survives the exact
+    quaternion route, omega = 2 vec(conj(q) (x) qdot), and the measured
+    tipping axis sits only 2.4 deg off the body axis, so neither the
+    Euler detour nor an axis misalignment accounts for it.
+
+    The cost is one extra differentiation of a noisier signal; whether
+    that is worth avoiding the empirical factor is an experiment, not a
+    matter of principle.
+    """
+    tau = np.asarray(tau, dtype=float)
+    phi = np.asarray(phi, dtype=float)
+    ks = np.arange(3, order + 1)
+    A = np.vstack([tau ** k for k in ks]).T
+    coef, *_ = np.linalg.lstsq(A, phi, rcond=None)
+    fit = A @ coef
+    om = np.vstack([k * tau ** (k - 1) for k in ks]).T @ coef
+    omd = np.vstack([k * (k - 1) * tau ** (k - 2) for k in ks]).T @ coef
+    return fit, om, omd

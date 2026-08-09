@@ -74,8 +74,40 @@ Separately, mocap and odometry attitudes agree to 0.999 on roll but
 sources and does not bear on the gain, since both of them place the
 rate about 10% low.
 
+THE 0.890 IS NOT DERIVABLE, AND THE CHOICE OF SOURCE MATTERS.  Three
+candidate identities were tested and all three fail.  It is not the
+Euler-vs-body-rate detour: recovering the body rate exactly from the
+attitude, omega = 2 vec(conj(q) (x) qdot), returns the same 0.891 /
+0.890.  It is not a misaligned tipping axis: the measured rotation axis
+sits 2.4 deg (median) from the excited body axis, cos = 0.999, and
+projecting onto the measured axis still gives 0.889.  And it cannot be
+side-stepped by dropping the rate altogether: fitting the ATTITUDE with
+the same onset-anchored polynomial (HD_DERIV=polyphi:K,
+kinematics_from_phi) and differentiating twice gives
+
+  polyphi:5   gradient  +22.8   level 193.9   1.16 x model
+  polyphi:6             -90.7         200.7   1.20
+  polyphi:7             -11.0         196.0   1.17
+  polyk:6 + gain 0.890   +0.3         159.1   0.95
+
+If the attitude were right and the rate simply 0.890 of it, these two
+routes would agree.  They differ by 24% in level, so the scale factor
+does not fully reconcile them -- J_P omega_dot involves the SECOND
+derivative, and the relation between the two odometry outputs is not a
+pure scale at that order.  The attitude route is also much noisier, as
+two differentiations of a noisier signal must be (residual RMS 257
+against 203).
+
+So the honest level bracket spans BOTH kinematic sources, 0.95-1.20 of
+the model, not the 0.95-0.99 the rate route alone suggests.  The rate
+route is reported as primary because it differentiates once rather than
+twice and its scale factor is measured against two independent attitude
+sources -- but that is a choice, not a derivation, and it should be
+stated as one.
+
 Environment: HD_SAVGOL (width, default 9), HD_DERIV ('sg' | 'poly:K' |
-'polyk:K'), HD_GAIN (rate divisor, default 1.0), HD_DUMP (npz path).
+'polyk:K' | 'polyphi:K'), HD_GAIN (rate divisor, default 1.0),
+HD_DUMP (npz path).
 
 Usage: PYTHONPATH=<stubs> python analysis/heave_damping.py
 """
@@ -98,7 +130,8 @@ from utils import math_tools
 from error_budget import ge_moment
 from analysis.pnls_constants import PNLS_CONSTANTS
 from analysis.rate_derivative import (omega_dot, edge_margin,
-                                      omega_dot_poly)
+                                      omega_dot_poly,
+                                      kinematics_from_phi)
 
 ROOT = Path(__file__).resolve().parents[1] / 'DataSet' / 'exp'
 G, Z = 9.81, 0.261
@@ -188,9 +221,22 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
         # where omega_dot must be zero (analysis/rate_derivative.py)
         dt = float(np.median(np.diff(sig['t'][:n])))
         om_full = s * sig['omega'][:n] / GYRO_GAIN
-        if DERIV.startswith('poly'):
-            om = om_full[sl]
-            om = om - om[0]          # anchor the rate at the onset
+        # Bias from the PRE-ONSET MEAN, where the vehicle is at rest.
+        # Using the single onset sample instead leaves that sample's
+        # noise (scatter ~19 mrad/s) as a constant offset, which over a
+        # 0.7 s window integrates to ~0.7 deg -- 11% of the excursion,
+        # and exactly the size of the discrepancy it was blamed for.
+        pre = slice(max(0, j - 100), j)
+        bias = float(np.mean(om_full[pre])) if j >= 20 else om_full[j]
+        if DERIV.startswith('polyphi'):
+            # everything from the ATTITUDE, which mocap corroborates:
+            # no rate scale factor is involved at all
+            ph_fit, om, omd = kinematics_from_phi(
+                tau, phi_rel, int(DERIV.split(':')[1]))
+            phi_rel = ph_fit
+            phi_abs = phi_abs[0] + ph_fit
+        elif DERIV.startswith('poly'):
+            om = om_full[sl] - bias
             ph_fit, om_fit, omd = omega_dot_poly(
                 tau, om, int(DERIV.split(':')[1]))
             if DERIV.startswith('polyk'):
