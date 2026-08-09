@@ -87,6 +87,25 @@ theorem), which are independently measured rather than fitted:
    error in z_CoM +-2.8, against a signal of -2.  So neither the
    differentiation nor the noise is the limit.
 
+   Read simply, the residual falls linearly with tilt, which is a
+   restoring stiffness of 2.5 N.m/rad -- 31% of W z_CoM, and opposite in
+   sign.  But over the fit window phi, omega and omega_dot all grow
+   monotonically, so a term linear in any one looks linear in the
+   others.  Regressing the residual on each in turn
+   (analysis/regressor_test.py) gives
+
+       phi        -2.69 N.m/rad        coefficient spread 0.69, R^2 0.22
+       omega      -0.50 N.m/(rad/s)                     0.68,     0.21
+       omega_dot  +0.055 kg.m^2                         2.47,     0.19
+
+   Stiffness and damping are indistinguishable here, and the added
+   inertia reading is the LEAST rate-consistent of the three -- so the
+   "0.11 kg.m^2 of apparent inertia" below should be read as one
+   parametrisation of the anomaly, not as its identification.
+   Separating stiffness from damping needs runs where phi and omega are
+   not collinear, which a ramp never provides and a release from rest
+   does.
+
    TWO CORRECTIONS to an earlier reading of this residual, recorded so
    the same inference is not made again:
 
@@ -98,6 +117,15 @@ theorem), which are independently measured rather than fitted:
        was a sign flip.  The inversion in fact points ABOVE the CAD
        height while the calibration points below it, so the two
        disagree in opposite senses and no single pair satisfies both.
+
+   (a2) The rolling-contact exclusion was argued wrongly.  An 80 mm
+       rolling foot leaves a circle-fit residual of only 0.070 mm,
+       BELOW the 0.1-0.2 mm measured, because the fit absorbs the
+       trochoid into cx and R (analysis/rolling_test.py).  The
+       exclusion holds through the fitted geometry instead: at
+       r = 80 mm the fit would return l_p = 260 mm against the measured
+       140.4 +- 3.6, which allows r <~ 2.4 mm and so at most 3% of the
+       required stiffness.
 
    (b) The sensitivities do not transfer.  Along the parallel axis the
        synthetic budget predicts d(slope)/dz = +0.363 mN.m/deg per mm,
