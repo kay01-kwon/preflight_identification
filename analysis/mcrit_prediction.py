@@ -71,6 +71,7 @@ GE = {'single': (0.0103, 0.01026),     # (c_a, b) at phi=0
       'interf': (0.0431, 0.04314)}
 
 rows = []
+per_run = []
 for d in sorted(ROOT.glob('case_*/M[xy]')):
     axis = 'x' if d.name == 'Mx' else 'y'
     with contextlib.redirect_stdout(io.StringIO()):
@@ -104,6 +105,15 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
             per['none'].append(T)
             for name, (ca, b) in GE.items():
                 per[name].append((T - sgn * ca * f_r * l_r) / (1.0 + b))
+            # the same residuals one run at a time, for a distribution
+            # rather than a group mean.  Aggregates below are unchanged.
+            per_run.append(dict(case=key[0], axis=key[1], dir=dirn,
+                                M_ident=f"{M_r:+.5f}",
+                                l_mm=f"{1e3 * l_r:.1f}",
+                                f_onset=f"{f_r:.2f}",
+                                **{f'resid_{k}_mNm':
+                                   f"{1e3 * (M_r - per[k][-1]):+.1f}"
+                                   for k in ('none', 'single', 'interf')}))
         M_bar = float(np.mean([r[0] for r in runs]))
         f_bar = float(np.mean([r[1] for r in runs]))
         arms = np.array([r[2] for r in runs])
@@ -136,6 +146,13 @@ with open(OUT / 'mcrit_prediction.csv', 'w', newline='') as f:
     w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
     w.writeheader()
     w.writerows(rows)
+if per_run:
+    pr = OUT / 'mcrit_per_run.csv'
+    with open(pr, 'w', newline='') as f2:
+        w2 = csv.DictWriter(f2, fieldnames=list(per_run[0].keys()))
+        w2.writeheader()
+        w2.writerows(per_run)
+    print(f"per-run residuals -> {pr}  ({len(per_run)} runs)")
 
 hdr = (f"{'case':8} {'ax':3} {'dir':4} {'l_odom':>7} {'M_ident':>9} "
        f"{'pred:none':>9} {'resid':>7} {'pred:int':>9} {'r_sgl':>7} "
