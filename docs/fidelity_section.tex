@@ -639,6 +639,37 @@ ground-effect channels are antisymmetric between tip directions and are
 partly removed by it ($1.3$--$1.4\times$) --- the structural statement of
 Sec.~\ref{sec:fid-transfer}, now with a number.
 
+\paragraph{The ground-effect entry without the ground-effect model.}
+That row of Table~\ref{tab:budget} is evaluated along the
+image-superposition model, which invites the objection that it assumes
+what it should establish: is that model right along the trajectory?
+The entry does not depend on the answer, and two facts carry it that
+are not modelling assumptions. \emph{First, the projection is an
+algebraic identity of the estimator, not a choice.} Each run carries
+the three degrees of freedom $\{1, \tau, \delta\varphi\}$, so whatever
+the true ground-effect moment is, any part of it lying in that span is
+absorbed exactly; only the curvature in the tilt and above can reach
+the onset --- for \emph{any} function, not for this model in
+particular. \emph{Second, the moment is bounded in magnitude.} Take
+then the most adversarial shape that bound admits, the entire moment
+placed in curvature,
+$\Delta M_{\mathrm{GE}}(\delta\varphi) = A\,(\delta\varphi /
+\delta\varphi_{\max})^2$ with $A$ the run's own modelled level, and
+propagate it through the same Duhamel integral
+\eqref{eq:duhamel-bound} and onset linearisation
+\eqref{eq:onset-translation}. Over the $116$ runs whose rotor
+clearances stay outside the Cheeseman singularity this moves the
+identified CoM offset by $5.2\,\mu$m (median), $24.6$ (95th
+percentile) and $41.6$ (worst); at twice the modelled amplitude,
+$10.4$, $49.2$ and $83.2\,\mu$m. The entry therefore survives a
+ground-effect moment of twice the modelled size, in the worst shape a
+bounded function can take, with a factor of $20$ still in hand against
+the $1.64$~mm validation RMS. The same calculation applied to the
+model as it stands gives $0.2\,\mu$m (median) and $2.2$ (worst);
+Table~\ref{tab:budget} reports $0.11$ and $0.15$ for this channel by
+the anchored peak bound, a different and tighter route to the same
+quantity (\texttt{analysis/ge\_worst\_case\_shape.py}).
+
 Finally, the same table settles how much of $\rho$ could be mistaken for
 a mis-calibrated $C_2$. Since
 $\partial\ln(\cosh x - 1)/\partial\ln x = x\coth(x/2) \ge 2$ for all
@@ -771,7 +802,11 @@ propagation through the deviation dynamics and the onset sensitivity
 (Table~\ref{tab:budget}) moves the delivered CoM offset by at most
 $4.3\,\mu$m, some $400\times$ below the achieved accuracy: over this
 dataset the accuracy is set by measurement noise rather than by the
-closed form. Empirically, the zero-freedom
+closed form. Its ground-effect part is bounded a second time without
+recourse to the ground-effect model, at $42\,\mu$m in the worst
+admissible shape and $83\,\mu$m at twice the modelled amplitude, so
+that entry does not rest on the aerodynamics being right along the
+trajectory. Empirically, the zero-freedom
 family predicts the response across all runs with a noise-dominated,
 rate-invariant residual, is insensitive to the window extent, and
 decisively outperforms its own quadratic limit. The theoretical bounds
