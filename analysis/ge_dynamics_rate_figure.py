@@ -161,13 +161,21 @@ ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.20), ncol=2,
 # ---- (b) within-run attitude slope ----------------------------------
 ax = axes[1]
 si, sm = [], []
+flat = []
 for i in np.unique(rid[keep]):
     s_ = rid == i
-    if np.ptp(phi_all_by_run := d['phi'][s_]) < 0.2:
+    # A slope needs an abscissa to fit over.  A run that tips less than
+    # 0.2 deg is a single point in phi and polyfit's slope runs away, so
+    # panel (b) always has fewer runs than panel (a).  Say by how many.
+    if np.ptp(d['phi'][s_]) < 0.2:
+        flat.append(i)
         continue
     si.append(np.polyfit(d['phi'][s_], (d['resid'] + d['model'])[s_], 1)[0])
     sm.append(np.polyfit(d['phi'][s_], d['model'][s_], 1)[0])
 si, sm = np.array(si), np.array(sm)
+if flat:
+    print(f"  panel (b) drops {len(flat)} of {n_run} runs that tip less"
+          f" than 0.2 deg (no abscissa to fit a slope over)")
 bins = np.arange(-140, 41, 10)
 ax.hist(si, bins=bins, color=DYN, alpha=0.55, lw=0, label='inversion')
 ax.axvline(np.median(si), color=DYN, lw=2.2, zorder=5)

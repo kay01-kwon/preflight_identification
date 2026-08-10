@@ -180,6 +180,12 @@ def pivot_arms(axis, pos, lp):
 
 
 rows = []
+# Why the run count falls between the 140 bags on disk and the rows
+# that reach the figure.  Each gate is counted so the drop is reported
+# rather than inferred.
+drop = dict(no_onset=0, short_window=0, savgol_too_short=0,
+            filter_edge=0, no_ge_model=0)
+n_bags = 0
 for d in sorted(ROOT.glob('case_*/M[xy]')):
     ax = 'x' if d.name == 'Mx' else 'y'
     case, axname = d.parent.name, d.name
@@ -192,6 +198,8 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
         crits, _ = cvp.extract_piecewise_batch(bags, ax, cosh_c2=c2f,
                                                ramp_gain=kf)
     by = {b.name: b for b in bags}
+    n_bags += len(bags)
+    drop['no_onset'] += len(bags) - len(crits)
     for crit in crits:
         bag = by[crit.bag_name]
         s = 1.0 if crit.bag_name.startswith('pos') else -1.0
@@ -205,11 +213,13 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
         j = crit.onset_idx
         i1 = min(i1, n - 1)
         if i1 - j < 15:
+            drop['short_window'] += 1
             continue
         sl = slice(j, i1 + 1)
         tau = sig['t'][sl] - sig['t'][j]
         w = min(SAVGOL_W, len(tau) - (1 - len(tau) % 2))
         if w < 5:
+            drop['savgol_too_short'] += 1
             continue
 
         phi_abs = s * phi_all[sl]
@@ -251,6 +261,9 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
             omd = omega_dot(om_full, dt, w)[sl]
             om = om_full[sl]
             if not edge_margin(n, j, i1, w)['ok']:
+                # only reachable with HD_DERIV=sg; the polynomial
+                # derivatives have no filter edge to fall off
+                drop['filter_edge'] += 1
                 continue
 
         piv = cvp.estimate_pivot_from_mocap(bag, crit.onset_time, ax)
@@ -261,6 +274,7 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
         q_rest = q_rest / np.linalg.norm(q_rest)
         raw = ge_moment(bag, sig, ax, n, s > 0, q_rest=q_rest)
         if raw is None:
+            drop['no_ge_model'] += 1
             continue
 
         ge = (j_p * omd - m - f * lp + W * a * np.cos(phi_abs)
@@ -288,7 +302,11 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
                          model=s * raw[sl]))
     print(f"  loaded {case}/{axname}", flush=True)
 
-print(f"\n{len(rows)} runs\n")
+print(f"\n{len(rows)} of {n_bags} bags survive:")
+for k, v in drop.items():
+    if v:
+        print(f"    -{v:3d}  {k.replace('_', ' ')}")
+print()
 
 # ---------------------------------------------------------------------
 # 1. a-priori magnitude
