@@ -9,6 +9,16 @@ tip directions do not reach the same tilt on both axes:
     Mx/pos  median excursion 5.8 deg     Mx/neg  7.4
     My/pos                   6.8         My/neg  3.1
 
+That asymmetry is designed, not a defect.  All four classes stop at
+much the same absolute attitude -- +6.63, -6.96, +6.52 and -5.82 deg --
+under the common tilt cap, and what differs is where they start: the
+pad rests at -1.5 deg in pitch, so My/neg is already at -2.46 deg by
+its onset and has only 3.4 deg of room left, while My/pos begins at
+-0.26 and has 6.8.  Roll rests at +0.5, so Mx starts at +0.86 and +0.37
+and its two directions are nearly balanced.  The My range limit is
+therefore the pad and the cap, and says nothing about that axis's
+contact.
+
 Each panel is the average of the two tip directions, which is the
 combination M_ff = sign * 0.5 * (M_pos + M_neg) the identification
 forms, and it is not optional here.  The directions carry an
@@ -32,6 +42,10 @@ below it, flat, with no step anywhere.  My also carries the wider band
 throughout, 118-217 against 107-129, and it is the axis whose 1-3 Hz
 rigid-body balance does not close (analysis/rate_band_check.py, ratio
 1.8-2.0 against 0.9-1.1).
+
+Those two facts are not explained by the range.  They are present from
+0.2 deg upwards, where both My directions still have 600 samples each,
+so whatever separates the axes is not the tilt the runs reach.
 
 The band is the interquartile range over direction pairs, dispersion
 rather than an uncertainty on the median.
