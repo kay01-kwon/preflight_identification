@@ -7,20 +7,27 @@ inversion, plotted against the tilt excursion -- but split by what the
 identification actually forms.
 
 (a) Per tip direction.  The two directions straddle the model by
-    hundreds of mN.m and neither follows it.  Read this way the check
-    fails, and that is what earlier versions of the figure showed
-    (pooling the two directions hid it behind a median).
+    100-150 mN.m from the onset onwards and neither follows it.  Read
+    this way the check fails, and that is what earlier versions of the
+    figure showed: pooling the two directions hid the split behind a
+    single median.
 
-(b) After the pivot-free average.  For each case/axis group the pos and
-    neg medians are averaged at each tilt, which is the combination
+(b) After the pivot-free average.  The two direction medians are
+    averaged at each tilt, which is the combination
     M_ff = sign * 0.5 * (M_pos + M_neg) the deliverable is built from,
-    so the antisymmetric term -- +7.7 mm on My, -1.4 mm on Mx expressed
-    as a length -- is removed by construction rather than by choice.
-    What is left tracks the model.
+    so the antisymmetric term -- +7.7 mm on My and -1.4 mm on Mx
+    expressed as a length -- is removed by construction rather than by
+    choice.  The level then lands on the model at the onset and drifts
+    below it as the tilt grows.
 
-The averaged curve stops where the shorter direction stops: My/neg
-reaches about 4.8 deg while My/pos reaches 9.2, and an average is only
-formed where both exist.  The line is drawn only over that range.
+Coverage.  Medians are pooled over runs, not formed per group first:
+requiring twelve samples per case/axis group per direction stops every
+curve at 3.4 deg, whereas pooling carries both directions to 7.2 with
+25+ samples and 20+ runs in each bin.  Past that the counts fall into
+single digits and nothing is drawn.  The band is the interquartile
+range across runs in panel (a) and across the ten case/axis groups in
+panel (b), in both cases dispersion rather than an uncertainty on the
+median.
 
 Usage:
   HD_DERIV=polyk:6 HD_GAIN=0.890 HD_DUMP=hd.npz \
@@ -40,48 +47,67 @@ OUT = Path(sys.argv[2]) if len(sys.argv) > 2 else Path('docs')
 
 POS, NEG, DYN, MOD = '#b4451f', '#2a78d6', '#2a78d6', '#eb6834'
 INK, INK2, MUTED, SURF = '#0b0b0b', '#52514e', '#b8b7b2', '#fcfcfb'
-EDGES = np.arange(0.0, 6.01, 0.4)
+EDGES = np.arange(0.0, 7.61, 0.4)
 CTR = 0.5 * (EDGES[:-1] + EDGES[1:])
-MIN_N = 12                    # samples needed in a bin for one group/direction
-MIN_G = 4                     # groups needed before a bin's median is drawn
-
-
-def enough(v):
-    """mask of bins backed by at least MIN_G groups -- without it the
-    tail spikes, since past 4 deg only one or two groups still have
-    data and the median is then a single run"""
-    return (~np.isnan(v)).sum(axis=0) >= MIN_G
+MIN_S, MIN_R, MIN_G = 25, 10, 4      # samples, runs, groups per bin
+# a single case/axis group holds only seven runs per direction, so the
+# pooled thresholds above can never be met within one group; the band
+# needs its own, looser pair
+GRP_S, GRP_R = 8, 4
 
 d = np.load(SRC)
 rid, phi = d['rid'], d['phi']
 inv, mod = d['resid'] + d['model'], d['model']
-grp = np.array([f"{c}/{a}/{t}"
-                for c, a, t in zip(d['case'], d['axis'], d['tip'])])
-gs = np.array([f"{c}/{a}" for c, a in zip(d['case'], d['axis'])])
-GROUPS = sorted(set(gs))
+tip = d['tip'][rid]
+gs_run = np.array([f"{c}/{a}" for c, a in zip(d['case'], d['axis'])])
+gs = gs_run[rid]
+GROUPS = sorted(set(gs_run))
+BINS = [(phi >= a) & (phi < b) for a, b in zip(EDGES[:-1], EDGES[1:])]
 
 
-def binned(mask_sample, y):
-    """median of y per tilt bin over the selected samples"""
+def pooled(sel, y, min_s=MIN_S, min_r=MIN_R):
+    """median of y per bin, pooled over runs; NaN where too thin"""
     out = np.full(len(CTR), np.nan)
-    for i, (a, b) in enumerate(zip(EDGES[:-1], EDGES[1:])):
-        m = mask_sample & (phi >= a) & (phi < b)
-        if m.sum() >= MIN_N:
+    for i, b in enumerate(BINS):
+        m = sel & b
+        if m.sum() >= min_s and len(np.unique(rid[m])) >= min_r:
             out[i] = np.median(y[m])
     return out
 
 
-# per group and direction, then the average of the two directions
-sym_inv, sym_mod = [], []
-for g in GROUPS:
-    p = binned((gs[rid] == g) & (grp[rid].astype(str) == g + '/pos'), inv)
-    n = binned((gs[rid] == g) & (grp[rid].astype(str) == g + '/neg'), inv)
-    pm = binned((gs[rid] == g) & (grp[rid].astype(str) == g + '/pos'), mod)
-    nm = binned((gs[rid] == g) & (grp[rid].astype(str) == g + '/neg'), mod)
-    sym_inv.append(0.5 * (p + n))
-    sym_mod.append(0.5 * (pm + nm))
-sym_inv = np.array(sym_inv)
-sym_mod = np.array(sym_mod)
+def runs_in(sel):
+    """how many distinct runs back each bin"""
+    return np.array([len(np.unique(rid[sel & b])) for b in BINS])
+
+
+def run_iqr(sel, y):
+    """interquartile range across per-run medians, per bin"""
+    lo, hi = np.full(len(CTR), np.nan), np.full(len(CTR), np.nan)
+    for i, b in enumerate(BINS):
+        m = sel & b
+        r = np.unique(rid[m])
+        if len(r) < MIN_R:
+            continue
+        v = [np.median(y[m & (rid == k)]) for k in r]
+        lo[i], hi[i] = np.percentile(v, [25, 75])
+    return lo, hi
+
+
+# per case/axis group, the symmetric combination, for panel (b)'s band
+sym_g = np.full((len(GROUPS), len(CTR)), np.nan)
+for j, g in enumerate(GROUPS):
+    p = pooled((gs == g) & (tip == 'pos'), inv, GRP_S, GRP_R)
+    n = pooled((gs == g) & (tip == 'neg'), inv, GRP_S, GRP_R)
+    sym_g[j] = 0.5 * (p + n)
+
+# Past the tilt where a direction retains fewer than half its runs, the
+# two medians come from different subsets -- only the runs that tipped
+# far -- so their average is no longer over matched conditions.  Shade
+# it rather than trimming it away.
+n_pos, n_neg = runs_in(tip == 'pos'), runs_in(tip == 'neg')
+half = min(n_pos[0], n_neg[0]) / 2
+thin = np.flatnonzero((n_pos < half) | (n_neg < half))
+THIN = CTR[thin[0]] - 0.2 if len(thin) else None
 
 plt.rcParams.update({
     'font.size': 11, 'axes.labelsize': 11,
@@ -99,7 +125,7 @@ def dress(ax, title):
     ax.axhline(0, color=MUTED, lw=0.9, zorder=0)
     ax.set_xlabel(r'$\varphi$  [deg]', color=INK2)
     ax.set_ylabel(r'$\Delta M_{\mathrm{GE}}$  [mNm]', color=INK2)
-    ax.set_xlim(-0.1, 6.05)
+    ax.set_xlim(-0.1, EDGES[-1])
     ax.grid(alpha=0.22, lw=0.6, color=MUTED)
     ax.set_axisbelow(True)
     for sp in ('top', 'right'):
@@ -109,21 +135,24 @@ def dress(ax, title):
 
 # ---- (a) per direction ----------------------------------------------
 ax = axes[0]
-for tip, col, lab in (('pos', POS, 'pos tip'), ('neg', NEG, 'neg tip')):
-    v = np.array([binned(grp[rid].astype(str) == g + '/' + tip, inv)
-                  for g in GROUPS])
-    med = np.nanmedian(v, axis=0)
-    ok = ~np.isnan(med) & enough(v)
-    ax.fill_between(CTR[ok], np.nanpercentile(v, 25, axis=0)[ok],
-                    np.nanpercentile(v, 75, axis=0)[ok], color=col,
-                    alpha=0.15, lw=0, zorder=2)
-    ax.plot(CTR[ok], med[ok], color=col, lw=2.6, zorder=5, label=lab,
+med_dir = {}
+for t, col, lab in (('pos', POS, 'pos tip'), ('neg', NEG, 'neg tip')):
+    sel = tip == t
+    m_ = pooled(sel, inv)
+    med_dir[t] = m_
+    lo, hi = run_iqr(sel, inv)
+    ok = ~np.isnan(m_)
+    ax.fill_between(CTR[ok], lo[ok], hi[ok], color=col, alpha=0.15, lw=0,
+                    zorder=2)
+    ax.plot(CTR[ok], m_[ok], color=col, lw=2.6, zorder=5, label=lab,
             solid_capstyle='round')
-vm = np.array([binned(gs[rid] == g, mod) for g in GROUPS])
-mm = np.nanmedian(vm, axis=0)
-ok = ~np.isnan(mm) & enough(vm)
-ax.plot(CTR[ok], mm[ok], color=MOD, lw=2.6, zorder=6, label='model',
+    print(f"  {t} tip: drawn to {CTR[ok][-1]:.1f} deg")
+mm_all = pooled(np.ones(len(phi), bool), mod)
+ok = ~np.isnan(mm_all)
+ax.plot(CTR[ok], mm_all[ok], color=MOD, lw=2.6, zorder=6, label='model',
         solid_capstyle='round')
+if THIN is not None:
+    ax.axvspan(THIN, EDGES[-1], color=MUTED, alpha=0.16, lw=0, zorder=0)
 dress(ax, '(a)  per tip direction')
 ax.legend(fontsize=10, frameon=False, loc='upper center',
           bbox_to_anchor=(0.5, 1.17), ncol=3, labelcolor=INK2)
@@ -131,27 +160,37 @@ YL = ax.get_ylim()
 
 # ---- (b) after the pivot-free average -------------------------------
 ax = axes[1]
-med = np.nanmedian(sym_inv, axis=0)
-ok = ~np.isnan(med) & enough(sym_inv)
-ax.fill_between(CTR[ok], np.nanpercentile(sym_inv, 25, axis=0)[ok],
-                np.nanpercentile(sym_inv, 75, axis=0)[ok], color=DYN,
+sym = 0.5 * (med_dir['pos'] + med_dir['neg'])
+ok = ~np.isnan(sym)
+band = (~np.isnan(sym_g)).sum(axis=0) >= MIN_G
+b_ = ok & band
+ax.fill_between(CTR[b_], np.nanpercentile(sym_g, 25, axis=0)[b_],
+                np.nanpercentile(sym_g, 75, axis=0)[b_], color=DYN,
                 alpha=0.16, lw=0, zorder=2)
-ax.plot(CTR[ok], med[ok], color=DYN, lw=2.8, zorder=5,
+ax.plot(CTR[ok], sym[ok], color=DYN, lw=2.8, zorder=5,
         label='dynamic inversion, direction-averaged',
         solid_capstyle='round')
-mm = np.nanmedian(sym_mod, axis=0)
-okm = ~np.isnan(mm) & enough(sym_mod)
-ax.plot(CTR[okm], mm[okm], color=MOD, lw=2.8, zorder=6,
+ax.plot(CTR[ok], mm_all[ok], color=MOD, lw=2.8, zorder=6,
         label='image-superposition model', solid_capstyle='round')
+if THIN is not None:
+    ax.axvspan(THIN, EDGES[-1], color=MUTED, alpha=0.16, lw=0, zorder=0)
+    ax.annotate('fewer than half the\nruns still tipping', (THIN, 0.97),
+                xycoords=('data', 'axes fraction'), textcoords='offset points',
+                xytext=(5, -4), va='top', color=INK2, fontsize=9,
+                linespacing=1.35)
 dress(ax, '(b)  after the pivot-free average')
 ax.set_ylim(YL)
-ax.legend(fontsize=10, frameon=False, loc='upper left', ncol=1,
-          labelcolor=INK2)
-res = med[ok] - mm[ok]
+ax.legend(fontsize=10, frameon=False, loc='upper left', labelcolor=INK2)
+res = sym[ok] - mm_all[ok]
+solid = ok & (CTR < (THIN if THIN is not None else EDGES[-1]))
+res_s = (sym - mm_all)[solid]
 ax.text(0.03, 0.05,
-        f'residual over {CTR[ok][0]:.1f}–{CTR[ok][-1]:.1f}°:  '
-        f'median {np.median(res):+.0f}, RMS {np.sqrt(np.mean(res**2)):.0f} mNm\n'
-        'band: interquartile range across the 10 case/axis groups',
+        f'residual, {CTR[solid][0]:.1f}–{CTR[solid][-1]:.1f}°:  '
+        f'median {np.median(res_s):+.0f}, RMS {np.sqrt(np.mean(res_s**2)):.0f}'
+        f' mNm\n'
+        f'over the shaded part as well:  median {np.median(res):+.0f},'
+        f' RMS {np.sqrt(np.mean(res**2)):.0f}\n'
+        f'band: interquartile range across case/axis groups',
         transform=ax.transAxes, fontsize=9.5, color=INK, linespacing=1.4,
         bbox=dict(fc=SURF, ec=MUTED, lw=0.5, pad=4, alpha=0.93))
 
@@ -163,7 +202,10 @@ fig.savefig(OUT / 'fig_ge_dynamics_sym.pdf', bbox_inches='tight')
 fig.savefig(OUT / 'fig_ge_dynamics_sym.png', bbox_inches='tight', dpi=190)
 print(f"-> {OUT / 'fig_ge_dynamics_sym.pdf'}")
 print(f"   averaged curve spans {CTR[ok][0]:.1f}-{CTR[ok][-1]:.1f} deg")
+print(f"   unshaded {CTR[solid][0]:.1f}-{CTR[solid][-1]:.1f} deg:"
+      f"  median {np.median(res_s):+.1f}  RMS {np.sqrt(np.mean(res_s**2)):.1f}")
 print(f"   residual  median {np.median(res):+.1f}  RMS "
       f"{np.sqrt(np.mean(res ** 2)):.1f}  max |{np.max(np.abs(res)):.0f}| mNm")
-for c, v in zip(CTR[ok], res):
-    print(f"     phi {c:4.1f}   inversion - model {v:+7.1f}")
+for c, v, s_, m_ in zip(CTR[ok], res, sym[ok], mm_all[ok]):
+    print(f"     phi {c:4.1f}   inversion {s_:6.1f}   model {m_:6.1f}"
+          f"   diff {v:+7.1f}")
