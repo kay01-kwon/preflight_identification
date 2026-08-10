@@ -131,7 +131,9 @@ from error_budget import ge_moment
 from analysis.pnls_constants import PNLS_CONSTANTS
 from analysis.rate_derivative import (omega_dot, edge_margin,
                                       omega_dot_poly,
-                                      kinematics_from_phi)
+                                      kinematics_from_phi,
+                                      omega_dot_butter, butter_lowpass,
+                                      integrate_from_onset)
 
 ROOT = Path(__file__).resolve().parents[1] / 'DataSet' / 'exp'
 G, Z = 9.81, 0.261
@@ -252,7 +254,31 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
         # and exactly the size of the discrepancy it was blamed for.
         pre = slice(max(0, j - 100), j)
         bias = float(np.mean(om_full[pre])) if j >= 20 else om_full[j]
-        if DERIV.startswith('polyphi'):
+        if DERIV.startswith('bw'):
+            # centred difference on the full trace, then a zero-phase
+            # Butterworth; the cutoff is the only free choice and it is
+            # set between the ~10 Hz structural line and blade passing.
+            fc = float(DERIV.split(':')[1])
+            # Filter [0, window end], not the whole bag.  Past the window
+            # the vehicle has gone over and the rate collapses; filtfilt
+            # smears that collapse BACKWARDS into the window, and the
+            # lower the cutoff the further -- the peak of J_P omega_dot
+            # lands at 0.44, 0.57, 0.74, 0.89 of the window at 1.5, 2, 3
+            # and 6 Hz, where the raw rate is still accelerating at the
+            # end in 125 of 140 runs.  Ending the segment at i1 lets
+            # filtfilt's own reflection continue the ramp instead.  The
+            # onset stays hundreds of samples from the left edge.
+            seg = om_full[:i1 + 1] - bias
+            omd = omega_dot_butter(seg, dt, fc)[sl]
+            om = butter_lowpass(seg, dt, fc)[sl]
+            if DERIV.startswith('bwk'):
+                # phi from the same filtered rate, so phi, omega and
+                # omega_dot are one motion -- the consistency polyk
+                # gets by construction
+                ph_fit = integrate_from_onset(tau, om)
+                phi_rel = ph_fit
+                phi_abs = phi_abs[0] + ph_fit
+        elif DERIV.startswith('polyphi'):
             # everything from the ATTITUDE, which mocap corroborates:
             # no rate scale factor is involved at all
             ph_fit, om, omd = kinematics_from_phi(
@@ -292,8 +318,12 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
             drop['no_ge_model'] += 1
             continue
 
-        ge = (j_p * omd - m - f * lp + W * a * np.cos(phi_abs)
-              - W * Z * np.sin(phi_abs))
+        # keep the five terms separately as well: which of them carries
+        # the run-to-run scatter decides what the limitation actually is
+        term = dict(inertia=j_p * omd, moment=-m, load=-f * lp,
+                    grav_a=W * a * np.cos(phi_abs),
+                    grav_z=-W * Z * np.sin(phi_abs))
+        ge = sum(term.values())
         resid = ge - s * raw[sl]                      # N.m
 
         # --- a-priori heave-damping regressor, no fitted constant ------
@@ -311,7 +341,9 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
         reg = d_ideal * om                                 # N.m
 
         mdot = abs(float(np.polyfit(tau, m, 1)[0])) or np.nan
-        rows.append(dict(case=case, ax=axname, bag=crit.bag_name,
+        rows.append(dict(**{'t_' + k: v for k, v in term.items()},
+                         lp=lp, arm_a=a, W=W, f=f, phi_abs=phi_abs,
+                         case=case, ax=axname, bag=crit.bag_name,
                          tip='pos' if s > 0 else 'neg',
                          mdot=mdot, tau=tau,
                          phi=phi_rel, om=om, omd=omd, resid=resid,
@@ -437,5 +469,15 @@ if os.environ.get('HD_DUMP'):
              case=np.array([r['case'] for r in rows]),
              axis=np.array([r['ax'] for r in rows]),
              bag=np.array([r['bag'] for r in rows]),
-             tip=np.array([r['tip'] for r in rows]))
+             tip=np.array([r['tip'] for r in rows]),
+             **{k: np.concatenate([1e3 * r[k] for r in rows])
+                for k in ('t_inertia', 't_moment', 't_load', 't_grav_a',
+                          't_grav_z')},
+             # the arms and forces, so an arm substitution can be tried
+             # without re-running the whole pipeline
+             lp=np.array([r['lp'] for r in rows]),
+             arm_a=np.array([r['arm_a'] for r in rows]),
+             Wn=np.array([r['W'] for r in rows]),
+             f_col=np.concatenate([r['f'] for r in rows]),
+             phi_abs=np.concatenate([r['phi_abs'] for r in rows]))
     print(f"\ndumped -> {os.environ['HD_DUMP']}")

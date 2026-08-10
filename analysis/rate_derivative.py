@@ -33,7 +33,7 @@ differentiate the FULL trace and slice the RESULT.
 Both edges then sit deep inside real data and no extrapolation occurs.
 """
 import numpy as np
-from scipy.signal import savgol_filter
+from scipy.signal import butter, filtfilt, savgol_filter
 
 
 def omega_dot(omega_full, dt, window=9, poly=2):
@@ -175,3 +175,52 @@ def kinematics_from_phi(tau, phi, order=6):
     om = np.vstack([k * tau ** (k - 1) for k in ks]).T @ coef
     omd = np.vstack([k * (k - 1) * tau ** (k - 2) for k in ks]).T @ coef
     return fit, om, omd
+
+
+def omega_dot_butter(omega_full, dt, fc, order=2):
+    """Central difference over a full trace, then a zero-phase low pass.
+
+    The alternative to fitting a polynomial over the window: differentiate
+    with the plain centred difference, which has no free parameter, and
+    take the noise out afterwards with a Butterworth filter run forwards
+    and backwards so no phase is introduced.  The one choice left is the
+    cutoff, and that is set by physics rather than taste -- the bags
+    carry a real ~10 Hz structural component and blade passing well
+    above it, so the cutoff belongs between them.
+
+    Filter the FULL trace and slice the result, for exactly the reason
+    in this module's docstring: filtfilt pads and reflects at the ends,
+    and the onset must not sit in that transient.
+
+    Unlike omega_dot_poly this does NOT force omega_dot(0) = 0.  That is
+    a difference in kind, not degree: the polynomial imposes the static
+    balance at the onset as a constraint, this measures whatever the
+    gyro says there.
+    """
+    od = np.gradient(np.asarray(omega_full, float), dt)
+    wn = fc * 2.0 * dt                      # fc / (fs/2), fs = 1/dt
+    if not 0 < wn < 1:
+        raise ValueError(f"cutoff {fc} Hz outside (0, {0.5 / dt}) Hz")
+    b, a = butter(order, wn, btype='low')
+    return filtfilt(b, a, od)
+
+
+def butter_lowpass(x_full, dt, fc, order=2):
+    """Zero-phase low pass on a full trace, no differentiation."""
+    wn = fc * 2.0 * dt
+    b, a = butter(order, wn, btype='low')
+    return filtfilt(b, a, np.asarray(x_full, float))
+
+
+def integrate_from_onset(tau, omega):
+    """phi(tau) with phi(0) = 0, trapezoidal.
+
+    Used so that phi, omega and omega_dot describe one motion when the
+    derivative comes from a filter rather than from a fitted polynomial
+    -- the consistency that omega_dot_poly's 'polyk' variant provides by
+    construction.
+    """
+    c = np.concatenate([[0.0],
+                        np.cumsum(0.5 * (omega[1:] + omega[:-1])
+                                  * np.diff(tau))])
+    return c - c[0]

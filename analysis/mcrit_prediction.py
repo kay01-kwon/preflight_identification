@@ -46,7 +46,17 @@ from utils.extractor import load_excitation_dataset
 from analysis.pnls_constants import PNLS_CONSTANTS
 
 ROOT = Path(__file__).resolve().parents[1] / 'DataSet' / 'exp'
+# argv[1] is the OUTPUT directory; the dataset is found on its own.
+# Passing the dataset path here -- an easy slip, since most of the other
+# scripts take it -- used to drop mcrit_prediction.csv inside DataSet.
 OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('.')
+if any(a.startswith('-') for a in sys.argv[1:]):
+    sys.exit(f"{Path(__file__).name} takes one optional argument, the "
+             f"output directory. No flags. Got: {sys.argv[1:]}")
+if OUT.resolve() == ROOT or ROOT in OUT.resolve().parents:
+    sys.exit(f"refusing to write output into the dataset ({OUT}). "
+             f"argv[1] is the OUTPUT directory; the dataset is found "
+             f"automatically at {ROOT}.")
 
 G = 9.81
 MASS_KG = {'case_01': 3.066, 'case_02': 3.220, 'case_03': 3.220,
