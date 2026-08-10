@@ -43,7 +43,8 @@ DYN, MOD = '#2a78d6', '#eb6834'
 INK, INK2, MUTED, SURF = '#0b0b0b', '#52514e', '#b8b7b2', '#fcfcfb'
 EDGES = np.arange(0.0, 5.21, 0.4)
 CTR = 0.5 * (EDGES[:-1] + EDGES[1:])
-GRP_S, GRP_R = 8, 4          # samples and runs per group, per direction
+GRP_S, GRP_R = 5, 3          # samples and runs per group, per direction
+MIN_G = 4                    # groups needed before a bin is drawn at all
 
 d = np.load(SRC)
 rid, phi = d['rid'], d['phi']
@@ -70,14 +71,21 @@ mod_g = np.array([0.5 * (per_bin((gs == g) & (tip == 'pos'), mod)
                          + per_bin((gs == g) & (tip == 'neg'), mod))
                   for g in GROUPS])
 
-# every one of the ten groups must reach the bin, or the curve changes
-# what it is a statistic of partway along
-full = (~np.isnan(sym_g)).sum(axis=0) == len(GROUPS)
-x = CTR[full]
-med = np.nanmedian(sym_g[:, full], axis=0)
-q1 = np.nanpercentile(sym_g[:, full], 25, axis=0)
-q3 = np.nanpercentile(sym_g[:, full], 75, axis=0)
-mm = np.nanmedian(mod_g[:, full], axis=0)
+# A group only forms an average where both its directions reach the
+# bin, and neg does not tip as far, so the contributing set shrinks with
+# tilt and shrinks unevenly -- by 4.6 deg only the five Mx groups are
+# left.  The curve is drawn wherever MIN_G groups remain and the count
+# is printed per bin, so what each part is a statistic of stays on the
+# record; the range over which all ten contribute is reported
+# separately as the balanced one.
+ngrp = (~np.isnan(sym_g)).sum(axis=0)
+ok = ngrp >= MIN_G
+full = ngrp == len(GROUPS)
+x = CTR[ok]
+med = np.nanmedian(sym_g[:, ok], axis=0)
+q1 = np.nanpercentile(sym_g[:, ok], 25, axis=0)
+q3 = np.nanpercentile(sym_g[:, ok], 75, axis=0)
+mm = np.nanmedian(mod_g[:, ok], axis=0)
 
 plt.rcParams.update({
     'font.size': 12, 'axes.labelsize': 12,
@@ -96,7 +104,7 @@ ax.plot(x, mm, color=MOD, lw=2.8, zorder=6,
         label='image-superposition model', solid_capstyle='round')
 ax.set_xlabel(r'$\varphi$  [deg]', color=INK2)
 ax.set_ylabel(r'$\Delta M_{\mathrm{GE}}$  [mNm]', color=INK2)
-ax.set_xlim(0, EDGES[np.flatnonzero(full)[-1] + 1])
+ax.set_xlim(0, EDGES[np.flatnonzero(ok)[-1] + 1])
 ax.grid(alpha=0.22, lw=0.6, color=MUTED)
 ax.set_axisbelow(True)
 for sp in ('top', 'right'):
@@ -110,14 +118,22 @@ print(f"-> {OUT / 'fig_ge_dynamics_sym.pdf'}")
 
 res = med - mm
 w = q3 - q1
-print(f"\n  drawn over {x[0]:.1f}-{x[-1]:.1f} deg, all {len(GROUPS)} groups\n")
+print(f"\n  drawn over {x[0]:.1f}-{x[-1]:.1f} deg;  all {len(GROUPS)} groups"
+      f" to {CTR[full][-1]:.1f} deg\n")
 print(f"  {'phi':>5}{'inversion':>11}{'model':>8}{'diff':>8}"
-      f"{'q25':>8}{'q75':>8}{'band':>7}{'mean':>8}")
-for i in range(len(x)):
+      f"{'q25':>8}{'q75':>8}{'band':>7}{'groups':>8}   composition")
+for i, k in enumerate(np.flatnonzero(ok)):
+    got = [GROUPS[j].replace('case_0', 'c') for j in range(len(GROUPS))
+           if not np.isnan(sym_g[j, k])]
     print(f"  {x[i]:5.1f}{med[i]:11.1f}{mm[i]:8.1f}{res[i]:+8.1f}"
-          f"{q1[i]:8.1f}{q3[i]:8.1f}{w[i]:7.0f}"
-          f"{np.nanmean(sym_g[:, full][:, i]):8.1f}")
-print(f"\n  residual   median {np.median(res):+.1f}   RMS "
-      f"{np.sqrt(np.mean(res ** 2)):.1f}   max |{np.max(np.abs(res)):.0f}|")
+          f"{q1[i]:8.1f}{q3[i]:8.1f}{w[i]:7.0f}{len(got):8d}   "
+          f"{'all ten' if len(got) == len(GROUPS) else ','.join(got)}")
+rb = (med - mm)[full[ok]]
+print(f"\n  residual, all {len(GROUPS)} groups (0.2-{CTR[full][-1]:.1f} deg):"
+      f"  median {np.median(rb):+.1f}  RMS {np.sqrt(np.mean(rb ** 2)):.1f}"
+      f"  max |{np.max(np.abs(rb)):.0f}|")
+print(f"  residual, everything drawn:            "
+      f"  median {np.median(res):+.1f}  RMS {np.sqrt(np.mean(res ** 2)):.1f}"
+      f"  max |{np.max(np.abs(res)):.0f}|")
 print(f"  band width max {w.max():.0f} mNm at phi = {x[np.argmax(w)]:.1f} deg,"
       f"  min {w.min():.0f},  median {np.median(w):.0f}")
