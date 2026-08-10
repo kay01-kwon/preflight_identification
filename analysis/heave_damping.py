@@ -259,8 +259,18 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
             # Butterworth; the cutoff is the only free choice and it is
             # set between the ~10 Hz structural line and blade passing.
             fc = float(DERIV.split(':')[1])
-            omd = omega_dot_butter(om_full - bias, dt, fc)[sl]
-            om = butter_lowpass(om_full - bias, dt, fc)[sl]
+            # Filter [0, window end], not the whole bag.  Past the window
+            # the vehicle has gone over and the rate collapses; filtfilt
+            # smears that collapse BACKWARDS into the window, and the
+            # lower the cutoff the further -- the peak of J_P omega_dot
+            # lands at 0.44, 0.57, 0.74, 0.89 of the window at 1.5, 2, 3
+            # and 6 Hz, where the raw rate is still accelerating at the
+            # end in 125 of 140 runs.  Ending the segment at i1 lets
+            # filtfilt's own reflection continue the ramp instead.  The
+            # onset stays hundreds of samples from the left edge.
+            seg = om_full[:i1 + 1] - bias
+            omd = omega_dot_butter(seg, dt, fc)[sl]
+            om = butter_lowpass(seg, dt, fc)[sl]
             if DERIV.startswith('bwk'):
                 # phi from the same filtered rate, so phi, omega and
                 # omega_dot are one motion -- the consistency polyk
