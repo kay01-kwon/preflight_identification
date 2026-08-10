@@ -741,8 +741,8 @@ Case & Axis & Truth & Free & error & Constrained & error \\
 Collapsing the twenty free numbers to three changes the RMS error by
 $0.03$~mm and no individual case by more than $0.11$~mm. The identical
 mean error, $-0.95$~mm in both columns, further shows that the residual
-bias is a property of the physics — the ground-contact budget of
-Sec.~\ref{sec:static} — and not of the calibration. In the constrained form $C_2$ is also derived rather
+bias is a property of the vehicle--contact geometry, common to every
+estimator, and not of the calibration. In the constrained form $C_2$ is also derived rather
 than searched, so it cannot settle on a search bound.
 
 One caution completes the picture: this does \emph{not} measure
@@ -794,8 +794,8 @@ Case & Axis & $J_P$ & $C_2$ & $K$ & CV [\%] & Truth & Identified (error) \\
 
 The RMS error is $1.64$~mm either way. Twenty fitted numbers and none
 deliver the same offset, and the mean error stays near $-0.9$~mm in
-both --- a residual belonging to the ground-contact budget of
-Sec.~\ref{sec:static}, not to the calibration. What the fitting does
+both --- a residual belonging to the vehicle--contact geometry, not to
+the calibration. What the fitting does
 buy is rate consistency: the CV rises from $2.4\%$ to $4.2\%$ in the
 mean and from $4.2\%$ to $6.9\%$ at worst when the constants are taken
 from CAD.
@@ -1098,11 +1098,14 @@ CPD's minimum segment) and a \emph{single} run already sits within a
 few percent of its directional mean — which is what enables run-count
 reduction and per-run gating diagnostics.
 
-\section{Per-direction check against the static thresholds}
+\section{A bound on the ground-contact budget}
 \label{sec:static}
 
-The static tip-over thresholds tie each directional critical moment to
-independently measured quantities:
+This section bounds the near-ground contribution to the directional
+thresholds; it does not validate a particular aerodynamic model, and
+the closing paragraphs say why it cannot.  The static tip-over
+thresholds tie each directional critical moment to independently
+measured quantities:
 $M_{\pm} = \pm(W - f)\,l_{\mathrm{arm}} + W y_{\mathrm{off}}$ (roll)
 and $M_{\pm} = \pm(W - f)\,l_{\mathrm{arm}} - W x_{\mathrm{off}}$
 (pitch), with $W$ and the offsets pinned by the load-cell truth, $f$
@@ -1181,39 +1184,14 @@ leaves no one-sidedness worth the name.}
 colored markers) against the static-threshold predictions with truth
 offsets and odometry-fitted arms: no ground effect (black solid),
 ground effect without rotor interference (gray dotted), and with
-rotor interference (green dashed). The interference prediction passes
-through the estimator cluster in nearly every group, while the other
-two sit systematically outside it. A $19$~mm inboard shift of the
+rotor interference (green dashed). The interference prediction falls
+inside the range spanned by the five estimators in $9$ of the $20$
+groups, where neither of the other two ever does ($0/20$); the median
+estimator range is $108$~mN\,m. A $19$~mm inboard shift of the
 static contact lever would move the black line by a similar amount:
 the figure shows the \emph{size} of the near-ground correction, not
 its attribution.}
 \label{fig:static}
-\end{figure}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.92\linewidth]{fig_ge_dynamics.pdf}
-\caption{The ground-effect moment from the parameter-free model against
-the dynamic inversion
-$J_P\dot\omega - m - f\,l_p + Wa\cos\varphi - Wz_{\mathrm{CoM}}\sin\varphi$,
-both plotted against the tilt excursion measured from the onset
-(median and interquartile band over $116$ runs, CAD constants). The
-levels agree at $\delta\varphi = 0$ because the balance there is
-static, so $J_P$ and $z_{\mathrm{CoM}}$ drop out and the inversion
-reduces to the check of Fig.~\ref{fig:static}. Past about $1^\circ$
-the inversion falls away, reaching $-90$~mN\,m by $6.5^\circ$ while the
-model stays near $+155$. The \emph{sign} of that drift is expected:
-tipping about one foot lifts the opposite rotors clear of the ground,
-and those carry the long moment arms, so the net ground-effect moment
-must fall with tilt --- the model's own slope is negative too, $-2.7$ to
-$-0.1$~mN\,m/deg. What the inversion cannot be measuring is the
-magnitude, sixteen times larger, nor the crossing into a net restoring
-moment, which would need the near-pivot rotors to outweigh the far ones.
-The drift is the residual of the $Wz_{\mathrm{CoM}}\sin\varphi$
-cancellation, and the model's slope sits inside its linewidth. The attitude dependence of the ground-effect
-moment is therefore bounded by the excitation design --- the tilt cap
---- rather than measured.}
-\label{fig:gedyn}
 \end{figure}
 
 \begin{table}[t]
@@ -1299,6 +1277,16 @@ $\sim\!0.2$~N\,m per direction and confirms it has the magnitude and
 sign that ground effect predicts; it is not an identification of
 ground effect against contact compliance.
 
+The floor is set by the contact arm itself. The threshold's
+sensitivity to it is $\mathrm{d}M/\mathrm{d}l = W - f = 10.6$~N, so
+the $61$~mN\,m median residual that survives the interference model is
+$5.8$~mm of arm --- the same order as the run-to-run spread of the
+circle fit inside a single group ($0.7$--$8.4$~mm, median $1.5$), and
+smaller than any plausible systematic on where the normal-force
+resultant acts within a compliant contact patch. Nothing about the
+aerodynamic model can be resolved beneath that floor, which is why
+this section reports a budget and not a fit.
+
 That limitation is immaterial to the method, and by construction. The
 fidelity analysis assumes only that the perturbation is smooth and
 thrust-proportional — which \emph{both} candidates are — and shows
@@ -1336,7 +1324,7 @@ Tables~\ref{tab:nls}--\ref{tab:nls-disp};
 \item \texttt{analysis/mcrit\_prediction.py},
 \texttt{analysis/mcrit\_static\_figure.py},
 \texttt{analysis/static\_attribution.py} — Sec.~\ref{sec:static}
-(static-threshold check, arms, attribution limits,
+(static-threshold budget, arms, attribution limits,
 Fig.~\ref{fig:static});
 \item \texttt{analysis/ge\_bilinear.py} — the bilinear $\tau\varphi$
 ground-effect term along measured trajectories;
@@ -1359,30 +1347,6 @@ in a neighbourhood of them) and its intervals;
 \item \texttt{analysis/mff\_table.py}, \texttt{analysis/cv\_full.py} —
 the estimator benchmark extended with the PNLS-centred and CAD
 constants, and the full-pipeline dispersions;
-\item \texttt{analysis/ge\_dynamics\_check.py} — dynamic inversion of
-the ground-effect moment with the CAD constants. It reduces to the
-static check at the onset, and away from it the model's attitude slope
-($-2.7$ to $-0.1$~mN\,m/deg) is $0$--$1.9\%$ of the
-$W z_{\mathrm{CoM}}$ term it must be separated from
-($-141$~mN\,m/deg, cancelled to $70\%$). The residual is not a
-constants error: \texttt{-{}-z-sweep} moves the cancelled term by
-$35\%$ over $z_{\mathrm{CoM}} \in [0.190, 0.261]$~m while the residual
-slope stays within $8\%$ of $-44$~mN\,m/deg, seven times less than the
-synthetic budget of \texttt{analysis/slope\_budget.py} predicts. No
-choice of $(J_P, z_{\mathrm{CoM}})$ removes it. A migrating contact
-point is excluded as well: read as a moving pivot the residual would
-need $8.1$~mm of travel over a $6^\circ$ excursion, across an arc of
-only $36$~mm, which would inflate the circle-fit residual to several
-millimetres against the $0.1$--$0.2$~mm measured
-(\texttt{analysis/pivot\_geom.py}). What remains scales with thrust
---- aerodynamic, or the moment reconstruction itself ---
-and a no-thrust release would isolate it.
-\texttt{analysis/slope\_budget.py} also shows the differentiation and
-the gyro noise are not the limit ($+0.5$ bias, $\pm4.2$ scatter that
-averages to $\pm0.4$ over the runs).
-\item \texttt{analysis/ge\_dynamics\_figure.py} —
-Fig.~\ref{fig:gedyn}: the model against the inversion over the
-onset-to-peak window.
 \end{itemize}
 \endgroup
 
