@@ -1287,6 +1287,28 @@ resultant acts within a compliant contact patch. Nothing about the
 aerodynamic model can be resolved beneath that floor, which is why
 this section reports a budget and not a fit.
 
+\paragraph{Applying the correction does not improve the deliverable.}
+The two channels reach the offset unequally, and the arithmetic is
+exact. Pairing the tip directions in the onset balance gives
+$S_{\mathrm{off}} = (1+b)\,M_{\mathrm{ff}} + (a_+ - a_-)/2 -
+[(W{-}f_+)l_+ - (W{-}f_-)l_-]/2$. The thrust channel is antisymmetric
+and cancels, leaving $0.111$~mm in the median from its direction
+asymmetry alone; the moment-proportional channel multiplies
+$M_{\mathrm{ff}}$ and does not cancel at all, scaling the delivered
+offset by $4.31\%$ --- $0.413$~mm in the median and $0.654$ at worst,
+beside a $1.64$~mm validation RMS. It is therefore large enough to
+matter, and it can be tested directly: applying it makes the agreement
+with the load-cell truth \emph{worse}, the RMS rising from $1.64$ to
+$1.82$~mm and the mean error from $-0.91$ to $-1.20$. This is the
+degeneracy above seen from the deliverable's side. A contact-geometry
+term of comparable size acts the other way, the two cannot be
+separated at this arm precision, and correcting for one alone
+therefore removes a real effect while leaving its counterpart in
+place. The channel is accordingly reported as a bound on the
+deliverable and not applied to it
+(\texttt{analysis/ge\_offset\_effect.py}); the identification is left
+uncorrected, and the $1.64$~mm is quoted as measured.
+
 That limitation is immaterial to the method, and by construction. The
 fidelity analysis assumes only that the perturbation is smooth and
 thrust-proportional — which \emph{both} candidates are — and shows
