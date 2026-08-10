@@ -169,18 +169,37 @@ YL = ax.get_ylim()
 
 # ---- (b) after the pivot-free average -------------------------------
 ax = axes[1]
-sym = 0.5 * (med_dir['pos'] + med_dir['neg'])
-ok = ~np.isnan(sym)
-band = (~np.isnan(sym_g)).sum(axis=0) >= MIN_G
-b_ = ok & band
-ax.fill_between(CTR[b_], np.nanpercentile(sym_g, 25, axis=0)[b_],
-                np.nanpercentile(sym_g, 75, axis=0)[b_], color=DYN,
+# The line and the band must be the same estimator, or the line can sit
+# outside its own band -- as it did when the line was the pooled median
+# of all runs while the band was the quartiles across groups.  The
+# symmetric combination only exists per group (a run tips one way
+# only), so both are taken across groups.
+ok = (~np.isnan(sym_g)).sum(axis=0) >= MIN_G
+sym = np.where(ok, np.nanmedian(np.where(ok, sym_g, np.nan), axis=0),
+               np.nan)
+ax.fill_between(CTR[ok], np.nanpercentile(sym_g, 25, axis=0)[ok],
+                np.nanpercentile(sym_g, 75, axis=0)[ok], color=DYN,
                 alpha=0.16, lw=0, zorder=2)
-ax.plot(CTR[ok], sym[ok], color=DYN, lw=2.8, zorder=5,
+# The set of groups that can form an average shrinks with tilt, and it
+# does not shrink evenly: by 4.2 deg every My group has dropped out and
+# the curve is an Mx-only statistic, while at low tilt it is balanced
+# five and five.  Draw the balanced part solid and the rest faint, and
+# report the residual over the balanced part.
+ngrp = (~np.isnan(sym_g)).sum(axis=0)
+full = ok & (ngrp == len(GROUPS))
+ax.plot(CTR[ok], sym[ok], color=DYN, lw=2.0, alpha=0.35, zorder=4,
+        solid_capstyle='round')
+ax.plot(CTR[full], sym[full], color=DYN, lw=2.8, zorder=5,
         label='dynamic inversion, direction-averaged',
         solid_capstyle='round')
 ax.plot(CTR[ok], mm_all[ok], color=MOD, lw=2.8, zorder=6,
         label='image-superposition model', solid_capstyle='round')
+for i in np.flatnonzero(ok):
+    ax.annotate(f'{ngrp[i]}', (CTR[i], 0.03), xycoords=('data', 'axes fraction'),
+                ha='center', color=INK2 if ngrp[i] == len(GROUPS) else MUTED,
+                fontsize=8)
+ax.text(0.015, 0.095, 'groups averaged', transform=ax.transAxes,
+        color=INK2, fontsize=8)
 if THIN is not None:
     ax.axvspan(THIN, EDGES[-1], color=MUTED, alpha=0.16, lw=0, zorder=0)
     ax.annotate('fewer than half the\nruns still tipping', (THIN, 0.97),
@@ -191,12 +210,12 @@ dress(ax, '(b)  after the pivot-free average')
 ax.set_ylim(YL)
 ax.legend(fontsize=10, frameon=False, loc='upper left', labelcolor=INK2)
 res = sym[ok] - mm_all[ok]
-solid = ok & (CTR < (THIN if THIN is not None else EDGES[-1]))
-res_s = (sym - mm_all)[solid]
-ax.text(0.03, 0.05,
-        f'residual, {CTR[ok][0]:.1f}–{CTR[ok][-1]:.1f}°:  '
-        f'median {np.median(res):+.0f}, RMS {np.sqrt(np.mean(res**2)):.0f}'
-        f' mNm\n'
+res_s = (sym - mm_all)[full]
+ax.text(0.03, 0.20,
+        f'over the balanced range {CTR[full][0]:.1f}–{CTR[full][-1]:.1f}°:  '
+        f'median {np.median(res_s):+.0f}, RMS '
+        f'{np.sqrt(np.mean(res_s**2)):.0f} mNm\n'
+        f'faint: fewer groups reach the bin, My dropping out first\n'
         f'band: interquartile range across case/axis groups',
         transform=ax.transAxes, fontsize=9.5, color=INK, linespacing=1.4,
         bbox=dict(fc=SURF, ec=MUTED, lw=0.5, pad=4, alpha=0.93))
@@ -209,8 +228,9 @@ fig.savefig(OUT / 'fig_ge_dynamics_sym.pdf', bbox_inches='tight')
 fig.savefig(OUT / 'fig_ge_dynamics_sym.png', bbox_inches='tight', dpi=190)
 print(f"-> {OUT / 'fig_ge_dynamics_sym.pdf'}")
 print(f"   averaged curve spans {CTR[ok][0]:.1f}-{CTR[ok][-1]:.1f} deg")
-print(f"   unshaded {CTR[solid][0]:.1f}-{CTR[solid][-1]:.1f} deg:"
-      f"  median {np.median(res_s):+.1f}  RMS {np.sqrt(np.mean(res_s**2)):.1f}")
+print(f"   balanced {CTR[full][0]:.1f}-{CTR[full][-1]:.1f} deg (all "
+      f"{len(GROUPS)} groups):  median {np.median(res_s):+.1f}"
+      f"  RMS {np.sqrt(np.mean(res_s ** 2)):.1f}")
 print(f"   residual  median {np.median(res):+.1f}  RMS "
       f"{np.sqrt(np.mean(res ** 2)):.1f}  max |{np.max(np.abs(res)):.0f}| mNm")
 for c, v, s_, m_ in zip(CTR[ok], res, sym[ok], mm_all[ok]):
