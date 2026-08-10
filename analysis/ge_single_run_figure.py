@@ -8,18 +8,25 @@ and one negative tip run of one case, on each axis, plus their average
 -- the combination M_ff = sign * 0.5 * (M_pos + M_neg) the
 identification forms.
 
-The cases shown are the ones whose direction-averaged onset residual
-sits closest to their axis's median over the five cases, so neither
-panel is a best case: case_05 on Mx (-32.5 mN.m against an axis median
-of -32.5) and case_02 on My (-56.6 against -56.6).
+The cases are chosen on BOTH the level and the gradient of the
+direction-averaged residual, each scored against its axis median in
+units of that axis's spread, so neither panel is a best case.  Choosing
+on the level alone picks case_02 on My, whose gradient is +28.9
+mN.m/deg against an axis median of -17.2 -- the steepest of the five,
+and misleading about the gradient it was not chosen for.
 
-Two things are visible here that the aggregate hides.  The two tip
-directions straddle the model rather than sitting on it, by about +-240
-mN.m on My and +-60 on Mx -- the contact lever's direction asymmetry,
-which the average removes (analysis/lever_fit.py).  And a single run is
-not smooth: the per-run residual has an RMS of 137 mN.m on Mx, most of
-which the estimator's own span absorbs, leaving a propagated 0.02 mm on
-the identified offset (analysis/residual_to_mm.py).
+The tilt range is the aggregate figure's, 5.0 deg on Mx and 3.4 on My.
+Past that a single run runs on to its own window end, where it is going
+over fast and the balance stops holding -- Mx/pos reaches -1050 mN.m by
+6.5 deg -- and the aggregate, being a median over 70 runs, neither
+shows those tails nor extends into them.
+
+What is visible here that the aggregate hides is the straddle: the two
+tip directions sit either side of the model rather than on it, by
+roughly +-100 mN.m on Mx and +-120 on My, and only their average
+approaches it.  That is the contact lever's direction asymmetry, which
+the pivot-free average removes by construction
+(analysis/lever_fit.py).
 
 Usage:
   HD_DERIV=bwk:3 HD_GAIN=0.890 HD_DUMP=hd.npz \
@@ -39,7 +46,12 @@ OUT = Path(sys.argv[2]) if len(sys.argv) > 2 else Path('docs')
 
 POS, NEG, AVG, MOD = '#b4451f', '#2a78d6', '#0b0b0b', '#eb6834'
 INK, INK2, MUTED, SURF = '#0b0b0b', '#52514e', '#b8b7b2', '#fcfcfb'
-SHOW = {'Mx': 'case_05', 'My': 'case_02'}
+# Chosen on BOTH the onset level and the gradient of the
+# direction-averaged residual, each scored against its axis median in
+# units of that axis's interquartile spread.  Picking on the level
+# alone put case_02 on My, whose gradient is +28.9 mN.m/deg against an
+# axis median of -17.2 -- the steepest of the five, and misleading.
+SHOW = None
 
 d = np.load(SRC)
 rid, phi = d['rid'], d['phi']
@@ -57,6 +69,35 @@ fig.subplots_adjust(left=0.085, right=0.98, bottom=0.14, top=0.90,
                     wspace=0.08)
 
 
+def representative(axn):
+    """the case closest to its axis median in level AND in gradient"""
+    lim = 5.0 if axn == 'Mx' else 3.4
+    lv, gr, cs = [], [], []
+    for c in sorted(set(d['case'])):
+        a = []
+        for tp in ('pos', 'neg'):
+            m = ((d['case'][rid] == c) & (d['axis'][rid] == axn)
+                 & (d['tip'][rid] == tp) & (phi <= lim))
+            if m.sum() < 30:
+                break
+            a.append((np.median(d['resid'][m & (phi < 0.4)]),
+                      np.polyfit(phi[m], d['resid'][m], 1)[0]))
+        if len(a) == 2:
+            cs.append(c)
+            lv.append(0.5 * (a[0][0] + a[1][0]))
+            gr.append(0.5 * (a[0][1] + a[1][1]))
+    lv, gr = np.array(lv), np.array(gr)
+    sl = np.subtract(*np.percentile(lv, [75, 25])) or 1.0
+    sg = np.subtract(*np.percentile(gr, [75, 25])) or 1.0
+    score = (np.abs(lv - np.median(lv)) / abs(sl)
+             + np.abs(gr - np.median(gr)) / abs(sg))
+    k = int(np.argmin(score))
+    print(f"  {axn}: {cs[k]}   level {lv[k]:+.1f} (median "
+          f"{np.median(lv):+.1f}),  gradient {gr[k]:+.1f} (median "
+          f"{np.median(gr):+.1f})")
+    return cs[k]
+
+
 def pick(case, axn, tp):
     """the run of this class whose onset residual is closest to its median"""
     m = ((d['case'] == case) & (d['axis'] == axn) & (d['tip'] == tp))
@@ -69,16 +110,26 @@ def pick(case, axn, tp):
     return int(idx[np.nanargmin(np.abs(val - np.nanmedian(val)))])
 
 
+print("representative case per axis, scored on level and gradient\n")
+SHOW = {axn: representative(axn) for axn in ('Mx', 'My')}
+
 for k, axn in enumerate(('Mx', 'My')):
     a_ = axes[k]
     case = SHOW[axn]
     ip, inn = pick(case, axn, 'pos'), pick(case, axn, 'neg')
     sp, sn = rid == ip, rid == inn
+    lim = 5.0 if axn == 'Mx' else 3.4
     for s, col, lab in ((sp, POS, 'pos tip'), (sn, NEG, 'neg tip')):
-        a_.plot(phi[s], inv[s], color=col, lw=1.9, alpha=0.9, zorder=4,
+        c_ = s & (phi <= lim)
+        a_.plot(phi[c_], inv[c_], color=col, lw=1.9, alpha=0.9, zorder=4,
                 label=lab)
-    # the average, on the tilt grid both runs cover
-    hi = min(phi[sp].max(), phi[sn].max())
+    # Same tilt range the aggregate figure uses.  A single run carries
+    # on to its own window end, where the vehicle is going over fast and
+    # the balance stops holding -- Mx/pos reaches -1050 mN.m by 6.5 deg
+    # -- and the aggregate is a median over 70 runs, which is insensitive
+    # to those tails and is cut at 5.0 deg on Mx and 3.4 on My anyway.
+    # Showing them here would display a regime the result excludes.
+    hi = min(phi[sp].max(), phi[sn].max(), 5.0 if axn == 'Mx' else 3.4)
     g = np.linspace(0, hi, 120)
     av = 0.5 * (np.interp(g, phi[sp], inv[sp])
                 + np.interp(g, phi[sn], inv[sn]))
@@ -86,7 +137,7 @@ for k, axn in enumerate(('Mx', 'My')):
     a_.plot(g, np.interp(g, phi[sp], mod[sp]), color=MOD, lw=2.8, zorder=5,
             label='image-superposition model')
     a_.set_xlabel(r'$\varphi$  [deg]', color=INK2)
-    a_.set_xlim(0, max(phi[sp].max(), phi[sn].max()) * 1.02)
+    a_.set_xlim(0, hi * 1.02)
     a_.grid(alpha=0.22, lw=0.6, color=MUTED)
     a_.set_axisbelow(True)
     for sp_ in ('top', 'right'):
