@@ -292,8 +292,12 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
             drop['no_ge_model'] += 1
             continue
 
-        ge = (j_p * omd - m - f * lp + W * a * np.cos(phi_abs)
-              - W * Z * np.sin(phi_abs))
+        # keep the five terms separately as well: which of them carries
+        # the run-to-run scatter decides what the limitation actually is
+        term = dict(inertia=j_p * omd, moment=-m, load=-f * lp,
+                    grav_a=W * a * np.cos(phi_abs),
+                    grav_z=-W * Z * np.sin(phi_abs))
+        ge = sum(term.values())
         resid = ge - s * raw[sl]                      # N.m
 
         # --- a-priori heave-damping regressor, no fitted constant ------
@@ -311,7 +315,8 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
         reg = d_ideal * om                                 # N.m
 
         mdot = abs(float(np.polyfit(tau, m, 1)[0])) or np.nan
-        rows.append(dict(case=case, ax=axname, bag=crit.bag_name,
+        rows.append(dict(**{'t_' + k: v for k, v in term.items()},
+                         case=case, ax=axname, bag=crit.bag_name,
                          tip='pos' if s > 0 else 'neg',
                          mdot=mdot, tau=tau,
                          phi=phi_rel, om=om, omd=omd, resid=resid,
@@ -437,5 +442,8 @@ if os.environ.get('HD_DUMP'):
              case=np.array([r['case'] for r in rows]),
              axis=np.array([r['ax'] for r in rows]),
              bag=np.array([r['bag'] for r in rows]),
-             tip=np.array([r['tip'] for r in rows]))
+             tip=np.array([r['tip'] for r in rows]),
+             **{k: np.concatenate([1e3 * r[k] for r in rows])
+                for k in ('t_inertia', 't_moment', 't_load', 't_grav_a',
+                          't_grav_z')})
     print(f"\ndumped -> {os.environ['HD_DUMP']}")
