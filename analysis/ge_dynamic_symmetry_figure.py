@@ -20,7 +20,7 @@ Three panels, in the order the argument runs.
     same groups.
 
 Usage:
-  HD_DERIV=polyk:6 HD_GAIN=0.890 HD_DUMP=hd.npz \
+  HD_DERIV=bwk:3 HD_GAIN=0.890 HD_DUMP=hd.npz \
       python analysis/heave_damping.py
   python analysis/mcrit_prediction.py OUTDIR
   python analysis/ge_dynamic_symmetry_figure.py hd.npz OUTDIR/mcrit_prediction.csv [outdir]
@@ -177,7 +177,7 @@ fig.suptitle('the per-direction spread is antisymmetric, and the '
              'groups', fontsize=12, color=INK, x=0.055, ha='left', y=0.965)
 OUT.mkdir(parents=True, exist_ok=True)
 fig.savefig(OUT / 'fig_ge_symmetry.pdf', bbox_inches='tight')
-fig.savefig(OUT / 'fig_ge_symmetry.png', bbox_inches='tight', dpi=190)
+fig.savefig(OUT / 'fig_ge_symmetry.png', bbox_inches='tight', dpi=600)
 print(f"-> {OUT / 'fig_ge_symmetry.pdf'}")
 print(f"   antisymmetric  My {np.mean(anti[1::2]):+.2f} +- "
       f"{np.std(anti[1::2]):.2f} mm,  Mx {np.mean(anti[0::2]):+.2f} +- "
