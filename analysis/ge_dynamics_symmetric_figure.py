@@ -16,15 +16,21 @@ median.
 Range.  A group can only form an average in a bin where both its
 directions are represented, and the neg direction does not tip as far,
 so the set of contributing groups shrinks with tilt and shrinks
-unevenly: past 4.2 deg every My group has dropped and the curve would
-be an Mx-only statistic compared against a balanced one at low tilt.
-The figure therefore stops at the last bin all ten groups reach.
-Loosening the per-group thresholds from 8 samples / 4 runs to 5 / 3
-buys 0.4 deg and no more, so the limit is the experiment's, not the
-threshold's.
+unevenly: all ten reach 2.6 deg, but by 4.6 only the five Mx groups do.
+The curve is drawn wherever four groups remain, the count is printed
+per bin, and the residual is quoted both over the balanced range and
+over everything drawn.
+
+The derivative is the filtered one, HD_DERIV=bwk:3 -- centred
+difference, zero-phase Butterworth at 3 Hz over [0, window end], phi
+from the integral of that same filtered rate.  3 Hz is where
+analysis/rate_band_check.py puts the boundary between rigid rotation
+about the contact line and airframe structure: over 140 runs the
+inertial moment the gyro implies matches the moment actually present to
+within a factor 1.2 below 3 Hz and misses it by 8.7 in 3-6 Hz.
 
 Usage:
-  HD_DERIV=polyk:6 HD_GAIN=0.890 HD_DUMP=hd.npz \
+  HD_DERIV=bwk:3 HD_GAIN=0.890 HD_DUMP=hd.npz \
       python analysis/heave_damping.py
   python analysis/ge_dynamics_symmetric_figure.py hd.npz [outdir]
 """
@@ -113,7 +119,7 @@ ax.legend(fontsize=11, frameon=False, loc='lower left', labelcolor=INK2)
 
 OUT.mkdir(parents=True, exist_ok=True)
 fig.savefig(OUT / 'fig_ge_dynamics_sym.pdf', bbox_inches='tight')
-fig.savefig(OUT / 'fig_ge_dynamics_sym.png', bbox_inches='tight', dpi=200)
+fig.savefig(OUT / 'fig_ge_dynamics_sym.png', bbox_inches='tight', dpi=600)
 print(f"-> {OUT / 'fig_ge_dynamics_sym.pdf'}")
 
 res = med - mm
