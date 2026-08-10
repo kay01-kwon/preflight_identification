@@ -44,6 +44,21 @@ import numpy as np
 
 SRC = Path(sys.argv[1])
 OUT = Path(sys.argv[2]) if len(sys.argv) > 2 else Path('docs')
+# Optional axis restriction.  The rigid-body balance closes on Mx and
+# not on My -- analysis/rate_band_check.py gives 0.9-1.1 against 1.8-2.0
+# in the 1-3 Hz band, a criterion that looks only at whether
+# J_P omega_dot matches the moment applied and never at the
+# ground-effect model -- so the dynamic check is applied to Mx.
+AXIS = sys.argv[3] if len(sys.argv) > 3 and sys.argv[3] != '-' else None
+# Optional admission list: one "case/axis/bag" per line, the runs whose
+# 1-3 Hz rigid-body balance closes with a contact lever no larger than
+# the landing-gear half-span of that axis (140 mm on Mx, 125 on My).
+# A lever outside the footprint is not a contact line, so the run is not
+# rigid rotation about one.  The test reads only the gyro, the load cell
+# and the collective -- never the ground-effect model -- so it cannot
+# select on the answer.  See analysis/lever_solve.py.
+KEEP = (set(Path(sys.argv[4]).read_text().split())
+        if len(sys.argv) > 4 else None)
 
 DYN, MOD = '#2a78d6', '#eb6834'
 INK, INK2, MUTED, SURF = '#0b0b0b', '#52514e', '#b8b7b2', '#fcfcfb'
@@ -56,8 +71,19 @@ d = np.load(SRC)
 rid, phi = d['rid'], d['phi']
 inv, mod = d['resid'] + d['model'], d['model']
 tip = d['tip'][rid]
-gs = np.array([f"{c}/{a}" for c, a in zip(d['case'], d['axis'])])[rid]
-GROUPS = sorted(set(gs))
+bagkey = np.array([f"{c}/{a}/{b}"
+                   for c, a, b in zip(d['case'], d['axis'], d['bag'])])
+if KEEP is not None:
+    keep_run = np.array([k in KEEP for k in bagkey])
+    print(f"  admission list: {keep_run.sum()} of {len(keep_run)} runs kept")
+else:
+    keep_run = np.ones(len(bagkey), bool)
+gs = np.where(keep_run, [f"{c}/{a}" for c, a in zip(d['case'], d['axis'])],
+              '')[rid]
+GROUPS = sorted(g for g in set(gs)
+                if g and (AXIS is None or g.endswith(AXIS)))
+if AXIS:
+    print(f"  restricted to {AXIS}: {len(GROUPS)} groups")
 BINS = [(phi >= a) & (phi < b) for a, b in zip(EDGES[:-1], EDGES[1:])]
 
 
@@ -118,9 +144,11 @@ for sp in ('top', 'right'):
 ax.legend(fontsize=11, frameon=False, loc='lower left', labelcolor=INK2)
 
 OUT.mkdir(parents=True, exist_ok=True)
-fig.savefig(OUT / 'fig_ge_dynamics_sym.pdf', bbox_inches='tight')
-fig.savefig(OUT / 'fig_ge_dynamics_sym.png', bbox_inches='tight', dpi=600)
-print(f"-> {OUT / 'fig_ge_dynamics_sym.pdf'}")
+stem = ('fig_ge_dynamics_sym' + (f'_{AXIS}' if AXIS else '')
+        + ('_admitted' if KEEP is not None else ''))
+fig.savefig(OUT / f'{stem}.pdf', bbox_inches='tight')
+fig.savefig(OUT / f'{stem}.png', bbox_inches='tight', dpi=600)
+print(f"-> {OUT / (stem + '.pdf')}")
 
 res = med - mm
 w = q3 - q1
@@ -133,7 +161,7 @@ for i, k in enumerate(np.flatnonzero(ok)):
            if not np.isnan(sym_g[j, k])]
     print(f"  {x[i]:5.1f}{med[i]:11.1f}{mm[i]:8.1f}{res[i]:+8.1f}"
           f"{q1[i]:8.1f}{q3[i]:8.1f}{w[i]:7.0f}{len(got):8d}   "
-          f"{'all ten' if len(got) == len(GROUPS) else ','.join(got)}")
+          f"{'all' if len(got) == len(GROUPS) else ','.join(got)}")
 rb = (med - mm)[full[ok]]
 print(f"\n  residual, all {len(GROUPS)} groups (0.2-{CTR[full][-1]:.1f} deg):"
       f"  median {np.median(rb):+.1f}  RMS {np.sqrt(np.mean(rb ** 2)):.1f}"
