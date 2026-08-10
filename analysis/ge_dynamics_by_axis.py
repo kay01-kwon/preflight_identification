@@ -3,28 +3,52 @@
 
 The two axes are different experiments and pooling them hides both.
 They tip about different contact lines (140 mm against 110), the model
-predicts different moments (about 175 mN.m against 138), and
-analysis/rate_band_check.py finds the rigid-body balance closing on Mx
-(ratio 0.9-1.1 below 3 Hz) and not on My (1.8-2.0).  Reported
-separately:
+predicts different moments (about 172 mN.m against 135), and the two
+tip directions do not reach the same tilt on both axes:
 
-    Mx, 0.2-5.0 deg    residual median -17.2, RMS 16.6, max 32
+    Mx/pos  median excursion 5.8 deg     Mx/neg  7.4
+    My/pos                   6.8         My/neg  3.1
+
+That asymmetry is designed, not a defect.  All four classes stop at
+much the same absolute attitude -- +6.63, -6.96, +6.52 and -5.82 deg --
+under the common tilt cap, and what differs is where they start: the
+pad rests at -1.5 deg in pitch, so My/neg is already at -2.46 deg by
+its onset and has only 3.4 deg of room left, while My/pos begins at
+-0.26 and has 6.8.  Roll rests at +0.5, so Mx starts at +0.86 and +0.37
+and its two directions are nearly balanced.  The My range limit is
+therefore the pad and the cap, and says nothing about that axis's
+contact.
+
+Each panel is the average of the two tip directions, which is the
+combination M_ff = sign * 0.5 * (M_pos + M_neg) the identification
+forms, and it is not optional here.  The directions carry an
+antisymmetric term -- 470 mN.m apart on My, 80 on Mx -- so POOLING them
+instead makes the curve follow whichever direction still has samples.
+On My that manufactures a step: the pooled median jumps from 142 to 230
+mN.m between 2.2 and 2.6 deg while neither direction's own median moves
+at all, only their mix, 49% negative becoming 45 and then 14 by 4.2
+deg.  The same mixing, not any property of the axis, is what makes the
+pooled band three times wider on My.
+
+Averaged properly, and stopping where the shorter direction runs out:
+
+    Mx, 0.2-5.0 deg    residual median  -5.2, RMS 14.9, max 26
                        9% of the model, 66-70 runs in every bin
-    My, 0.2-2.2 deg    residual median  -6.2, RMS 15.0, max 28
-                       11% of the model, 67-70 runs in every bin
-    My, 2.6-5.0 deg    residual median +124.3, RMS 126.9, max 154
+    My, 0.2-3.4 deg    residual median -45.3, RMS 49.0, max 66
+                       36% of the model, 52-70 runs
 
-So My is not a bad axis.  Below 2.4 deg it agrees with the model as
-well as Mx does over its whole range.  It then departs abruptly: +4.3
-mN.m at 2.2 deg becomes +92.5 at 2.6, with 67 and 66 runs contributing,
-so the transition is not the sample thinning -- that comes afterwards,
-as the runs stop reaching further.  Above it the inversion reads 90-150
-mN.m more than the model, the direction the band ratio predicts, the
-gyro implying more moment than the instruments show.
+So Mx tracks the model over its whole range and My sits about 45 mN.m
+below it, flat, with no step anywhere.  My also carries the wider band
+throughout, 118-217 against 107-129, and it is the axis whose 1-3 Hz
+rigid-body balance does not close (analysis/rate_band_check.py, ratio
+1.8-2.0 against 0.9-1.1).
 
-The band is the interquartile range across runs, dispersion rather than
-an uncertainty on the median.  It is about three times wider on My than
-on Mx at every tilt, which is the same fact the band ratio reports.
+Those two facts are not explained by the range.  They are present from
+0.2 deg upwards, where both My directions still have 600 samples each,
+so whatever separates the axes is not the tilt the runs reach.
+
+The band is the interquartile range over direction pairs, dispersion
+rather than an uncertainty on the median.
 
 Usage:
   HD_DERIV=bwk:3 HD_GAIN=0.890 HD_DUMP=hd.npz \
@@ -52,6 +76,7 @@ d = np.load(SRC)
 rid, phi = d['rid'], d['phi']
 inv, mod = d['resid'] + d['model'], d['model']
 axis = d['axis'][rid]
+tip = d['tip'][rid]
 
 plt.rcParams.update({
     'font.size': 12, 'axes.labelsize': 12,
@@ -74,14 +99,29 @@ for k, axn in enumerate(('Mx', 'My')):
     nrun = np.zeros(len(CTR), int)
     for i, (lo, hi) in enumerate(zip(EDGES[:-1], EDGES[1:])):
         m = sel & (phi >= lo) & (phi < hi)
-        r = np.unique(rid[m])
-        if len(r) < MIN_R:
+        mp, mn = m & (tip == 'pos'), m & (tip == 'neg')
+        # Average the two tip directions rather than pooling them.  The
+        # two carry an antisymmetric term -- 470 mN.m apart on My, 80 on
+        # Mx -- and they do not reach the same tilt: My/neg stops at a
+        # median 3.1 deg where My/pos goes to 6.8.  Pooling therefore
+        # slides towards the positive direction as the tilt grows and
+        # manufactures a step: the My pooled median jumps from 142 to
+        # 230 mN.m between 2.2 and 2.6 deg while NEITHER direction's own
+        # median moves, only their mix, 49% negative becoming 45 and
+        # then 14 by 4.2 deg.  The same mixing sets the width of the
+        # band.  Both directions must therefore be represented, and the
+        # curve stops where the shorter one runs out.
+        if (len(np.unique(rid[mp])) < MIN_R
+                or len(np.unique(rid[mn])) < MIN_R
+                or mp.sum() < 20 or mn.sum() < 20):
             continue
-        per = [np.median(inv[m & (rid == j)]) for j in r]
-        med[i] = np.median(inv[m])
+        per = [0.5 * (np.median(inv[mp & (rid == j)])
+                      + np.median(inv[mn & (rid == k)]))
+               for j in np.unique(rid[mp]) for k in np.unique(rid[mn])]
+        med[i] = 0.5 * (np.median(inv[mp]) + np.median(inv[mn]))
         q1[i], q3[i] = np.percentile(per, [25, 75])
-        mm[i] = np.median(mod[m])
-        nrun[i] = len(r)
+        mm[i] = 0.5 * (np.median(mod[mp]) + np.median(mod[mn]))
+        nrun[i] = len(np.unique(rid[m]))
     ok = ~np.isnan(med)
     a_.fill_between(CTR[ok], q1[ok], q3[ok], color=DYN, alpha=0.16, lw=0,
                     zorder=2)
