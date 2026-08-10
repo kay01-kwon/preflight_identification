@@ -65,15 +65,21 @@ def spectrum(x, dt):
     return np.abs(np.fft.rfft(x * np.hanning(len(x)))) / len(x) * 4
 
 
-def ratios(case, axname, bagname):
+def load_group(case, axname):
+    """read one case/axis once -- reloading per bag is quadratic"""
     ax = 'x' if axname == 'Mx' else 'y'
     with contextlib.redirect_stdout(io.StringIO()):
         bags = load_excitation_dataset(ROOT / case / axname)
         crits, _ = cvp.extract_piecewise_batch(bags, ax)
+    return ax, {b.name: b for b in bags}, crits
+
+
+def ratios(case, axname, bagname, group=None):
+    ax, by, crits = group if group else load_group(case, axname)
     crit = next((c for c in crits if c.bag_name == bagname), None)
     if crit is None:
         return None
-    bag = {b.name: b for b in bags}[bagname]
+    bag = by[bagname]
     sig = cvp.prepare_signals(bag, ax)
     n = len(sig['t'])
     dt = float(np.median(np.diff(sig['t'][:n])))
@@ -109,19 +115,24 @@ else:
     print("present in that band.  1 = rigid rotation, large = structure.\n")
     print(hdr)
     rows = []
-    for case in sorted(p.name for p in ROOT.glob('case_*')):
+    for case in sorted(p.name for p in ROOT.glob('case_*') if p.is_dir()):
         for axname in ('Mx', 'My'):
-            d = ROOT / case / axname
-            if not d.exists():
+            if not (ROOT / case / axname).exists():
                 continue
-            with contextlib.redirect_stdout(io.StringIO()):
-                names = [b.name for b in load_excitation_dataset(d)]
-            for nm in names[:2]:
-                r = ratios(case, axname, nm)
+            g = load_group(case, axname)
+            for crit in g[2]:
+                r = ratios(case, axname, crit.bag_name, group=g)
                 if r is None:
                     continue
                 rows.append(r)
-                print(f"  {case + '/' + nm:26}"
-                      + ''.join(f"{v:9.1f}" for v in r))
-    med = np.median(np.array(rows), axis=0)
-    print(f"\n  {'MEDIAN':26}" + ''.join(f"{v:9.1f}" for v in med))
+            print(f"  {case + '/' + axname:26}"
+                  + ''.join(f"{v:9.1f}" for v in
+                            np.median(np.array(rows[-len(g[2]):]), axis=0)),
+                  flush=True)
+    rows = np.array(rows)
+    print(f"\n  {f'MEDIAN over {len(rows)} runs':26}"
+          + ''.join(f"{v:9.1f}" for v in np.median(rows, axis=0)))
+    print(f"  {'25th percentile':26}"
+          + ''.join(f"{v:9.1f}" for v in np.percentile(rows, 25, axis=0)))
+    print(f"  {'75th percentile':26}"
+          + ''.join(f"{v:9.1f}" for v in np.percentile(rows, 75, axis=0)))
