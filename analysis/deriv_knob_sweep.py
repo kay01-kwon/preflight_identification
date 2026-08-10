@@ -75,9 +75,9 @@ def stats(f):
 
 
 ROWS = [(f'poly  K={k}', f'hd_polyk{k}.npz') for k in (5, 6, 7)]
-ROWS += [(f'bw  {fc:>4} Hz', f'hd_bw{fc}.npz') for fc in (4, 6, 8, 12, 20)]
-ROWS += [(f'bwk {fc:>4} Hz', f'hd_bwk{fc}.npz')
-         for fc in (1.5, 2, 2.5, 3, 4, 6, 8, 12, 20)]
+CUTS = (1.5, 2, 2.5, 3, 4, 6, 8, 12, 20)
+ROWS += [(f'bw  {fc:>4} Hz', f'hd_bw{fc}.npz') for fc in CUTS]
+ROWS += [(f'bwk {fc:>4} Hz', f'hd_bwk{fc}.npz') for fc in CUTS]
 
 print(f"  {'setting':12}{'level/model':>13}{'sym median':>12}{'sym RMS':>10}"
       f"{'anti RMS':>10}{'within-run slope':>18}")

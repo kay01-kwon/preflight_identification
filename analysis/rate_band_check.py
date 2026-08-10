@@ -47,10 +47,6 @@ the antisymmetric residual sits (+7.3 mm against -2.1 on Mx).
 three half-cycles, i.e. roughly 4.5 Hz, so the polynomial route was
 already acting as a low pass near this cutoff.  That is why it worked.)
 
-(For scale: a K = 6 polynomial over a 0.67 s window can represent about
-three half-cycles, i.e. roughly 4.5 Hz, so the polynomial route was
-already acting as a low pass near this cutoff.  That is why it worked.)
-
 Usage:
   PYTHONPATH=<stubs> python analysis/rate_band_check.py [case] [Mx|My] [bag]
   PYTHONPATH=<stubs> python analysis/rate_band_check.py --all
