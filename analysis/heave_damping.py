@@ -131,7 +131,9 @@ from error_budget import ge_moment
 from analysis.pnls_constants import PNLS_CONSTANTS
 from analysis.rate_derivative import (omega_dot, edge_margin,
                                       omega_dot_poly,
-                                      kinematics_from_phi)
+                                      kinematics_from_phi,
+                                      omega_dot_butter, butter_lowpass,
+                                      integrate_from_onset)
 
 ROOT = Path(__file__).resolve().parents[1] / 'DataSet' / 'exp'
 G, Z = 9.81, 0.261
@@ -252,7 +254,21 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
         # and exactly the size of the discrepancy it was blamed for.
         pre = slice(max(0, j - 100), j)
         bias = float(np.mean(om_full[pre])) if j >= 20 else om_full[j]
-        if DERIV.startswith('polyphi'):
+        if DERIV.startswith('bw'):
+            # centred difference on the full trace, then a zero-phase
+            # Butterworth; the cutoff is the only free choice and it is
+            # set between the ~10 Hz structural line and blade passing.
+            fc = float(DERIV.split(':')[1])
+            omd = omega_dot_butter(om_full - bias, dt, fc)[sl]
+            om = butter_lowpass(om_full - bias, dt, fc)[sl]
+            if DERIV.startswith('bwk'):
+                # phi from the same filtered rate, so phi, omega and
+                # omega_dot are one motion -- the consistency polyk
+                # gets by construction
+                ph_fit = integrate_from_onset(tau, om)
+                phi_rel = ph_fit
+                phi_abs = phi_abs[0] + ph_fit
+        elif DERIV.startswith('polyphi'):
             # everything from the ATTITUDE, which mocap corroborates:
             # no rate scale factor is involved at all
             ph_fit, om, omd = kinematics_from_phi(
