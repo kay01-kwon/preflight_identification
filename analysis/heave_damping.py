@@ -316,6 +316,7 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
 
         mdot = abs(float(np.polyfit(tau, m, 1)[0])) or np.nan
         rows.append(dict(**{'t_' + k: v for k, v in term.items()},
+                         lp=lp, arm_a=a, W=W, f=f, phi_abs=phi_abs,
                          case=case, ax=axname, bag=crit.bag_name,
                          tip='pos' if s > 0 else 'neg',
                          mdot=mdot, tau=tau,
@@ -445,5 +446,12 @@ if os.environ.get('HD_DUMP'):
              tip=np.array([r['tip'] for r in rows]),
              **{k: np.concatenate([1e3 * r[k] for r in rows])
                 for k in ('t_inertia', 't_moment', 't_load', 't_grav_a',
-                          't_grav_z')})
+                          't_grav_z')},
+             # the arms and forces, so an arm substitution can be tried
+             # without re-running the whole pipeline
+             lp=np.array([r['lp'] for r in rows]),
+             arm_a=np.array([r['arm_a'] for r in rows]),
+             Wn=np.array([r['W'] for r in rows]),
+             f_col=np.concatenate([r['f'] for r in rows]),
+             phi_abs=np.concatenate([r['phi_abs'] for r in rows]))
     print(f"\ndumped -> {os.environ['HD_DUMP']}")
