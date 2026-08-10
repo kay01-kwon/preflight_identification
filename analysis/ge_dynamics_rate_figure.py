@@ -32,12 +32,24 @@ distinguished far more finely than the overlap of the bands suggests.
 Panel (b) is the attitude dependence, and it needs its own panel
 because the pooled trend in (a) is NOT the within-run trend.  Runs
 differ in offset and in how far they tip, so pooling them flattens the
-line: at Mdot <= 0.3 the pooled slope reads +1.7 mN.m/deg while the
-median WITHIN-run slope is -46.5 (IQR -66.0 .. -20.1).  Restricting to
-slow ramps does not improve it -- over all 116 runs the within-run
-slope is -43.5.  Against a model slope of -2.5, the inversion misses
-the attitude dependence by a factor of about nineteen, which is the
-point the figure has to make honestly.
+line, so the panel fits one straight line PER RUN and histograms the
+slopes.  Its three summary numbers are different in kind and must not
+be confused:
+
+  IQR                the 25th-75th percentile of the per-run slopes.
+                     The run-to-run DISPERSION.  Half the runs lie
+                     inside it; it does not shrink with n.
+  SE of the median   the uncertainty on where the centre is, smaller
+                     than the IQR by roughly sqrt(n).
+  model - inversion  the gap to be closed, to be read against the SE.
+
+With the corrected pipeline (HD_DERIV=polyk:6 HD_GAIN=0.890) the gap
+is of order one SE, so the two are statistically consistent AT THAT
+POLYNOMIAL ORDER -- but the order systematic across K = 5, 6, 7 is
+about +-10 mN.m/deg, larger than both the SE and the model slope.  The
+honest reading is therefore that this apparatus resolves the LEVEL of
+the ground-effect moment (1.01-1.04 of the model) and does NOT resolve
+its attitude gradient.
 
 Usage:
   python analysis/ge_dynamics_rate_figure.py hd.npz [outdir] [max_rate]
@@ -178,15 +190,27 @@ for sp in ('top', 'right'):
     ax.spines[sp].set_visible(False)
 ax.set_title('(b)  attitude dependence', fontsize=9, color=INK, loc='left',
              pad=6)
-se = np.std(si) / np.sqrt(len(si))
+# sigma/sqrt(n) is the standard error of the MEAN.  The bars here mark
+# medians, and for a normal sample the median's standard error is larger
+# by sqrt(pi/2) = 1.253, so quoting sigma/sqrt(n) against a median gap
+# understates it by a quarter.  Carry the factor.
+se = 1.2533 * np.std(si, ddof=1) / np.sqrt(len(si))
 ax.text(0.03, 0.78,
         f'IQR {np.percentile(si, 25):.0f} … {np.percentile(si, 75):.0f}\n'
         f'SE of the median  {se:.1f}\n'
         f'model − inversion  {np.median(sm) - np.median(si):+.1f}',
         transform=ax.transAxes, fontsize=7.5, color=INK, linespacing=1.35,
         bbox=dict(fc=SURF, ec=MUTED, lw=0.5, pad=3, alpha=0.93))
+gap = np.median(sm) - np.median(si)
 print(f"  within-run slope: inversion {np.median(si):+.1f}, "
-      f"model {np.median(sm):+.1f}")
+      f"model {np.median(sm):+.1f}  ({len(si)} runs)")
+print(f"  IQR {np.percentile(si, 25):+.1f} .. {np.percentile(si, 75):+.1f}"
+      f"  (dispersion across runs, does not shrink with n)")
+print(f"  SE of the median {se:.1f};  model - inversion {gap:+.1f}"
+      f"  = {abs(gap)/se:.1f} SE")
+print("  NB the polynomial-order systematic across K = 5, 6, 7 is about"
+      " +-10,\n     which exceeds both this SE and the model slope itself:"
+      " the\n     gradient is NOT resolved by this apparatus.  The level is.")
 
 cap_txt = (rf'all {n_run} runs, $\dot M$ = {mdot.min():.2f}–{mdot.max():.2f}'
            rf' N$\cdot$m/s'
