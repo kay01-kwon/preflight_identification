@@ -78,7 +78,8 @@ for d in [Path(p) for p in sys.argv[1:]]:
         dphi = ph - ph[0]
         mom = crit.moment[sl]
         A = np.vstack([np.ones_like(tau), tau, dphi]).T
-        ge = ge_moment(bag, sig, axis, n, crit.bag_name.startswith('pos'))
+        ge = ge_moment(bag, sig, axis, n,
+                       crit.bag_name.startswith('pos'), window=sl)
         raw = {
             'gravity': -W * arm * np.cos(ph) + W * Z * np.sin(ph),
             'ge': ge[sl] if ge is not None else None,

@@ -169,6 +169,15 @@ DERIV = os.environ.get('HD_DERIV', 'sg')
 # J_P omega_dot and W z sin(phi) in the same balance.
 GYRO_GAIN = float(os.environ.get('HD_GAIN', 1.0))
 
+# HD_MAXPHI: truncate every window at a common tilt excursion [deg]
+# before anything is fitted.  The polynomial kinematics fit the whole
+# window and are then differentiated at tau = 0, so a window that runs
+# out to 9 deg and one that stops at 2 deg do not give the onset the
+# same treatment -- and the measured onset level tracks the window's
+# total excursion almost linearly, which a static balance cannot do.
+# Capping puts every run on the same footing.  0 disables.
+MAXPHI = float(os.environ.get('HD_MAXPHI', 0))
+
 
 def pivot_arms(axis, pos, lp):
     """Horizontal rotor arms about the contact line, tipping-positive."""
@@ -212,6 +221,11 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
             sig['moment'], moment_cap=cvp.MOMENT_CAP.get(ax))
         j = crit.onset_idx
         i1 = min(i1, n - 1)
+        if MAXPHI:
+            over = np.flatnonzero(
+                np.rad2deg(np.abs(phi_all[j:i1 + 1] - phi_all[j])) > MAXPHI)
+            if len(over):
+                i1 = j + int(over[0]) - 1
         if i1 - j < 15:
             drop['short_window'] += 1
             continue
@@ -272,7 +286,8 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
         a = lp + s * OFF_SIGN[axname] * OFF_MM[(case, axname)] * 1e-3
         q_rest = bag.odom.quaternion[:max(20, i0w)].mean(axis=0)
         q_rest = q_rest / np.linalg.norm(q_rest)
-        raw = ge_moment(bag, sig, ax, n, s > 0, q_rest=q_rest)
+        raw = ge_moment(bag, sig, ax, n, s > 0, q_rest=q_rest,
+                        window=sl)
         if raw is None:
             drop['no_ge_model'] += 1
             continue
@@ -296,7 +311,9 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
         reg = d_ideal * om                                 # N.m
 
         mdot = abs(float(np.polyfit(tau, m, 1)[0])) or np.nan
-        rows.append(dict(case=case, ax=axname, mdot=mdot, tau=tau,
+        rows.append(dict(case=case, ax=axname, bag=crit.bag_name,
+                         tip='pos' if s > 0 else 'neg',
+                         mdot=mdot, tau=tau,
                          phi=phi_rel, om=om, omd=omd, resid=resid,
                          reg=reg, d_ideal=d_ideal, arms=arms,
                          model=s * raw[sl]))
@@ -418,5 +435,7 @@ if os.environ.get('HD_DUMP'):
              d_fit=np.array(d_fit),
              d_ideal=np.array([np.median(r['d_ideal']) for r in rows]),
              case=np.array([r['case'] for r in rows]),
-             axis=np.array([r['ax'] for r in rows]))
+             axis=np.array([r['ax'] for r in rows]),
+             bag=np.array([r['bag'] for r in rows]),
+             tip=np.array([r['tip'] for r in rows]))
     print(f"\ndumped -> {os.environ['HD_DUMP']}")

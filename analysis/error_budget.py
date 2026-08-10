@@ -131,12 +131,24 @@ def _rot_matrices(qw, qx, qy, qz):
     ], axis=-2)
 
 
-def ge_moment(bag, sig, axis, n, pos, q_rest=None):
+def ge_moment(bag, sig, axis, n, pos, q_rest=None, window=None):
     """Pivot ground-effect moment along the trajectory (interference model).
 
     Image superposition over rotor-centre distances at each rotor's own
     tilted height; no empirical constant.  Mirrors the 'interf' branch of
     analysis/ge_trajectory.py.
+
+    The image solution diverges at h = R/4, so the run is refused if any
+    rotor comes inside R/4 + 1 cm of the ground.  Pass ``window`` -- the
+    slice the caller will actually read -- to apply that test only there.
+    Without it the test runs over the whole bag, which includes the
+    seconds after the vehicle has gone over and a rotor is genuinely on
+    the floor: on this dataset that discarded 24 of 140 runs whose
+    excitation windows never come within 25 cm of the limit, and they
+    were not a random 24 (the largest excursions, in one tip direction
+    per axis, because the geometry is asymmetric about the contact
+    line).  The default is kept as it was so existing callers do not
+    change behaviour silently.
 
     Ground effect is set by rotor height above the GROUND, so the heights
     must be referred to the resting plane, not to true vertical: the pad
@@ -183,7 +195,8 @@ def ge_moment(bag, sig, axis, n, pos, q_rest=None):
                        1 - 2 * (rx * rx + ry * ry)])          # R0[:, 2]
         rot = _rot_matrices(qw[:n], qx[:n], qy[:n], qz[:n])   # (n, 3, 3)
         h_it = np.einsum('k,nkj,jm->nm', gn, rot, p_p)
-    if np.any(h_it <= R_ROTOR / 4 + 0.01):
+    probe = h_it if window is None else h_it[window]
+    if np.any(probe <= R_ROTOR / 4 + 0.01):
         return None
     d2 = ((p_p[0][:, None] - p_p[0][None, :]) ** 2
           + (p_p[1][:, None] - p_p[1][None, :]) ** 2)
@@ -307,7 +320,8 @@ def main():
             rho['gravity'] = out_of_span(
                 basis, -weight * arm * np.cos(phi) + weight * Z_COM * np.sin(phi))
             # (b) ground effect, interference model, exact along the trajectory
-            ge = ge_moment(bag, sig, axis, n, crit.bag_name.startswith('pos'))
+            ge = ge_moment(bag, sig, axis, n,
+                           crit.bag_name.startswith('pos'), window=sl)
             rho['ge'] = (out_of_span(basis, ge[sl]) if ge is not None
                          else np.zeros_like(tau))
             # (c) bilinear GE term beta_M * (Mdot tau) * dphi
