@@ -295,7 +295,7 @@ def analyse(bag, crit, axis, sig, phi_all, n, z_com, j_p, savgol=9):
 
     ge_dyn = (j_p * om_dot - m - f * lp
               + case_w * a * np.cos(phi) - case_w * z_com * np.sin(phi))
-    raw = ge_moment(bag, sig, axis, n, pos)
+    raw = ge_moment(bag, sig, axis, n, pos, window=sl)
     if raw is None:
         return None
     ge_mod = s * raw[sl]
@@ -578,7 +578,7 @@ def main():
     # ------------------------------------------- dynamic inversion vs model
     ge_dyn = (j_p * om_dot - m - f * lp
               + W * a * np.cos(phi) - W * args.z_com * np.sin(phi))
-    ge_mod_raw = ge_moment(bag, sig, axis, n, pos)
+    ge_mod_raw = ge_moment(bag, sig, axis, n, pos, window=sl)
     ge_mod = s * ge_mod_raw[sl] if ge_mod_raw is not None else None
     if ge_mod is not None and np.mean(ge_mod) < 0:
         ge_mod = -ge_mod                      # tipping-positive convention

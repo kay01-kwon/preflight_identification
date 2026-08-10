@@ -272,7 +272,8 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
         a = lp + s * OFF_SIGN[axname] * OFF_MM[(case, axname)] * 1e-3
         q_rest = bag.odom.quaternion[:max(20, i0w)].mean(axis=0)
         q_rest = q_rest / np.linalg.norm(q_rest)
-        raw = ge_moment(bag, sig, ax, n, s > 0, q_rest=q_rest)
+        raw = ge_moment(bag, sig, ax, n, s > 0, q_rest=q_rest,
+                        window=sl)
         if raw is None:
             drop['no_ge_model'] += 1
             continue
@@ -296,7 +297,9 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
         reg = d_ideal * om                                 # N.m
 
         mdot = abs(float(np.polyfit(tau, m, 1)[0])) or np.nan
-        rows.append(dict(case=case, ax=axname, mdot=mdot, tau=tau,
+        rows.append(dict(case=case, ax=axname, bag=crit.bag_name,
+                         tip='pos' if s > 0 else 'neg',
+                         mdot=mdot, tau=tau,
                          phi=phi_rel, om=om, omd=omd, resid=resid,
                          reg=reg, d_ideal=d_ideal, arms=arms,
                          model=s * raw[sl]))
@@ -418,5 +421,7 @@ if os.environ.get('HD_DUMP'):
              d_fit=np.array(d_fit),
              d_ideal=np.array([np.median(r['d_ideal']) for r in rows]),
              case=np.array([r['case'] for r in rows]),
-             axis=np.array([r['ax'] for r in rows]))
+             axis=np.array([r['ax'] for r in rows]),
+             bag=np.array([r['bag'] for r in rows]),
+             tip=np.array([r['tip'] for r in rows]))
     print(f"\ndumped -> {os.environ['HD_DUMP']}")

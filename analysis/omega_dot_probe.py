@@ -70,7 +70,7 @@ dt = float(np.median(np.diff(tau)))
 piv = cvp.estimate_pivot_from_mocap(bag, crit.onset_time, axis)
 lp = piv['pivot_abs'] * 1e-3 if not np.isnan(piv['pivot_abs']) else LP[axis]
 a = lp + s * OFF_SIGN[axname] * OFF_MM[(case, axname)] * 1e-3
-raw = ge_moment(bag, sig, axis, n, s > 0)
+raw = ge_moment(bag, sig, axis, n, s > 0, window=sl)
 if raw is None:
     sys.exit(f"ge_moment declined {crit.bag_name}: a rotor height fell below "
              f"the near-ground guard, so the image model is out of range. "

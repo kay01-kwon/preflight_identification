@@ -82,7 +82,8 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
         sl = slice(j, i1 + 1)
         tau = crit.t[sl] - crit.t[j]
         dphi = phi_all[sl] - phi_all[j]
-        ge = ge_moment(bag, sig, axis, n, crit.bag_name.startswith('pos'))
+        ge = ge_moment(bag, sig, axis, n,
+                       crit.bag_name.startswith('pos'), window=sl)
         if ge is None:
             continue
         ge = ge[sl]

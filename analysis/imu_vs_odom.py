@@ -70,7 +70,10 @@ for name in ('pos_Mx_01', 'pos_Mx_045', 'pos_Mx_120'):
         sig_o['moment'], moment_cap=cvp.MOMENT_CAP.get(axis))
     i1 = min(i1, n - 1)
     t_on, t_end = sig_o['t'][crit.onset_idx], sig_o['t'][i1]
-    raw = ge_moment(bag, sig_o, axis, n, True)
+    # the guard only has to hold where the trace is read back, which
+    # is between the onset and the window end
+    raw = ge_moment(bag, sig_o, axis, n, True,
+                    window=slice(crit.onset_idx, i1 + 1))
     piv = cvp.estimate_pivot_from_mocap(bag, crit.onset_time, axis)
     lp = piv['pivot_abs'] * 1e-3 if not np.isnan(piv['pivot_abs']) else LP[axis]
     a = lp + s * OFF_SIGN[axname] * OFF_MM[(case, axname)] * 1e-3

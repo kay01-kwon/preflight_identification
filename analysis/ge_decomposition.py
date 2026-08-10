@@ -67,14 +67,14 @@ for name in ('pos_Mx_01', 'pos_Mx_045', 'pos_Mx_120'):
     deg = np.rad2deg(phi_all[sl] - phi_all[j])
     dm = sig['moment'][i1] - sig['moment'][j]
 
-    full = eb.ge_moment(bag, sig, ax, n, True)[sl]
+    full = eb.ge_moment(bag, sig, ax, n, True, window=sl)[sl]
     # freeze the attitude at the onset: only the thrusts move
     q = bag.odom.quaternion.copy()
     bag_t = bag.__class__(**{**bag.__dict__,
                              'odom': bag.odom.__class__(**{
                                  **bag.odom.__dict__,
                                  'quaternion': np.repeat(q[j:j+1], len(q), 0)})})
-    thr_only = eb.ge_moment(bag_t, sig, ax, n, True)[sl]
+    thr_only = eb.ge_moment(bag_t, sig, ax, n, True, window=sl)[sl]
     # freeze the thrusts at the onset: only the attitude moves
     rpm = bag.rpm.rpm.copy()
     k0 = int(np.searchsorted(bag.rpm.t - bag.odom.t[0], sig['t'][j]))
@@ -82,7 +82,7 @@ for name in ('pos_Mx_01', 'pos_Mx_045', 'pos_Mx_120'):
     bag_a = bag.__class__(**{**bag.__dict__,
                              'rpm': bag.rpm.__class__(**{**bag.rpm.__dict__,
                                                           'rpm': rpm_f})})
-    tilt_only = eb.ge_moment(bag_a, sig, ax, n, True)[sl]
+    tilt_only = eb.ge_moment(bag_a, sig, ax, n, True, window=sl)[sl]
 
     cells = []
     for v in (full, thr_only, tilt_only):

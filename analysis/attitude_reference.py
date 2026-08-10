@@ -116,8 +116,9 @@ for d in sorted(ROOT.glob('case_*/M[xy]')):
             sig['moment'], moment_cap=cvp.MOMENT_CAP.get(ax))
         q_rest = np.median(bag.odom.quaternion[:max(20, i0w)], axis=0)
         q_rest = q_rest / np.linalg.norm(q_rest)
-        raw = ge_moment(bag, sig, ax, n, s > 0)
-        raw_g = ge_moment(bag, sig, ax, n, s > 0, q_rest=q_rest)
+        raw = ge_moment(bag, sig, ax, n, s > 0, window=sl)
+        raw_g = ge_moment(bag, sig, ax, n, s > 0, q_rest=q_rest,
+                          window=sl)
         if raw is None or raw_g is None:
             continue
         gem = s * raw[sl]; gem_g = s * raw_g[sl]

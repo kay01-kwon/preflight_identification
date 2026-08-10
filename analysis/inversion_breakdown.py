@@ -125,7 +125,7 @@ def decompose(crit):
     a = lp + s * OFF_SIGN[AXNAME] * OFF_MM[(CASE, AXNAME)] * 1e-3
     q_rest = bag.odom.quaternion[:max(20, i0w)].mean(axis=0)
     q_rest = q_rest / np.linalg.norm(q_rest)
-    raw = ge_moment(bag, sig, ax, n, s > 0, q_rest=q_rest)
+    raw = ge_moment(bag, sig, ax, n, s > 0, q_rest=q_rest, window=sl)
     if raw is None:
         return None
     terms = {
