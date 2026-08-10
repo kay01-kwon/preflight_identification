@@ -14,8 +14,11 @@ ingredients -- weight and CoM offset from ground truth, the collective
 thrust at that run's own onset, and that run's own contact arm from the
 mocap circle fit.  Nothing here is fitted to the onset moments.
 
-Three ground-effect treatments are shown side by side because the
-comparison is what selects the model, not the level of any one of them:
+Two figures come out, because two different things are being asked.
+
+fig_mcrit_residual pools the five cases and puts the three
+ground-effect treatments side by side, since the comparison is what
+selects the model, not the level of any one of them:
 
     none        no ground effect at all
     single      per-rotor Cheeseman superposition, rotor-rotor
@@ -46,13 +49,35 @@ median_neg).  The interference model takes the antisymmetric part from
 reference, which neglects rotor-rotor interference, removes about a
 quarter of it and leaves -125 and -181.
 
-The last column is the combination the identification actually forms,
-M_ff = sign * 0.5 * (M_pos + M_neg).  It cancels any
-direction-antisymmetric error identically, which is why it stays within
-13 to 26 mN.m whatever the ground-effect treatment -- an order below
-the per-direction residuals.  The deliverable is therefore insensitive
-to this choice; the per-direction thresholds of Eqs. (7)/(14) are not,
-and that is what selects the model.
+But the width of those pooled boxes must not be read as run-to-run
+scatter, and that is what the second figure is for.  Split by case, the
+runs of one class agree closely and the classes do not agree with each
+other:
+
+    axis / dir     spread of the five case medians    median within-case IQR
+    Mx / pos                                229                          21
+    Mx / neg                                270                          66
+    My / pos                                130                          29
+    My / neg                                160                          33
+
+so between 3 and 10 times more of the pooled width is case-to-case
+offset than is run-to-run repeatability.  fig_mcrit_residual_case draws
+the interference model per case, where each box is one CoM
+configuration and the tightness of the individual boxes is the
+measurement's actual repeatability.
+
+That case-to-case term is symmetric in the tip direction, so it is not
+a ground-effect error: it survives all three treatments nearly
+unchanged (Mx/case_03 M_ff -83.8 with no correction, -95.5 with
+interference).  It is the part the pivot-free average
+M_ff = sign * 0.5 * (M_pos + M_neg) carries, and it ranges from -96 to
++72 mN.m on Mx and -83 to +38 on My.  The pooled medians of -22 and -13
+in the table above are five cases of both signs averaging each other
+out and understate it; per case it is 3 mm of arm at the balance's own
+sensitivity, and it mixes the ground-truth CoM offset with the
+direction asymmetry of the contact arm (analysis/lever_fit.py).  What
+does hold for every case is that the ground-effect treatment barely
+moves it -- the model choice acts on the antisymmetric part only.
 
 Usage:
   python analysis/mcrit_prediction.py <outdir>       # writes the CSV
@@ -79,12 +104,7 @@ TREAT = (('resid_none_mNm', 'no ground effect'),
 rows = list(csv.DictReader(open(SRC)))
 if not rows:
     sys.exit(f"no rows in {SRC}")
-
-
-def take(axn, dirn, col):
-    return np.array([float(r[col]) for r in rows
-                     if r['axis'] == axn and r['dir'] == dirn])
-
+CASES = sorted({r['case'] for r in rows})
 
 plt.rcParams.update({
     'font.size': 12, 'axes.labelsize': 12,
@@ -93,31 +113,63 @@ plt.rcParams.update({
     'xtick.color': INK2, 'ytick.color': INK2,
     'figure.facecolor': SURF, 'axes.facecolor': SURF,
     'savefig.facecolor': SURF, 'pdf.fonttype': 42})
+
+
+def take(axn, dirn, col, case=None):
+    return np.array([float(r[col]) for r in rows
+                     if r['axis'] == axn and r['dir'] == dirn
+                     and (case is None or r['case'] == case)])
+
+
+def iqr(v):
+    return float(np.subtract(*np.percentile(v, [75, 25])))
+
+
+def box(a_, v, at, col):
+    bp = a_.boxplot([v], positions=[at], widths=0.31, patch_artist=True,
+                    showfliers=True, medianprops=dict(color=INK, lw=1.8),
+                    whiskerprops=dict(color=col, lw=1.1),
+                    capprops=dict(color=col, lw=1.1),
+                    flierprops=dict(marker='.', markersize=4,
+                                    markerfacecolor=col,
+                                    markeredgecolor='none', alpha=0.55))
+    for b in bp['boxes']:
+        b.set(facecolor=col, alpha=0.30, edgecolor=col, lw=1.2)
+
+
+def dress(a_, ticks, labels, title, first, legend='lower right'):
+    a_.axhline(0, color=MUTED, lw=0.9, zorder=1)
+    a_.set_xticks(ticks)
+    a_.set_xticklabels(labels)
+    a_.set_xlim(-0.55, len(ticks) - 0.45)
+    a_.grid(axis='y', alpha=0.22, lw=0.6, color=MUTED)
+    a_.set_axisbelow(True)
+    for sp in ('top', 'right'):
+        a_.spines[sp].set_visible(False)
+    a_.set_title(title, fontsize=13, color=INK, loc='left', pad=6)
+    if first:
+        a_.set_ylabel(r'$M_{\mathrm{onset}} - M_{\mathrm{crit}}$  [mNm]',
+                      color=INK2)
+        h = [plt.Line2D([], [], color=c, lw=7, alpha=0.45, label=t)
+             for c, t in ((POS, 'positive tip'), (NEG, 'negative tip'))]
+        a_.legend(handles=h, fontsize=10.5, frameon=False,
+                  loc=legend, labelcolor=INK2)
+
+
+# ---- pooled over the cases, the three treatments side by side --------
 fig, axes = plt.subplots(1, 2, figsize=(11.2, 4.6), sharey=True)
 fig.subplots_adjust(left=0.085, right=0.98, bottom=0.13, top=0.93,
                     wspace=0.08)
-
 print("static critical-moment residual, run by run  [mN.m]\n")
+print("pooled over the five cases\n")
 for k, axn in enumerate(('Mx', 'My')):
     a_ = axes[k]
-    a_.axhline(0, color=MUTED, lw=0.9, zorder=1)
     print(f"{axn}")
     print(f"  {'treatment':18}{'dir':>6}{'n':>5}{'q1':>9}{'median':>9}"
           f"{'q3':>9}{'|resid| med':>13}")
     for j, (col, lab) in enumerate(TREAT):
-        for dirn, col_, dx in (('pos', POS, -0.19), ('neg', NEG, +0.19)):
-            v = take(axn, dirn, col)
-            bp = a_.boxplot([v], positions=[j + dx], widths=0.31,
-                            patch_artist=True, showfliers=True,
-                            medianprops=dict(color=INK, lw=1.8),
-                            whiskerprops=dict(color=col_, lw=1.1),
-                            capprops=dict(color=col_, lw=1.1),
-                            flierprops=dict(marker='.', markersize=4,
-                                            markerfacecolor=col_,
-                                            markeredgecolor='none',
-                                            alpha=0.55))
-            for b in bp['boxes']:
-                b.set(facecolor=col_, alpha=0.30, edgecolor=col_, lw=1.2)
+        for dirn, colr, dx in (('pos', POS, -0.19), ('neg', NEG, +0.19)):
+            box(a_, take(axn, dirn, col), j + dx, colr)
         vp, vn = take(axn, 'pos', col), take(axn, 'neg', col)
         both = np.concatenate([vp, vn])
         for dirn, v in (('pos', vp), ('neg', vn)):
@@ -132,24 +184,49 @@ for k, axn in enumerate(('Mx', 'My')):
               f"{'antisym':>9}{0.5 * (np.median(vp) - np.median(vn)):9.1f}"
               f"{'M_ff':>6}{0.5 * (np.median(vp) + np.median(vn)):7.1f}"
               f"{np.median(np.abs(both)):13.1f}")
-    a_.set_xticks(range(len(TREAT)))
-    a_.set_xticklabels([lab for _, lab in TREAT])
-    a_.set_xlim(-0.55, len(TREAT) - 0.45)
-    a_.grid(axis='y', alpha=0.22, lw=0.6, color=MUTED)
-    a_.set_axisbelow(True)
-    for sp in ('top', 'right'):
-        a_.spines[sp].set_visible(False)
-    a_.set_title(f'$M_{axn[1]}$', fontsize=13, color=INK, loc='left', pad=6)
+    dress(a_, range(len(TREAT)), [t for _, t in TREAT], f'$M_{axn[1]}$',
+          k == 0)
     print()
-
-axes[0].set_ylabel(r'$M_{\mathrm{onset}} - M_{\mathrm{crit}}$  [mNm]',
-                   color=INK2)
-handles = [plt.Line2D([], [], color=c, lw=7, alpha=0.45, label=t)
-           for c, t in ((POS, 'positive tip'), (NEG, 'negative tip'))]
-axes[0].legend(handles=handles, fontsize=10.5, frameon=False,
-               loc='lower right', labelcolor=INK2)
-
 OUT.mkdir(parents=True, exist_ok=True)
 fig.savefig(OUT / 'fig_mcrit_residual.pdf', bbox_inches='tight')
 fig.savefig(OUT / 'fig_mcrit_residual.png', bbox_inches='tight', dpi=600)
-print(f"-> {OUT / 'fig_mcrit_residual.pdf'}")
+print(f"-> {OUT / 'fig_mcrit_residual.pdf'}\n")
+
+# ---- the reported model, case by case --------------------------------
+# The pooled boxes above are wide mostly because the five cases sit at
+# different levels, not because the runs of one case disagree.  Drawn
+# per case the runs are tight and the case offsets are visible as what
+# they are: a direction-SYMMETRIC term, present with or without the
+# ground-effect correction, which the model choice does not touch.
+COL = 'resid_interf_mNm'
+fig2, axes2 = plt.subplots(1, 2, figsize=(11.2, 4.6), sharey=True)
+fig2.subplots_adjust(left=0.085, right=0.98, bottom=0.13, top=0.93,
+                     wspace=0.08)
+print("the interference model, case by case\n")
+for k, axn in enumerate(('Mx', 'My')):
+    a_ = axes2[k]
+    print(f"{axn}   {'case':10}{'n':>4}{'pos med':>9}{'neg med':>9}"
+          f"{'antisym':>9}{'M_ff':>8}{'pos IQR':>9}{'neg IQR':>9}")
+    for j, case in enumerate(CASES):
+        for dirn, colr, dx in (('pos', POS, -0.19), ('neg', NEG, +0.19)):
+            box(a_, take(axn, dirn, COL, case), j + dx, colr)
+        vp, vn = take(axn, 'pos', COL, case), take(axn, 'neg', COL, case)
+        print(f"     {case:10}{len(vp) + len(vn):4d}{np.median(vp):9.1f}"
+              f"{np.median(vn):9.1f}"
+              f"{0.5 * (np.median(vp) - np.median(vn)):9.1f}"
+              f"{0.5 * (np.median(vp) + np.median(vn)):8.1f}"
+              f"{iqr(vp):9.1f}{iqr(vn):9.1f}")
+    for dirn in ('pos', 'neg'):
+        med = np.array([np.median(take(axn, dirn, COL, c)) for c in CASES])
+        wi = np.median([iqr(take(axn, dirn, COL, c)) for c in CASES])
+        print(f"     {axn}/{dirn}: spread of the case medians "
+              f"{med.max() - med.min():.0f}, median within-case IQR "
+              f"{wi:.0f} mN.m")
+    dress(a_, range(len(CASES)), [c.replace('case_', '') for c in CASES],
+          f'$M_{axn[1]}$', k == 0, legend='upper right')
+    a_.set_xlabel('case', color=INK2)
+    print()
+fig2.savefig(OUT / 'fig_mcrit_residual_case.pdf', bbox_inches='tight')
+fig2.savefig(OUT / 'fig_mcrit_residual_case.png', bbox_inches='tight',
+             dpi=600)
+print(f"-> {OUT / 'fig_mcrit_residual_case.pdf'}")
