@@ -22,12 +22,13 @@ identification actually forms.
 
 Coverage.  Medians are pooled over runs, not formed per group first:
 requiring twelve samples per case/axis group per direction stops every
-curve at 3.4 deg, whereas pooling carries both directions to 7.2 with
-25+ samples and 20+ runs in each bin.  Past that the counts fall into
-single digits and nothing is drawn.  The band is the interquartile
-range across runs in panel (a) and across the ten case/axis groups in
-panel (b), in both cases dispersion rather than an uncertainty on the
-median.
+curve at 3.4 deg, since one group holds only seven runs per direction.
+Pooling carries both directions to 5.2 deg with 25+ samples and 36+
+runs in every bin, which is where the figure ends -- past it one
+direction drops below half its runs and the average stops being over
+matched conditions.  The band is the interquartile range across runs in
+panel (a) and across the ten case/axis groups in panel (b), in both
+cases dispersion rather than an uncertainty on the median.
 
 Usage:
   HD_DERIV=polyk:6 HD_GAIN=0.890 HD_DUMP=hd.npz \
@@ -47,7 +48,15 @@ OUT = Path(sys.argv[2]) if len(sys.argv) > 2 else Path('docs')
 
 POS, NEG, DYN, MOD = '#b4451f', '#2a78d6', '#2a78d6', '#eb6834'
 INK, INK2, MUTED, SURF = '#0b0b0b', '#52514e', '#b8b7b2', '#fcfcfb'
-EDGES = np.arange(0.0, 7.61, 0.4)
+# Stop at 5.2 deg.  Beyond it fewer than half the runs are still
+# tipping in one direction or the other, so the two direction medians
+# come from different subsets -- only the runs that tipped far -- and
+# their average is no longer over matched conditions.  The curve does
+# climb to +122 above the model out there, but that is a change in
+# which runs are being averaged, not a measurement.  MAX_PHI is checked
+# against the run counts below, so widening it re-arms the shading.
+MAX_PHI = 5.2
+EDGES = np.arange(0.0, MAX_PHI + 0.01, 0.4)
 CTR = 0.5 * (EDGES[:-1] + EDGES[1:])
 MIN_S, MIN_R, MIN_G = 25, 10, 4      # samples, runs, groups per bin
 # a single case/axis group holds only seven runs per direction, so the
@@ -185,11 +194,9 @@ res = sym[ok] - mm_all[ok]
 solid = ok & (CTR < (THIN if THIN is not None else EDGES[-1]))
 res_s = (sym - mm_all)[solid]
 ax.text(0.03, 0.05,
-        f'residual, {CTR[solid][0]:.1f}–{CTR[solid][-1]:.1f}°:  '
-        f'median {np.median(res_s):+.0f}, RMS {np.sqrt(np.mean(res_s**2)):.0f}'
+        f'residual, {CTR[ok][0]:.1f}–{CTR[ok][-1]:.1f}°:  '
+        f'median {np.median(res):+.0f}, RMS {np.sqrt(np.mean(res**2)):.0f}'
         f' mNm\n'
-        f'over the shaded part as well:  median {np.median(res):+.0f},'
-        f' RMS {np.sqrt(np.mean(res**2)):.0f}\n'
         f'band: interquartile range across case/axis groups',
         transform=ax.transAxes, fontsize=9.5, color=INK, linespacing=1.4,
         bbox=dict(fc=SURF, ec=MUTED, lw=0.5, pad=4, alpha=0.93))
