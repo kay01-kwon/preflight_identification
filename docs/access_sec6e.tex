@@ -36,7 +36,9 @@ therefore set both homogeneous coefficients to zero --- no assumption on
 $\rho(0)$ is required --- and the deviation is the Duhamel integral
 alone,
 \begin{equation}
-  e_\varphi(\tau) = \int_0^\tau h_\varphi(\tau-s)\,\rho(s)\,ds .
+  e_\varphi(\tau) = \int_0^\tau h_\varphi(\tau-s)\,\rho(s)\,ds ,
+  \qquad
+  e_\omega(\tau) = \int_0^\tau \dot h_\varphi(\tau-s)\,\rho(s)\,ds .
   \tag{88}
 \end{equation}
 
@@ -54,98 +56,169 @@ gravity remainder is $\mathcal{O}(\varphi^2)\sim\tau^6$ and the
 bilinear term is $\tau\cdot\tau^3 = \tau^4$ --- so each is largest at
 the window end.
 
-\paragraph{A bound that can be verified by hand.}
-Bounding each channel there and integrating the kernel,
-$\int_0^\tau h_\varphi(u)\,du = (\cosh C_2\tau - 1)/(J_PC_2^2)$, and
-using $J_PC_2^2 = \Wz$,
+\paragraph{An envelope bound that can be verified by hand.}
+Replacing $\rho$ by a constant $\bar\rho$ and integrating the two
+kernels, $\int_0^\tau h_\varphi = (\cosh C_2\tau - 1)/(J_PC_2^2)$ and
+$\int_0^\tau \dot h_\varphi = \sinh(C_2\tau)/(J_PC_2)$, and using
+$J_PC_2^2 = \Wz$,
 \begin{equation}
-  \bigl|e_\varphi(\tau_{\rm end})\bigr| \;\le\;
-  \frac{\rho_{\varphi,\max} + \rho_{GE,\max}}{\Wz}\,
-  \bigl(\cosh x - 1\bigr),
+  \bigl|e_\varphi(\tau_{\rm end})\bigr| \le
+  \frac{\bar\rho}{\Wz}\bigl(\cosh x - 1\bigr),
+  \qquad
+  \bigl|e_\omega(\tau_{\rm end})\bigr| \le
+  \frac{\bar\rho\,C_2}{\Wz}\,\sinh x ,
   \qquad x \triangleq C_2\tau_{\rm end}.
   \tag{90}
 \end{equation}
-The inertia cancels: (90) requires only $\Wz$, the dimensionless group
-$x$ and the two channel maxima, all of which are already reported.
+The inertia cancels in both: $J_PC_2 = \Wz/C_2$ likewise. Only $\Wz$,
+$C_2$, the dimensionless group $x$ and the forcing level enter.
 
-Each maximum is elementary. The gravity remainder is
-$\rho_\varphi = \tfrac12 G''(\varphi^*)\varphi^2$ with
-$G'' = W(l_p+\lambda_{\rm off})\cos\varphi^* - \Wz\sin\varphi^*$ from
-(84), so its worst case over the operating box is reached at the tilt
-cap, $\rho_{\varphi,\max} \approx 71$~mN\,m at $\varphi_{\max} =
-10^\circ$; over the runs actually flown it is $2.7$~mN\,m in the median
-and $12.3$ at worst. The coupling is a product of two measured
-quantities, $\rho_{GE,\max} = |\beta_M|\,\Delta M_{\rm win}\,
-\varphi_{\rm end}$ with $\Delta M_{\rm win} = \dot M\tau_{\rm end}$ the
-moment increment over the window; with $\beta_M = -0.0345$~rad$^{-1}$
-from Table~2 that is $3.5$~mN\,m at the box corner
-($\Delta M_{\rm win} = 0.59$~N\,m, $\varphi = 10^\circ$) and
-$0.7$~mN\,m in the median over the flown runs. The gravity channel
-therefore dominates by a factor of about twenty.
+\paragraph{The window length is bounded a priori by the tilt cap.}
+Neither channel maximum nor the kernel factor requires $x$ to be
+solved for. With the nominal excursion of (20),
+\begin{equation}
+  \varphi_{\rm end} = \frac{\dot M}{\Wz C_2}\,\Lambda(x),
+  \qquad \Lambda(x) \triangleq \sinh x - x
+  = \sum_{k\ge1}\frac{x^{2k+1}}{(2k+1)!} .
+  \tag{91}
+\end{equation}
+Every term of $\Lambda$ is positive, so $\Lambda(x)\ge x^3/6$, and
+since $\Lambda$ increases, imposing the tilt cap
+$\varphi_{\rm end}\le\varphi_{\max}$ inverts in closed form:
+\begin{equation}
+  x \le \bar x \triangleq
+  \Bigl(\frac{6\,\varphi_{\max}\Wz C_2}{\dot M}\Bigr)^{1/3},
+  \qquad
+  \tau_{\rm end} \le \frac{\bar x}{C_2}
+  = \Bigl(\frac{6\,\varphi_{\max}\Wz}{C_2^{2}\dot M}\Bigr)^{1/3},
+  \tag{92}
+\end{equation}
+where $J_P = \Wz/C_2^{2}$ has been used to remove the inertia. The
+retained term is the inertia-only rise
+$\varphi = \dot M\tau^3/(6J_P)$ obtained by dropping the destabilising
+$\Wz\varphi$: it is the slowest admissible ascent and therefore reaches
+the cap latest, which is why (92) bounds $x$ from above and why the
+worst case is the \emph{slowest} ramp, not the fastest. The moment
+increment over the window and the coupling channel follow with no
+measured quantity at all,
+\begin{equation}
+  \Delta M_{\rm win} = \dot M\tau_{\rm end}
+  \le \Bigl(\frac{6\,\varphi_{\max}\Wz\dot M^{2}}{C_2^{2}}\Bigr)^{1/3},
+  \qquad
+  \rho_{GE,\max} = |\beta_M|\,\Delta M_{\rm win}\varphi_{\rm end}
+  \le |\beta_M|\,\varphi_{\max}
+  \Bigl(\frac{6\,\varphi_{\max}\Wz\dot M^{2}}{C_2^{2}}\Bigr)^{1/3},
+  \tag{93}
+\end{equation}
+and the kernel factors of (90) close on the same constant through the
+identity $\cosh x - 1 = \Lambda(x) + (x - 1 + e^{-x})$ with
+$0\le x-1+e^{-x} < x$, together with $\sinh x = \Lambda(x) + x$:
+\begin{equation}
+  \cosh x - 1 \;\le\; \sinh x \;\le\; \Lambda(x) + \bar x
+  \;\le\; \frac{\bar x^{3}}{6} + \bar x .
+  \tag{94}
+\end{equation}
+Both kernels therefore share one bracket.\footnote{%
+The step matters. $\Lambda(x)$ is known \emph{as an equality} --- the
+tilt cap supplies it --- so only the residual linear term needs $\bar
+x$. Substituting $\bar x$ into $\sinh$ instead is exponentially lossy:
+at the slowest ramp $\bar x = 7.23$ gives $\sinh\bar x = 691$ against
+$\Lambda + \bar x = 70.3$, a factor of nine thrown away for nothing.}
 
-Nothing beyond $|\rho| \le \rho_{\max}$ enters (90): no monotonicity,
-no shape, and no property of the trajectory but the window length.
-That is deliberate. The bound is the hand-checkable companion to the
-per-run propagation, which convolves the measured $\rho$ with the
-exact kernel and needs no envelope at all; the entry reported in
-Table~\ref{tab:budget} is the latter, and (90) exists so that its
-order of magnitude can be confirmed from $\Wz$, $x$ and the channel
-maxima alone.\footnote{%
-The bound tightens if $\rho$ is additionally taken monotone
-increasing, which it is here. Chebyshev's integral inequality for
-functions of \emph{opposite} monotonicity --- $\rho$ rises from zero
-at the onset while the kernel $\cosh(C_2(\tau-s))$ decreases in $s$
---- replaces each maximum in (90) by its time average. For the
-nominal shapes $\rho_\varphi\propto(\sinh u - u)^2$ and
-$\rho_{GE}\propto u(\sinh u - u)$ with $u = C_2\tau$ those averages are
-$R_\varphi(x)\,\rho_{\varphi,\max}$ and $R_{GE}(x)\,\rho_{GE,\max}$ with
-$R_\varphi \le 1/7$ and $R_{GE} \le 1/5$, the limits being the $x\to0$
-values where the two channels are sixth and fourth order; over
-$x \in [1.08, 5.20]$ they are $0.089$--$0.139$ and $0.145$--$0.197$,
-worth a factor of $5$ to $11$. We quote (90) without this refinement,
-since the conclusion does not need it and the refinement costs an
-assumption on $\rho$ that the envelope does not.}
+\paragraph{Why the envelope alone does not settle the question.}
+Nothing beyond $|\rho|\le\rho_{\max}$ enters (90): no monotonicity, no
+shape, no property of the trajectory but the window length. That
+generality is also its cost. A constant envelope spreads the forcing
+over the whole window, whereas both channels are concentrated at its
+end ($\tau^6$ and $\tau^4$), and the mismatch grows with $x$, i.e.\
+with the \emph{slowest} ramps. Evaluated with $\bar\rho = \rho_{\max}$
+over the identified constants, (90) returns a relative deviation of
+$467\%$ at $\dot M = 0.10$~N\,m/s --- larger than the excursion it
+bounds. The envelope form is a sanity check on the algebra, not a
+result.
 
-\paragraph{Relative form: both $J_P$ and $\Wz$ cancel.}
+What restores it is the one structural fact available for free: $\rho$
+rises monotonically from zero at the onset while the kernel
+$\cosh\bigl(C_2(\tau-s)\bigr)$ decreases in $s$. For functions of
+\emph{opposite} monotonicity Chebyshev's integral inequality runs in
+the direction needed, and each maximum in (90) may be replaced by the
+channel's time average. With the nominal shapes
+$\rho_\varphi\propto\Lambda(u)^2$ and $\rho_{GE}\propto u\,\Lambda(u)$,
+$u = C_2\tau$,
+\begin{equation}
+  \bar\rho = R_\varphi(x)\,\rho_{\varphi,\max}
+           + R_{GE}(x)\,\rho_{GE,\max},
+  \qquad
+  R_\varphi \le \tfrac17, \qquad R_{GE} \le \tfrac15,
+  \tag{95}
+\end{equation}
+the limits being the $x\to0$ values where the two channels are sixth
+and fourth order; over the flown $x\in[1.79,5.20]$ they are
+$0.089$--$0.133$ and $0.145$--$0.191$. The same evaluation that gave
+$467\%$ returns $43.7\%$ with (95) in place.
+
+\paragraph{Relative form: the result, free of $x$.}
 Dividing (90) by the nominal excursion
-$\varphi_{\rm nom}(\tau) = (C_1/C_2)(\sinh C_2\tau - C_2\tau)$ with
-$C_1 = \dot M/\Wz$, and writing
-$\Delta M_{\rm win} = \dot M\tau_{\rm end}$ for the moment increment
-over the fit window,
+$\varphi_{\rm nom} = (C_1/C_2)\Lambda(x)$ with $C_1 = \dot M/\Wz$ and
+writing $\Delta M_{\rm win} = \dot M\tau_{\rm end} = \dot M x/C_2$,
 \begin{equation}
   \frac{|e_\varphi|_{\rm end}}{\varphi_{\rm nom,end}}
   \le \frac{\Psi(x)\,\bar\rho}{\Delta M_{\rm win}},
   \qquad
   \Psi(x) = \frac{x(\cosh x - 1)}{\sinh x - x} .
-  \tag{91}
+  \tag{96}
 \end{equation}
-Each product is bounded uniformly in $x$ --- $\Psi R_\varphi$ rises from
-$3/7$ to $1/2$ and $\Psi R_{GE}$ from $2/5$ to $1$ --- so
+Here the two approximations work against each other: $\Psi$ grows with
+$x$ and the averages of (95) shrink with it, and each product is
+bounded uniformly --- $\Psi R_\varphi$ rises monotonically from $3/7$
+to $1/2$ and $\Psi R_{GE}$ from $3/5$ to $1$. Hence
 \begin{equation}
   \boxed{\;\frac{|e_\varphi|_{\rm end}}{\varphi_{\rm nom,end}}
-  \;\le\; \frac{\tfrac12\rho_{\varphi,\max} + \rho_{b,\max}}
+  \;\le\; \frac{\tfrac12\rho_{\varphi,\max} + \rho_{GE,\max}}
                {\Delta M_{\rm win}},
   \qquad
   |\Delta M_{\rm crit}| \;\le\; \frac{\rho_{\varphi,\max}}{7}
-                              + \frac{\rho_{b,\max}}{5}\;}
-  \tag{92}
+                              + \frac{\rho_{GE,\max}}{5}\;}
+  \tag{97}
 \end{equation}
-independently of $C_2$, $J_P$ and $\Wz$.  The second inequality follows
-because the onset minimises the two-segment residual: linearising its
-stationarity condition gives
+independently of $x$, $C_2$, $J_P$ and $\Wz$: the window length that
+(92) went to some trouble to bound does not survive into the
+conclusion, and is needed only to bound $\rho_{GE,\max}$ through (93).
+The second inequality follows because the onset minimises the
+two-segment residual: linearising its stationarity condition gives
 $\Delta M_{\rm crit} = -\!\int_0^{\tau_{\rm end}}\!\rho\,w$ with a
 non-negative weight normalised to $\int w = 1$, so
-$|\Delta M_{\rm crit}| \le \bar\rho$.  A reviewer can evaluate (93) from
+$|\Delta M_{\rm crit}|\le\bar\rho$. A reviewer can evaluate (97) from
 numbers already in the paper.
+
+\paragraph{No pivot inertia is assumed anywhere.}
+$C_2$ is not computed from $J_P$; the two-stage calibration of Sec.~V
+identifies the pair $(C_2, K)$ directly from the onset fits, and
+$\Wz = 1/K$ is one of them. $J_P = 1/(KC_2^{2})$ is a derived
+by-product that enters none of (90)--(97) --- which is as well, since
+the identified $J_P$ spans $0.10$--$0.28$~kg\,m$^2$ against the rigid
+parallel-axis value $J_{CoM} + md^2 \approx 0.43$~kg\,m$^2$, a gap the
+compliant contact makes uninterpretable as an inertia. Over the ten
+configurations the identified constants span
+$C_2\in[3.52, 5.67]$~s$^{-1}$ and $\Wz\in[2.96, 6.65]$~N\,m, so with
+$\varphi_{\max} = 10^\circ$ and $\dot M\in[0.10,1.20]$~N\,m/s, (92)
+gives $\bar x\le 7.23$ at the slowest ramp and (93) gives
+$\rho_{GE,\max}\le 4.5$~mN\,m at the fastest --- the two extremes lie
+at opposite corners of the box --- against
+$\rho_{\varphi,\max}\le\tfrac12 W(l_p+\lambda_{\rm off})
+\varphi_{\max}^{2} = 77.0$~mN\,m (roll; $62.5$ pitch), or $50.7$~mN\,m
+if the stabilising $-\Wz\sin\varphi$ term of $G''$ is retained at the
+cap. Because $\bar x$ depends on the constants only as
+$(\Wz C_2/\dot M)^{1/3}$, a factor-of-two error in $\Wz$ moves it by
+$26\%$: the chain is least sensitive to exactly the constants that are
+least certain.
 
 \paragraph{Evaluation.}
 Every quantity must be read off the \emph{same} window:
-$\rho_{\varphi,\max}$ and $\rho_{b,\max}$ at the excursion that window
+$\rho_{\varphi,\max}$ and $\rho_{GE,\max}$ at the excursion that window
 reaches, $\Delta M_{\rm win}$ as its own moment increment.  Over the
 $140$ gate-passing runs, with $W = 31.59$~N,
-$l_p+\lambda_{\rm off} = 0.160/0.130$~m (roll/pitch), $z_{CoM} = 0.2$~m
-(conservative: the CAD value is $0.256$~m and $\rho_\varphi$ decreases
-with $z_{CoM}$, by $2\%$ at the largest tilt)
+$l_p+\lambda_{\rm off} = 0.160/0.130$~m (roll/pitch), $z_{CoM} = 0.30$~m
 and $\beta_M = 0.0345$~rad$^{-1}$:
 
 \begin{center}\small
@@ -157,7 +230,7 @@ $\dot M$ [N\,m/s] & $0.10$ & $0.30$ & $0.65$ & $1.20$ & median & worst \\
 $|\varphi|_{\rm end}$ [deg]          & $5.23$ & $5.90$ & $6.55$ & $6.17$ & $5.95$ & $9.33$\\
 $\Delta M_{\rm win}$ [N\,m]          & $0.072$& $0.165$& $0.306$& $0.479$& $0.221$& ---\\
 $\rho_{\varphi,\max}$ [mN\,m]        & $19.7$ & $22.5$ & $30.4$ & $27.2$ & $23.6$ & $58.3$\\
-$\rho_{b,\max}$ [mN\,m]              & $0.24$ & $0.59$ & $1.24$ & $1.85$ & $0.68$ & $3.00$\\
+$\rho_{GE,\max}$ [mN\,m]             & $0.24$ & $0.59$ & $1.24$ & $1.85$ & $0.68$ & $3.00$\\
 $x = C_2\tau_{\rm end}$              & $3.47$ & $2.64$ & $2.15$ & $1.79$ & $2.67$ & $5.20$\\
 \midrule
 $|e_\varphi|/\varphi_{\rm nom}$ [\%] & $13.8$ & $6.0$  & $4.7$  & $2.9$  & $4.9$  & $25.1$\\
@@ -170,14 +243,19 @@ ground-effect share of $\bar\rho$ [\%] & $1.8$ & $4.0$ & $6.0$ & $8.8$ & $5.1$ &
 \end{tabular}
 \end{center}
 
-Using instead the $x$-free constants of (93) the worst case becomes
-$|\Delta M_{\rm crit}| \le 8.8$~mN\,m, i.e.\
-$|\Delta\lambda_{\rm off}| \le 0.28$~mm --- the price of not evaluating
-$R_\varphi, R_{GE}$ is under $12\%$.
+The table entry is the per-run propagation, which convolves the
+measured $\rho$ with the exact kernel and needs no envelope at all.
+Using instead the $x$-free constants of (97) the same runs give
+$|\Delta M_{\rm crit}|\le 8.8$~mN\,m, i.e.\
+$|\Delta\lambda_{\rm off}|\le 0.28$~mm --- the price of not evaluating
+$R_\varphi, R_{GE}$ is under $12\%$.  Applied a priori at the tilt cap
+rather than at the flown excursions, (97) gives $11.9$~mN\,m and
+$0.38$~mm, which is the guarantee the method carries into a
+configuration it has not seen.
 
 The bilinear ground-effect channel contributes $5.1\%$ of $\bar\rho$ in
 the median and $25.6\%$ at worst; it grows with the ramp rate because
-$\rho_{GE} \propto \dot M\tau$, whereas the gravity remainder depends on
+$\rho_{GE}\propto\dot M\tau$, whereas the gravity remainder depends on
 the excursion alone.  \textcolor{blue}{The threshold bound
 $|\Delta\lambda_{\rm off}| \le 0.25$~mm is the figure that matters: it
 does not involve $\Delta M_{\rm win}$, and so does not inherit the loss
