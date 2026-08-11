@@ -1,0 +1,448 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=24mm]{geometry}
+\usepackage{amsmath,amssymb,booktabs}
+\setlength{\parskip}{0.4em}\setlength{\parindent}{0pt}
+\newcommand{\Wz}{W\!z_{CoM}}
+\newcommand{\te}{\tau_{\rm end}}
+\newcommand{\rmax}{\rho_{\max}}
+\newcommand{\rbar}{\bar\rho}
+\title{\vspace{-18mm}\textbf{How (95)--(97) are obtained}\\[2mm]
+\large a step-by-step companion to Sec.~VI-E}
+\date{\small every step below is checked by
+\texttt{analysis/vi\_e\_bound\_constants.py}}
+\begin{document}\maketitle
+
+\section*{0. What is being bounded, and why the rate}
+
+The estimator does not see the tilt angle. It fits the two-segment
+model to the \emph{rate}
+\begin{equation}
+  \omega_{\rm nom}(\tau) = C_1\bigl(\cosh C_2\tau - 1\bigr),
+  \qquad C_1 = \frac{\dot M}{\Wz},
+  \qquad C_2 = \sqrt{\frac{\Wz}{J_P}},
+  \tag{D.1}
+\end{equation}
+reconstructed from the gyro, and reports the onset as the argument
+that minimises the residual of that fit. Two questions follow, and
+(97) answers both:
+
+\begin{enumerate}
+\item[(i)] how far can the \emph{true} rate depart from (D.1) before
+  the fit stops describing the data? --- the quantity
+  $|e_\omega|_{\rm end}/\omega_{\rm nom,end}$;
+\item[(ii)] how far does that departure move the \emph{reported
+  onset moment}? --- the quantity $|\Delta M_{\rm crit}|$.
+\end{enumerate}
+
+These are different questions with different answers, which is why the
+two halves of (97) carry different constants ($\tfrac12$ and $1$ in the
+first, $\tfrac17$ and $\tfrac15$ in the second). Sections 5--6 do (i)
+and Section 7 does (ii). If only one line of this document is read, let
+it be that one.
+
+The departure obeys the Duhamel integral (88),
+\begin{equation}
+  e_\omega(\tau) = \int_0^{\tau}\dot h_\varphi(\tau-s)\,\rho(s)\,ds ,
+  \qquad
+  \dot h_\varphi(u) = \frac{\cosh C_2 u}{J_P},
+  \tag{D.2}
+\end{equation}
+with $\rho$ the part of the true forcing that the estimator's span
+$\{1,\tau,\delta\varphi\}$ cannot absorb --- the gravity remainder
+$\rho_\varphi$ and the bilinear ground-effect coupling $\rho_{GE}$ of
+(89). Everything below is about turning (D.2) into a number.
+
+\section*{1. The crude bound, and why it is not enough}
+
+Put $|\rho(s)|\le\rmax$ inside (D.2) and pull it out:
+\begin{equation}
+  |e_\omega(\te)| \;\le\; \rmax\!\int_0^{\te}\!\dot h_\varphi(\te-s)\,ds
+  \;=\; \rmax\!\int_0^{\te}\!\frac{\cosh C_2u}{J_P}\,du
+  \;=\; \frac{\rmax\sinh x}{J_PC_2},
+  \qquad x \triangleq C_2\te .
+  \tag{D.3}
+\end{equation}
+The substitution $u = \te - s$ was used in the middle step; the
+integral of $\cosh$ is $\sinh$. Using $J_P = \Wz/C_2^{2}$, i.e.\
+$J_PC_2 = \Wz/C_2$, the inertia disappears:
+$|e_\omega(\te)| \le \rmax C_2\sinh x/\Wz$. This is (90).
+
+(D.3) is honest but blunt. It treats $\rho$ as though it sat at its
+maximum for the whole window, whereas both channels start at zero at
+the onset and grow like $\tau^6$ and $\tau^4$. Evaluated over the
+identified constants it returns a deviation of $446\%$ at the slowest
+ramp --- bigger than the signal it is supposed to bound. Sections 2--4
+recover the lost factor.
+
+\section*{2. Chebyshev's integral inequality}
+
+\textbf{Statement.} Let $f,g$ be integrable on $[a,b]$. If they are
+\emph{oppositely} monotone (one non-decreasing, the other
+non-increasing), then
+\begin{equation}
+  \int_a^b\! fg \;\le\; \frac{1}{b-a}\int_a^b\! f \int_a^b\! g .
+  \tag{D.4}
+\end{equation}
+If they are monotone in the \emph{same} direction, the inequality
+reverses. (Textbooks usually print the same-direction version, with
+$\ge$; the one needed here is the reversed one, so the direction is
+worth checking rather than remembering.)
+
+\textbf{Proof.} Opposite monotonicity means
+$\bigl(f(u)-f(v)\bigr)\bigl(g(u)-g(v)\bigr)\le0$ for every
+$u,v\in[a,b]$: when $u>v$ one bracket is $\ge0$ and the other $\le0$.
+Integrate that product over the square $[a,b]^2$ and expand the four
+terms,
+\[
+  \underbrace{\int\!\!\int f(u)g(u)}_{(b-a)\int fg}
+  - \underbrace{\int\!\!\int f(u)g(v)}_{\int f\int g}
+  - \underbrace{\int\!\!\int f(v)g(u)}_{\int f\int g}
+  + \underbrace{\int\!\!\int f(v)g(v)}_{(b-a)\int fg}
+  \;=\; 2(b-a)\!\int\! fg - 2\!\int\! f\!\int\! g \;\le\; 0,
+\]
+which is (D.4). $\square$
+
+\textbf{Application to (D.2).} Take $[a,b] = [0,\te]$ with
+$f(s) = \rho(s)$ and $g(s) = \dot h_\varphi(\te-s)$.
+
+\begin{itemize}
+\item $f$ is non-decreasing: both channels vanish at the onset and
+  grow monotonically over the window ($\rho_\varphi\propto\varphi^2$
+  with $\varphi$ rising, $\rho_{GE}\propto\tau\varphi$ likewise).
+\item $g$ is non-increasing \emph{in $s$}: as $s$ grows the argument
+  $\te-s$ shrinks and $\cosh$ decreases. Note the kernel is increasing
+  in its own argument; it is the reflection $s\mapsto\te-s$ that makes
+  it decreasing in $s$.
+\end{itemize}
+
+They are oppositely monotone, so (D.4) applies with $\le$, which is the
+useful direction:
+\begin{equation}
+  e_\omega(\te)
+  \;\le\; \underbrace{\frac{1}{\te}\int_0^{\te}\!\rho}_{\textstyle\rbar}
+  \;\cdot\;\int_0^{\te}\!\dot h_\varphi(\te-s)\,ds
+  \;=\; \frac{\rbar\sinh x}{J_PC_2}.
+  \tag{D.5}
+\end{equation}
+(D.5) is (D.3) with $\rmax$ replaced by the \emph{time average} $\rbar$.
+Nothing else changed. All that remains is to compute $\rbar/\rmax$ for
+the two channels.
+
+\section*{3. The reduction factors $R_\varphi$ and $R_{GE}$: (95)}
+
+Both channels have a known shape, because $\varphi$ does. From (D.1),
+$\varphi_{\rm nom}(\tau) = (C_1/C_2)\Lambda(C_2\tau)$ with
+$\Lambda(u) = \sinh u - u$. Hence, writing $u = C_2\tau$,
+\[
+  \rho_\varphi(\tau) = \tfrac12 G''\varphi^2 = A\,\Lambda(u)^2,
+  \qquad
+  \rho_{GE}(\tau) = \beta_M\dot M\tau\,\varphi = B\,u\,\Lambda(u),
+\]
+with $A,B$ constants whose values never matter --- they cancel in the
+ratio below.
+
+\textbf{Gravity channel.} The maximum is at the window end,
+$\rho_{\varphi,\max} = A\Lambda(x)^2$. The average is, substituting
+$u = C_2\tau$ so that $d\tau = du/C_2$ and $\te = x/C_2$,
+\[
+  \bar\rho_\varphi = \frac{1}{\te}\int_0^{\te}\! A\Lambda(C_2\tau)^2 d\tau
+  = \frac{C_2}{x}\cdot\frac{A}{C_2}\int_0^x\!\Lambda(u)^2 du
+  = \frac{A}{x}\int_0^x\!\Lambda(u)^2 du ,
+\]
+so the constant $A$ cancels and
+\begin{equation}
+  R_\varphi(x) \;\triangleq\;
+  \frac{\bar\rho_\varphi}{\rho_{\varphi,\max}}
+  \;=\; \frac{1}{x}\,\frac{\int_0^x\Lambda(u)^2du}{\Lambda(x)^2}.
+  \tag{D.6}
+\end{equation}
+
+\textbf{Ground-effect channel.} Identically,
+$\rho_{GE,\max} = B\,x\Lambda(x)$ and
+\begin{equation}
+  R_{GE}(x) \;=\; \frac{1}{x}\,
+  \frac{\int_0^x u\,\Lambda(u)\,du}{x\,\Lambda(x)} .
+  \tag{D.7}
+\end{equation}
+
+\textbf{Where $1/7$ and $1/5$ come from.} Expand
+$\Lambda(u) = u^3/6 + u^5/120 + \cdots$ and keep the leading term.
+
+\emph{Small $x$.} $\Lambda^2 \simeq u^6/36$, so
+$\int_0^x\Lambda^2 \simeq x^7/(7\cdot36)$ and
+\[
+  R_\varphi \simeq \frac{1}{x}\cdot
+  \frac{x^7/(7\cdot 36)}{x^6/36} = \frac{1}{7}.
+\]
+Similarly $u\Lambda \simeq u^4/6$, so $\int_0^x u\Lambda \simeq x^5/30$
+and
+\[
+  R_{GE} \simeq \frac{1}{x}\cdot\frac{x^5/30}{x\cdot x^3/6}
+  = \frac{x^4/30}{x^4/6} = \frac{1}{5}.
+\]
+The two numbers are just the orders of the channels: a $\tau^6$ signal
+averages to $1/7$ of its endpoint value, a $\tau^4$ signal to $1/5$.
+(For $\tau^n$ the average over $[0,T]$ is $T^n/(n+1)$ against the
+endpoint $T^n$.)
+
+\emph{Large $x$.} $\Lambda\to\sinh u\simeq e^u/2$, so
+$\int_0^x\Lambda^2\simeq e^{2x}/8$ and $R_\varphi\simeq1/(2x)$;
+$\int_0^x u\Lambda\simeq xe^x/2$ and $R_{GE}\simeq1/x$. Both fall off
+like $1/x$.
+
+Both are monotone decreasing in between (checked numerically), so the
+small-$x$ values are the maxima:
+\begin{equation}
+  \rbar = R_\varphi(x)\,\rho_{\varphi,\max}
+        + R_{GE}(x)\,\rho_{GE,\max},
+  \qquad R_\varphi\le\tfrac17,\qquad R_{GE}\le\tfrac15 .
+  \tag{95}
+\end{equation}
+Over the flown $x\in[1.79,5.20]$ they run $0.089$--$0.133$ and
+$0.145$--$0.191$, i.e.\ a factor of $5$ to $11$ off (D.3).
+
+\section*{4. Normalising on the rate: (96)}
+
+Divide (D.5) by the nominal rate at the same instant,
+$\omega_{\rm nom,end} = C_1(\cosh x - 1)$ with $C_1 = \dot M/\Wz$, and
+use $J_PC_2 = \Wz/C_2$:
+\[
+  \frac{|e_\omega|_{\rm end}}{\omega_{\rm nom,end}}
+  \;\le\; \frac{\rbar\,C_2\sinh x/\Wz}
+               {(\dot M/\Wz)(\cosh x - 1)}
+  \;=\; \frac{\rbar\,C_2}{\dot M}\cdot\frac{\sinh x}{\cosh x - 1}.
+\]
+$\Wz$ has cancelled. Now eliminate $\dot M$ in favour of the moment
+increment the window actually spans. Since $\te = x/C_2$,
+\[
+  \Delta M_{\rm win} = \dot M\te = \frac{\dot M x}{C_2}
+  \qquad\Longleftrightarrow\qquad
+  \frac{C_2}{\dot M} = \frac{x}{\Delta M_{\rm win}},
+\]
+and substituting,
+\begin{equation}
+  \frac{|e_\omega|_{\rm end}}{\omega_{\rm nom,end}}
+  \le \frac{\Psi(x)\,\rbar}{\Delta M_{\rm win}},
+  \qquad
+  \Psi(x) = \frac{x\sinh x}{\cosh x - 1} .
+  \tag{96}
+\end{equation}
+The half-angle identities $\cosh x - 1 = 2\sinh^2(x/2)$ and
+$\sinh x = 2\sinh(x/2)\cosh(x/2)$ collapse the quotient:
+\[
+  \Psi(x) = x\,\frac{2\sinh(x/2)\cosh(x/2)}{2\sinh^2(x/2)}
+          = x\coth\frac{x}{2} \;\ge\; 2 .
+\]
+$\Psi$ rises from $2$ at $x\to0$ to $x$ as $x\to\infty$. (Had the
+excursion been used as the normaliser instead of the rate, the factor
+would have been $x(\cosh x - 1)/(\sinh x - x)$, rising from $3$ ---
+a different function, and the wrong one, since the estimator never
+looks at $\varphi$.)
+
+\section*{5. Why $\Psi\rbar$ stays bounded: first half of (97)}
+
+$\Psi$ grows with $x$ and the $R$'s shrink with it. They are not
+merely both bounded --- they are inverse to each other, and the
+products converge:
+\[
+  \Psi R_\varphi:\quad
+  x\to0:\; 2\cdot\tfrac17 = \tfrac27,
+  \qquad
+  x\to\infty:\; x\cdot\frac{1}{2x} = \tfrac12 ;
+\]
+\[
+  \Psi R_{GE}:\quad
+  x\to0:\; 2\cdot\tfrac15 = \tfrac25,
+  \qquad
+  x\to\infty:\; x\cdot\frac{1}{x} = 1 .
+\]
+Both products increase monotonically between those limits (checked
+numerically over $x\in(0,12]$), so the limits at $x\to\infty$ are
+suprema. Expanding $\rbar$ by (95),
+\[
+  \Psi\rbar = \bigl(\Psi R_\varphi\bigr)\rho_{\varphi,\max}
+            + \bigl(\Psi R_{GE}\bigr)\rho_{GE,\max}
+            \;\le\; \tfrac12\rho_{\varphi,\max} + \rho_{GE,\max},
+\]
+which is the left half of (97). \emph{$x$ has disappeared} --- and with
+it $C_2$, $J_P$ and $\Wz$. This is the whole point of the exercise: the
+bound no longer depends on the window length, so it does not have to be
+solved for, only bounded well enough to keep $\rho_{GE,\max}$ finite
+(which is what (92)--(93) do).
+
+\section*{6. From the rate deviation to the threshold: second half of (97)}
+
+The reported quantity is not $e_\omega$ but the onset moment, so the
+deviation must be pushed one step further.
+
+\textbf{How the onset responds to a perturbation.} The estimator picks
+$t_0$ to minimise $\;J(t_0) = \int\bigl(y(t) - \hat\omega(t;t_0)\bigr)^2dt\;$
+with $\hat\omega(t;t_0) = C_1(\cosh C_2(t-t_0) - 1)$. Write the data as
+the nominal solution plus the deviation, $y = \hat\omega(t;t_0^*) +
+e_\omega$, and the minimiser as $t_0 = t_0^* + \delta$. To first order
+$\hat\omega(t;t_0^*+\delta) \simeq \hat\omega(t;t_0^*) +
+\delta\,\partial_{t_0}\hat\omega$, so the residual is
+$e_\omega - \delta\,\partial_{t_0}\hat\omega$ and stationarity
+$\partial J/\partial t_0 = 0$ reads
+\[
+  \int\bigl(e_\omega - \delta\,\partial_{t_0}\hat\omega\bigr)
+       \partial_{t_0}\hat\omega \,dt = 0
+  \qquad\Longrightarrow\qquad
+  \delta = \frac{\langle e_\omega,\;\partial_{t_0}\hat\omega\rangle}
+                {\|\partial_{t_0}\hat\omega\|^2}.
+\]
+With $\partial_{t_0}\hat\omega = -C_1C_2\sinh(C_2\tau)$ and
+$\Delta M_{\rm crit} = \dot M\delta$, and using $C_1 = \dot M/\Wz$,
+\begin{equation}
+  \Delta M_{\rm crit}
+  = -\,\frac{\Wz\,\langle e_\omega,\;\sinh(C_2\tau)\rangle}
+            {C_2\,\|\sinh(C_2\tau)\|^2}.
+  \tag{D.8}
+\end{equation}
+This is exactly the reduction \texttt{error\_budget.py} implements.
+
+\textbf{It is an average of $\rho$ with a non-negative weight.}
+Substitute the Duhamel integral (D.2) into (D.8) and exchange the order
+of integration (Fubini; both integrands are continuous on a bounded
+domain):
+\[
+  \int_0^{T}\!\!\sinh(C_2\tau)\!\int_0^{\tau}\!\!\dot h_\varphi(\tau-s)
+    \rho(s)\,ds\,d\tau
+  = \int_0^{T}\!\!\rho(s)
+    \underbrace{\left[\int_s^{T}\!\!\sinh(C_2\tau)\,
+      \dot h_\varphi(\tau-s)\,d\tau\right]}_{\text{depends on }s\text{ only}}\!ds,
+\]
+the inner limits changing from $s\in[0,\tau]$ to $\tau\in[s,T]$. Hence
+\begin{equation}
+  \Delta M_{\rm crit} = -\!\int_0^{T}\!\rho(s)\,w(s)\,ds,
+  \qquad
+  w(s) = \frac{\Wz\displaystyle\int_s^{T}\!\sinh(C_2\tau)
+                \cosh\bigl(C_2(\tau-s)\bigr)d\tau}
+              {J_PC_2\|\sinh(C_2\tau)\|^2}.
+  \tag{D.9}
+\end{equation}
+Three properties of $w$ finish the argument, and all three are checked
+in code (\texttt{error\_budget.py -{}-check}):
+\begin{enumerate}
+\item $w\ge0$, because the integrand is a product of two hyperbolic
+  functions of non-negative arguments;
+\item $\int_0^T w = 1$. The check evaluates (D.9) at $\rho\equiv1$ and
+  obtains $\Delta M_{\rm crit} = -1.0005$ to $-1.0001$ across five
+  operating points. Physically: a uniform unmodelled moment displaces
+  the identified threshold one-for-one, which is the only
+  normalisation the reduction could have;
+\item $w$ is non-increasing in $s$ --- as $s$ grows both the
+  integration range and the $\cosh$ factor shrink (verified
+  numerically over the window).
+\end{enumerate}
+Property 1 plus 2 alone would give $|\Delta M_{\rm crit}|\le\rmax$. But
+$\rho$ is increasing and $w$ is decreasing, so \emph{Chebyshev applies a
+second time}, now to (D.9):
+\[
+  \Bigl|\int_0^T\!\rho\,w\Bigr|
+  \;\le\; \frac{1}{T}\int_0^T\!\rho \int_0^T\! w
+  \;=\; \rbar\cdot 1 \;=\; \rbar ,
+\]
+and substituting (95),
+\begin{equation}
+  |\Delta M_{\rm crit}| \;\le\; \rbar
+  \;\le\; \frac{\rho_{\varphi,\max}}{7} + \frac{\rho_{GE,\max}}{5},
+  \tag{97b}
+\end{equation}
+the right half of (97).
+
+\textbf{Why the constants differ from the left half.} The left half
+asks how far the rate curve is displaced, so the kernel integral
+$\Psi$ multiplies $\rbar$ and the products $\Psi R$ climb to
+$\tfrac12$ and $1$. The right half asks how far the \emph{minimiser}
+moves, and the minimiser is found by correlating against
+$\sinh(C_2\tau)$ --- a normalised operation, $\int w = 1$, with no
+kernel gain left over. So there $\rbar$ enters bare, and the constants
+are the $R$'s themselves, $\tfrac17$ and $\tfrac15$. The threshold
+bound is the stronger of the two by roughly a factor of four, which is
+why it, and not the relative rate bound, is the number carried into the
+offset budget.
+
+\section*{7. A worked example, checkable by hand}
+
+Take \texttt{case\_02/Mx} at the fastest ramp:
+$C_2 = 5.428$~s$^{-1}$, $K = 0.1503$ (so $\Wz = 1/K = 6.653$~N\,m,
+$C_1 = K\dot M = 0.1804$), $\dot M = 1.20$~N\,m/s,
+$\varphi_{\max} = 10^\circ = 0.17453$~rad, $\beta_M = 0.0345$~rad$^{-1}$,
+$W(l_p+\lambda_{\rm off}) = 31.59\times0.160$~N\,m.
+
+\begin{center}\small
+\begin{tabular}{@{}llr@{}}
+\toprule
+step & expression & value \\
+\midrule
+tilt cap $\to\Lambda$ & $\Lambda_{\max} = \varphi_{\max}\Wz C_2/\dot M$ & $5.253$\\
+(92)   & $\bar x = (6\Lambda_{\max})^{1/3}$ & $3.159$\\
+exact  & solve $\sinh x - x = \Lambda_{\max}$ & $x = 2.781$\\
+       & $\te = x/C_2$ & $0.512$~s\\
+       & $\Delta M_{\rm win} = \dot M\te$ & $0.615$~N\,m\\
+\midrule
+channel& $\rho_{\varphi,\max} = \tfrac12W(l_p{+}\lambda)\varphi_{\max}^2$ & $76.98$~mN\,m\\
+(93)   & $\rho_{GE,\max} = |\beta_M|\Delta M_{\rm win}\varphi_{\max}$ & $3.70$~mN\,m\\
+\midrule
+(D.6)  & $R_\varphi(2.781)$ & $0.1217$\\
+(D.7)  & $R_{GE}(2.781)$ & $0.1800$\\
+(95)   & $\rbar = R_\varphi\rho_{\varphi,\max}+R_{GE}\rho_{GE,\max}$
+       & $10.04$~mN\,m\\
+       & (against $\rmax = 80.7$~mN\,m) & \\
+\midrule
+(96)   & $\Psi(x) = x\coth(x/2)$ & $3.148$\\
+(96)   & $\Psi\rbar/\Delta M_{\rm win}$ & $5.14\%$\\
+(97)   & $(\tfrac12\rho_{\varphi,\max}+\rho_{GE,\max})/\Delta M_{\rm win}$
+       & $6.86\%$\\
+(97b)  & $\rho_{\varphi,\max}/7 + \rho_{GE,\max}/5$ & $11.74$~mN\,m\\
+       & $\div\,W$ & $0.372$~mm\\
+\midrule
+(D.3)  & envelope only, $\Psi\rmax/\Delta M_{\rm win}$ & $41.3\%$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Two readings. First, (97) costs about a third over (96) --- the price
+of dropping $x$ from the statement --- whereas the envelope form costs
+a factor of eight. Second, this is the \emph{worst admissible} case,
+evaluated at the $10^\circ$ tilt cap; over the runs actually flown the
+excursions are $5$--$9^\circ$ and the exact per-run propagation, which
+convolves the measured $\rho$ instead of any envelope, gives
+$0.04$~mN\,m in the median and $0.15$ at worst --- $0.001$ to
+$0.004$~mm of offset.
+
+\section*{8. Summary of the chain}
+
+\begin{center}\small
+\begin{tabular}{@{}rll@{}}
+\toprule
+& step & what it buys \\
+\midrule
+(D.2) & $e_\omega = \int\dot h_\varphi(\te-s)\rho(s)ds$
+      & the exact deviation \\
+(D.3) & $|\rho|\le\rmax$, integrate the kernel
+      & (90); too weak by $\sim8\times$ \\
+(D.4) & Chebyshev, $\rho\uparrow$ against $\dot h_\varphi(\te-\cdot)\downarrow$
+      & $\rmax \to \rbar$ \\
+(D.6--7) & known shapes $\Lambda^2$ and $u\Lambda$
+      & (95): $R_\varphi\le\tfrac17$, $R_{GE}\le\tfrac15$ \\
+(96)  & divide by $\omega_{\rm nom,end}$, use $\Delta M_{\rm win}=\dot Mx/C_2$
+      & $\Psi = x\coth(x/2)$; $\Wz$, $J_P$ gone \\
+      & $\Psi R_\varphi\uparrow\tfrac12$, $\Psi R_{GE}\uparrow1$
+      & (97) left half; $x$ gone \\
+(D.8--9) & linearise the onset, Fubini, $w\ge0$, $\int w=1$
+      & $\Delta M_{\rm crit} = -\langle\rho\rangle_w$ \\
+      & Chebyshev again, $\rho\uparrow$ against $w\downarrow$
+      & (97) right half: $\tfrac17,\tfrac15$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Chebyshev is used twice, for the same reason both times: the forcing is
+concentrated at the end of the window and every kernel in the problem
+weights the end of the window least. The two uses are independent ---
+the first converts a kernel integral, the second a normalised
+correlation --- which is why the constants they leave behind differ.
+
+\end{document}
