@@ -119,8 +119,23 @@ print(f"  cz* pooled: mean {allb.mean():.3f} m, sd {allb.std():.3f}, "
       f"median {np.median(allb):.3f}")
 print(f"  h_eff     : mean {hs.mean():.3f} m, range "
       f"[{hs.min():.3f}, {hs.max():.3f}]")
-print(f"  correlation cz* vs h_eff over the ten configurations: "
-      f"r = {np.corrcoef(cz_mean, hs)[0, 1]:+.2f}")
+r_pool = np.corrcoef(cz_mean, hs)[0, 1]
+print(f"  correlation cz* vs h_eff over the ten configurations: r = {r_pool:+.2f}")
+# Guard against reading that correlation as evidence.  cz* takes very few
+# distinct values here, and both it and h_eff differ systematically between
+# the axes, so a pooled r is mostly the axis split.  Report the within-axis
+# correlations and how much of the sweep range is being hit at its edge.
+for ax, lbl in (('x', 'Mx'), ('y', 'My')):
+    m = [i for i, r in enumerate(rows) if r[1] == ax]
+    if len(m) > 2:
+        print(f"    within {lbl}: r = "
+              f"{np.corrcoef(cz_mean[m], hs[m])[0, 1]:+.2f}, "
+              f"{len(set(np.round(cz_mean[m], 3)))} distinct cz*, "
+              f"{int(np.sum(np.isclose(cz_mean[m], CZ[-1])))}/{len(m)} at the "
+              f"sweep edge")
+if len(set(np.round(cz_mean, 3))) <= 4 or np.any(np.isclose(cz_mean, CZ[-1])):
+    print("    cz* is piling up on few values or on the sweep boundary, which")
+    print("    is what a flat objective does; the pooled r is not evidence.")
 print(f"  residual: {np.mean(rb):.2f} mm at cz*, {np.mean(rz):.2f} mm at "
       f"cz = 0  -> freeing the height buys "
       f"{100 * (1 - np.mean(rb) / np.mean(rz)):.0f}%")
