@@ -1264,6 +1264,29 @@ onset detector.}
 \label{tab:static}
 \end{table}
 
+\paragraph{A consistency check that needs no truth.}
+Eq.~(35) estimates the same offset twice, once from each tip
+direction, using that direction's own arm, and Eq.~(34) supplies the
+weight from the moments themselves. Both are internal: no load cell
+and no external reference enters. Neither closes without a
+ground-effect term. The two directional estimates of the offset
+disagree by $12.6$~mm in the median and $19.8$ at worst --- that is
+the antisymmetric part of \eqref{eq:gap} expressed in millimetres ---
+and Eq.~(34) returns a weight $5.2\%$ below $mg$, low in all ten
+configurations. Restoring the interference channels brings the
+directional spread to $3.6$~mm (worst $9.0$), a factor of $3.5$, and
+the weight to $1.1\%$ below
+(\texttt{analysis/offset\_pivot\_based.py}). The thrust channel does
+most of the second, since it enters Eq.~(34) as $(1+c_a)f$.
+
+Neither result identifies ground effect. A $19$~mm inboard shift of
+the contact resultant closes both, exactly as it closes the threshold
+deficit, and the degeneracy of the next paragraphs applies here
+unchanged. What they add is that one parameter-free correction of the
+right size removes an inconsistency that shows up in three
+independent places --- the directional thresholds, the directional
+offsets, and the weight --- none of which was used to choose it.
+
 \paragraph{It is not the onset detector.}
 The four alternative estimators bracket the identified moment within a
 median $108$~mN\,m (last column of Table~\ref{tab:static}), and all
@@ -1447,6 +1470,9 @@ median/mean/zero baseline;
 Tables~\ref{tab:nls}--\ref{tab:nls-disp};
 \item \texttt{analysis/mcrit\_prediction.py},
 \texttt{analysis/mcrit\_static\_figure.py},
+\texttt{analysis/offset\_pivot\_based.py},
+\texttt{analysis/offset\_ge\_variants.py},
+\texttt{analysis/static\_residual\_split.py},
 \texttt{analysis/static\_attribution.py} — Sec.~\ref{sec:static}
 (static-threshold budget, arms, attribution limits,
 Fig.~\ref{fig:static});
