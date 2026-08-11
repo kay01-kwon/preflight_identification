@@ -45,8 +45,18 @@ and each is checked here:
      deviation larger than the signal it bounds at the slowest ramp,
      which is why (97) and not (90) is the reported result.
 
-Nothing here is fitted.  beta_M comes from the LPV channel fit, the
-arms from the geometry, and (C2, K) from pnls_constants.
+NOTE ON SCOPE.  Sec. VI-E is now evaluated over the GEOMETRIC box of
+Sec. VI-D -- unloaded weight, z_CoM in [0.2, 0.3] m, and the
+parallel-axis identity (82) for the inertia -- and that evaluation
+lives in analysis/vi_e_geometric_box.py.  What remains authoritative
+here is the pure mathematics of (95)-(97), which is independent of any
+operating box: the reduction factors, the Psi products, and the
+monotonicity results.  The identified constants are retained as a
+cross-check on whether the box actually contains the fits; the same
+comparison, per configuration, is printed by the geometric script.
+
+beta_M comes from the LPV channel fit, the arms from the geometry, and
+(C2, K) from pnls_constants.
 
 Usage: python analysis/vi_e_bound_constants.py
 """
@@ -142,6 +152,31 @@ print(f"  {'x_bar':>7}{'sinh(x_bar)':>13}{'Lambda + x_bar':>16}{'ratio':>8}")
 for xb in (max(xb_all), 5.04, 3.16):
     print(f"  {xb:7.2f}{np.sinh(xb):13.1f}{xb ** 3 / 6 + xb:16.1f}"
           f"{np.sinh(xb) / (xb ** 3 / 6 + xb):8.1f}x")
+
+print("\n4a. why 1/7 and 1/5 are the suprema: R is decreasing\n")
+# R(x) = int_0^1 f(xt)/f(x) dt, so R falls whenever the local order
+# n_eff(u) = u f'(u)/f(u) rises: for t < 1 the integrand's logarithmic
+# x-derivative is [n_eff(xt) - n_eff(x)]/x <= 0.  With Lambda' = cosh u - 1
+# both orders are expressible through the excursion normaliser psi_phi.
+u = np.linspace(1e-3, 30.0, 4000)
+n_lam2 = 2 * psi_phi(u)                    # f = Lambda^2:  6 -> oo
+n_ulam = 1 + psi_phi(u)                    # f = u Lambda:  4 -> oo
+print(f"  n_eff(Lambda^2) = 2 psi_phi : {n_lam2[0]:6.3f} -> {n_lam2[-1]:5.1f}"
+      f"   increasing: {bool(np.all(np.diff(n_lam2) > 0))}")
+print(f"  n_eff(u Lambda) = 1+psi_phi : {n_ulam[0]:6.3f} -> {n_ulam[-1]:5.1f}"
+      f"   increasing: {bool(np.all(np.diff(n_ulam) > 0))}")
+xs = np.linspace(0.02, 25.0, 600)
+rp_g = np.array([r_phi(x) for x in xs])
+rg_g = np.array([r_ge(x) for x in xs])
+print(f"  R_phi decreasing: {bool(np.all(np.diff(rp_g) < 0))}"
+      f"   sup = R_phi(0+) = {rp_g[0]:.5f}  (1/7 = {1 / 7:.5f})")
+print(f"  R_GE  decreasing: {bool(np.all(np.diff(rg_g) < 0))}"
+      f"   sup = R_GE(0+)  = {rg_g[0]:.5f}  (1/5 = {1 / 5:.5f})")
+tt = np.linspace(0.0, 1.0, 60001)
+for x in (0.70, 2.78, 6.00):
+    lhs = float(np.trapz(lam(x * tt) ** 2, tt) / lam(x) ** 2)
+    print(f"  (D.6a) at x = {x:4.2f}:  int_0^1 f(xt)/f(x) dt = {lhs:.6f}"
+          f"   vs R_phi = {r_phi(x):.6f}")
 
 print("\n4. Eqs. (95)-(97): the products are bounded uniformly in x\n")
 chk = [0.5, 2.0, 5.0, 9.0]
