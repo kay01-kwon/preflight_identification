@@ -190,16 +190,60 @@ $\int_0^x\Lambda^2\simeq e^{2x}/8$ and $R_\varphi\simeq1/(2x)$;
 $\int_0^x u\Lambda\simeq xe^x/2$ and $R_{GE}\simeq1/x$. Both fall off
 like $1/x$.
 
-Both are monotone decreasing in between (checked numerically), so the
-small-$x$ values are the maxima:
+\textbf{Why the small-$x$ value is the supremum.} Both $R$'s decrease
+throughout, and this needs no numerics. Substituting $u = xt$ in the
+numerator rescales the window to $[0,1]$:
+\begin{equation}
+  R(x) = \frac{1}{x}\frac{\int_0^x f(u)\,du}{f(x)}
+       = \int_0^1 \frac{f(xt)}{f(x)}\,dt .
+  \tag{D.6a}
+\end{equation}
+In this form the small-$x$ limit is immediate: if $f\simeq u^n$ near
+the origin then $f(xt)/f(x)\to t^n$ and $R\to\int_0^1t^ndt =
+1/(n{+}1)$. Now let
+\[
+  n_{\rm eff}(u) \;\triangleq\; \frac{u f'(u)}{f(u)}
+  \;=\; \frac{d\log f}{d\log u}
+\]
+be the \emph{local order} of $f$. Differentiating the integrand of
+(D.6a) logarithmically,
+\[
+  \frac{\partial}{\partial x}\log\frac{f(xt)}{f(x)}
+  = t\,\frac{f'(xt)}{f(xt)} - \frac{f'(x)}{f(x)}
+  = \frac{n_{\rm eff}(xt) - n_{\rm eff}(x)}{x} .
+\]
+For $t\in(0,1)$ we have $xt < x$, so if $n_{\rm eff}$ is increasing the
+bracket is $\le0$: every integrand of (D.6a) decreases in $x$, hence so
+does $R$. $\square$
+
+Both channels satisfy the hypothesis, and with
+$\Lambda' = \cosh u - 1$ the local orders are expressible through the
+same $\Psi_\varphi(u) = u(\cosh u - 1)/(\sinh u - u) = u\Lambda'/\Lambda$
+that Sec.~4 discarded as the wrong normaliser:
+\[
+  f = \Lambda^2:\quad n_{\rm eff} = 2\Psi_\varphi(u)
+  \;\; \text{from } 6 \text{ to } \infty;
+  \qquad
+  f = u\Lambda:\quad n_{\rm eff} = 1 + \Psi_\varphi(u)
+  \;\; \text{from } 4 \text{ to } \infty,
+\]
+$\Psi_\varphi$ being increasing with $\Psi_\varphi(0^+) = 3$. The
+mechanism is physical: $\Lambda$ behaves as $u^3$ near the onset and
+grows exponentially later, so the larger the window the more sharply
+both channels are concentrated at its end, and the smaller their
+average is relative to the endpoint value. The small-$x$ values are
+therefore suprema:
 \begin{equation}
   \rbar = R_\varphi(x)\,\rho_{\varphi,\max}
         + R_{GE}(x)\,\rho_{GE,\max},
   \qquad R_\varphi\le\tfrac17,\qquad R_{GE}\le\tfrac15 .
   \tag{95}
 \end{equation}
-Over the flown $x\in[1.79,5.20]$ they run $0.089$--$0.133$ and
-$0.145$--$0.191$, i.e.\ a factor of $5$ to $11$ off (D.3).
+The suprema are approached but never attained: for $x>0$ the
+inequalities are strict. Over the flown $x\in[1.79,5.20]$ the factors
+run $0.089$--$0.133$ and $0.145$--$0.191$, so quoting $\tfrac17$ and
+$\tfrac15$ gives away $10$--$60\%$ --- while gaining a factor of $5$ to
+$11$ over (D.3).
 
 \section*{4. Normalising on the rate: (96)}
 
@@ -426,6 +470,8 @@ $0.004$~mm of offset.
 (D.4) & Chebyshev, $\rho\uparrow$ against $\dot h_\varphi(\te-\cdot)\downarrow$
       & $\rmax \to \rbar$ \\
 (D.6--7) & known shapes $\Lambda^2$ and $u\Lambda$
+      & the ratios $\rbar/\rmax$ \\
+(D.6a) & $R = \int_0^1 f(xt)/f(x)dt$, $n_{\rm eff}\uparrow$
       & (95): $R_\varphi\le\tfrac17$, $R_{GE}\le\tfrac15$ \\
 (96)  & divide by $\omega_{\rm nom,end}$, use $\Delta M_{\rm win}=\dot Mx/C_2$
       & $\Psi = x\coth(x/2)$; $\Wz$, $J_P$ gone \\
