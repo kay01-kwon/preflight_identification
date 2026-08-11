@@ -1351,23 +1351,79 @@ $M_{\mathrm{ff}}$ is the max--min-margin choice whatever
 $\Delta_{\pm}$ turns out to be; both endpoints are obtained from the
 excitation, not from a model.
 
-The moment-proportional channel is the one exception worth stating,
-because it does \emph{not} cancel: it multiplies $M_{\mathrm{ff}}$ and
-would scale the delivered offset by $4.31\%$, $0.41$~mm in the median.
-A common displacement of the contact resultant cancels in
-$M_{\mathrm{ff}}$ and this does not, so the two are distinguishable
-here in principle. In practice they are not: applying the factor moves
-the agreement with the load-cell truth from $1.64$ to $1.76$~mm RMS, a
-shift of $0.9$ times the standard error of that comparison
-($0.45$~mm). We therefore report Eq.~(35) at $\eta^{GE} = 0$, which is
-also the quantity applied in flight
-(\texttt{analysis/ge\_offset\_effect.py}); $M_{\mathrm{ff}}$ is the
-in-situ balanced moment and already contains the ground-induced
-contribution, which is what the take-off compensation requires. This
-is why $M_{\mathrm{ff}}$ validates to millimetres
-(Sec.~\ref{sec:nls}) even though the individual thresholds carry a
-$\sim\!0.2$~N\,m ground-induced budget whose internal split this
-experiment cannot resolve.
+\paragraph{The moment applied, and the offset reported.}
+The two uses of the same measurement need separating, because the
+ground-effect term belongs in one and not the other. The compensation
+applied at take-off is $M_{\mathrm{ff}}$ itself, with no ground-effect
+model anywhere: it is the in-situ balanced moment and already carries
+whatever the ground contributes, which is precisely what has to be
+cancelled. Subtracting a modelled ground-effect term there would
+remove part of the disturbance the compensation exists to reject.
+
+Reading the same quantity as a mass property is a different matter,
+and it is the one the reviewer's concern touches: the load cell
+measures $W\lambda_{\mathrm{off}}$ alone, so a ground-induced moment
+during the excitation would bias the inferred offset. The inversion
+that answers this restores both channels in the onset balance and
+pairs the directions,
+\begin{equation}
+S_{\mathrm{off}} = \tfrac{1+b}{2}\,(M_+ + M_-)
++ \tfrac{c_a}{2}\,(f_+ l_+ - f_- l_-)
+- \tfrac12\big[(W - f_+) l_+ - (W - f_-) l_-\big] ,
+\label{eq:offge}
+\end{equation}
+the last bracket being dropped in the pivot-free variant, which
+assumes $l_+ = l_-$. Nothing in \eqref{eq:offge} is fitted: $c_a$ and
+$b$ are the model values at $\varphi = 0$. Table~\ref{tab:offge}
+evaluates it both ways.
+
+\begin{table}[h]
+\centering
+\small
+\caption{Identified CoM offset against the load-cell truth, with and
+without the ground-effect channels of \eqref{eq:offge}, over the ten
+case/axis configurations. ``$\Delta$ vs $\eta = 0$'' is the mean
+paired change in $|$error$|$, with the exact sign test beside it. The
+standard error of the comparison is $0.45$~mm and the interference
+correction is $0.41$~mm, so none of the differences is resolvable
+(\texttt{analysis/offset\_ge\_variants.py}).}
+\label{tab:offge}
+\begin{tabular}{ll rrr rr}
+\toprule
+arms & ground effect & RMS & mean & max &
+$\Delta$ vs $\eta{=}0$ & $p$ \\
+ & & [mm] & [mm] & [mm] & [mm] & \\
+\midrule
+pivot-free & none (reported) & $1.64$ & $-0.91$ & $3.34$ & --- & --- \\
+pivot-free & single-rotor & $1.67$ & $-0.98$ & $3.44$ & $-0.00$ & $1.00$ \\
+pivot-free & interference & $1.82$ & $-1.20$ & $3.77$ & $+0.19$ & $0.11$ \\
+\addlinespace[2pt]
+pivot-based & none & $1.77$ & $+0.42$ & $2.96$ & --- & --- \\
+pivot-based & single-rotor & $1.73$ & $+0.35$ & $2.80$ & $-0.01$ & $1.00$ \\
+pivot-based & interference & $1.65$ & $+0.13$ & $3.05$ & $-0.06$ & $1.00$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The ground-effect term does not improve the offset. Held at the
+pivot-free estimator the paper reports, restoring it moves the RMS
+from $1.64$ to $1.82$~mm and the mean error from $-0.91$ to $-1.20$;
+with the arms restored as well it moves the RMS from $1.77$ to $1.65$
+and the mean from $+0.42$ to $+0.13$. No paired comparison reaches
+significance --- the correction is $0.41$~mm against a $0.45$~mm
+standard error --- so the honest reading is that this dataset cannot
+resolve the ground-effect contribution to the offset at all, and that
+its size is bounded at about half a millimetre either way. What does
+change systematically is the mean bias, which the fullest inversion
+removes ($-0.91 \to +0.13$~mm) at unchanged RMS, leaving the scatter
+that the per-configuration contact geometry accounts for.
+
+The offset is therefore reported at $\eta^{GE} = 0$, matching the
+quantity applied in flight, with Table~\ref{tab:offge} standing as the
+bound on what the omission costs. This is why $M_{\mathrm{ff}}$
+validates to millimetres (Sec.~\ref{sec:nls}) even though the
+individual thresholds carry a $\sim\!0.2$~N\,m ground-induced budget
+whose internal split this experiment cannot resolve.
 
 \section{Reproducibility}
 
