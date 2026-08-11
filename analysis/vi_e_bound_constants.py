@@ -45,8 +45,18 @@ and each is checked here:
      deviation larger than the signal it bounds at the slowest ramp,
      which is why (97) and not (90) is the reported result.
 
-Nothing here is fitted.  beta_M comes from the LPV channel fit, the
-arms from the geometry, and (C2, K) from pnls_constants.
+NOTE ON SCOPE.  Sec. VI-E is now evaluated over the GEOMETRIC box of
+Sec. VI-D -- unloaded weight, z_CoM in [0.2, 0.3] m, and the
+parallel-axis identity (82) for the inertia -- and that evaluation
+lives in analysis/vi_e_geometric_box.py.  What remains authoritative
+here is the pure mathematics of (95)-(97), which is independent of any
+operating box: the reduction factors, the Psi products, and the
+monotonicity results.  The identified constants are retained as a
+cross-check on whether the box actually contains the fits; the same
+comparison, per configuration, is printed by the geometric script.
+
+beta_M comes from the LPV channel fit, the arms from the geometry, and
+(C2, K) from pnls_constants.
 
 Usage: python analysis/vi_e_bound_constants.py
 """

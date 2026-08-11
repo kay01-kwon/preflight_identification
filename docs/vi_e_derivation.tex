@@ -9,7 +9,7 @@
 \title{\vspace{-18mm}\textbf{How (95)--(97) are obtained}\\[2mm]
 \large a step-by-step companion to Sec.~VI-E}
 \date{\small every step below is checked by
-\texttt{analysis/vi\_e\_bound\_constants.py}}
+\texttt{analysis/vi\_e\_geometric\_box.py}}
 \begin{document}\maketitle
 
 \section*{0. What is being bounded, and why the rate}
@@ -59,7 +59,7 @@ Put $|\rho(s)|\le\rmax$ inside (D.2) and pull it out:
   |e_\omega(\te)| \;\le\; \rmax\!\int_0^{\te}\!\dot h_\varphi(\te-s)\,ds
   \;=\; \rmax\!\int_0^{\te}\!\frac{\cosh C_2u}{J_P}\,du
   \;=\; \frac{\rmax\sinh x}{J_PC_2},
-  \qquad x \triangleq C_2\te .
+  \quad x \triangleq C_2\te .
   \tag{D.3}
 \end{equation}
 The substitution $u = \te - s$ was used in the middle step; the
@@ -70,8 +70,8 @@ $|e_\omega(\te)| \le \rmax C_2\sinh x/\Wz$. This is (90).
 (D.3) is honest but blunt. It treats $\rho$ as though it sat at its
 maximum for the whole window, whereas both channels start at zero at
 the onset and grow like $\tau^6$ and $\tau^4$. Evaluated over the
-identified constants it returns a deviation of $446\%$ at the slowest
-ramp --- bigger than the signal it is supposed to bound. Sections 2--4
+geometric box of Sec.~VI-D it returns a deviation of $446\%$ at the
+slowest ramp --- bigger than the signal it is supposed to bound. Sections 2--4
 recover the lost factor.
 
 \section*{2. Chebyshev's integral inequality}
@@ -409,52 +409,60 @@ offset budget.
 
 \section*{7. A worked example, checkable by hand}
 
-Take \texttt{case\_02/Mx} at the fastest ramp:
-$C_2 = 5.428$~s$^{-1}$, $K = 0.1503$ (so $\Wz = 1/K = 6.653$~N\,m,
-$C_1 = K\dot M = 0.1804$), $\dot M = 1.20$~N\,m/s,
-$\varphi_{\max} = 10^\circ = 0.17453$~rad, $\beta_M = 0.0345$~rad$^{-1}$,
-$W(l_p+\lambda_{\rm off}) = 31.59\times0.160$~N\,m.
+Take the roll axis at the fastest ramp, evaluated over the geometric
+box of Sec.~VI-D rather than at any fitted constant: $W = 30.08$~N
+(unloaded, $m = 3.067$~kg), $z_{CoM} = 0.30$~m, $a = l_p + p_{\rm off}
+= 0.160$~m, $\dot M = 1.20$~N\,m/s, $\varphi_{\max} = 10^\circ =
+0.17453$~rad, $\beta_M = 0.0345$~rad$^{-1}$, $J_{CoM}^{\rm CAD} =
+0.0537$~kg\,m$^2$.
 
 \begin{center}\small
 \begin{tabular}{@{}llr@{}}
 \toprule
 step & expression & value \\
 \midrule
-tilt cap $\to\Lambda$ & $\Lambda_{\max} = \varphi_{\max}\Wz C_2/\dot M$ & $5.253$\\
-(92)   & $\bar x = (6\Lambda_{\max})^{1/3}$ & $3.159$\\
-exact  & solve $\sinh x - x = \Lambda_{\max}$ & $x = 2.781$\\
-       & $\te = x/C_2$ & $0.512$~s\\
-       & $\Delta M_{\rm win} = \dot M\te$ & $0.615$~N\,m\\
+geometry & $\Wz = Wz_{CoM}$ & $9.024$~N\,m\\
+(82) lower & $J_P \ge m(z_{CoM}^2+a^2)$ & $0.3546$~kg\,m$^2$\\
+(82) upper & $J_P \le J_{CoM}^{\rm CAD} + m(z_{CoM}^2+a^2)$ & $0.4083$~kg\,m$^2$\\
+       & $C_2 \le \sqrt{g z_{CoM}/(z_{CoM}^2+a^2)}$ & $5.045$~s$^{-1}$\\
 \midrule
-channel& $\rho_{\varphi,\max} = \tfrac12W(l_p{+}\lambda)\varphi_{\max}^2$ & $76.98$~mN\,m\\
-(93)   & $\rho_{GE,\max} = |\beta_M|\Delta M_{\rm win}\varphi_{\max}$ & $3.70$~mN\,m\\
+tilt cap $\to\Lambda$ & $\Lambda_{\max} = \varphi_{\max}\Wz C_2/\dot M$ & $6.621$\\
+(92)   & $\bar x = (6\Lambda_{\max})^{1/3}$ & $3.412$\\
+exact  & solve $\sinh x - x = \Lambda_{\max}$ & $x = 2.955$\\
+(93)   & $\tau_{\rm end}\le(6\varphi_{\max}J_P/\dot M)^{1/3}$ & $0.709$~s\\
+(93)   & $\Delta M_{\rm win} = \dot M\tau_{\rm end}$ & $0.851$~N\,m\\
 \midrule
-(D.6)  & $R_\varphi(2.781)$ & $0.1217$\\
-(D.7)  & $R_{GE}(2.781)$ & $0.1800$\\
+channel& $\rho_{\varphi,\max} = \tfrac12W a\,\varphi_{\max}^2$ & $73.30$~mN\,m\\
+(93)   & $\rho_{GE,\max} = |\beta_M|\Delta M_{\rm win}\varphi_{\max}$ & $5.12$~mN\,m\\
+\midrule
+(D.6)  & $R_\varphi(3.412)$ & $0.1132$\\
+(D.7)  & $R_{GE}(3.412)$ & $0.1713$\\
 (95)   & $\rbar = R_\varphi\rho_{\varphi,\max}+R_{GE}\rho_{GE,\max}$
-       & $10.04$~mN\,m\\
-       & (against $\rmax = 80.7$~mN\,m) & \\
+       & $9.18$~mN\,m\\
+       & (against $\rmax = 78.4$~mN\,m) & \\
 \midrule
-(96)   & $\Psi(x) = x\coth(x/2)$ & $3.148$\\
-(96)   & $\Psi\rbar/\Delta M_{\rm win}$ & $5.14\%$\\
+(96)   & $\Psi(\bar x) = \bar x\coth(\bar x/2)$ & $3.645$\\
+(96)   & $\Psi\rbar/\Delta M_{\rm win}$ & $3.93\%$\\
 (97)   & $(\tfrac12\rho_{\varphi,\max}+\rho_{GE,\max})/\Delta M_{\rm win}$
-       & $6.86\%$\\
-(97b)  & $\rho_{\varphi,\max}/7 + \rho_{GE,\max}/5$ & $11.74$~mN\,m\\
-       & $\div\,W$ & $0.372$~mm\\
+       & $4.91\%$\\
+(97b)  & $\rho_{\varphi,\max}/7 + \rho_{GE,\max}/5$ & $11.50$~mN\,m\\
+       & $\div\,W$ & $0.382$~mm\\
 \midrule
-(D.3)  & envelope only, $\Psi\rmax/\Delta M_{\rm win}$ & $41.3\%$\\
+(D.3)  & envelope only, $\Psi\rmax/\Delta M_{\rm win}$ & $33.6\%$\\
 \bottomrule
 \end{tabular}
 \end{center}
 
-Two readings. First, (97) costs about a third over (96) --- the price
+Two readings. First, (97) costs about a quarter over (96) --- the price
 of dropping $x$ from the statement --- whereas the envelope form costs
-a factor of eight. Second, this is the \emph{worst admissible} case,
-evaluated at the $10^\circ$ tilt cap; over the runs actually flown the
-excursions are $5$--$9^\circ$ and the exact per-run propagation, which
-convolves the measured $\rho$ instead of any envelope, gives
-$0.04$~mN\,m in the median and $0.15$ at worst --- $0.001$ to
-$0.004$~mm of offset.
+a factor of nine. Second, this is the \emph{worst admissible} case: the
+box is evaluated at the $10^\circ$ tilt cap, at the top of the
+$z_{CoM}$ range, and with the inertia at whichever end of (82) is
+unfavourable for the quantity being bounded. Over the runs actually
+flown the excursions are $5$--$9^\circ$ and the exact per-run
+propagation, which convolves the measured $\rho$ instead of any
+envelope, gives $0.04$~mN\,m in the median and $0.15$ at worst ---
+$0.001$ to $0.004$~mm of offset.
 
 \section*{8. Summary of the chain}
 

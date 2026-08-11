@@ -102,22 +102,20 @@ $\varphi_{\rm end}\le\varphi_{\max}$ inverts in closed form:
   = \Bigl(\frac{6\,\varphi_{\max}\Wz}{C_2^{2}\dot M}\Bigr)^{1/3},
   \tag{92}
 \end{equation}
-where $J_P = \Wz/C_2^{2}$ has been used to remove the inertia. The
-retained term is the inertia-only rise
-$\varphi = \dot M\tau^3/(6J_P)$ obtained by dropping the destabilising
-$\Wz\varphi$: it is the slowest admissible ascent and therefore reaches
-the cap latest, which is why (92) bounds $x$ from above and why the
-worst case is the \emph{slowest} ramp, not the fastest. The moment
-increment over the window and the coupling channel follow with no
-measured quantity at all,
+the second form using $J_P = \Wz/C_2^{2}$. The retained term is the
+inertia-only rise $\varphi = \dot M\tau^3/(6J_P)$ obtained by dropping
+the destabilising $\Wz\varphi$: it is the slowest admissible ascent and
+therefore reaches the cap latest, which is why (92) bounds $x$ from
+above and why the worst case is the \emph{slowest} ramp, not the
+fastest. The moment increment over the window and the coupling channel
+follow with no fitted quantity at all,
 \begin{equation}
 \begin{aligned}
   \Delta M_{\rm win} &= \dot M\tau_{\rm end}
-  \;\le\; \Bigl(\frac{6\,\varphi_{\max}\Wz\dot M^{2}}{C_2^{2}}
-          \Bigr)^{1/3}, \\[2pt]
+  \;\le\; \bigl(6\,\varphi_{\max}J_P\,\dot M^{2}\bigr)^{1/3}, \\[2pt]
   \rho_{GE,\max} &= |\beta_M|\,\Delta M_{\rm win}\,\varphi_{\rm end}
   \;\le\; |\beta_M|\,\varphi_{\max}
-  \Bigl(\frac{6\,\varphi_{\max}\Wz\dot M^{2}}{C_2^{2}}\Bigr)^{1/3},
+          \bigl(6\,\varphi_{\max}J_P\,\dot M^{2}\bigr)^{1/3} .
 \end{aligned}
   \tag{93}
 \end{equation}
@@ -133,8 +131,9 @@ Both kernels therefore share one bracket.\footnote{%
 The step matters. $\Lambda(x)$ is known \emph{as an equality} --- the
 tilt cap supplies it --- so only the residual linear term needs $\bar
 x$. Substituting $\bar x$ into $\sinh$ instead is exponentially lossy:
-at the slowest ramp $\bar x = 7.23$ gives $\sinh\bar x = 691$ against
-$\Lambda + \bar x = 70.3$, a factor of nine thrown away for nothing.}
+at the slowest ramp $\bar x = 7.81$ gives $\sinh\bar x = 1233$ against
+$\Lambda + \bar x = 87.2$, a factor of fourteen thrown away for
+nothing.}
 
 \paragraph{Why the envelope alone does not settle the question.}
 Nothing beyond $|\rho|\le\rho_{\max}$ enters (90): no monotonicity, no
@@ -143,8 +142,7 @@ generality is also its cost. A constant envelope spreads the forcing
 over the whole window, whereas both channels are concentrated at its
 end ($\tau^6$ and $\tau^4$), and the mismatch grows with $x$, i.e.\
 with the \emph{slowest} ramps. Evaluated with $\bar\rho = \rho_{\max}$
-over the identified constants, (90) returns a relative deviation of
-$446\%$ at $\dot M = 0.10$~N\,m/s --- larger than the signal it
+over the box, (90) returns a relative deviation of $446\%$ at $\dot M = 0.10$~N\,m/s --- larger than the signal it
 bounds. The envelope form is a sanity check on the algebra, not a
 result.
 
@@ -264,33 +262,86 @@ the stronger of the two by about a factor of four, which is why it,
 and not the relative rate bound, is what the offset budget inherits. A
 reviewer can evaluate either from numbers already in the paper.
 
-\paragraph{No pivot inertia is assumed anywhere.}
-$C_2$ is not computed from $J_P$; the two-stage calibration of Sec.~V
-identifies the pair $(C_2, K)$ directly from the onset fits, and
-$\Wz = 1/K$ is one of them. $J_P = 1/(KC_2^{2})$ is a derived
-by-product that enters none of (90)--(97) --- which is as well, since
-the identified $J_P$ spans $0.10$--$0.28$~kg\,m$^2$ against the rigid
-parallel-axis value $J_{CoM} + md^2 \approx 0.43$~kg\,m$^2$, a gap the
-compliant contact makes uninterpretable as an inertia. Over the ten
-configurations the identified constants span
-$C_2\in[3.52, 5.67]$~s$^{-1}$ and $\Wz\in[2.96, 6.65]$~N\,m, so with
-$\varphi_{\max} = 10^\circ$ and $\dot M\in[0.10,1.20]$~N\,m/s, (92)
-gives $\bar x\le 7.23$ at the slowest ramp and (93) gives
-$\rho_{GE,\max}\le 4.5$~mN\,m at the fastest --- the two extremes lie
-at opposite corners of the box --- against
-$\rho_{\varphi,\max}\le\tfrac12 W(l_p+\lambda_{\rm off})
-\varphi_{\max}^{2} = 77.0$~mN\,m (roll; $62.5$ pitch), or $50.7$~mN\,m
-if the stabilising $-\Wz\sin\varphi$ term of $G''$ is retained at the
-cap. Because $\bar x$ depends on the constants only as
-$(\Wz C_2/\dot M)^{1/3}$, a factor-of-two error in $\Wz$ moves it by
-$26\%$: the chain is least sensitive to exactly the constants that are
-least certain.
+\paragraph{How the pivot inertia enters, and how little of it is needed.}
+The two bounds want $J_P$ from opposite sides, and the parallel-axis
+identity (82) supplies both. For $\bar x$ an inertia \emph{lower} bound
+is wanted, which is exactly what (82) gives by discarding
+$J_{CoM}\ge0$ --- and there the mass cancels outright,
+\[
+  C_2^{2} = \frac{\Wz}{J_P}
+  \;\le\; \frac{W z_{CoM}}{m\bigl(z_{CoM}^2 + a^2\bigr)}
+  \;=\; \frac{g\,z_{CoM}}{z_{CoM}^2 + a^2},
+  \qquad a \triangleq l_p + p_{\rm off},
+\]
+so the ceiling on $C_2$ is pure geometry, with no weight and no
+inertia in it. It is largest at the low end of $z_{CoM}\in[0.2,0.3]$~m
+(the unconstrained maximum $\sqrt{g/2a}$ sits at $z_{CoM} = a$, below
+that interval), giving $C_2\le5.47$~s$^{-1}$ for roll and $5.87$ for
+pitch, hence $\Wz C_2 \le 45.5$ and $47.3$~N\,m/s at the top of the
+$z_{CoM}$ range.
 
-\paragraph{Evaluation.}
-Every quantity must be read off the \emph{same} window:
+For $\Delta M_{\rm win}$ an inertia \emph{upper} bound is wanted, which
+(82) as written does not give: $\tau_{\rm end}$ of (93) grows with
+$J_P$. Retaining the term (82) discards closes it,
+$J_P \le J_{CoM}^{\rm CAD} + m(z_{CoM,\max}^2 + a^2)$, i.e.\ $0.408$ and
+$0.382$~kg\,m$^2$. A second and entirely inertia-free ceiling is
+available as a cross-check, since the excitation window is truncated at
+the moment cap: $\Delta M_{\rm win}\le M_{\rm cap} - |M_{\rm crit}|_{\min}$,
+which is $1.67$ and $2.34$~N\,m. The first is much the tighter and is
+the one used.
+
+With these, $\varphi_{\max} = 10^\circ$, $\beta_M = 0.0345$~rad$^{-1}$
+and $\dot M\in[0.10,1.20]$~N\,m/s, the whole of (90)--(94) closes on
+the box of Sec.~VI-D:
+\begin{center}\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+ & \multicolumn{3}{c}{roll ($M_x$)} & \multicolumn{3}{c}{pitch ($M_y$)}\\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}
+$\dot M$ [N\,m/s] & $0.10$ & $0.45$ & $1.20$ & $0.10$ & $0.45$ & $1.20$\\
+\midrule
+$\bar x$ by (92)                & $7.81$ & $4.73$ & $3.41$ & $7.91$ & $4.79$ & $3.46$\\
+$\Delta M_{\rm win}$ [N\,m]     & $0.16$ & $0.44$ & $0.85$ & $0.16$ & $0.43$ & $0.83$\\
+$\rho_{\varphi,\max}$ [mN\,m]   & \multicolumn{3}{c}{$73.30$} & \multicolumn{3}{c}{$59.56$}\\
+$\rho_{GE,\max}$ [mN\,m]        & $0.98$ & $2.66$ & $5.12$ & $0.96$ & $2.60$ & $5.01$\\
+$\bar\rho$ by (95) [mN\,m]      & $4.76$ & $7.39$ & $9.18$ & $3.83$ & $6.02$ & $7.56$\\
+\midrule
+$|e_\omega|/\omega_{\rm nom}$ [\%] & $34.5$ & $9.9$ & $4.5$ & $29.1$ & $8.4$ & $3.9$\\
+$|e_\omega|$ [deg/s]            & $18.3$ & $5.8$  & $3.0$  & $16.0$ & $5.1$ & $2.6$\\
+$|\Delta M_{\rm crit}|$ [mN\,m] & $10.7$ & $11.0$ & $11.5$ & $8.7$  & $9.0$ & $9.5$\\
+$|\Delta\lambda_{\rm off}|$ [mm]& $0.36$ & $0.37$ & $0.38$ & $0.29$ & $0.30$ & $0.32$\\
+\bottomrule
+\end{tabular}
+\end{center}
+The threshold row is nearly flat in $\dot M$, as (97) requires: it is
+the $x$-free bound, and only the weak dependence of $\rho_{GE,\max}$ on
+the ramp rate survives in it. Its worst value over the whole box is
+$11.5$~mN\,m for roll and $9.5$ for pitch, i.e.\ $0.38$ and $0.32$~mm
+of identified offset. The gravity channel supplies $91\%$ of that even
+at the fastest ramp.
+
+Two remarks on robustness. First, $\bar x$ depends on the geometry only
+as $(\Wz C_2/\dot M)^{1/3}$, so a factor-of-two error in $\Wz$ moves it
+by $26\%$ --- the chain is least sensitive to exactly the quantity
+that is least certain. Second, the $C_2$ ceiling above is tight
+enough to be worth checking against the fits, and one of the ten,
+$5.667$~s$^{-1}$ for \texttt{case\_05}/$M_x$, exceeds the roll ceiling
+$5.468$ by $3.6\%$. The margin is set by $p_{\rm off}$: taking the arm
+of (82) as $l_p$ alone raises the ceiling to $5.737$ and restores the
+inequality. Since $p_{\rm off}$ is a bound on the offset rather than a
+displacement of the contact point, $l_p$ is the correct arm there, and
+the ceiling above is evaluated with $l_p + p_{\rm off}$ only because
+doing so lowers it and is therefore conservative for $\bar x$.
+
+\paragraph{Evaluation at the flown configurations.}
+The table above is the guarantee over the admissible box. The runs
+themselves sit well inside it, and reading the same bound at the
+excursions each window actually reached gives the sharper picture
+below.  Here every quantity must come off the \emph{same} window:
 $\rho_{\varphi,\max}$ and $\rho_{GE,\max}$ at the excursion that window
 reaches, $\Delta M_{\rm win}$ as its own moment increment.  Over the
-$140$ gate-passing runs, with $W = 31.59$~N,
+$140$ gate-passing runs, with the loaded weight $W = 31.59$~N,
 $l_p+\lambda_{\rm off} = 0.160/0.130$~m (roll/pitch), $z_{CoM} = 0.30$~m
 and $\beta_M = 0.0345$~rad$^{-1}$:
 
@@ -315,15 +366,13 @@ ground-effect share of $\bar\rho$ [\%] & $1.8$ & $4.0$ & $6.0$ & $8.8$ & $5.1$ &
 \end{tabular}
 \end{center}
 
-These are bound evaluations, not measurements: each row forwards the
-\emph{unprojected} channel maximum through (96).  Using instead the
+These too are bound evaluations, not measurements: each row forwards
+the \emph{unprojected} channel maximum through (96).  Using instead the
 $x$-free constants of (97) the same runs give
 $|\Delta M_{\rm crit}|\le 8.8$~mN\,m, i.e.\
 $|\Delta\lambda_{\rm off}|\le 0.28$~mm --- the price of not evaluating
-$R_\varphi, R_{GE}$ is under $12\%$.  Applied a priori at the tilt cap
-rather than at the flown excursions, (97) gives $11.9$~mN\,m and
-$0.38$~mm, which is the guarantee the method carries into a
-configuration it has not seen.
+$R_\varphi, R_{GE}$ is under $12\%$, and the flown excursions buy a
+further $25\%$ over the $11.5$~mN\,m the box guarantees.
 
 The per-run propagation reported with the error budget is a separate
 and much smaller number, because it convolves the \emph{measured} $\rho$
