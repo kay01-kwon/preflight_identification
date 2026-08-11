@@ -6,6 +6,10 @@
 \title{\vspace{-16mm}\textbf{Drop-in text for Sec.~VI-E (deviation bound)
 and Sec.~VI-B (ramp tracking)}\vspace{-3mm}}
 \date{\small numbering continues from Eq.~(86); symbols follow the manuscript}
+% Every step of (90)-(98) is written out at length in
+% docs/vi_e_derivation.tex, and every constant quoted here is recomputed
+% from the calibration by analysis/vi_e_bound_constants.py.  Keep the
+% three in step when editing.
 \begin{document}\maketitle
 
 \section*{VI-E continuation: impulse response and the bound on $e_\varphi$}
@@ -107,12 +111,14 @@ worst case is the \emph{slowest} ramp, not the fastest. The moment
 increment over the window and the coupling channel follow with no
 measured quantity at all,
 \begin{equation}
-  \Delta M_{\rm win} = \dot M\tau_{\rm end}
-  \le \Bigl(\frac{6\,\varphi_{\max}\Wz\dot M^{2}}{C_2^{2}}\Bigr)^{1/3},
-  \qquad
-  \rho_{GE,\max} = |\beta_M|\,\Delta M_{\rm win}\varphi_{\rm end}
-  \le |\beta_M|\,\varphi_{\max}
+\begin{aligned}
+  \Delta M_{\rm win} &= \dot M\tau_{\rm end}
+  \;\le\; \Bigl(\frac{6\,\varphi_{\max}\Wz\dot M^{2}}{C_2^{2}}
+          \Bigr)^{1/3}, \\[2pt]
+  \rho_{GE,\max} &= |\beta_M|\,\Delta M_{\rm win}\,\varphi_{\rm end}
+  \;\le\; |\beta_M|\,\varphi_{\max}
   \Bigl(\frac{6\,\varphi_{\max}\Wz\dot M^{2}}{C_2^{2}}\Bigr)^{1/3},
+\end{aligned}
   \tag{93}
 \end{equation}
 and the kernel factors of (90) close on the same constant through the
@@ -142,25 +148,48 @@ $446\%$ at $\dot M = 0.10$~N\,m/s --- larger than the signal it
 bounds. The envelope form is a sanity check on the algebra, not a
 result.
 
-What restores it is the one structural fact available for free: $\rho$
-rises monotonically from zero at the onset while the kernel
-$\cosh\bigl(C_2(\tau-s)\bigr)$ decreases in $s$. For functions of
-\emph{opposite} monotonicity Chebyshev's integral inequality runs in
-the direction needed, and each maximum in (90) may be replaced by the
-channel's time average. With the nominal shapes
+What restores it is the one structural fact available for free. Both
+channels rise monotonically from zero at the onset, while the kernel
+seen as a function of the integration variable,
+$s\mapsto\dot h_\varphi(\tau_{\rm end}-s)$, \emph{decreases} --- the
+reflection $s\mapsto\tau_{\rm end}-s$ reversing a $\cosh$ that
+increases in its own argument. Chebyshev's integral inequality for
+factors of \emph{opposite} monotonicity therefore applies, in the
+direction needed:
+$\int_a^b fg \le (b-a)^{-1}\!\int_a^b f\int_a^b g$, which follows by
+integrating $\bigl(f(u)-f(v)\bigr)\bigl(g(u)-g(v)\bigr)\le0$ over
+$[a,b]^2$. Applied to (88) it replaces each maximum in (90) by the
+channel's time average over the window. With the nominal shapes
 $\rho_\varphi\propto\Lambda(u)^2$ and $\rho_{GE}\propto u\,\Lambda(u)$,
-$u = C_2\tau$,
+$u = C_2\tau$, the amplitudes cancel in the ratio and
 \begin{equation}
-  \bar\rho = R_\varphi(x)\,\rho_{\varphi,\max}
-           + R_{GE}(x)\,\rho_{GE,\max},
+\begin{aligned}
+  \bar\rho &= R_\varphi(x)\,\rho_{\varphi,\max}
+            + R_{GE}(x)\,\rho_{GE,\max}, \\[2pt]
+  R_\varphi(x) &= \frac{1}{x}\frac{\int_0^x\Lambda(u)^2du}{\Lambda(x)^2}
+   \le \tfrac17,
   \qquad
-  R_\varphi \le \tfrac17, \qquad R_{GE} \le \tfrac15,
+  R_{GE}(x) = \frac{1}{x}\frac{\int_0^x u\Lambda(u)\,du}{x\,\Lambda(x)}
+   \le \tfrac15 .
+\end{aligned}
   \tag{95}
 \end{equation}
-the limits being the $x\to0$ values where the two channels are sixth
-and fourth order; over the flown $x\in[1.79,5.20]$ they are
-$0.089$--$0.133$ and $0.145$--$0.191$. The same evaluation that gave
-$446\%$ returns $41.8\%$ with (95) in place.
+The two constants are simply the orders of the two channels at the
+onset: a signal going as $\tau^n$ averages to $1/(n{+}1)$ of its
+endpoint value, and the channels are sixth and fourth order. That
+these are the suprema follows from rescaling the window, $u = xt$,
+which turns either ratio into $R(x) = \int_0^1 f(xt)/f(x)\,dt$; the
+logarithmic derivative of that integrand is
+$\bigl[n_{\rm eff}(xt) - n_{\rm eff}(x)\bigr]/x$ with
+$n_{\rm eff} = u f'/f$ the local order, so $R$ decreases wherever
+$n_{\rm eff}$ rises. It does in both cases --- $n_{\rm eff}$ equals
+$2\Psi_\varphi$ and $1+\Psi_\varphi$ respectively, with
+$\Psi_\varphi(u) = u\Lambda'/\Lambda$ increasing from $3$ --- because
+$\Lambda$ stiffens from cubic to exponential and concentrates each
+channel ever more sharply at the end of the window. Over the flown
+$x\in[1.79,5.20]$ the factors are $0.089$--$0.133$ and
+$0.145$--$0.191$, so (95) gives away $10$--$60\%$; the same evaluation
+that returned $446\%$ returns $41.8\%$ with it in place.
 
 \paragraph{Relative form: the result, free of $x$.}
 Dividing the rate bound of (90) by the nominal rate the estimator
@@ -194,12 +223,46 @@ from $2/7$ to $1/2$ and $\Psi R_{GE}$ from $2/5$ to $1$. Hence
 independently of $x$, $C_2$, $J_P$ and $\Wz$: the window length that
 (92) went to some trouble to bound does not survive into the
 conclusion, and is needed only to bound $\rho_{GE,\max}$ through (93).
-The second inequality follows because the onset minimises the
-two-segment residual: linearising its stationarity condition gives
-$\Delta M_{\rm crit} = -\!\int_0^{\tau_{\rm end}}\!\rho\,w$ with a
-non-negative weight normalised to $\int w = 1$, so
-$|\Delta M_{\rm crit}|\le\bar\rho$. A reviewer can evaluate (97) from
-numbers already in the paper.
+
+The second inequality of (97) is the same argument carried one step
+further, to the quantity actually reported. The onset minimises the
+two-segment residual, so perturbing the data by $e_\omega$ displaces
+the minimiser by
+$\delta = \langle e_\omega,\partial_{t_0}\hat\omega\rangle/
+\|\partial_{t_0}\hat\omega\|^2$ with
+$\partial_{t_0}\hat\omega = -C_1C_2\sinh(C_2\tau)$; multiplying by
+$\dot M$ and substituting (88), then exchanging the order of
+integration, collapses the double integral to a weighted average of
+the forcing itself,
+\begin{equation}
+  \Delta M_{\rm crit} = -\!\int_0^{\tau_{\rm end}}\!\!\rho(s)\,w(s)\,ds,
+  \qquad
+  w(s) = \frac{\Wz\int_s^{\tau_{\rm end}}\sinh(C_2\tau)
+                \cosh\bigl(C_2(\tau-s)\bigr)d\tau}
+              {J_PC_2\,\|\sinh(C_2\tau)\|^2} .
+  \tag{98}
+\end{equation}
+The weight is non-negative, being an integral of a product of
+hyperbolic functions of non-negative arguments; it integrates to
+unity, as it must, since a uniform unmodelled moment displaces the
+identified threshold one-for-one; and it is non-increasing in $s$,
+both the integration range and the $\cosh$ factor shrinking as $s$
+grows. The first two properties alone would give
+$|\Delta M_{\rm crit}|\le\rho_{\max}$. The third makes $\rho$ and $w$
+oppositely monotone, so Chebyshev applies a second time and returns
+$|\Delta M_{\rm crit}|\le\bar\rho$, which with (95) is the stated
+bound.
+
+The constants differ between the two halves of (97) because the two
+questions do. The first asks how far the fitted rate curve is
+displaced, so the kernel integral $\Psi$ multiplies $\bar\rho$ and the
+products climb to $\tfrac12$ and $1$; the second asks how far the
+\emph{minimiser} moves, and by (98) that is a normalised correlation
+with no kernel gain left over, so $\bar\rho$ enters bare and the
+constants are the reduction factors themselves. The threshold bound is
+the stronger of the two by about a factor of four, which is why it,
+and not the relative rate bound, is what the offset budget inherits. A
+reviewer can evaluate either from numbers already in the paper.
 
 \paragraph{No pivot inertia is assumed anywhere.}
 $C_2$ is not computed from $J_P$; the two-stage calibration of Sec.~V
