@@ -2,7 +2,7 @@
 """Sec. VI-E evaluated over the geometric operating box of Sec. VI-D.
 
 VI-D fixes an admissible box from geometry rather than from the fits:
-the unloaded weight W, the CoM height z_CoM in [0.2, 0.3] m, the planar
+the weight W, the CoM height z_CoM in [0.2, 0.3] m, the planar
 offset box, the measured threshold magnitudes, and the parallel-axis
 identity (82) for the pivot inertia.  This script carries that box
 through the deviation bound and reports what the gyro channel can do
@@ -34,6 +34,20 @@ Three things are worth stating about how the inertia enters.
      of (90) close on Wz and x, and the reported bound (97) is free of
      both.
 
+A note on consistency.  At the tilt cap x is DETERMINED by the geometry
+and the ramp rate through Lambda(x) = phi_max Wz C2 / Mdot, and so is
+dM_win = Mdot x / C2.  The bounds (92)-(93) exist only to avoid solving
+that transcendental equation; they must not be substituted into the
+denominator of the relative form, which would flatter it.  Sections 3
+and 4 below therefore solve for x once and use the window it implies,
+with (93) reported alongside as the shortcut and used only where it
+appears on the conservative side -- in rho_GE for the x-free (97).
+
+The weight enters from both ends of its admissible range.  W_max is
+unfavourable for Wz, rho_phi and J_P; W_min for omega_nom and for the
+conversion of a threshold error into an offset error.  Each quantity is
+taken at whichever end is unfavourable for it.
+
 Usage: python analysis/vi_e_geometric_box.py
 """
 import sys
@@ -47,7 +61,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from pnls_constants import PNLS_CONSTANTS as CONST
 
 G = 9.80665
-W = 30.08                          # N, unloaded (Sec. VI-D)
+W_RANGE = (30.08, 31.59)           # N, unloaded to fully ballasted
+W = max(W_RANGE)                   # conservative for Wz, rho_phi, J_P
+W_MIN = min(W_RANGE)               # conservative for omega_nom and d lambda
 MASS = W / G
 PHI_MAX = np.deg2rad(10.0)         # tilt cap of the excitation design
 BETA_M = 0.0345                    # rad^-1, bilinear moment-channel slope
@@ -79,8 +95,10 @@ def psi(x):
     return x / np.tanh(0.5 * x)
 
 
-print(f"W = {W} N (unloaded), m = {MASS:.3f} kg, phi_max = 10 deg, "
-      f"beta_M = {BETA_M} /rad\n")
+print(f"W in {W_RANGE} N (unloaded .. ballasted), m_max = {MASS:.3f} kg,")
+print(f"phi_max = 10 deg, beta_M = {BETA_M} /rad.  Each quantity is taken at")
+print(f"whichever end of the weight range is unfavourable for it: W_max for")
+print(f"Wz, rho_phi and J_P, W_min for omega_nom and the offset conversion.\n")
 
 print("1. eq (82) two ways.  For C2 the mass cancels; for dM_win it does not\n")
 print(f"  {'axis':12}{'z':>6}{'Wz':>8}{'J_P lo':>8}{'J_P hi':>8}"
@@ -104,22 +122,26 @@ print(f"\n  unconstrained ceiling sqrt(g/2a) at z = a: "
       + ',  '.join(f"{n.split()[0]} {np.sqrt(G / (2 * p['arm'])):.3f}"
                    for n, p in AXES.items()) + " /s")
 
-print("\n2. the window: two independent ceilings on dM_win\n")
-print(f"  {'axis':12}{'Mdot':>6}{'x_bar':>7}{'tau_end<=':>10}"
-      f"{'dM tilt':>9}{'dM cap':>8}{'dM_win<=':>10}   [s], [N.m]")
+print("\n2. the window at the tilt cap, and the (92)-(93) shortcuts\n")
+print(f"  {'axis':12}{'Mdot':>6}{'x exact':>9}{'x_bar':>7}{'tau_end':>9}"
+      f"{'dM_win':>8}{'(93) bnd':>9}{'cap bnd':>9}   [s], [N.m]")
 win = {}
 for name, p in AXES.items():
-    wzc2 = max(r['wz'] * r['c2_hi'] for r in box[name])
+    r0 = max(box[name], key=lambda r: r['wz'] * r['c2_hi'])
+    wz, c2 = r0['wz'], r0['c2_hi']
+    wzc2 = wz * c2
     jp_hi = max(r['jp_hi'] for r in box[name])
     dm_cap = p['cap'] - p['m_lo']
     for md in RATES:
         xb = (6 * PHI_MAX * wzc2 / md) ** (1 / 3)
-        te = (6 * PHI_MAX * jp_hi / md) ** (1 / 3)
-        dm_tilt = md * te
-        dm = min(dm_tilt, dm_cap)
-        win[(name, md)] = (xb, dm)
-        print(f"  {name:12}{md:6.2f}{xb:7.2f}{te:10.3f}"
-              f"{dm_tilt:9.3f}{dm_cap:8.2f}{dm:10.3f}")
+        x = brentq(lambda t: lam(t) - PHI_MAX * wzc2 / md, 1e-9, 40.0)
+        te = x / c2
+        dm = md * te
+        dm93 = md * (6 * PHI_MAX * jp_hi / md) ** (1 / 3)
+        win[(name, md)] = dict(x=x, xb=xb, te=te, dm=dm, wz=wz, c2=c2,
+                               dm93=min(dm93, dm_cap))
+        print(f"  {name:12}{md:6.2f}{x:9.2f}{xb:7.2f}{te:9.3f}"
+              f"{dm:8.3f}{dm93:9.3f}{dm_cap:9.2f}")
 
 print("\n3. the two channels and their Chebyshev average\n")
 print(f"  {'axis':12}{'Mdot':>6}{'rho_phi':>9}{'rho_GE':>8}{'rho_max':>9}"
@@ -128,38 +150,43 @@ chan = {}
 for name, p in AXES.items():
     rp = 0.5 * W * p['arm'] * PHI_MAX ** 2
     for md in RATES:
-        xb, dm = win[(name, md)]
-        rg = BETA_M * dm * PHI_MAX
-        rb = r_phi(xb) * rp + r_ge(xb) * rg
+        w = win[(name, md)]
+        rg = BETA_M * w['dm'] * PHI_MAX
+        rb = r_phi(w['x']) * rp + r_ge(w['x']) * rg
         chan[(name, md)] = (rp, rg, rb)
         print(f"  {name:12}{md:6.2f}{1e3 * rp:9.2f}{1e3 * rg:8.2f}"
-              f"{1e3 * (rp + rg):9.2f}{r_phi(xb):8.4f}{r_ge(xb):7.4f}"
+              f"{1e3 * (rp + rg):9.2f}{r_phi(w['x']):8.4f}{r_ge(w['x']):7.4f}"
               f"{1e3 * rb:9.2f}")
 
 print("\n4. what the gyro channel can do inside the box\n")
-print(f"  {'axis':12}{'Mdot':>6}{'w_nom':>9}{'|e_w|':>9}{'rel':>8}"
-      f"{'|e_w|':>10}{'|dM_crit|':>11}{'|d lam_off|':>12}")
-print(f"  {'':12}{'[N.m/s]':>6}{'[rad/s]':>9}{'[rad/s]':>9}{'[%]':>8}"
-      f"{'[deg/s]':>10}{'[mN.m]':>11}{'[mm]':>12}")
+print(f"  {'axis':12}{'Mdot':>6}{'w_nom':>9}{'|e_w|':>9}{'env':>7}{'rel':>7}"
+      f"{'|e_w|':>9}{'|dM_crit|':>11}{'|d lam_off|':>12}")
+print(f"  {'':12}{'[N.m/s]':>6}{'[rad/s]':>9}{'[rad/s]':>9}{'[%]':>7}{'[%]':>7}"
+      f"{'[deg/s]':>9}{'[mN.m]':>11}{'[mm]':>12}")
 for name, p in AXES.items():
-    r0 = max(box[name], key=lambda r: r['wz'] * r['c2_hi'])
-    wz, c2 = r0['wz'], r0['c2_hi']
     for md in RATES:
-        rp, rg, _ = chan[(name, md)]
-        x = brentq(lambda t: lam(t) - PHI_MAX * wz * c2 / md, 1e-9, 40.0)
-        w_nom = (md / wz) * (np.cosh(x) - 1.0)
-        rel = psi(x) * (r_phi(x) * rp + r_ge(x) * rg) / (md * x / c2)
-        dmc = rp / 7 + rg / 5
+        w = win[(name, md)]
+        rp, rg, rb = chan[(name, md)]
+        x = w['x']
+        w_nom = (md / (W_MIN * w['wz'] / W)) * (np.cosh(x) - 1.0)
+        rel = psi(x) * rb / w['dm']
+        env = psi(x) * (rp + rg) / w['dm']
+        rg93 = BETA_M * w['dm93'] * PHI_MAX
+        dmc = rp / 7 + rg93 / 5
         print(f"  {name:12}{md:6.2f}{w_nom:9.3f}{rel * w_nom:9.4f}"
-              f"{100 * rel:8.2f}{np.rad2deg(rel * w_nom):10.3f}"
-              f"{1e3 * dmc:11.2f}{1e3 * dmc / W:12.3f}")
-print(f"\n  the x-free form (97) is rate-independent; taking the largest"
-      f" rho_GE per axis,")
+              f"{100 * env:7.0f}{100 * rel:7.2f}"
+              f"{np.rad2deg(rel * w_nom):9.3f}{1e3 * dmc:11.2f}"
+              f"{1e3 * dmc / W_MIN:12.3f}")
+print(f"\n  the x-free form (97) is rate-independent up to rho_GE;"
+      f" at the fastest ramp,")
 for name, p in AXES.items():
-    rp, rg, _ = chan[(name, max(RATES))]
-    print(f"    {name}:  |dM_crit| <= {1e3 * rp:.2f}/7 + {1e3 * rg:.2f}/5"
-          f" = {1e3 * (rp / 7 + rg / 5):.2f} mN.m"
-          f"  ->  {1e3 * (rp / 7 + rg / 5) / W:.3f} mm")
+    w = win[(name, max(RATES))]
+    rp = 0.5 * W * p['arm'] * PHI_MAX ** 2
+    rg93 = BETA_M * w['dm93'] * PHI_MAX
+    print(f"    {name}:  |dM_crit| <= {1e3 * rp:.2f}/7 + {1e3 * rg93:.2f}/5"
+          f" = {1e3 * (rp / 7 + rg93 / 5):.2f} mN.m"
+          f"  ->  {1e3 * (rp / 7 + rg93 / 5) / W_MIN:.3f} mm"
+          f"   (gravity share {100 * (rp / 7) / (rp / 7 + rg93 / 5):.0f}%)")
 
 print("\n5. cross-check: does the box contain the identified constants?\n")
 print(f"  {'case':9}{'axis':5}{'C2 fit':>8}{'C2 ceiling (82)':>18}   verdict")
@@ -178,6 +205,6 @@ if bad:
     for name, p in AXES.items():
         print(f"    {name} ceiling from "
               f"{max(r['c2_hi'] for r in box[name]):.3f} to "
-              f"{np.sqrt(W * Z_RANGE[0] / (MASS * (Z_RANGE[0] ** 2 + (p['arm'] - 0.020) ** 2))):.3f} /s")
+              f"{np.sqrt(G * Z_RANGE[0] / (Z_RANGE[0] ** 2 + (p['arm'] - 0.020) ** 2)):.3f} /s")
     print(f"  so either p_off is excluded from the arm of (82), or the")
     print(f"  contact is not a rigid pivot for that run.  Worth a footnote.")
