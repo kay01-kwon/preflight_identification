@@ -1,0 +1,163 @@
+% ---------------------------------------------------------------------
+% Drop-in continuation of Sec. VI-B (ground-effect-induced bias) for the
+% IEEE Access manuscript.  Place after the LPV affine fit of the channel
+% gains (Table 2 / Fig. 15); it takes the coefficients from there and
+% adds what the excitation data say about them.
+%
+% Cross-references assumed to exist in the host document:
+%   \eqref{eq:mcrit_roll}   Eq. (7)    directional roll thresholds
+%   \eqref{eq:mcrit_pitch}  Eq. (14)   directional pitch thresholds
+%   \eqref{eq:weight}       Eq. (34)   weight from the moments
+%   \eqref{eq:offset}       Eq. (35)   offset per direction
+%   \eqref{eq:pivotfree}    Eq. (36)   pivot-free average
+% Replace these with the host's own labels before compiling.
+% ---------------------------------------------------------------------
+
+\subsubsection{What the excitation data say about the bias}
+
+The coefficients above are predictions. The excitation runs test them
+without any quantity being fitted, through the gap that the rigid
+balance leaves. Writing the rigid threshold of
+\eqref{eq:mcrit_roll} and \eqref{eq:mcrit_pitch} as
+$T_{\mathrm{rigid}} = \mathrm{sgn}\,(W - f)\,l + S_{\mathrm{off}}$ and
+the detected onset moment as $M_{\mathrm{det}}$,
+\begin{equation}
+\Delta M \;\triangleq\; T_{\mathrm{rigid}} - M_{\mathrm{det}}
+\label{eq:gap}
+\end{equation}
+is the moment the ground supplies but the rigid balance omits. Over
+the twenty direction groups of the five configurations, the vehicle
+tips at a \emph{smaller} commanded moment than the rigid balance
+requires in every one of them, by $204$~mN\,m in the median --- about
+a fifth of the threshold itself. Evaluated at the onset, the
+interference model of \eqref{eq:ge_moment} predicts $165$~mN\,m of
+that, or $81\%$, with no tuned constant; the single-rotor reference,
+which neglects rotor--rotor interference, predicts a fifth of it.
+Group by group the ratio of implied to modelled spans $0.53$ to
+$2.07$, so this is a statement about the median and not about any one
+group.
+
+One qualification belongs with the number. $\Delta M$ is not a
+measurement of the aerodynamic moment: it is what the rigid balance
+leaves over, and two of that balance's ingredients are themselves
+modelled --- the collective thrust is $\sum C_T \omega_i^2$ from a
+bench identification, hence an out-of-ground-effect value by
+construction, and the circle fit of Sec.~V locates the
+\emph{kinematic} pivot, whereas the balance needs the line of action
+of the normal-force resultant. $\Delta M$ therefore collects the
+ground's total contribution, aerodynamic and contact alike.
+
+\paragraph{Two checks that use no external reference}
+Both \eqref{eq:weight} and \eqref{eq:offset} close on themselves.
+Eq.~\eqref{eq:offset} estimates the same offset twice, once from each
+tip direction with that direction's own arm, and \eqref{eq:weight}
+returns the weight from the moments. Neither closes without a
+ground-effect term: the two directional offset estimates disagree by
+$12.6$~mm in the median ($19.8$ at worst), and \eqref{eq:weight}
+returns a weight $5.2\%$ below $mg$, low in all ten case/axis
+configurations. Restoring the channels brings the directional spread
+to $3.6$~mm ($9.0$ at worst) and the weight to $1.1\%$ below; the
+thrust channel does most of the latter, since it enters
+\eqref{eq:weight} as $(1+\eta_f^{GE})f_{\mathrm{crit}}$. Neither the
+load cell nor the identified offsets enter these two checks.
+
+The gap is also not an artifact of the onset detector. The four
+model-agnostic baselines of Sec.~II-D bracket the identified moment
+within a median $108$~mN\,m, and all detectors place the per-run onset
+moment within $3$--$45$~mN\,m of one another, both well below
+$\Delta M$.
+
+\paragraph{Effect on the identified offset}
+The reviewer's concern is whether this bias corrupts the delivered
+offset, and the inversion answers it directly. Restoring both channels
+in the onset balance and pairing the directions,
+\begin{equation}
+S_{\mathrm{off}} = \tfrac{1+\eta_M^{GE}}{2}(M_+ + M_-)
++ \tfrac{\eta_f^{GE}}{2}(f_+ l_+ - f_- l_-)
+- \tfrac12\big[(W - f_+)l_+ - (W - f_-)l_-\big],
+\label{eq:offge}
+\end{equation}
+the last bracket being dropped in the pivot-free variant of
+\eqref{eq:pivotfree}, which assumes $l_+ = l_-$. Table~\ref{tab:offge}
+evaluates \eqref{eq:offge} against the load-cell truth at both levels
+of physics and both treatments of the arms.
+
+\begin{table}[t]
+\centering
+\caption{Identified CoM offset against the load-cell truth over the
+ten case/axis configurations, with and without the ground-effect
+channels of \eqref{eq:offge}. ``$\Delta$'' is the mean paired change
+in $|$error$|$ against the $\eta^{GE} = 0$ row of the same block, with
+the exact sign test beside it.}
+\label{tab:offge}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}ll rrr rr@{}}
+\hline
+arms & ground effect & RMS & mean & max & $\Delta$ & $p$ \\
+ & & [mm] & [mm] & [mm] & [mm] & \\
+\hline
+pivot-free & none (reported) & $1.64$ & $-0.91$ & $3.34$ & --- & --- \\
+pivot-free & single-rotor & $1.67$ & $-0.98$ & $3.44$ & $-0.00$ & $1.00$ \\
+pivot-free & interference & $1.82$ & $-1.20$ & $3.77$ & $+0.19$ & $0.11$ \\
+\hline
+pivot-based & none & $1.77$ & $+0.42$ & $2.96$ & --- & --- \\
+pivot-based & single-rotor & $1.73$ & $+0.35$ & $2.80$ & $-0.01$ & $1.00$ \\
+pivot-based & interference & $1.65$ & $+0.13$ & $3.05$ & $-0.06$ & $1.00$ \\
+\hline
+\end{tabular}
+\end{table}
+
+The ground-effect term does not improve the offset, and no paired
+comparison reaches significance: the correction is $0.41$~mm in the
+median against a $0.45$~mm standard error of the comparison itself, so
+this dataset bounds the ground-effect contribution to the offset at
+about half a millimetre either way rather than resolving it. What does
+move systematically is the mean bias, which the fullest inversion ---
+arms and interference together --- removes, from $-0.91$ to
+$+0.13$~mm at unchanged RMS.
+
+\paragraph{What is applied, and what is reported}
+The two uses of the same measurement need separating. The compensation
+applied at take-off is $M_{\mathrm{ff}}$ of \eqref{eq:pivotfree} with
+no ground-effect model anywhere: it is the in-situ balanced moment and
+already carries whatever the ground contributes, which is precisely
+what has to be cancelled, so subtracting a modelled term there would
+remove part of the disturbance the compensation exists to reject.
+Reading the same quantity as a mass property is the separate question
+of Table~\ref{tab:offge}, and the offset is reported at
+$\eta^{GE} = 0$ to match the quantity flown, with the table standing
+as the bound on what the omission costs.
+
+That the deliverable is insensitive is structural rather than
+fortunate. Writing the unmodelled part of the balance as a lumped
+$\Delta_{\pm}$ and splitting it by direction,
+$\Delta_a = (\Delta_+ - \Delta_-)/2$ and
+$\Delta_s = (\Delta_+ + \Delta_-)/2$, everything acting as
+force~$\times$~pivot-distance changes sign with the tip direction and
+lands in $\Delta_a$, which cancels identically in
+\eqref{eq:pivotfree}. Measured here, $|\Delta_a| = 54$~mN\,m in the
+median against $|\Delta_s| = 37$, the latter $3.7\%$ of the half-width
+of the interval $[M_-, M_+]$ the excitation measures directly
+($1000$~mN\,m in the median). Since any moment strictly inside that
+interval keeps both contacts loaded and the midpoint maximises the
+smaller of the two margins, $M_{\mathrm{ff}}$ is the max--min-margin
+choice whatever $\Delta_{\pm}$ turns out to be, and both endpoints
+come from the excitation rather than from a model.
+
+\paragraph{Limits of the attribution}
+The comparison cannot assign $\Delta M$ uniquely. A contact-geometry
+explanation fits equally well: if the normal-force resultant acts a
+distance $\delta l$ inboard of the kinematic pivot circle, as a
+finite compliant contact patch implies, a least-squares fit gives
+$\delta l = 19.2 \pm 1.8$~mm with a residual indistinguishable from
+that of the ground-effect hypothesis, and the same shift closes the
+two checks above. The sensitivity that sets the floor is
+$\mathrm{d}M/\mathrm{d}l = W - f = 10.6$~N, so the $61$~mN\,m the
+interference model leaves is $5.8$~mm of contact arm --- the same
+order as the run-to-run spread of the circle fit itself. Separating
+the two requires a clearance sweep, since the aerodynamic term scales
+with $h/R$ and the contact term does not: repeating one axis at
+$h = 0.60$~m would put the aerodynamic hypothesis at $0.069$~N\,m
+against the contact hypothesis's unchanged $0.20$, a three-fold split
+well above the $0.06$~N\,m floor.
