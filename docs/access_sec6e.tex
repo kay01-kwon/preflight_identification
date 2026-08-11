@@ -40,63 +40,74 @@ alone,
   \tag{88}
 \end{equation}
 
-\paragraph{A bound that can be verified by hand.}
-Bounding $\rho$ by its window maximum and integrating the kernel,
-$\int_0^\tau h_\varphi(u)\,du = (\cosh C_2\tau - 1)/(J_PC_2^2)$, and
-using $J_PC_2^2 = \Wz$,
-\begin{equation}
-  \bigl|e_\varphi(\tau)\bigr| \;\le\;
-  \frac{\rho_{\varphi,\max}}{\Wz}\,\bigl(\cosh C_2\tau - 1\bigr).
-  \tag{89}
-\end{equation}
-The inertia cancels: (89) requires only $\Wz$ and the dimensionless
-group $C_2\tau$, both of which are already reported.
-
-\paragraph{The two channels, and what the bound needs.}
+\paragraph{The two channels.}
 Two terms of (79) leave the estimator span: the gravity remainder (83)
 and the bilinear ground-effect coupling (79)(iv),
 \begin{equation}
-  \rho(\tau) = \rho_\varphi(\tau) + \rho_b(\tau),
+  \rho(\tau) = \rho_\varphi(\tau) + \rho_{GE}(\tau),
   \qquad
-  \rho_b(\tau) = \beta_M \dot M \tau\varphi .
-  \tag{90}
+  \rho_{GE}(\tau) = \beta_M \dot M \tau\varphi .
+  \tag{89}
 \end{equation}
 Both vanish at the onset --- with $\varphi_{\rm nom}\sim\tau^3$ the
 gravity remainder is $\mathcal{O}(\varphi^2)\sim\tau^6$ and the
 bilinear term is $\tau\cdot\tau^3 = \tau^4$ --- so each is largest at
-the window end, and bounding each there gives
+the window end.
+
+\paragraph{A bound that can be verified by hand.}
+Bounding each channel there and integrating the kernel,
+$\int_0^\tau h_\varphi(u)\,du = (\cosh C_2\tau - 1)/(J_PC_2^2)$, and
+using $J_PC_2^2 = \Wz$,
 \begin{equation}
   \bigl|e_\varphi(\tau_{\rm end})\bigr| \;\le\;
-  \frac{\rho_{\varphi,\max} + \rho_{b,\max}}{\Wz}\,
+  \frac{\rho_{\varphi,\max} + \rho_{GE,\max}}{\Wz}\,
   \bigl(\cosh x - 1\bigr),
   \qquad x \triangleq C_2\tau_{\rm end}.
-  \tag{91}
+  \tag{90}
 \end{equation}
-Nothing beyond $|\rho| \le \rho_{\max}$ enters (91): no monotonicity,
+The inertia cancels: (90) requires only $\Wz$, the dimensionless group
+$x$ and the two channel maxima, all of which are already reported.
+
+Each maximum is elementary. The gravity remainder is
+$\rho_\varphi = \tfrac12 G''(\varphi^*)\varphi^2$ with
+$G'' = W(l_p+\lambda_{\rm off})\cos\varphi^* - \Wz\sin\varphi^*$ from
+(84), so its worst case over the operating box is reached at the tilt
+cap, $\rho_{\varphi,\max} \approx 71$~mN\,m at $\varphi_{\max} =
+10^\circ$; over the runs actually flown it is $2.7$~mN\,m in the median
+and $12.3$ at worst. The coupling is a product of two measured
+quantities, $\rho_{GE,\max} = |\beta_M|\,\Delta M_{\rm win}\,
+\varphi_{\rm end}$ with $\Delta M_{\rm win} = \dot M\tau_{\rm end}$ the
+moment increment over the window; with $\beta_M = -0.0345$~rad$^{-1}$
+from Table~2 that is $3.5$~mN\,m at the box corner
+($\Delta M_{\rm win} = 0.59$~N\,m, $\varphi = 10^\circ$) and
+$0.7$~mN\,m in the median over the flown runs. The gravity channel
+therefore dominates by a factor of about twenty.
+
+Nothing beyond $|\rho| \le \rho_{\max}$ enters (90): no monotonicity,
 no shape, and no property of the trajectory but the window length.
 That is deliberate. The bound is the hand-checkable companion to the
 per-run propagation, which convolves the measured $\rho$ with the
 exact kernel and needs no envelope at all; the entry reported in
-Table~\ref{tab:budget} is the latter, and (91) exists so that its
+Table~\ref{tab:budget} is the latter, and (90) exists so that its
 order of magnitude can be confirmed from $\Wz$, $x$ and the channel
 maxima alone.\footnote{%
 The bound tightens if $\rho$ is additionally taken monotone
 increasing, which it is here. Chebyshev's integral inequality for
 functions of \emph{opposite} monotonicity --- $\rho$ rises from zero
 at the onset while the kernel $\cosh(C_2(\tau-s))$ decreases in $s$
---- replaces each maximum in (91) by its time average. For the
+--- replaces each maximum in (90) by its time average. For the
 nominal shapes $\rho_\varphi\propto(\sinh u - u)^2$ and
-$\rho_b\propto u(\sinh u - u)$ with $u = C_2\tau$ those averages are
-$R_\varphi(x)\,\rho_{\varphi,\max}$ and $R_b(x)\,\rho_{b,\max}$ with
-$R_\varphi \le 1/7$ and $R_b \le 1/5$, the limits being the $x\to0$
+$\rho_{GE}\propto u(\sinh u - u)$ with $u = C_2\tau$ those averages are
+$R_\varphi(x)\,\rho_{\varphi,\max}$ and $R_{GE}(x)\,\rho_{GE,\max}$ with
+$R_\varphi \le 1/7$ and $R_{GE} \le 1/5$, the limits being the $x\to0$
 values where the two channels are sixth and fourth order; over
 $x \in [1.08, 5.20]$ they are $0.089$--$0.139$ and $0.145$--$0.197$,
-worth a factor of $5$ to $11$. We quote (91) without this refinement,
+worth a factor of $5$ to $11$. We quote (90) without this refinement,
 since the conclusion does not need it and the refinement costs an
 assumption on $\rho$ that the envelope does not.}
 
 \paragraph{Relative form: both $J_P$ and $\Wz$ cancel.}
-Dividing (89) by the nominal excursion
+Dividing (90) by the nominal excursion
 $\varphi_{\rm nom}(\tau) = (C_1/C_2)(\sinh C_2\tau - C_2\tau)$ with
 $C_1 = \dot M/\Wz$, and writing
 $\Delta M_{\rm win} = \dot M\tau_{\rm end}$ for the moment increment
@@ -106,10 +117,10 @@ over the fit window,
   \le \frac{\Psi(x)\,\bar\rho}{\Delta M_{\rm win}},
   \qquad
   \Psi(x) = \frac{x(\cosh x - 1)}{\sinh x - x} .
-  \tag{92}
+  \tag{91}
 \end{equation}
 Each product is bounded uniformly in $x$ --- $\Psi R_\varphi$ rises from
-$3/7$ to $1/2$ and $\Psi R_b$ from $2/5$ to $1$ --- so
+$3/7$ to $1/2$ and $\Psi R_{GE}$ from $2/5$ to $1$ --- so
 \begin{equation}
   \boxed{\;\frac{|e_\varphi|_{\rm end}}{\varphi_{\rm nom,end}}
   \;\le\; \frac{\tfrac12\rho_{\varphi,\max} + \rho_{b,\max}}
@@ -117,7 +128,7 @@ $3/7$ to $1/2$ and $\Psi R_b$ from $2/5$ to $1$ --- so
   \qquad
   |\Delta M_{\rm crit}| \;\le\; \frac{\rho_{\varphi,\max}}{7}
                               + \frac{\rho_{b,\max}}{5}\;}
-  \tag{93}
+  \tag{92}
 \end{equation}
 independently of $C_2$, $J_P$ and $\Wz$.  The second inequality follows
 because the onset minimises the two-segment residual: linearising its
@@ -162,11 +173,11 @@ ground-effect share of $\bar\rho$ [\%] & $1.8$ & $4.0$ & $6.0$ & $8.8$ & $5.1$ &
 Using instead the $x$-free constants of (93) the worst case becomes
 $|\Delta M_{\rm crit}| \le 8.8$~mN\,m, i.e.\
 $|\Delta\lambda_{\rm off}| \le 0.28$~mm --- the price of not evaluating
-$R_\varphi, R_b$ is under $12\%$.
+$R_\varphi, R_{GE}$ is under $12\%$.
 
 The bilinear ground-effect channel contributes $5.1\%$ of $\bar\rho$ in
 the median and $25.6\%$ at worst; it grows with the ramp rate because
-$\rho_b \propto \dot M\tau$, whereas the gravity remainder depends on
+$\rho_{GE} \propto \dot M\tau$, whereas the gravity remainder depends on
 the excursion alone.  \textcolor{blue}{The threshold bound
 $|\Delta\lambda_{\rm off}| \le 0.25$~mm is the figure that matters: it
 does not involve $\Delta M_{\rm win}$, and so does not inherit the loss
