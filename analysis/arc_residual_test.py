@@ -111,12 +111,25 @@ print(f"\n  correlation over {len(res)} configurations: r = {r:+.2f}, "
       f"permutation p = {p:.3f}")
 print(f"  (SE on r at n = {len(res)} is about {1 / np.sqrt(len(res) - 3):.2f})")
 
-print(f"\n  the same, within each axis:")
+# A pooled r is not to be read on its own here.  Both the residual and the
+# deficit differ systematically between the axes, so a positive pooled
+# figure can be nothing more than that offset -- the same trap the cz sweep
+# in pivot_height_scan.py sprang.  Print the within-axis correlations and
+# the axis means beside it, and say so when they disagree in sign.
+print(f"\n  the same, within each axis (read these first):")
+signs = []
 for a, lab in (('Mx', 'roll '), ('My', 'pitch')):
     m = [i for i, t in enumerate(tag) if t.endswith(a)]
     if len(m) > 2:
-        print(f"    {lab}: r = {np.corrcoef(res[m], dfc[m])[0, 1]:+.2f} "
-              f"(n = {len(m)})")
+        rw = float(np.corrcoef(res[m], dfc[m])[0, 1])
+        signs.append(rw)
+        print(f"    {lab}: r = {rw:+.2f} (n = {len(m)}),"
+              f"  mean resid {res[m].mean():.4f} mm,"
+              f"  mean deficit {dfc[m].mean():+.0f} mN.m")
+if len(signs) == 2 and signs[0] * signs[1] < 0:
+    print(f"    The within-axis correlations have OPPOSITE signs, so the")
+    print(f"    pooled r is the axis offset and not a relation.  With n = 5")
+    print(f"    per axis this is what noise looks like; the test is a null.")
 
 print(f"\n  arm bias implied by each configuration's residual, if the residual")
 print(f"  were entirely contact migration (an upper bound, since it is not):")
