@@ -71,19 +71,35 @@ def sign_p(x):
 
 
 tru = np.array([TRUTH[u] for u in UNITS])
+COMP = {'Mx': 'y_off', 'My': 'x_off'}
+VIEW = (('pivot-free', True, 'no ground effect'),
+        ('pivot-free', True, 'interference'),
+        ('pivot-based', False, 'interference'))
 res = {}
-print("CoM offset inverted at three levels of ground effect  [mm]\n")
-for pf in (True, False):
-    tag = 'pivot-free' if pf else 'pivot-based'
-    print(f"  {tag}")
-    print(f"    {'level':20}" + ''.join(f"{c.replace('case_0', 'c'):>7}"
-                                        for c in CASES for _ in (0, 1)))
+for tag, pf in (('pivot-free', True), ('pivot-based', False)):
     for lab, (ca, b) in GE.items():
-        v = np.array([offset(c, a, ca, b, pf) for c, a in UNITS])
-        res[(tag, lab)] = v - tru
-        print(f"    {lab:20}" + ''.join(f"{x:7.2f}" for x in v - tru))
-    print(f"    {'truth':20}" + ''.join(f"{x:7.2f}" for x in tru))
-    print()
+        res[(tag, lab)] = np.array(
+            [offset(c, a, ca, b, pf) for c, a in UNITS]) - tru
+
+print("identified CoM offset per configuration  [mm]\n")
+print(f"  {'case':9}{'comp':7}{'truth':>8}"
+      + ''.join(f"{t.split('-')[1][:4] + '/' + l[:6]:>16}"
+                for t, _, l in VIEW))
+print(f"  {'':9}{'':7}{'':8}" + ''.join(f"{'ident':>9}{'err':>7}"
+                                        for _ in VIEW))
+for i, (c, a) in enumerate(UNITS):
+    row = f"  {c:9}{COMP[a]:7}{tru[i]:8.2f}"
+    for tag, pf, lab in VIEW:
+        ca, b = GE[lab]
+        v = offset(c, a, ca, b, pf)
+        row += f"{v:9.2f}{v - tru[i]:7.2f}"
+    print(row)
+print(f"  {'':9}{'RMS':7}{'':8}"
+      + ''.join(f"{'':9}{np.sqrt((res[(t, l)] ** 2).mean()):7.2f}"
+                for t, _, l in VIEW))
+print(f"  {'':9}{'mean':7}{'':8}"
+      + ''.join(f"{'':9}{res[(t, l)].mean():+7.2f}" for t, _, l in VIEW))
+print()
 
 print(f"  {'variant':16}{'level':20}{'RMS':>7}{'mean':>8}{'max':>7}"
       f"{'vs eta=0':>10}{'p':>7}")
