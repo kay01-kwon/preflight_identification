@@ -320,15 +320,16 @@ $\dot M$ [N\,m/s] & $0.10$ & $0.45$ & $1.20$ & $0.10$ & $0.45$ & $1.20$\\
 $x$ at the cap                  & $5.18$ & $3.80$ & $2.99$ & $5.21$ & $3.83$ & $3.02$\\
 $\bar x$ by (92)                & $7.94$ & $4.81$ & $3.47$ & $8.04$ & $4.87$ & $3.51$\\
 $\Delta M_{\rm win}$ [N\,m]     & $0.103$& $0.339$& $0.712$& $0.099$& $0.329$& $0.692$\\
-$\rho_{\varphi,\max}$ [mN\,m]   & \multicolumn{3}{c}{$76.98$} & \multicolumn{3}{c}{$62.55$}\\
+$\rho_{\varphi,\max}$ by (99) [mN\,m] & \multicolumn{3}{c}{$68.40$} & \multicolumn{3}{c}{$54.01$}\\
 $\rho_{GE,\max}$ [mN\,m]        & $0.62$ & $2.04$ & $4.29$ & $0.60$ & $1.98$ & $4.16$\\
 $\bar\rho$ by (95) [mN\,m]      & $6.99$ & $8.64$ & $9.92$ & $5.66$ & $7.04$ & $8.15$\\
 \midrule
 envelope only, by (90) [\%]     & $396$  & $93$   & $38$   & $335$  & $79$   & $32$\\
 $|e_\omega|/\omega_{\rm nom}$ by (96) [\%] & $35.7$ & $10.1$ & $4.6$ & $30.0$ & $8.6$ & $3.9$\\
 $|e_\omega|$ [deg/s]            & $19.8$ & $6.2$  & $3.2$  & $17.3$ & $5.4$ & $2.8$\\
-$|\Delta M_{\rm crit}|$ [mN\,m] & $11.2$ & $11.5$ & $12.0$ & $9.1$  & $9.5$ & $10.0$\\
-$|\Delta\lambda_{\rm off}|$ [mm]& $0.37$ & $0.38$ & $0.40$ & $0.30$ & $0.32$ & $0.33$\\
+$|\Delta M_{\rm crit}|$ by (97) [mN\,m] & $10.3$ & $10.6$ & $11.0$ & $8.2$ & $8.5$ & $9.0$\\
+\quad by (100) [mN\,m]          & $5.24$ & $2.54$ & $1.40$ & $4.20$ & $2.05$ & $1.14$\\
+$|\Delta\lambda_{\rm off}|$ by (100) [mm] & $0.174$& $0.084$& $0.047$& $0.140$& $0.068$& $0.038$\\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -337,10 +338,53 @@ exceeds the signal it bounds by four-fold, and only past
 $0.45$~N\,m/s does it become informative at all. The Chebyshev row
 below it is a factor of $8$ to $11$ smaller, and the threshold row is
 nearly flat in $\dot M$ as the $x$-free form requires, only the weak
-$\rho_{GE}$ dependence surviving. Its worst value over the whole box is
-$12.0$~mN\,m for roll and $10.0$ for pitch, i.e.\ $0.40$ and
-$0.33$~mm of identified offset, of which the gravity channel supplies
-$91\%$ and $90\%$.
+$\rho_{GE}$ dependence surviving. Its worst value over the box is
+$11.0$~mN\,m for roll and $8.9$ for pitch, i.e.\ $0.37$ and $0.30$~mm
+of identified offset, of which the gravity channel supplies $92\%$.
+Here $\rho_{\varphi,\max}$ is the exact second-order remainder of the
+gravity moment rather than its Taylor bound,
+\begin{equation}
+  \rho_\varphi = G(\varphi)-G(0)-G'(0)\varphi
+  = W\bigl[a(1-\cos\varphi) + z_{CoM}(\sin\varphi-\varphi)\bigr]
+  \;\le\; \tfrac12 W a\,\varphi_{\max}^2 ,
+  \tag{99}
+\end{equation}
+the second term being negative; the customary bound on the right is
+loose by $8$--$14\%$ over the box and there is no reason to pay it.
+
+\paragraph{A sharper bound, at the cost of the $x$-independence.}
+Eq.~(97) discards one fact it is entitled to. In (98) the forcing is
+\emph{already} the out-of-span part, $\rho = P\rho$, and an orthogonal
+projection is self-adjoint and idempotent, so
+$\langle P\rho, w\rangle = \langle P\rho, Pw\rangle$ and
+\begin{equation}
+  |\Delta M_{\rm crit}| \;\le\;
+  K_\varphi(x)\,\rho_{\varphi,\max} + K_{GE}(x)\,\rho_{GE,\max},
+  \qquad
+  K \;=\; \frac{\|P\rho\|_\infty}{\rho_{\max}}\,\|Pw\|_1 ,
+  \tag{100}
+\end{equation}
+using no monotonicity at all --- only the absorption the reduction
+already assumes. The gain comes from $w$ itself lying mostly in the
+span: it is smooth, positive and slowly varying, so
+$\|Pw\|_1 = 0.11$ to $0.38$ over the box against the unit mass
+$\int w = 1$. The weight needs no quadrature either, since
+$\sinh v\cosh(v-s) = \tfrac12[\sinh(2v-s)+\sinh s]$ integrates to
+\[
+  \int_s^{x}\!\sinh v\,\cosh(v-s)\,dv
+  = \tfrac14\bigl[\cosh(2x-s)-\cosh s\bigr] + \tfrac12(x-s)\sinh s .
+\]
+Over the box (100) gives $5.2$~mN\,m for roll and $4.2$ for pitch,
+i.e.\ $\mathbf{0.174}$ and $\mathbf{0.140}$~mm --- better than (97) by
+a factor of $2.1$ on both axes. The improvement is narrow on the
+gravity channel and tenfold on the ground-effect channel, whose shape
+$s\Lambda(s)$ the span approximates especially well because $\Lambda$
+is one of its members. What (100) costs is the $x$-independence: $K$
+rises with $x$ where the Chebyshev factors fall, the two crossing near
+$x\simeq5.5$, so (100) wins throughout the box ($x\le5.21$) but would
+not for an arbitrarily slow ramp. Quoting $\min(K,R)$ per channel is
+safe either way, and (97) remains the statement that holds whatever
+the window.
 
 Two remarks on robustness. First, $\bar x$ depends on the geometry only
 as $(\Wz C_2/\dot M)^{1/3}$, so a factor-of-two error in $\Wz$ moves it

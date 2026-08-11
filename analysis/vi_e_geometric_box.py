@@ -95,6 +95,60 @@ def psi(x):
     return x / np.tanh(0.5 * x)
 
 
+def rho_phi_exact(a, z):
+    """The gravity remainder at the tilt cap, without a Taylor bound.
+
+    The span holds {1, tau, dphi}, so what survives of
+    G(phi) = -W a cos phi + W z sin phi is its second-order remainder
+    about phi = 0, which is elementary and exact:
+
+        rho_phi = G(phi) - G(0) - G'(0) phi
+                = W [ a (1 - cos phi) + z (sin phi - phi) ] .
+
+    The second term is negative, so the customary 1/2 W a phi^2 is
+    loose by 8-14% over the box.
+    """
+    return W * (a * (1 - np.cos(PHI_MAX)) + z * (np.sin(PHI_MAX) - PHI_MAX))
+
+
+_KC = {}
+
+
+def span_constants(x, n=4001):
+    """(||Pw||_1, K_phi, K_GE) with P removing span{1, u, Lambda}.
+
+    The reduction (98) is dM_crit = -<rho, w>, and rho is already the
+    out-of-span part, so dM_crit = -<P rho, w> = -<P rho, P w> because
+    an orthogonal projection is self-adjoint and idempotent.  Hence
+
+        |dM_crit| <= ||P rho||_inf * ||P w||_1 ,
+
+    which uses no monotonicity at all -- only that the estimator
+    absorbs its own span, which the reduction already assumes.  The
+    weight w turns out to lie mostly IN the span, so ||P w||_1 is small
+    and the product beats the Chebyshev constants over the whole box.
+    """
+    key = round(x, 4)
+    if key in _KC:
+        return _KC[key]
+    u = np.linspace(0.0, x, n)
+    A = np.stack([np.ones_like(u), u, lam(u)], 1)
+
+    def proj_off(y):
+        c, *_ = np.linalg.lstsq(A, y, rcond=None)
+        return y - A @ c
+
+    # int_s^x sinh(v) cosh(v-s) dv in closed form, via
+    # sinh(v) cosh(v-s) = [sinh(2v-s) + sinh(s)]/2:
+    w = 0.25 * (np.cosh(2 * x - u) - np.cosh(u)) + 0.5 * np.sinh(u) * (x - u)
+    w /= np.trapz(w, u)
+    n1 = float(np.trapz(np.abs(proj_off(w)), u))
+    out = [float(np.max(np.abs(proj_off(f(u)))) / f(u)[-1]) * n1
+           for f in (lambda v: lam(v) ** 2, lambda v: v * lam(v))]
+    _KC[key] = (n1, out[0], out[1])
+    return _KC[key]
+
+
 print(f"W in {W_RANGE} N (unloaded .. ballasted), m_max = {MASS:.3f} kg,")
 print(f"phi_max = 10 deg, beta_M = {BETA_M} /rad.  Each quantity is taken at")
 print(f"whichever end of the weight range is unfavourable for it: W_max for")
@@ -188,7 +242,40 @@ for name, p in AXES.items():
           f"  ->  {1e3 * (rp / 7 + rg93 / 5) / W_MIN:.3f} mm"
           f"   (gravity share {100 * (rp / 7) / (rp / 7 + rg93 / 5):.0f}%)")
 
-print("\n5. cross-check: does the box contain the identified constants?\n")
+print("\n5. the sharp bound: use the absorption instead of monotonicity\n")
+print(f"  {'axis':12}{'Mdot':>6}{'z*':>6}{'x':>6}{'rho_phi':>9}{'rho_GE':>8}"
+      f"{'K_phi':>8}{'K_GE':>7}{'R_phi':>8}{'R_GE':>7}"
+      f"{'(99)':>8}{'(97)':>8}{'  [mN.m]'}")
+sharp = {}
+for name, p in AXES.items():
+    a = p['arm']
+    for md in RATES:
+        rec = None
+        for z in np.linspace(*Z_RANGE, 11):
+            wz, c2 = W * z, np.sqrt(G * z / (z ** 2 + a ** 2))
+            x = brentq(lambda t: lam(t) - PHI_MAX * wz * c2 / md, 1e-9, 40.0)
+            rp, rg = rho_phi_exact(a, z), BETA_M * (md * x / c2) * PHI_MAX
+            _, kp, kg = span_constants(x)
+            v = (min(kp, r_phi(x)) * rp + min(kg, r_ge(x)) * rg)
+            if rec is None or v > rec[0]:
+                rec = (v, z, x, rp, rg, kp, kg)
+        v, z, x, rp, rg, kp, kg = rec
+        xfree = max(rho_phi_exact(a, zz) for zz in Z_RANGE) / 7 + rg / 5
+        sharp[(name, md)] = (v, xfree)
+        print(f"  {name:12}{md:6.2f}{z:6.2f}{x:6.2f}{1e3 * rp:9.2f}"
+              f"{1e3 * rg:8.2f}{kp:8.4f}{kg:7.4f}{r_phi(x):8.4f}{r_ge(x):7.4f}"
+              f"{1e3 * v:8.2f}{1e3 * xfree:8.2f}")
+print()
+for name in AXES:
+    v = max(sharp[(name, md)][0] for md in RATES)
+    f = max(sharp[(name, md)][1] for md in RATES)
+    print(f"  {name}:  (99) {1e3 * v:5.2f} mN.m -> {1e3 * v / W_MIN:.3f} mm"
+          f"     (97) {1e3 * f:5.2f} -> {1e3 * f / W_MIN:.3f} mm"
+          f"     ratio {f / v:.1f}x")
+print(f"\n  K rises with x and crosses R near x = 5.5, so the sharp form wins")
+print(f"  everywhere in the box (x <= 5.21) but would not for a slower ramp.")
+
+print("\n6. cross-check: does the box contain the identified constants?\n")
 print(f"  {'case':9}{'axis':5}{'C2 fit':>8}{'C2 ceiling (82)':>18}   verdict")
 for (case, axis), (c2, _) in sorted(CONST.items()):
     name = 'roll  (Mx)' if axis == 'Mx' else 'pitch (My)'
