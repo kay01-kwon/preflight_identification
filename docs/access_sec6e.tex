@@ -57,21 +57,26 @@ bilinear term is $\tau\cdot\tau^3 = \tau^4$ --- so each is largest at
 the window end.
 
 \paragraph{An envelope bound that can be verified by hand.}
-Replacing $\rho$ by a constant $\bar\rho$ and integrating the two
-kernels, $\int_0^\tau h_\varphi = (\cosh C_2\tau - 1)/(J_PC_2^2)$ and
-$\int_0^\tau \dot h_\varphi = \sinh(C_2\tau)/(J_PC_2)$, and using
-$J_PC_2^2 = \Wz$,
+The estimator consumes the \emph{rate}: the two-segment fit is applied
+to $\omega = C_1(\cosh C_2\tau - 1)$ reconstructed from the gyro, and
+the onset is the argument that minimises its residual. The quantity
+that must be bounded is therefore $e_\omega$, and $e_\varphi$ enters
+only through the gravity remainder that generates $\rho$. Replacing
+$\rho$ by a constant $\bar\rho$ and integrating the two kernels,
+$\int_0^\tau \dot h_\varphi = \sinh(C_2\tau)/(J_PC_2)$ and
+$\int_0^\tau h_\varphi = (\cosh C_2\tau - 1)/(J_PC_2^2)$, with
+$J_PC_2 = \Wz/C_2$ and $J_PC_2^2 = \Wz$,
 \begin{equation}
-  \bigl|e_\varphi(\tau_{\rm end})\bigr| \le
-  \frac{\bar\rho}{\Wz}\bigl(\cosh x - 1\bigr),
-  \qquad
   \bigl|e_\omega(\tau_{\rm end})\bigr| \le
   \frac{\bar\rho\,C_2}{\Wz}\,\sinh x ,
+  \qquad
+  \bigl|e_\varphi(\tau_{\rm end})\bigr| \le
+  \frac{\bar\rho}{\Wz}\bigl(\cosh x - 1\bigr),
   \qquad x \triangleq C_2\tau_{\rm end}.
   \tag{90}
 \end{equation}
-The inertia cancels in both: $J_PC_2 = \Wz/C_2$ likewise. Only $\Wz$,
-$C_2$, the dimensionless group $x$ and the forcing level enter.
+The inertia cancels in both.  Only $\Wz$, $C_2$, the dimensionless
+group $x$ and the forcing level enter.
 
 \paragraph{The window length is bounded a priori by the tilt cap.}
 Neither channel maximum nor the kernel factor requires $x$ to be
@@ -133,7 +138,7 @@ over the whole window, whereas both channels are concentrated at its
 end ($\tau^6$ and $\tau^4$), and the mismatch grows with $x$, i.e.\
 with the \emph{slowest} ramps. Evaluated with $\bar\rho = \rho_{\max}$
 over the identified constants, (90) returns a relative deviation of
-$467\%$ at $\dot M = 0.10$~N\,m/s --- larger than the excursion it
+$446\%$ at $\dot M = 0.10$~N\,m/s --- larger than the signal it
 bounds. The envelope form is a sanity check on the algebra, not a
 result.
 
@@ -155,25 +160,30 @@ $u = C_2\tau$,
 the limits being the $x\to0$ values where the two channels are sixth
 and fourth order; over the flown $x\in[1.79,5.20]$ they are
 $0.089$--$0.133$ and $0.145$--$0.191$. The same evaluation that gave
-$467\%$ returns $43.7\%$ with (95) in place.
+$446\%$ returns $41.8\%$ with (95) in place.
 
 \paragraph{Relative form: the result, free of $x$.}
-Dividing (90) by the nominal excursion
-$\varphi_{\rm nom} = (C_1/C_2)\Lambda(x)$ with $C_1 = \dot M/\Wz$ and
-writing $\Delta M_{\rm win} = \dot M\tau_{\rm end} = \dot M x/C_2$,
+Dividing the rate bound of (90) by the nominal rate the estimator
+fits, $\omega_{\rm nom,end} = C_1(\cosh x - 1)$ with
+$C_1 = \dot M/\Wz$, and writing
+$\Delta M_{\rm win} = \dot M\tau_{\rm end} = \dot M x/C_2$ for the
+moment increment over the window,
 \begin{equation}
-  \frac{|e_\varphi|_{\rm end}}{\varphi_{\rm nom,end}}
+  \frac{|e_\omega|_{\rm end}}{\omega_{\rm nom,end}}
   \le \frac{\Psi(x)\,\bar\rho}{\Delta M_{\rm win}},
   \qquad
-  \Psi(x) = \frac{x(\cosh x - 1)}{\sinh x - x} .
+  \Psi(x) = \frac{x\sinh x}{\cosh x - 1} = x\coth\frac{x}{2} ,
   \tag{96}
 \end{equation}
-Here the two approximations work against each other: $\Psi$ grows with
-$x$ and the averages of (95) shrink with it, and each product is
-bounded uniformly --- $\Psi R_\varphi$ rises monotonically from $3/7$
-to $1/2$ and $\Psi R_{GE}$ from $3/5$ to $1$. Hence
+the closed form following from $\cosh x - 1 = 2\sinh^2(x/2)$ and
+$\sinh x = 2\sinh(x/2)\cosh(x/2)$; $\Psi \ge 2$ everywhere, which is
+the inequality the exponent-perturbation argument of Sec.~VI-D already
+uses. Here the two approximations work against each other: $\Psi$
+grows with $x$ while the averages of (95) shrink with it, and each
+product is bounded uniformly --- $\Psi R_\varphi$ rises monotonically
+from $2/7$ to $1/2$ and $\Psi R_{GE}$ from $2/5$ to $1$. Hence
 \begin{equation}
-  \boxed{\;\frac{|e_\varphi|_{\rm end}}{\varphi_{\rm nom,end}}
+  \boxed{\;\frac{|e_\omega|_{\rm end}}{\omega_{\rm nom,end}}
   \;\le\; \frac{\tfrac12\rho_{\varphi,\max} + \rho_{GE,\max}}
                {\Delta M_{\rm win}},
   \qquad
@@ -233,8 +243,7 @@ $\rho_{\varphi,\max}$ [mN\,m]        & $19.7$ & $22.5$ & $30.4$ & $27.2$ & $23.6
 $\rho_{GE,\max}$ [mN\,m]             & $0.24$ & $0.59$ & $1.24$ & $1.85$ & $0.68$ & $3.00$\\
 $x = C_2\tau_{\rm end}$              & $3.47$ & $2.64$ & $2.15$ & $1.79$ & $2.67$ & $5.20$\\
 \midrule
-$|e_\varphi|/\varphi_{\rm nom}$ [\%] & $13.8$ & $6.0$  & $4.7$  & $2.9$  & $4.9$  & $25.1$\\
-$|e_\varphi|$ [deg]                  & $0.76$ & $0.34$ & $0.31$ & $0.18$ & $0.32$ & $1.68$\\
+$|e_\omega|/\omega_{\rm nom}$ [\%]   & $13.8$ & $6.0$  & $4.7$  & $2.9$  & $4.9$  & $25.1$\\
 $|\Delta M_{\rm crit}|$ [mN\,m]      & $1.94$ & $2.73$ & $3.77$ & $3.76$ & $3.01$ & $7.86$\\
 $|\Delta\lambda_{\rm off}|$ [mm]     & $0.061$& $0.086$& $0.119$& $0.119$& $0.095$& $0.249$\\
 \midrule
@@ -243,9 +252,9 @@ ground-effect share of $\bar\rho$ [\%] & $1.8$ & $4.0$ & $6.0$ & $8.8$ & $5.1$ &
 \end{tabular}
 \end{center}
 
-The table entry is the per-run propagation, which convolves the
-measured $\rho$ with the exact kernel and needs no envelope at all.
-Using instead the $x$-free constants of (97) the same runs give
+These are bound evaluations, not measurements: each row forwards the
+\emph{unprojected} channel maximum through (96).  Using instead the
+$x$-free constants of (97) the same runs give
 $|\Delta M_{\rm crit}|\le 8.8$~mN\,m, i.e.\
 $|\Delta\lambda_{\rm off}|\le 0.28$~mm --- the price of not evaluating
 $R_\varphi, R_{GE}$ is under $12\%$.  Applied a priori at the tilt cap
@@ -253,10 +262,26 @@ rather than at the flown excursions, (97) gives $11.9$~mN\,m and
 $0.38$~mm, which is the guarantee the method carries into a
 configuration it has not seen.
 
+The per-run propagation reported with the error budget is a separate
+and much smaller number, because it convolves the \emph{measured} $\rho$
+with the exact kernel after the estimator has absorbed its own span.
+Over the same runs the residual forcing that actually reaches the
+onset is $2.75$~mN\,m in the median ($12.28$ at worst) on the gravity
+channel and $0.53$ ($3.20$) on the ground-effect channel, the rate
+deviation $|e_\omega|/\omega_{\rm nom}$ is $0.24\%$ in the median
+($6.5\%$ at worst summed over channels), and the resulting threshold
+error is $0.04$~mN\,m in the median and $0.15$ at worst --- $0.001$ to
+$0.004$~mm of offset.  The two differ by roughly a factor of $50$,
+which is the price the envelope form pays for assuming nothing about
+$\rho$ but its size.
+
 The bilinear ground-effect channel contributes $5.1\%$ of $\bar\rho$ in
 the median and $25.6\%$ at worst; it grows with the ramp rate because
 $\rho_{GE}\propto\dot M\tau$, whereas the gravity remainder depends on
-the excursion alone.  \textcolor{blue}{The threshold bound
+the excursion alone.  Its own contribution to the threshold is
+$0.00$~mN\,m in the median and $0.01$ at worst once propagated, so the
+channel the reviewer asks about is not the one that sets the budget.
+\textcolor{blue}{The threshold bound
 $|\Delta\lambda_{\rm off}| \le 0.25$~mm is the figure that matters: it
 does not involve $\Delta M_{\rm win}$, and so does not inherit the loss
 the relative normalisation suffers at slow ramps.}  The relative bound
