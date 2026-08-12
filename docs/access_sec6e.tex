@@ -336,8 +336,7 @@ envelope only, by (90) [\%]     & $396$  & $93$   & $38$   & $335$  & $79$   & $
 $|e_\omega|/\omega_{\rm nom}$ by (96) [\%] & $35.7$ & $10.1$ & $4.6$ & $30.0$ & $8.6$ & $3.9$\\
 $|e_\omega|$ [deg/s]            & $19.8$ & $6.2$  & $3.2$  & $17.3$ & $5.4$ & $2.8$\\
 $|\Delta M_{\rm crit}|$ by (97) [mN\,m] & $10.3$ & $10.6$ & $11.0$ & $8.2$ & $8.5$ & $9.0$\\
-\quad by (100) [mN\,m]          & $5.24$ & $2.54$ & $1.40$ & $4.20$ & $2.05$ & $1.14$\\
-$|\Delta\lambda_{\rm off}|$ by (100) [mm] & $0.174$& $0.084$& $0.047$& $0.140$& $0.068$& $0.038$\\
+$|\Delta\lambda_{\rm off}|$ [mm] & $0.34$ & $0.35$ & $0.37$ & $0.27$ & $0.28$ & $0.30$\\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -347,7 +346,7 @@ $0.45$~N\,m/s does it become informative at all. The Chebyshev row
 below it is a factor of $8$ to $11$ smaller, and the threshold row is
 nearly flat in $\dot M$ as the $x$-free form requires, only the weak
 $\rho_{GE}$ dependence surviving. Its worst value over the box is
-$11.0$~mN\,m for roll and $8.9$ for pitch, i.e.\ $0.37$ and $0.30$~mm
+$11.0$~mN\,m for roll and $9.0$ for pitch, i.e.\ $0.37$ and $0.30$~mm
 of identified offset, of which the gravity channel supplies $92\%$.
 Here $\rho_{\varphi,\max}$ is the exact second-order remainder of the
 gravity moment rather than its Taylor bound,
@@ -360,39 +359,19 @@ gravity moment rather than its Taylor bound,
 the second term being negative; the customary bound on the right is
 loose by $8$--$14\%$ over the box and there is no reason to pay it.
 
-\paragraph{A sharper bound, at the cost of the $x$-independence.}
-Eq.~(97) discards one fact it is entitled to. In (98) the forcing is
-\emph{already} the out-of-span part, $\rho = P\rho$, and an orthogonal
-projection is self-adjoint and idempotent, so
-$\langle P\rho, w\rangle = \langle P\rho, Pw\rangle$ and
-\begin{equation}
-  |\Delta M_{\rm crit}| \;\le\;
-  K_\varphi(x)\,\rho_{\varphi,\max} + K_{GE}(x)\,\rho_{GE,\max},
-  \qquad
-  K \;=\; \frac{\|P\rho\|_\infty}{\rho_{\max}}\,\|Pw\|_1 ,
-  \tag{100}
-\end{equation}
-using no monotonicity at all --- only the absorption the reduction
-already assumes. The gain comes from $w$ itself lying mostly in the
-span: it is smooth, positive and slowly varying, so
-$\|Pw\|_1 = 0.11$ to $0.38$ over the box against the unit mass
-$\int w = 1$. The weight needs no quadrature either, since
-$\sinh v\cosh(v-s) = \tfrac12[\sinh(2v-s)+\sinh s]$ integrates to
-\[
-  \int_s^{x}\!\sinh v\,\cosh(v-s)\,dv
-  = \tfrac14\bigl[\cosh(2x-s)-\cosh s\bigr] + \tfrac12(x-s)\sinh s .
-\]
-Over the box (100) gives $5.2$~mN\,m for roll and $4.2$ for pitch,
-i.e.\ $\mathbf{0.174}$ and $\mathbf{0.140}$~mm --- better than (97) by
-a factor of $2.1$ on both axes. The improvement is narrow on the
-gravity channel and tenfold on the ground-effect channel, whose shape
-$s\Lambda(s)$ the span approximates especially well because $\Lambda$
-is one of its members. What (100) costs is the $x$-independence: $K$
-rises with $x$ where the Chebyshev factors fall, the two crossing near
-$x\simeq5.5$, so (100) wins throughout the box ($x\le5.21$) but would
-not for an arbitrarily slow ramp. Quoting $\min(K,R)$ per channel is
-safe either way, and (97) remains the statement that holds whatever
-the window.
+\paragraph{The channel the reviewer asks about is the one best absorbed.}
+One asymmetry between the two channels is worth recording, because it
+runs opposite to the concern that motivates them. The estimator span
+contains $\delta\varphi$, whose nominal shape is $\Lambda$, and the
+bilinear ground-effect channel goes as $s\Lambda(s)$ --- close to a
+multiple of a span member, so a single scaling already accounts for all
+but $10\%$ of it and the full span for all but $4\%$. The gravity
+remainder goes as $\Lambda(s)^2$, whose exponent is twice as large, and
+the span cannot follow it: $18\%$ survives. The ground-effect
+contribution to (97) is thus small twice over --- once because
+$\rho_{GE,\max}$ is itself an order below $\rho_{\varphi,\max}$, and
+again because what remains of it after the fit re-tunes its own
+coefficients is smaller still.
 
 Two remarks on robustness. First, $\bar x$ depends on the geometry only
 as $(\Wz C_2/\dot M)^{1/3}$, so a factor-of-two error in $\Wz$ moves it
