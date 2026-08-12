@@ -1,3 +1,9 @@
+\documentclass[10pt]{article}
+\usepackage[a4paper,margin=22mm]{geometry}
+\usepackage{amsmath,amssymb,booktabs,xcolor}
+\setlength{\parskip}{0.35em}\setlength{\parindent}{0pt}
+\makeatletter\def\eqref#1{\textcolor{blue}{(\detokenize{#1})}}\makeatother
+\begin{document}
 % ---------------------------------------------------------------------
 % Drop-in continuation of Sec. VI-B (ground-effect-induced bias) for the
 % IEEE Access manuscript.  Place after the LPV affine fit of the channel
@@ -24,7 +30,7 @@
 %   \eqref{eq:parallelaxis} Eq. (82)   parallel-axis identity
 % ---------------------------------------------------------------------
 
-\subsubsection{What the excitation data say about the bias}
+\section*{What the excitation data say about the bias}
 
 The coefficients above are predictions. The excitation runs test them
 without any quantity being fitted, through the gap that the rigid
@@ -124,7 +130,7 @@ within a median $108$~mN\,m, and all detectors place the per-run onset
 moment within $3$--$45$~mN\,m of one another, both well below
 $\Delta M$.
 
-\subsubsection{The residual cannot be attributed, and three tests say why}
+\section*{The residual cannot be attributed, and three tests say why}
 
 The $49$~mN\,m the model leaves is not a small coefficient error. Two
 physically distinct explanations fit it equally well, and the data
@@ -212,7 +218,7 @@ against the contact hypothesis's unchanged $0.20$, a three-fold split
 well above the $0.06$~N\,m floor. That sweep is outside the present
 dataset, and Sec.~IX returns to it.
 
-\subsubsection{Why the deliverable does not need the attribution}
+\section*{Why the deliverable does not need the attribution}
 
 The reviewer's concern is whether this bias corrupts the delivered
 offset. It does not, and the reason is structural rather than
@@ -328,3 +334,4 @@ the max--min-margin choice whatever the unmodelled terms turn out to
 be, and by \eqref{eq:ffcancel} the direction-common part of them ---
 $54$~mN\,m against a $1000$~mN\,m half-interval --- never enters it at
 all.
+\end{document}
