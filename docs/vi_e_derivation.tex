@@ -311,6 +311,31 @@ The half-angle tangent is not an accident: $\tanh(x/2) =
 compare an integral of $\Lambda$ against $\Lambda$ and its own
 derivative.
 
+\textbf{Where $\tfrac12$ and $1$ come from.} Both are the $x\to\infty$
+limits, and each is one application of l'H\^opital's rule. Written as
+above, both products have the form $\coth(x/2)\int_0^x\!f/f(x)$ --- with
+$f = \Lambda^2$ for the gravity channel and $f = u\Lambda$ for the
+ground-effect channel --- and $\coth(x/2)\to1$. In the remaining ratio
+numerator and denominator both diverge, so
+\[
+  \lim_{x\to\infty}\frac{\int_0^x\!f(u)\,du}{f(x)}
+  = \lim_{x\to\infty}\frac{f(x)}{f'(x)}
+  = \Bigl(\lim_{x\to\infty}\frac{f'}{f}\Bigr)^{\!-1},
+\]
+and the two logarithmic derivatives are elementary:
+\[
+  \frac{f'}{f}\bigg|_{f=\Lambda^2} = \frac{2\Lambda'}{\Lambda}
+  = \frac{2(\cosh x - 1)}{\sinh x - x}\;\longrightarrow\;2,
+  \qquad
+  \frac{f'}{f}\bigg|_{f=u\Lambda} = \frac1u + \frac{\Lambda'}{\Lambda}
+  \;\longrightarrow\;1,
+\]
+giving $\tfrac12$ and $1$. Each constant is thus the reciprocal of its
+kernel's exponential growth rate, which is what $\int_0^xe^{ku}du =
+e^{kx}/k$ says: the gravity channel gets the smaller constant because
+its kernel, $\Lambda^2\sim e^{2x}/4$, is the square of the other's,
+$u\Lambda\sim u\,e^{x}/2$.
+
 \textbf{The only theorem used.} Everything below rests on one
 corollary of the mean value theorem, applied three times and nowhere
 supplemented.

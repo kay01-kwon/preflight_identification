@@ -208,7 +208,14 @@ the inequality the exponent-perturbation argument of Sec.~VI-D already
 uses. Here the two approximations work against each other: $\Psi$
 grows with $x$ while the averages of (95) shrink with it, and each
 product is bounded by its $x\to\infty$ limit, $\tfrac12$ and $1$. Both
-bounds are exact rather than sampled. Substituting (95) and
+products take the form $\coth(x/2)\int_0^x\!f/f(x)$, with $f =
+\Lambda^2$ and $f = u\Lambda$ respectively, so l'H\^opital's rule
+returns the limit as the reciprocal of $\lim f'/f$, namely
+$2\Lambda'/\Lambda\to2$ and $1/u + \Lambda'/\Lambda\to1$: each constant
+is the reciprocal of its kernel's exponential growth rate, and the
+gravity channel gets the smaller one because its kernel is the square
+of the other's. Both bounds are exact rather than sampled.
+Substituting (95) and
 $\Psi = x\coth(x/2)$, the two claims read
 \begin{equation}
   \int_0^x\!\Lambda(u)^2du \le \tfrac12\tanh\tfrac{x}{2}\Lambda(x)^2,
