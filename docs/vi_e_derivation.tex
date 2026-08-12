@@ -311,34 +311,66 @@ The half-angle tangent is not an accident: $\tanh(x/2) =
 compare an integral of $\Lambda$ against $\Lambda$ and its own
 derivative.
 
-\textbf{Proof of (D.10).} Let $D(x)$ be the difference of the two
-sides, $D(0) = 0$. Differentiating and factoring out $\Lambda>0$,
+\textbf{The only theorem used.} Everything below rests on one
+corollary of the mean value theorem, applied three times and nowhere
+supplemented.
+
+\emph{Lemma.} If $f$ is continuous on $[0,b]$, differentiable on
+$(0,b)$ with $f'\ge0$ there, and $f(0) = 0$, then $f\ge0$ on $[0,b]$.
+\emph{Proof:} for $0\le s<t\le b$ the mean value theorem gives
+$f(t)-f(s) = f'(\xi)(t-s)\ge0$, so $f$ is non-decreasing; taking
+$s=0$ gives $f(t)\ge f(0)=0$. $\square$
+
+Note what is \emph{not} used. No limit as $x\to\infty$ enters: the
+constant $\tfrac12$ comes from the algebra of (D.10), and the
+inequality is established at each $x$ separately. No monotonicity of
+$\Psi R_\varphi$ is assumed or proved. The limits quoted above serve
+only to show the constants cannot be improved.
+
+\textbf{Proof of (D.10).} Let $D(x)$ be the right side minus the left,
+so that (D.10) is $D\ge0$. Every quantity divided by below ---
+$\coth(x/2)$, $\Lambda^2$, $\Lambda$, $\cosh^2(x/2)$ --- is strictly
+positive for $x>0$, so each step is an equivalence.
+
+$D(0) = 0$, since $\tanh0 = \Lambda(0) = \int_0^0 = 0$. Differentiating
+and factoring out $\Lambda>0$,
 \[
-  D'(x) = \Lambda\Bigl[\tfrac14\operatorname{sech}^2\tfrac{x}{2}\,\Lambda
-          + \tanh\tfrac{x}{2}\,\Lambda' - \Lambda\Bigr] .
+  D'(x) = \Lambda(x)\,B(x),
+  \qquad
+  B(x) = \tfrac14\operatorname{sech}^2\tfrac{x}{2}\,\Lambda
+         + \tanh\tfrac{x}{2}\,\Lambda' - \Lambda ,
 \]
-Write $y = x/2$, $S = \sinh y$, $C = \cosh y$, so that
-$\Lambda = 2SC - 2y$ and $\Lambda' = 2S^2$. Multiplying the bracket by
-$2C^2$ gives $(SC-y) + 4S^3C - 4SC^3 + 4yC^2$, and since
-$S^3 - SC^2 = S(S^2-C^2) = -S$ the two cubic terms collapse to $-4SC$,
-leaving
+so $D'\ge0$ iff $B\ge0$. Write $y = x/2$, $S = \sinh y$, $C = \cosh y$,
+giving $\Lambda = 2SC-2y$ and $\Lambda' = 2S^2$. Multiplying $B$ by
+$2C^2>0$,
 \[
-  y(4C^2-1) - 3SC = y(3+4S^2) - 3SC .
+  2C^2B = (SC-y) + 4S^3C - 4SC^3 + 4yC^2 ,
 \]
-With $4S^2 = 2\cosh2y - 2$ and $2SC = \sinh 2y$, and putting $z = 2y$,
-this is $\tfrac12\bigl[z(1+2\cosh z) - 3\sinh z\bigr]$. So everything
-reduces to
+and since $S^3C - SC^3 = SC(S^2-C^2) = -SC$ the two cubic terms
+collapse to $-4SC$, leaving $y(4C^2-1) - 3SC = y(3+4S^2) - 3SC$. Now
+$4S^2 = 2\cosh x - 2$ and $2SC = \sinh x$ and $y = x/2$, so
 \[
-  \phi(z) \triangleq z + 2z\cosh z - 3\sinh z \;\ge\; 0 ,
+  B(x) = \frac{\phi(x)}{4\cosh^2(x/2)},
+  \qquad
+  \phi(x) \triangleq x + 2x\cosh x - 3\sinh x ,
 \]
-and $\phi(0) = 0$, $\phi'(z) = 1 - \cosh z + 2z\sinh z$ with
-$\phi'(0) = 0$, and
+and $B\ge0$ iff $\phi\ge0$. Finally
 \[
-  \phi''(z) = \sinh z + 2z\cosh z \;\ge\; 0
-  \qquad (z\ge0).
+  \phi'(x) = 1 - \cosh x + 2x\sinh x,
+  \qquad
+  \phi''(x) = \sinh x + 2x\cosh x .
 \]
-Two integrations from zero give $\phi'\ge0$ then $\phi\ge0$, hence
-$D'\ge0$, hence $D\ge0$. $\square$
+
+\emph{First application.} $f = \phi'$: both terms of
+$\phi'' = \sinh x + 2x\cosh x$ are non-negative for $x\ge0$, and
+$\phi'(0) = 1-1+0 = 0$. The Lemma gives $\phi'\ge0$.
+
+\emph{Second application.} $f = \phi$: $\phi'\ge0$ by the first
+application and $\phi(0) = 0$. The Lemma gives $\phi\ge0$, hence
+$B\ge0$, hence $D' = \Lambda B\ge0$.
+
+\emph{Third application.} $f = D$: $D'\ge0$ by the second application
+and $D(0) = 0$. The Lemma gives $D\ge0$, which is (D.10). $\square$
 
 Eq.~(D.11) follows the same way, its difference having $E(0) = 0$ and
 $E'\ge0$; alternatively its power series has the closed general

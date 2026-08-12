@@ -217,25 +217,36 @@ $\Psi = x\coth(x/2)$, the two claims read
   \tag{99}
 \end{equation}
 with $\Lambda(u) = \sinh u - u$; the half-angle tangent enters because
-$\tanh(x/2) = \Lambda'(x)/\sinh x$. Writing the first as a difference
-$D$ with $D(0) = 0$, differentiating and factoring out $\Lambda>0$
-leaves a bracket which, on substituting $y = x/2$ and multiplying by
-$2\cosh^2 y$, collapses through $\sinh^3y - \sinh y\cosh^2y =
--\sinh y$ to $y(3+4\sinh^2y) - 3\sinh y\cosh y$, i.e.\ to
-$\phi(z) \ge 0$ with $z = 2y$ and
+$\tanh(x/2) = \Lambda'(x)/\sinh x$. Each step from (95)--(96) to (99)
+divides by a quantity that is positive for $x>0$ --- $\coth(x/2)$,
+$\Lambda$, $\Lambda^2$ and $\cosh^2(x/2)$ --- so (99) is equivalent to
+the two claims and not merely sufficient for them.
+
+Both are proved from one corollary of the mean value theorem, used
+three times and nowhere supplemented. \emph{If $f$ is continuous on
+$[0,b]$, differentiable on $(0,b)$ with $f'\ge0$, and $f(0)=0$, then
+$f\ge0$ on $[0,b]$}: for $t\in(0,b]$ the theorem gives
+$f(t) = f(t)-f(0) = f'(\xi)\,t \ge 0$ for some $\xi\in(0,t)$. Write
+the first claim of (99) as $D(x) \triangleq \tfrac12\tanh(x/2)
+\Lambda(x)^2 - \int_0^x\Lambda^2$, so $D(0)=0$; differentiating and
+factoring out $\Lambda>0$ leaves $D' = \Lambda B$ with $B =
+\phi/\bigl(4\cosh^2(x/2)\bigr)$ and
 \begin{equation}
-  \phi(z) \triangleq z + 2z\cosh z - 3\sinh z ,
+  \phi(x) \triangleq x + 2x\cosh x - 3\sinh x ,
   \qquad
-  \phi''(z) = \sinh z + 2z\cosh z \ge 0 .
+  \phi''(x) = \sinh x + 2x\cosh x \ge 0 .
   \tag{100}
 \end{equation}
-Since $\phi(0) = \phi'(0) = 0$, integrating (100) twice gives
-$\phi\ge0$ and hence $D\ge0$. The second inequality of (99) follows
-the same way; equivalently its power series has the general
-coefficient $\bigl[2^{m-1}/m + (m^2-6m+2)/3\bigr]/(m-1)!$ with
+Applying the corollary to $\phi'$ (whose derivative is $\phi''\ge0$
+and which vanishes at $0$) gives $\phi'\ge0$; applying it to $\phi$
+gives $\phi\ge0$, hence $B\ge0$ and $D' = \Lambda B\ge0$; applying it
+to $D$ gives $D\ge0$, which is the claim. The second inequality of
+(99) follows the same way; equivalently its power series has the
+general coefficient $\bigl[2^{m-1}/m + (m^2-6m+2)/3\bigr]/(m-1)!$ with
 $m = 2n$, zero at $m = 2,4$ and positive for $m\ge6$. No monotonicity
-of the products is used, only that they do not exceed their limits.
-Hence
+of the products is used, and the limits $\tfrac12$ and $1$ enter the
+proof nowhere: they are values the constants are held to, and the
+$x\to\infty$ limit shows only that neither can be lowered. Hence
 \begin{equation}
   \boxed{\;\frac{|e_\omega|_{\rm end}}{\omega_{\rm nom,end}}
   \;\le\; \frac{\tfrac12\rho_{\varphi,\max} + \rho_{GE,\max}}
