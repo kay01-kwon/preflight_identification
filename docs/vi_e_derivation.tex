@@ -370,11 +370,44 @@ in code (\texttt{error\_budget.py -{}-check}):
 \begin{enumerate}
 \item $w\ge0$, because the integrand is a product of two hyperbolic
   functions of non-negative arguments;
-\item $\int_0^T w = 1$. The check evaluates (D.9) at $\rho\equiv1$ and
-  obtains $\Delta M_{\rm crit} = -1.0005$ to $-1.0001$ across five
-  operating points. Physically: a uniform unmodelled moment displaces
-  the identified threshold one-for-one, which is the only
-  normalisation the reduction could have;
+\item $\int_0^T w = 1$, exactly. This is not a numerical coincidence
+  and is worth doing, because it is what lets $\bar\rho$ enter (97)
+  bare. Integrate the numerator of (D.9) over $s$ and exchange the
+  order: the region $0\le s\le\tau\le T$ is the same triangle read
+  either way, so
+  \[
+    \int_0^{T}\!\!\int_s^{T}\!\sinh(C_2\tau)\cosh\bigl(C_2(\tau-s)\bigr)
+      d\tau\,ds
+    = \int_0^{T}\!\sinh(C_2\tau)
+      \left[\int_0^{\tau}\!\cosh\bigl(C_2(\tau-s)\bigr)ds\right]d\tau .
+  \]
+  The inner integral is elementary --- substitute $u = \tau - s$, whose
+  sign flip is cancelled by the reversed limits ---
+  \[
+    \int_0^{\tau}\!\cosh\bigl(C_2(\tau-s)\bigr)ds
+    = \int_0^{\tau}\!\cosh(C_2u)\,du
+    = \frac{\sinh(C_2\tau)}{C_2},
+  \]
+  and putting it back reproduces the very norm that sits in the
+  denominator of (D.9),
+  \[
+    \frac{1}{C_2}\int_0^{T}\!\sinh^2(C_2\tau)\,d\tau
+    = \frac{\|\sinh(C_2\tau)\|^2}{C_2}.
+  \]
+  Hence
+  \[
+    \int_0^T w
+    = \frac{\Wz\,\|\sinh\|^2/C_2}{J_PC_2\|\sinh\|^2}
+    = \frac{\Wz}{J_PC_2^{2}} = 1
+  \]
+  by $J_PC_2^{2} = \Wz$ --- the same identity that removes the inertia
+  everywhere else in this document. Neither the window length nor any
+  constant survives. \texttt{error\_budget.py -{}-check} evaluates (D.9)
+  at $\rho\equiv1$ and returns $-1.0005$ to $-1.0001$ across five
+  operating points, which is the quadrature error on an identity rather
+  than evidence for it. The reading is that a uniform unmodelled moment
+  displaces the identified threshold one-for-one, and now that is a
+  consequence rather than an assumption;
 \item $w$ is non-increasing in $s$ --- as $s$ grows both the
   integration range and the $\cosh$ factor shrink (verified
   numerically over the window).
