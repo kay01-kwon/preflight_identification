@@ -36,9 +36,9 @@ that minimises the residual of that fit. Two questions follow, and
 
 These are different questions with different answers, which is why the
 two halves of (97) carry different constants ($\tfrac12$ and $1$ in the
-first, $\tfrac17$ and $\tfrac15$ in the second). Sections 5--6 do (i)
-and Section 7 does (ii). If only one line of this document is read, let
-it be that one.
+first, $\tfrac17$ and $\tfrac15$ in the second). Section 5 answers (i)
+and Section 6 answers (ii). If only one line of this document is read,
+let it be that one.
 
 The departure obeys the Duhamel integral (88),
 \begin{equation}
@@ -285,24 +285,70 @@ looks at $\varphi$.)
 
 \section*{5. Why $\Psi\rbar$ stays bounded: first half of (97)}
 
-$\Psi$ grows with $x$ and the $R$'s shrink with it. They are not
-merely both bounded --- they are inverse to each other, and the
-products converge:
+$\Psi$ grows with $x$ and the $R$'s shrink with it, and the two
+products converge to $\tfrac12$ and $1$. Both bounds are exact, and
+neither needs the series: two differentiations settle each.
+
+\textbf{The claims in integral form.} Since
+$\Psi = x\coth(x/2)$ and $\rho_{\varphi,\max} = A\Lambda(x)^2$,
 \[
-  \Psi R_\varphi:\quad
-  x\to0:\; 2\cdot\tfrac17 = \tfrac27,
-  \qquad
-  x\to\infty:\; x\cdot\frac{1}{2x} = \tfrac12 ;
+  \Psi R_\varphi
+  = x\coth\tfrac{x}{2}\cdot\frac{\int_0^x\Lambda^2du}{x\Lambda(x)^2}
+  = \coth\tfrac{x}{2}\,\frac{\int_0^x\Lambda^2du}{\Lambda(x)^2},
 \]
+so $\Psi R_\varphi\le\tfrac12$ is exactly
+\begin{equation}
+  \int_0^x\!\Lambda(u)^2du \;\le\; \tfrac12\tanh\tfrac{x}{2}\,\Lambda(x)^2,
+  \tag{D.10}
+\end{equation}
+and the same reduction turns $\Psi R_{GE}\le1$ into
+\begin{equation}
+  \int_0^x\! u\,\Lambda(u)\,du \;\le\; x\tanh\tfrac{x}{2}\,\Lambda(x) .
+  \tag{D.11}
+\end{equation}
+The half-angle tangent is not an accident: $\tanh(x/2) =
+(\cosh x - 1)/\sinh x = \Lambda'(x)/\sinh x$, so both statements
+compare an integral of $\Lambda$ against $\Lambda$ and its own
+derivative.
+
+\textbf{Proof of (D.10).} Let $D(x)$ be the difference of the two
+sides, $D(0) = 0$. Differentiating and factoring out $\Lambda>0$,
 \[
-  \Psi R_{GE}:\quad
-  x\to0:\; 2\cdot\tfrac15 = \tfrac25,
-  \qquad
-  x\to\infty:\; x\cdot\frac{1}{x} = 1 .
+  D'(x) = \Lambda\Bigl[\tfrac14\operatorname{sech}^2\tfrac{x}{2}\,\Lambda
+          + \tanh\tfrac{x}{2}\,\Lambda' - \Lambda\Bigr] .
 \]
-Both products increase monotonically between those limits (checked
-numerically over $x\in(0,12]$), so the limits at $x\to\infty$ are
-suprema. Expanding $\rbar$ by (95),
+Write $y = x/2$, $S = \sinh y$, $C = \cosh y$, so that
+$\Lambda = 2SC - 2y$ and $\Lambda' = 2S^2$. Multiplying the bracket by
+$2C^2$ gives $(SC-y) + 4S^3C - 4SC^3 + 4yC^2$, and since
+$S^3 - SC^2 = S(S^2-C^2) = -S$ the two cubic terms collapse to $-4SC$,
+leaving
+\[
+  y(4C^2-1) - 3SC = y(3+4S^2) - 3SC .
+\]
+With $4S^2 = 2\cosh2y - 2$ and $2SC = \sinh 2y$, and putting $z = 2y$,
+this is $\tfrac12\bigl[z(1+2\cosh z) - 3\sinh z\bigr]$. So everything
+reduces to
+\[
+  \phi(z) \triangleq z + 2z\cosh z - 3\sinh z \;\ge\; 0 ,
+\]
+and $\phi(0) = 0$, $\phi'(z) = 1 - \cosh z + 2z\sinh z$ with
+$\phi'(0) = 0$, and
+\[
+  \phi''(z) = \sinh z + 2z\cosh z \;\ge\; 0
+  \qquad (z\ge0).
+\]
+Two integrations from zero give $\phi'\ge0$ then $\phi\ge0$, hence
+$D'\ge0$, hence $D\ge0$. $\square$
+
+Eq.~(D.11) follows the same way, its difference having $E(0) = 0$ and
+$E'\ge0$; alternatively its power series has the closed general
+coefficient $\bigl[2^{m-1}/m + (m^2-6m+2)/3\bigr]/(m-1)!$ with
+$m = 2n$, which vanishes at $m = 2, 4$ and is positive for $m\ge6$
+because both terms are.
+
+No monotonicity of the products is claimed or needed --- only that they
+do not exceed their limits, which is what (D.10) and (D.11) say.
+Expanding $\rbar$ by (95),
 \[
   \Psi\rbar = \bigl(\Psi R_\varphi\bigr)\rho_{\varphi,\max}
             + \bigl(\Psi R_{GE}\bigr)\rho_{GE,\max}
@@ -439,97 +485,6 @@ are the $R$'s themselves, $\tfrac17$ and $\tfrac15$. The threshold
 bound is the stronger of the two by roughly a factor of four, which is
 why it, and not the relative rate bound, is the number carried into the
 offset budget.
-
-\section*{6b. A sharper route: use the absorption, not the monotonicity}
-
-Section 6 threw something away. The reduction (98) is
-$\Delta M_{\rm crit} = -\langle\rho, w\rangle$, and $\rho$ there is
-\emph{already} the out-of-span part, $\rho = P\rho$ with $P$ the
-orthogonal projection off $\mathrm{span}\{1,\tau,\delta\varphi\}$.
-An orthogonal projection is self-adjoint and idempotent, so
-\begin{equation}
-  \Delta M_{\rm crit} = -\langle P\rho,\,w\rangle
-                      = -\langle P\rho,\,Pw\rangle
-  \qquad\Longrightarrow\qquad
-  |\Delta M_{\rm crit}| \;\le\; \|P\rho\|_\infty\;\|Pw\|_1 .
-  \tag{D.10}
-\end{equation}
-No monotonicity is used --- only the absorption the reduction already
-assumes. And the point is that \emph{$w$ itself lies mostly in the
-span}: it is smooth, positive and slowly varying, so removing a
-constant, a ramp and a $\Lambda$ leaves very little, and $\|Pw\|_1$ is
-an order of magnitude below the unit mass $\int w = 1$.
-
-\textbf{Both factors are elementary.} The weight needs no quadrature.
-Writing $\sinh v\cosh(v-s) = \tfrac12\bigl[\sinh(2v-s) + \sinh s\bigr]$
-and integrating,
-\begin{equation}
-  \int_s^{x}\!\sinh v\,\cosh(v-s)\,dv
-  = \tfrac14\bigl[\cosh(2x-s) - \cosh s\bigr]
-    + \tfrac12\,(x-s)\sinh s ,
-  \tag{D.11}
-\end{equation}
-which is $w$ up to the normalisation $\int_0^x w = 1$. So the recipe,
-for a given $x$, is four lines of arithmetic on a grid:
-\begin{enumerate}\itemsep0pt
-\item tabulate $w(s)$ from (D.11) on $s\in[0,x]$ and divide by its
-  integral;
-\item least-squares fit $\alpha + \beta s + \gamma\Lambda(s)$ to
-  $w$, subtract, and take $\|Pw\|_1 = \int_0^x|w - \text{fit}|\,ds$;
-\item do the same fit-and-subtract to $\Lambda(s)^2$ and to
-  $s\Lambda(s)$, and take the sup-norm of each residual divided by its
-  endpoint value --- these are $\|P\rho_\varphi\|_\infty/
-  \rho_{\varphi,\max}$ and $\|P\rho_{GE}\|_\infty/\rho_{GE,\max}$;
-\item multiply.
-\end{enumerate}
-Calling the products $K_\varphi$ and $K_{GE}$,
-\begin{equation}
-  \boxed{\;|\Delta M_{\rm crit}| \;\le\;
-   K_\varphi(x)\,\rho_{\varphi,\max} + K_{GE}(x)\,\rho_{GE,\max},
-   \qquad
-   K \;=\; \frac{\|P\rho\|_\infty}{\rho_{\max}}\;\|Pw\|_1 \;}
-  \tag{D.12}
-\end{equation}
-
-\textbf{What it buys, and what it costs.}
-\begin{center}\small
-\begin{tabular}{@{}rrrrrr@{}}
-\toprule
-$x$ & $\|Pw\|_1$ & $K_\varphi$ & $K_{GE}$ & $R_\varphi$ & $R_{GE}$\\
-\midrule
-$1.00$ & $0.0024$ & $0.0004$ & $0.0001$ & $0.1397$ & $0.1972$\\
-$2.00$ & $0.0401$ & $0.0067$ & $0.0018$ & $0.1311$ & $0.1891$\\
-$2.99$ & $0.1147$ & $0.0202$ & $0.0048$ & $0.1190$ & $0.1772$\\
-$3.80$ & $0.1993$ & $0.0369$ & $0.0079$ & $0.1079$ & $0.1656$\\
-$5.21$ & $0.3799$ & $0.0776$ & $0.0138$ & $0.0892$ & $0.1444$\\
-$7.94$ & $0.7398$ & $0.1772$ & $0.0240$ & $0.0624$ & $0.1088$\\
-\bottomrule
-\end{tabular}
-\end{center}
-$K$ \emph{rises} with $x$ where $R$ falls, and the two cross near
-$x\simeq5.5$. Over the operating box, where $x\le5.21$, the sharp form
-wins on both channels --- narrowly on gravity, by a factor of ten on
-the ground-effect channel, whose shape $s\Lambda(s)$ the span
-approximates especially well because $\Lambda$ is one of its members.
-Quoting $\min(K,R)$ per channel is safe and is what the evaluation
-does. The cost is that (D.12) is no longer free of $x$: it must be
-read at the window the run actually has, whereas (97) holds whatever
-the window.
-
-\textbf{The exact gravity remainder.} One more factor comes free.
-$\rho_\varphi$ is the second-order remainder of
-$G(\varphi) = -Wa\cos\varphi + Wz_{CoM}\sin\varphi$ about
-$\varphi = 0$, and that remainder is elementary:
-\begin{equation}
-  \rho_\varphi(\varphi) = G(\varphi) - G(0) - G'(0)\varphi
-  = W\bigl[\,a\,(1-\cos\varphi) + z_{CoM}(\sin\varphi - \varphi)\,\bigr],
-  \tag{D.13}
-\end{equation}
-with $a = l_p+\lambda_{\rm off}$. The second term is negative, so the
-customary Taylor bound $\tfrac12 Wa\varphi^2$ --- which is (D.13) with
-$\cos$ expanded to second order and the $z_{CoM}$ term dropped
-altogether --- is loose by $8$ to $14\%$ over the box. There is no
-reason to pay it.
 
 \section*{7. A worked example, checkable by hand}
 
