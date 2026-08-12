@@ -207,8 +207,35 @@ $\sinh x = 2\sinh(x/2)\cosh(x/2)$; $\Psi \ge 2$ everywhere, which is
 the inequality the exponent-perturbation argument of Sec.~VI-D already
 uses. Here the two approximations work against each other: $\Psi$
 grows with $x$ while the averages of (95) shrink with it, and each
-product is bounded uniformly --- $\Psi R_\varphi$ rises monotonically
-from $2/7$ to $1/2$ and $\Psi R_{GE}$ from $2/5$ to $1$. Hence
+product is bounded by its $x\to\infty$ limit, $\tfrac12$ and $1$. Both
+bounds are exact rather than sampled. Substituting (95) and
+$\Psi = x\coth(x/2)$, the two claims read
+\begin{equation}
+  \int_0^x\!\Lambda(u)^2du \le \tfrac12\tanh\tfrac{x}{2}\Lambda(x)^2,
+  \qquad
+  \int_0^x\! u\,\Lambda(u)\,du \le x\tanh\tfrac{x}{2}\,\Lambda(x),
+  \tag{99}
+\end{equation}
+with $\Lambda(u) = \sinh u - u$; the half-angle tangent enters because
+$\tanh(x/2) = \Lambda'(x)/\sinh x$. Writing the first as a difference
+$D$ with $D(0) = 0$, differentiating and factoring out $\Lambda>0$
+leaves a bracket which, on substituting $y = x/2$ and multiplying by
+$2\cosh^2 y$, collapses through $\sinh^3y - \sinh y\cosh^2y =
+-\sinh y$ to $y(3+4\sinh^2y) - 3\sinh y\cosh y$, i.e.\ to
+$\phi(z) \ge 0$ with $z = 2y$ and
+\begin{equation}
+  \phi(z) \triangleq z + 2z\cosh z - 3\sinh z ,
+  \qquad
+  \phi''(z) = \sinh z + 2z\cosh z \ge 0 .
+  \tag{100}
+\end{equation}
+Since $\phi(0) = \phi'(0) = 0$, integrating (100) twice gives
+$\phi\ge0$ and hence $D\ge0$. The second inequality of (99) follows
+the same way; equivalently its power series has the general
+coefficient $\bigl[2^{m-1}/m + (m^2-6m+2)/3\bigr]/(m-1)!$ with
+$m = 2n$, zero at $m = 2,4$ and positive for $m\ge6$. No monotonicity
+of the products is used, only that they do not exceed their limits.
+Hence
 \begin{equation}
   \boxed{\;\frac{|e_\omega|_{\rm end}}{\omega_{\rm nom,end}}
   \;\le\; \frac{\tfrac12\rho_{\varphi,\max} + \rho_{GE,\max}}
@@ -328,7 +355,7 @@ $\dot M$ [N\,m/s] & $0.10$ & $0.45$ & $1.20$ & $0.10$ & $0.45$ & $1.20$\\
 $x$ at the cap                  & $5.18$ & $3.80$ & $2.99$ & $5.21$ & $3.83$ & $3.02$\\
 $\bar x$ by (92)                & $7.94$ & $4.81$ & $3.47$ & $8.04$ & $4.87$ & $3.51$\\
 $\Delta M_{\rm win}$ [N\,m]     & $0.103$& $0.339$& $0.712$& $0.099$& $0.329$& $0.692$\\
-$\rho_{\varphi,\max}$ by (99) [mN\,m] & \multicolumn{3}{c}{$68.40$} & \multicolumn{3}{c}{$54.01$}\\
+$\rho_{\varphi,\max}$ by (101) [mN\,m] & \multicolumn{3}{c}{$68.40$} & \multicolumn{3}{c}{$54.01$}\\
 $\rho_{GE,\max}$ [mN\,m]        & $0.62$ & $2.04$ & $4.29$ & $0.60$ & $1.98$ & $4.16$\\
 $\bar\rho$ by (95) [mN\,m]      & $6.99$ & $8.64$ & $9.92$ & $5.66$ & $7.04$ & $8.15$\\
 \midrule
@@ -354,7 +381,7 @@ gravity moment rather than its Taylor bound,
   \rho_\varphi = G(\varphi)-G(0)-G'(0)\varphi
   = W\bigl[a(1-\cos\varphi) + z_{CoM}(\sin\varphi-\varphi)\bigr]
   \;\le\; \tfrac12 W a\,\varphi_{\max}^2 ,
-  \tag{99}
+  \tag{101}
 \end{equation}
 the second term being negative; the customary bound on the right is
 loose by $8$--$14\%$ over the box and there is no reason to pay it.
