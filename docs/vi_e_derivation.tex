@@ -604,51 +604,51 @@ The reported quantity is not $e_\omega$ but the onset moment, so the
 deviation must be pushed one step further.
 
 \textbf{How the onset responds to a perturbation.} The estimator picks
-$t_0$ to minimise
+$t_c$ to minimise
 \[
-  J(t_0) = \int_{t_0}^{t_{\rm end}}\!
-           \bigl(y(t) - \hat\omega(t;t_0)\bigr)^2dt ,
+  J(t_c) = \int_{t_c}^{t_{\rm end}}\!
+           \bigl(y(t) - \hat\omega(t;t_c)\bigr)^2dt ,
   \qquad
-  \hat\omega(t;t_0) = C_1\bigl(\cosh C_2(t-t_0) - 1\bigr) .
+  \hat\omega(t;t_c) = C_1\bigl(\cosh C_2(t-t_c) - 1\bigr) .
 \]
-The lower limit moves with $t_0$: the fit is applied to the post-onset
-segment only. In the shifted variable $\tau = t - t_0$ that window is
-$[0,T]$ with $T = t_{\rm end} - t_0 = \te$, the window Sec.~2 averages
+The lower limit moves with $t_c$: the fit is applied to the post-onset
+segment only. In the shifted variable $\tau = t - t_c$ that window is
+$[0,T]$ with $T = t_{\rm end} - t_c = \te$, the window Sec.~2 averages
 over, so the $\rbar$ that appears below is the same $\rbar$.
 
-Write the data as nominal plus deviation, $y = \hat\omega(t;t_0^*) +
+Write the data as nominal plus deviation, $y = \hat\omega(t;t_c^*) +
 e_\omega$ --- the perturbation is $\rho$ itself, not its average --- and
-the minimiser as $t_0 = t_0^* + \delta$. Name the sensitivity
+the minimiser as $t_c = t_c^* + \delta t_c$. Name the sensitivity
 \[
   \chi(t) \;\triangleq\;
-  \frac{\partial\hat\omega(t;t_0)}{\partial t_0}\bigg|_{t_0 = t_0^*}
-  \;=\; -\,C_1C_2\sinh\bigl(C_2(t-t_0^*)\bigr) .
+  \frac{\partial\hat\omega(t;t_c)}{\partial t_c}\bigg|_{t_c = t_c^*}
+  \;=\; -\,C_1C_2\sinh\bigl(C_2(t-t_c^*)\bigr) .
 \]
 It needs a symbol of its own, and not $\varphi$: that is the tilt angle
 everywhere else, and $\langle e_\omega,\varphi\rangle$ would read as a
 rate correlated against an angle. To first order
-$\hat\omega(t;t_0^*+\delta)\simeq\hat\omega(t;t_0^*) + \delta\chi$, so
-the residual is $e_\omega - \delta\chi$ and
+$\hat\omega(t;t_c^*+\delta t_c)\simeq\hat\omega(t;t_c^*) + \delta t_c\,\chi$, so
+the residual is $e_\omega - \delta t_c\,\chi$ and
 \[
-  \frac{\partial J}{\partial t_0}
-  = \underbrace{-\bigl(y(t_0) - \hat\omega(t_0;t_0)\bigr)^2}
+  \frac{\partial J}{\partial t_c}
+  = \underbrace{-\bigl(y(t_c) - \hat\omega(t_c;t_c)\bigr)^2}
               _{\text{from the moving lower limit}}
-    \;-\;2\!\int_{t_0}^{t_{\rm end}}\!\bigl(e_\omega - \delta\chi\bigr)
+    \;-\;2\!\int_{t_c}^{t_{\rm end}}\!\bigl(e_\omega - \delta t_c\,\chi\bigr)
     \chi\,dt \;=\; 0 .
 \]
 The boundary term is negligible at this order, for the same reason the
-Duhamel boundary term of (88) was: $\hat\omega(t_0;t_0) =
+Duhamel boundary term of (88) was: $\hat\omega(t_c;t_c) =
 C_1(\cosh 0 - 1) = 0$ and the true rate at the onset is itself
-$\mathcal{O}(\delta^2)$, so the bracket is $\mathcal{O}(\delta^2)$ and
-its square $\mathcal{O}(\delta^4)$. Dropping it and solving,
+$\mathcal{O}\bigl((\delta t_c)^2\bigr)$, so the bracket is $\mathcal{O}\bigl((\delta t_c)^2\bigr)$ and
+its square $\mathcal{O}\bigl((\delta t_c)^4\bigr)$. Dropping it and solving,
 \[
-  \delta = \frac{\langle e_\omega,\chi\rangle}{\|\chi\|^2},
+  \delta t_c = \frac{\langle e_\omega,\chi\rangle}{\|\chi\|^2},
   \qquad
-  \langle a,b\rangle \triangleq \int_{t_0^*}^{t_{\rm end}}\!a(t)\,b(t)\,dt ,
+  \langle a,b\rangle \triangleq \int_{t_c^*}^{t_{\rm end}}\!a(t)\,b(t)\,dt ,
 \]
 the division legitimate because $\|\chi\|^2>0$ --- $\sinh(C_2\tau)$ is
 not identically zero on a window of positive length. With
-$\Delta M_{\rm crit} = \dot M\delta$ and $C_1 = \dot M/\Wz$ the
+$\Delta M_{\rm crit} = \dot M\,\delta t_c$ and $C_1 = \dot M/\Wz$ the
 amplitude $C_1$ cancels between numerator and denominator, leaving
 \begin{equation}
   \Delta M_{\rm crit}
@@ -668,15 +668,15 @@ Substitute the Duhamel integral (D.2) into (D.11) and exchange the order
 of integration (Fubini; both integrands are continuous on a bounded
 domain):
 \[
-  \int_0^{T}\!\!\sinh(C_2\tau)\!\int_0^{\tau}\!\!\dot h_\varphi(\tau-s)
+  \int_c^{T}\!\!\sinh(C_2\tau)\!\int_c^{\tau}\!\!\dot h_\varphi(\tau-s)
     \rho(s)\,ds\,d\tau
-  = \int_0^{T}\!\!\rho(s)
+  = \int_c^{T}\!\!\rho(s)
     \underbrace{\left[\int_s^{T}\!\!\sinh(C_2\tau)\,
       \dot h_\varphi(\tau-s)\,d\tau\right]}_{\text{depends on }s\text{ only}}\!ds,
 \]
 the inner limits changing from $s\in[0,\tau]$ to $\tau\in[s,T]$. Hence
 \begin{equation}
-  \Delta M_{\rm crit} = -\!\int_0^{T}\!\rho(s)\,w(s)\,ds,
+  \Delta M_{\rm crit} = -\!\int_c^{T}\!\rho(s)\,w(s)\,ds,
   \qquad
   w(s) = \frac{\Wz\displaystyle\int_s^{T}\!\sinh(C_2\tau)
                 \cosh\bigl(C_2(\tau-s)\bigr)d\tau}
@@ -688,33 +688,33 @@ in code (\texttt{error\_budget.py -{}-check}):
 \begin{enumerate}
 \item $w\ge0$, because the integrand is a product of two hyperbolic
   functions of non-negative arguments;
-\item $\int_0^T w = 1$, exactly. This is not a numerical coincidence
+\item $\int_c^T w = 1$, exactly. This is not a numerical coincidence
   and is worth doing, because it is what lets $\bar\rho$ enter (97)
   bare. Integrate the numerator of (D.12) over $s$ and exchange the
   order: the region $0\le s\le\tau\le T$ is the same triangle read
   either way, so
   \[
-    \int_0^{T}\!\!\int_s^{T}\!\sinh(C_2\tau)\cosh\bigl(C_2(\tau-s)\bigr)
+    \int_c^{T}\!\!\int_s^{T}\!\sinh(C_2\tau)\cosh\bigl(C_2(\tau-s)\bigr)
       d\tau\,ds
-    = \int_0^{T}\!\sinh(C_2\tau)
-      \left[\int_0^{\tau}\!\cosh\bigl(C_2(\tau-s)\bigr)ds\right]d\tau .
+    = \int_c^{T}\!\sinh(C_2\tau)
+      \left[\int_c^{\tau}\!\cosh\bigl(C_2(\tau-s)\bigr)ds\right]d\tau .
   \]
   The inner integral is elementary --- substitute $u = \tau - s$, whose
   sign flip is cancelled by the reversed limits ---
   \[
-    \int_0^{\tau}\!\cosh\bigl(C_2(\tau-s)\bigr)ds
-    = \int_0^{\tau}\!\cosh(C_2u)\,du
+    \int_c^{\tau}\!\cosh\bigl(C_2(\tau-s)\bigr)ds
+    = \int_c^{\tau}\!\cosh(C_2u)\,du
     = \frac{\sinh(C_2\tau)}{C_2},
   \]
   and putting it back reproduces the very norm that sits in the
   denominator of (D.12),
   \[
-    \frac{1}{C_2}\int_0^{T}\!\sinh^2(C_2\tau)\,d\tau
+    \frac{1}{C_2}\int_c^{T}\!\sinh^2(C_2\tau)\,d\tau
     = \frac{\|\sinh(C_2\tau)\|^2}{C_2}.
   \]
   Hence
   \[
-    \int_0^T w
+    \int_c^T w
     = \frac{\Wz\,\|\sinh\|^2/C_2}{J_PC_2\|\sinh\|^2}
     = \frac{\Wz}{J_PC_2^{2}} = 1
   \]
@@ -734,8 +734,8 @@ Property 1 plus 2 alone would give $|\Delta M_{\rm crit}|\le\rmax$. But
 $\rho$ is increasing and $w$ is decreasing, so \emph{Chebyshev applies a
 second time}, now to (D.12):
 \[
-  \Bigl|\int_0^T\!\rho\,w\Bigr|
-  \;\le\; \frac{1}{T}\int_0^T\!\rho \int_0^T\! w
+  \Bigl|\int_c^T\!\rho\,w\Bigr|
+  \;\le\; \frac{1}{T}\int_c^T\!\rho \int_c^T\! w
   \;=\; \rbar\cdot 1 \;=\; \rbar ,
 \]
 and substituting (95),
@@ -921,7 +921,7 @@ $0.001$ to $0.004$~mm of offset.
       & $\rmax \to \rbar$ \\
 (D.6--7) & known shapes $\Lambda^2$ and $u\Lambda$
       & the ratios $\rbar/\rmax$ \\
-(D.6a) & $R = \int_0^1 f(xt)/f(x)dt$, $n_{\rm eff}\uparrow$
+(D.6a) & $R = \int_c^1 f(xt)/f(x)dt$, $n_{\rm eff}\uparrow$
       & (95): $R_\varphi\le\tfrac17$, $R_{GE}\le\tfrac15$ \\
 (96)  & divide by $\omega_{\rm nom,end}$, use $\Delta M_{\rm win}=\dot Mx/C_2$
       & $\Psi = x\coth(x/2)$; $\Wz$, $J_P$ gone \\
