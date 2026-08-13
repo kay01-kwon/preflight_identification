@@ -109,6 +109,11 @@ $f(s) = \rho(s)$ and $g(s) = \dot h_\varphi(\te-s)$.
 \item $f$ is non-decreasing: both channels vanish at the onset and
   grow monotonically over the window ($\rho_\varphi\propto\varphi^2$
   with $\varphi$ rising, $\rho_{GE}\propto\tau\varphi$ likewise).
+  Equivalently, both are power series in $u$ with non-negative
+  coefficients, so $f'\ge0$ term by term --- the same sign pattern that
+  Sec.~3 uses for a different purpose. This is the one place the
+  argument needs the channels to increase; the reduction factors of
+  Sec.~3 do not.
 \item $g$ is non-increasing \emph{in $s$}: as $s$ grows the argument
   $\te-s$ shrinks and $\cosh$ decreases. Note the kernel is increasing
   in its own argument; it is the reflection $s\mapsto\te-s$ that makes
@@ -253,8 +258,14 @@ Convexity does hold, and one place a power series is used --- only for
 its sign pattern, with no coefficient evaluated --- establishes it.
 
 \emph{Lemma.} Let $f(u) = \sum_{n\ge0}a_nu^n$ converge for all $u\ge0$
-with every $a_n\ge0$, and let $f$ not be a single monomial. Then
+with every $a_n\ge0$, at least two of them non-zero. Then
 $n_{\rm eff} = uf'/f$ is strictly increasing on $(0,\infty)$.
+
+The second condition is what makes $f>0$ for $u>0$, so that dividing by
+$f$ below is legitimate, and what makes the conclusion strict. No
+monotonicity of $f$ is assumed --- it would be redundant, since
+$f' = \sum_{n\ge1}na_nu^{n-1}\ge0$ term by term, and it is not used in
+the proof.
 
 \emph{Proof.} Differentiating $n_{\rm eff}$,
 \[
