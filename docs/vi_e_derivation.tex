@@ -603,18 +603,19 @@ solved for, only bounded well enough to keep $\rho_{GE,\max}$ finite
 The reported quantity is not $e_\omega$ but the onset moment, so the
 deviation must be pushed one step further.
 
-\textbf{How the onset responds to a perturbation.} The estimator picks
-$t_c$ to minimise
-\[
-  J(t_c) = \int_{t_c}^{t_{\rm end}}\!
-           \bigl(y(t) - \hat\omega(t;t_c)\bigr)^2dt ,
-  \qquad
-  \hat\omega(t;t_c) = C_1\bigl(\cosh C_2(t-t_c) - 1\bigr) .
-\]
-The lower limit moves with $t_c$: the fit is applied to the post-onset
-segment only. In the shifted variable $\tau = t - t_c$ that window is
-$[0,T]$ with $T = t_{\rm end} - t_c = \te$, the window Sec.~2 averages
-over, so the $\rbar$ that appears below is the same $\rbar$.
+\textbf{How the onset responds to a perturbation.} The fit is
+two-segment and \emph{both} segments are in the cost --- a constant
+baseline before the onset, the closed-form rise after it, sharing that
+baseline:
+\begin{align*}
+  J(t_c) &= \int_{t_a}^{t_c}\!\bigl(y - C_0\bigr)^2dt \\[2pt]
+   &\quad+ \int_{t_c}^{t_{\rm end}}\!
+     \Bigl(y - C_0 - C_1\bigl(\cosh C_2(t-t_c) - 1\bigr)\Bigr)^2dt ,
+\end{align*}
+with $C_0$ the pre-onset baseline, refitted at each candidate $t_c$
+from the samples to its left. In the shifted variable $\tau = t - t_c$
+the post-onset window is $[0,T]$ with $T = t_{\rm end}-t_c = \te$, the
+window Sec.~2 averages over, so the $\rbar$ below is the same $\rbar$.
 
 Write the data as nominal plus deviation, $y = \hat\omega(t;t_c^*) +
 e_\omega$ --- the perturbation is $\rho$ itself, not its average --- and
@@ -631,16 +632,32 @@ $\hat\omega(t;t_c^*+\delta t_c)\simeq\hat\omega(t;t_c^*) + \delta t_c\,\chi$, so
 the residual is $e_\omega - \delta t_c\,\chi$ and
 \[
   \frac{\partial J}{\partial t_c}
-  = \underbrace{-\bigl(y(t_c) - \hat\omega(t_c;t_c)\bigr)^2}
-              _{\text{from the moving lower limit}}
+  = \underbrace{\bigl(y(t_c) - C_0\bigr)^2
+              - \bigl(y(t_c) - C_0\bigr)^2}_{=\;0,\ \text{the two limits}}
     \;-\;2\!\int_{t_c}^{t_{\rm end}}\!\bigl(e_\omega - \delta t_c\,\chi\bigr)
-    \chi\,dt \;=\; 0 .
+    \chi\,dt
+    \;-\;2\frac{dC_0}{dt_c}\!\int\! r \;=\; 0 .
 \]
-The boundary term is negligible at this order, for the same reason the
-Duhamel boundary term of (88) was: $\hat\omega(t_c;t_c) =
-C_1(\cosh 0 - 1) = 0$ and the true rate at the onset is itself
-$\mathcal{O}\bigl((\delta t_c)^2\bigr)$, so the bracket is $\mathcal{O}\bigl((\delta t_c)^2\bigr)$ and
-its square $\mathcal{O}\bigl((\delta t_c)^4\bigr)$. Dropping it and solving,
+$t_c$ is the upper limit of one integral and the lower limit of the
+other, so it produces two boundary terms, and they cancel
+\emph{identically}: at $\tau = 0$ the rise contributes
+$C_1(\cosh 0 - 1) = 0$, so the two-segment model is continuous at the
+onset by construction and both terms are $\bigl(y(t_c)-C_0\bigr)^2$
+with opposite signs. Nothing is discarded and no order argument is
+needed. This is worth stating, because the first thing to check about a
+fit whose window endpoint is also its optimisation variable is whether
+the Leibniz terms were quietly dropped.
+
+The baseline still couples the two segments, since $C_0$ depends on
+$t_c$ through the samples it is fitted to. Its contribution to the
+pre-onset integral is $(dC_0/dt_c)\int_{t_a}^{t_c}(y - C_0)$, which
+vanishes --- for the least-squares constant by its normal equation, and
+for the median the code actually uses because a median is piecewise
+constant in the sample set, so $dC_0/dt_c = 0$ almost everywhere. What
+could survive is the same drift entering the post-onset residual, but
+$dC_0/dt_c = \bigl(y(t_c) - C_0\bigr)/(t_c - t_a)$ for the mean, and at
+the onset the rate is still the baseline, so it vanishes there too.
+Dropping that term and solving,
 \[
   \delta t_c = \frac{\langle e_\omega,\chi\rangle}{\|\chi\|^2},
   \qquad
@@ -657,11 +674,13 @@ amplitude $C_1$ cancels between numerator and denominator, leaving
   \tag{D.11}
 \end{equation}
 This is exactly the reduction \texttt{error\_budget.py} implements, and
-it is the manuscript's (98)--(101) written with $\chi$ named. Minimising
-$J$ numerically against a deviation of the true shape and comparing with
-the formula gives ratios $1.0000$, $0.9995$, $0.9953$, $0.9556$ as the
-deviation grows over four decades: the formula is the first-order term,
-and the discarded boundary term does not spoil it.
+it is the manuscript's (98)--(101) written with $\chi$ named.
+Minimising $J$ numerically against a deviation of the true shape, over
+four decades of deviation size, gives ratios to the formula of
+$0.99995$, $0.99953$, $0.99530$ and $0.95559$: it is the first-order
+term, as claimed. Minimising the full two-segment cost and the
+post-onset term alone gives the same answer to five figures at every
+size, which is the numerical form of the two paragraphs above.
 
 \textbf{It is an average of $\rho$ with a non-negative weight.}
 Substitute the Duhamel integral (D.2) into (D.11) and exchange the order
