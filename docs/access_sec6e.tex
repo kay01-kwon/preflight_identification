@@ -192,8 +192,11 @@ than the monotonicity of $f$ and does not follow from it: $1-e^{-u}$
 rises yet has $n_{\rm eff}$ falling, because a saturating signal
 averages closer to its endpoint the longer the window. It holds here
 because both kernels stiffen. Writing $f = \sum a_nu^n$ with $a_n\ge0$,
-as both admit, and $S_k = \sum n^ka_nu^n$, so that $uf' = S_1$ and
-$u^2f'' = S_2 - S_1$,
+as both admit, and $S_k = \sum_{n\ge0} n^ka_nu^n$, so that $uf' = S_1$
+and $u^2f'' = S_2 - S_1$ --- all three sums from $n = 0$, since the
+coefficients $n$ and $n^2 - n$ vanish on exactly the terms
+differentiating shifts away, and the Cauchy--Schwarz step below needs
+one common index set ---
 \begin{equation}
   u\,\frac{dn_{\rm eff}}{du}
   = \frac{uf'}{f} + \frac{u^2f''}{f} - \Bigl(\frac{uf'}{f}\Bigr)^{\!2}
