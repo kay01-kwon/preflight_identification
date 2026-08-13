@@ -198,14 +198,25 @@ numerator rescales the window to $[0,1]$:
        = \int_0^1 \frac{f(xt)}{f(x)}\,dt .
   \tag{D.6a}
 \end{equation}
-In this form the small-$x$ limit is immediate: if $f\simeq u^n$ near
-the origin then $f(xt)/f(x)\to t^n$ and $R\to\int_0^1t^ndt =
-1/(n{+}1)$. Now let
+Let
 \[
   n_{\rm eff}(u) \;\triangleq\; \frac{u f'(u)}{f(u)}
   \;=\; \frac{d\log f}{d\log u}
 \]
-be the \emph{local order} of $f$. Differentiating the integrand of
+be the \emph{local order} of $f$. The small-$x$ limit of $R$ follows
+from it by one application of l'H\^opital's rule, with no expansion of
+$f$: in the first form of (D.6a) numerator and denominator both vanish
+at $x=0$, so
+\begin{equation}
+  \lim_{x\to0}R(x)
+  = \lim_{x\to0}\frac{\int_0^x\!f(u)\,du}{x\,f(x)}
+  = \lim_{x\to0}\frac{f(x)}{f(x) + x f'(x)}
+  = \frac{1}{1 + n_{\rm eff}(0^+)} ,
+  \tag{D.6b}
+\end{equation}
+the last step dividing through by $f$. Only the limit of the local
+order is needed, never the coefficients of $f$. Differentiating the
+integrand of
 (D.6a) logarithmically,
 \[
   \frac{\partial}{\partial x}\log\frac{f(xt)}{f(x)}
@@ -227,8 +238,20 @@ that Sec.~4 discarded as the wrong normaliser:
   f = u\Lambda:\quad n_{\rm eff} = 1 + \Psi_\varphi(u)
   \;\; \text{from } 4 \text{ to } \infty,
 \]
-$\Psi_\varphi$ being increasing with $\Psi_\varphi(0^+) = 3$. The
-mechanism is physical: $\Lambda$ behaves as $u^3$ near the onset and
+$\Psi_\varphi$ being increasing. Its value at the origin is again
+l'H\^opital's rule, applied three times. Writing $\Psi_\varphi = N/D$
+with $N = u\cosh u - u$ and $D = \sinh u - u$, successive
+differentiation gives the four pairs
+\[
+  \frac{u\cosh u - u}{\sinh u - u},\quad
+  \frac{\cosh u + u\sinh u - 1}{\cosh u - 1},\quad
+  \frac{2\sinh u + u\cosh u}{\sinh u},\quad
+  \frac{3\cosh u + u\sinh u}{\cosh u},
+\]
+of which the first three are $0/0$ at $u = 0$ while the fourth is
+$3/1$. Hence $\Psi_\varphi(0^+) = 3$, so $n_{\rm eff}(0^+)$ is $6$ for
+$\Lambda^2$ and $4$ for $u\Lambda$, and (D.6b) returns $\tfrac17$ and
+$\tfrac15$. The mechanism is physical: $\Lambda$ behaves as $u^3$ near the onset and
 grows exponentially later, so the larger the window the more sharply
 both channels are concentrated at its end, and the smaller their
 average is relative to the endpoint value. The small-$x$ values are
