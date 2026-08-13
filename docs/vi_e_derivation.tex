@@ -727,7 +727,89 @@ bound is the stronger of the two by roughly a factor of four, which is
 why it, and not the relative rate bound, is the number carried into the
 offset budget.
 
-\section*{7. A worked example, checkable by hand}
+\section*{7. The threshold bound by hand}
+
+The manuscript reports only the threshold bound, and that branch uses
+neither $\Psi$ nor $x$: the weight of (D.12) is normalised, so $\rbar$
+enters bare and the constants are the $R$'s themselves. What is left is
+arithmetic. No hyperbolic function appears below, $C_2$ never enters,
+and the window length is never solved for --- $\tfrac17$ and
+$\tfrac15$ are suprema over \emph{all} $x$, so no $x$ has to be known
+to use them.
+
+Given the weight $W$, the height $z_{CoM}$, the arm
+$a = l_p + p_{\rm off}$, the mass $m$, a CAD inertia $J_{CoM}$, the
+ramp rate $\dot M$, the tilt cap $\varphi_{\max}$ and the ground-effect
+slope $\beta_M$, six lines:
+\begin{enumerate}
+\item[(1)] $J_P \le J_{CoM} + m\bigl(z_{CoM}^2 + a^2\bigr)$
+  \hfill --- (82) at its upper end
+\item[(2)] $\Delta M_{\rm win} \le
+  \bigl(6\varphi_{\max}J_P\dot M^{2}\bigr)^{1/3}$ \hfill --- (93)
+\item[(3)] $\rho_{\varphi,\max} = \tfrac12 W a\,\varphi_{\max}^{2}$
+  \hfill --- the gravity remainder at the cap
+\item[(4)] $\rho_{GE,\max} =
+  |\beta_M|\,\Delta M_{\rm win}\,\varphi_{\max}$
+\item[(5)] $|\Delta M_{\rm crit}| \le
+  \rho_{\varphi,\max}/7 + \rho_{GE,\max}/5$ \hfill --- (97b)
+\item[(6)] divide by $W_{\min}$ for the equivalent offset.
+\end{enumerate}
+
+Over the geometric box of Sec.~VI-D, with $W = 31.59$~N,
+$z_{CoM} = 0.30$~m, $m = 3.221$~kg, $J_{CoM} = 0.0537$~kg\,m$^2$,
+$\varphi_{\max} = 10^\circ$, $\beta_M = 0.0345$~rad$^{-1}$ and
+$W_{\min} = 30.08$~N:
+
+\begin{center}\small
+\begin{tabular}{@{}llrrrrrr@{}}
+\toprule
+axis & $\dot M$ & $J_P$ & $\Delta M_{\rm win}$
+ & $\rho_{\varphi,\max}$ & $\rho_{GE,\max}$
+ & $|\Delta M_{\rm crit}|$ & offset \\
+ & N\,m/s & kg\,m$^2$ & N\,m & mN\,m & mN\,m & mN\,m & mm \\
+\midrule
+roll $(a = 0.160)$  & $0.10$ & $0.4260$ & $0.165$ & $76.98$ & $0.99$
+  & $11.20$ & $0.372$ \\
+                    & $0.45$ & $0.4260$ & $0.449$ & $76.98$ & $2.70$
+  & $11.54$ & $0.384$ \\
+                    & $1.20$ & $0.4260$ & $0.863$ & $76.98$ & $5.20$
+  & $12.04$ & $0.400$ \\
+\midrule
+pitch $(a = 0.130)$ & $0.10$ & $0.3980$ & $0.161$ & $62.55$ & $0.97$
+  & $\phantom{0}9.13$ & $0.304$ \\
+                    & $0.45$ & $0.3980$ & $0.439$ & $62.55$ & $2.64$
+  & $\phantom{0}9.46$ & $0.315$ \\
+                    & $1.20$ & $0.3980$ & $0.844$ & $62.55$ & $5.08$
+  & $\phantom{0}9.95$ & $0.331$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Three readings.
+
+\emph{The inertia hardly matters.} $J_P$ enters only through
+$\Delta M_{\rm win}$, which enters only through $\rho_{GE,\max}$, which
+is $2$--$10\%$ of the total; and it enters as a cube root. Halving
+$J_P$ moves the bound by $-1.8\%$, doubling it by $+2.2\%$. A crude
+inertia is therefore good enough, which is worth knowing because (82)
+is the one input here that is not directly measured.
+
+\emph{Line (5) is where the work went.} Properties 1 and 2 of the
+weight alone --- $w\ge0$ and $\int w = 1$ --- already give
+$|\Delta M_{\rm crit}|\le\rho_{\max} = \rho_{\varphi,\max} +
+\rho_{GE,\max}$, without Chebyshev and without any $R$. That is
+$2.70$~mm at worst over the box, which \emph{exceeds} the $1.64$~mm
+validation RMS: a guarantee weaker than the measured performance, and
+so of no use. The factor of seven that $\tfrac17$ and $\tfrac15$ supply
+is what brings it to $0.40$~mm and clears the measurement by $4.2\times$.
+
+\emph{The rate bound is not needed for this.} The same construction
+also bounds the relative rate deviation, with $\tfrac12$ and $1$ in
+place of $\tfrac17$ and $\tfrac15$ and a factor $\Psi = x\coth(x/2)$;
+that is Secs.~4--5, it is weaker by about a factor of four, and no
+number above depends on it.
+
+\section*{8. A worked example, checkable by hand}
 
 Take the roll axis at the fastest ramp, evaluated over the geometric
 box of Sec.~VI-D rather than at any fitted constant: $W = 31.59$~N
@@ -793,7 +875,7 @@ propagation, which convolves the measured $\rho$ instead of any
 envelope, gives $0.04$~mN\,m in the median and $0.15$ at worst ---
 $0.001$ to $0.004$~mm of offset.
 
-\section*{8. Summary of the chain}
+\section*{9. Summary of the chain}
 
 \begin{center}\small
 \begin{tabular}{@{}rll@{}}
