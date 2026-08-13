@@ -257,7 +257,7 @@ opposite way not because they rise but because they \emph{stiffen}.
 Convexity does hold, and one place a power series is used --- only for
 its sign pattern, with no coefficient evaluated --- establishes it.
 
-\emph{Lemma.} Let $f(u) = \sum_{n\ge0}a_nu^n$ converge for all $u\ge0$
+\emph{Lemma (log--log convexity).} Let $f(u) = \sum_{n\ge0}a_nu^n$ converge for all $u\ge0$
 with every $a_n\ge0$, at least two of them non-zero. Then
 $n_{\rm eff} = uf'/f$ is strictly increasing on $(0,\infty)$.
 
@@ -291,10 +291,12 @@ that way.)
 
 Both kernels qualify: $\Lambda = \sum_{k\ge1}u^{2k+1}/(2k+1)!$ has
 non-negative coefficients, and so do the product $\Lambda^2$ and the
-shift $u\Lambda$, and neither is a monomial. So $n_{\rm eff}$ is
-strictly increasing for both channels and $R$ is strictly decreasing.
-The same weights give the origin values for free, since as $u\to0$ they
-concentrate on the lowest exponent present, $6$ and $4$.
+shift $u\Lambda$; each has infinitely many non-zero, so certainly two.
+Hence $n_{\rm eff}$ is strictly increasing for both channels and $R$ is
+strictly decreasing. Reading the $a_nu^n/f$ as weights also returns the
+origin values, since as $u\to0$ they concentrate on the lowest exponent
+present, $6$ and $4$ --- the same numbers the l'H\^opital route below
+obtains without any series.
 
 \textbf{The same fact as a closed-form derivative.} An appendix that
 quotes $dR/dx$ explicitly needs those expressions signed, and the
@@ -350,11 +352,11 @@ either and the expression diverges as $x^{-2}$ instead. Both forms are
 checked against a five-point difference of $R$ by
 \texttt{analysis/closed\_form\_check.py}.
 
-The variance route needs the series; the following one does not, and
-is worth recording because it settles the same two numbers
-independently.
-The value of $\Psi_\varphi$ at the origin is
-l'H\^opital's rule, applied three times. Writing $\Psi_\varphi = N/D$
+\textbf{The origin values without the series.} The route above needs
+the coefficients' sign pattern; this one needs nothing, and is worth
+recording because it settles the same two numbers independently. The
+value of $\Psi_\varphi$ at the origin is l'H\^opital's rule, applied
+three times. Writing $\Psi_\varphi = N/D$
 with $N = u\cosh u - u$ and $D = \sinh u - u$, successive
 differentiation gives the four pairs
 \[
@@ -425,7 +427,9 @@ looks at $\varphi$.)
 
 $\Psi$ grows with $x$ and the $R$'s shrink with it, and the two
 products converge to $\tfrac12$ and $1$. Both bounds are exact, and
-neither needs the series: two differentiations settle each.
+neither needs the series: one corollary of the mean value theorem
+settles both, three applications for the first and one for the
+second.
 
 \textbf{The claims in integral form.} Since
 $\Psi = x\coth(x/2)$ and $\rho_{\varphi,\max} = A\Lambda(x)^2$,
@@ -437,12 +441,12 @@ $\Psi = x\coth(x/2)$ and $\rho_{\varphi,\max} = A\Lambda(x)^2$,
 so $\Psi R_\varphi\le\tfrac12$ is exactly
 \begin{equation}
   \int_0^x\!\Lambda(u)^2du \;\le\; \tfrac12\tanh\tfrac{x}{2}\,\Lambda(x)^2,
-  \tag{D.10}
+  \tag{D.8}
 \end{equation}
 and the same reduction turns $\Psi R_{GE}\le1$ into
 \begin{equation}
   \int_0^x\! u\,\Lambda(u)\,du \;\le\; x\tanh\tfrac{x}{2}\,\Lambda(x) .
-  \tag{D.11}
+  \tag{D.9}
 \end{equation}
 The half-angle tangent is not an accident: $\tanh(x/2) =
 (\cosh x - 1)/\sinh x = \Lambda'(x)/\sinh x$, so both statements
@@ -475,23 +479,26 @@ its kernel, $\Lambda^2\sim e^{2x}/4$, is the square of the other's,
 $u\Lambda\sim u\,e^{x}/2$.
 
 \textbf{The only theorem used.} Everything below rests on one
-corollary of the mean value theorem, applied three times and nowhere
-supplemented.
+corollary of the mean value theorem, applied four times in all --- three
+for (D.8) and once for (D.9) --- and nowhere supplemented.
 
-\emph{Lemma.} If $f$ is continuous on $[0,b]$, differentiable on
-$(0,b)$ with $f'\ge0$ there, and $f(0) = 0$, then $f\ge0$ on $[0,b]$.
-\emph{Proof:} for $0\le s<t\le b$ the mean value theorem gives
-$f(t)-f(s) = f'(\xi)(t-s)\ge0$, so $f$ is non-decreasing; taking
-$s=0$ gives $f(t)\ge f(0)=0$. $\square$
+\emph{Lemma (a corollary of the mean value theorem).} If $g$ is
+continuous on $[0,b]$, differentiable on $(0,b)$ with $g'\ge0$ there,
+and $g(0) = 0$, then $g\ge0$ on $[0,b]$. \emph{Proof:} for
+$0\le s<t\le b$ the mean value theorem gives $g(t)-g(s) =
+g'(\xi)(t-s)\ge0$, so $g$ is non-decreasing; taking $s=0$ gives
+$g(t)\ge g(0)=0$. $\square$ (The symbol is $g$, not the $f$ of
+Sec.~3: this lemma is applied to $\phi'$, $\phi$ and $D$, never to a
+channel kernel.)
 
 Note what is \emph{not} used. No limit as $x\to\infty$ enters: the
-constant $\tfrac12$ comes from the algebra of (D.10), and the
+constant $\tfrac12$ comes from the algebra of (D.8), and the
 inequality is established at each $x$ separately. No monotonicity of
 $\Psi R_\varphi$ is assumed or proved. The limits quoted above serve
 only to show the constants cannot be improved.
 
-\textbf{Proof of (D.10).} Let $D(x)$ be the right side minus the left,
-so that (D.10) is $D\ge0$. Every quantity divided by below ---
+\textbf{Proof of (D.8).} Let $D(x)$ be the right side minus the left,
+so that (D.8) is $D\ge0$. Every quantity divided by below ---
 $\coth(x/2)$, $\Lambda^2$, $\Lambda$, $\cosh^2(x/2)$ --- is strictly
 positive for $x>0$, so each step is an equivalence.
 
@@ -524,20 +531,20 @@ and $B\ge0$ iff $\phi\ge0$. Finally
   \phi''(x) = \sinh x + 2x\cosh x .
 \]
 
-\emph{First application.} $f = \phi'$: both terms of
+\emph{First application.} $g = \phi'$: both terms of
 $\phi'' = \sinh x + 2x\cosh x$ are non-negative for $x\ge0$, and
 $\phi'(0) = 1-1+0 = 0$. The Lemma gives $\phi'\ge0$.
 
-\emph{Second application.} $f = \phi$: $\phi'\ge0$ by the first
+\emph{Second application.} $g = \phi$: $\phi'\ge0$ by the first
 application and $\phi(0) = 0$. The Lemma gives $\phi\ge0$, hence
 $B\ge0$, hence $D' = \Lambda B\ge0$.
 
-\emph{Third application.} $f = D$: $D'\ge0$ by the second application
-and $D(0) = 0$. The Lemma gives $D\ge0$, which is (D.10). $\square$
+\emph{Third application.} $g = D$: $D'\ge0$ by the second application
+and $D(0) = 0$. The Lemma gives $D\ge0$, which is (D.8). $\square$
 
-\textbf{Proof of (D.11).} The same Lemma settles the ground-effect
+\textbf{Proof of (D.9).} The same Lemma settles the ground-effect
 channel, and here it is needed only once. Let $E$ be the right side of
-(D.11) minus the left,
+(D.9) minus the left,
 \[
   E(x) \;=\; x\tanh\tfrac{x}{2}\,\Lambda(x)
              \;-\; \int_0^x\! u\,\Lambda(u)\,du ,
@@ -550,19 +557,19 @@ $\cosh x + 1$, the hyperbolic terms collapse to
 \begin{equation}
   E'(x) \;=\; \frac{\sinh^2x - 2x\sinh x + x^2\cosh x}{\cosh x + 1}
         \;=\; \frac{\Lambda(x)^2 + x^2\Lambda'(x)}{\cosh x + 1} ,
-  \tag{D.12}
+  \tag{D.10}
 \end{equation}
 the second equality being the identity $(\sinh x - x)^2 + x^2(\cosh x
 - 1) = \sinh^2x - 2x\sinh x + x^2\cosh x$. The numerator is a sum of
 two non-negative terms and the denominator is positive, so $E'\ge0$;
-the Lemma gives $E\ge0$, which is (D.11). $\square$
+the Lemma gives $E\ge0$, which is (D.9). $\square$
 
-No series is needed for either, and (D.11) costs one application of the
-Lemma against three for (D.10) --- the completed square in (D.12) does
+No series is needed for either, and (D.9) costs one application of the
+Lemma against three for (D.8) --- the completed square in (D.10) does
 the work that $\phi$ did there.
 
 No monotonicity of the products is claimed or needed --- only that they
-do not exceed their limits, which is what (D.10) and (D.11) say.
+do not exceed their limits, which is what (D.8) and (D.9) say.
 Expanding $\rbar$ by (95),
 \[
   \Psi\rbar = \bigl(\Psi R_\varphi\bigr)\rho_{\varphi,\max}
@@ -581,7 +588,10 @@ The reported quantity is not $e_\omega$ but the onset moment, so the
 deviation must be pushed one step further.
 
 \textbf{How the onset responds to a perturbation.} The estimator picks
-$t_0$ to minimise $\;J(t_0) = \int\bigl(y(t) - \hat\omega(t;t_0)\bigr)^2dt\;$
+$t_0$ to minimise $\;J(t_0) = \int_0^{T}\bigl(y(t) -
+\hat\omega(t;t_0)\bigr)^2dt\;$ over the fit window $[0,T]$, which is the
+window of Sec.~2, $T = \te$, so that the $\rbar$ below is the same
+average
 with $\hat\omega(t;t_0) = C_1(\cosh C_2(t-t_0) - 1)$. Write the data as
 the nominal solution plus the deviation, $y = \hat\omega(t;t_0^*) +
 e_\omega$, and the minimiser as $t_0 = t_0^* + \delta$. To first order
@@ -602,12 +612,12 @@ $\Delta M_{\rm crit} = \dot M\delta$, and using $C_1 = \dot M/\Wz$,
   \Delta M_{\rm crit}
   = -\,\frac{\Wz\,\langle e_\omega,\;\sinh(C_2\tau)\rangle}
             {C_2\,\|\sinh(C_2\tau)\|^2}.
-  \tag{D.8}
+  \tag{D.11}
 \end{equation}
 This is exactly the reduction \texttt{error\_budget.py} implements.
 
 \textbf{It is an average of $\rho$ with a non-negative weight.}
-Substitute the Duhamel integral (D.2) into (D.8) and exchange the order
+Substitute the Duhamel integral (D.2) into (D.11) and exchange the order
 of integration (Fubini; both integrands are continuous on a bounded
 domain):
 \[
@@ -624,7 +634,7 @@ the inner limits changing from $s\in[0,\tau]$ to $\tau\in[s,T]$. Hence
   w(s) = \frac{\Wz\displaystyle\int_s^{T}\!\sinh(C_2\tau)
                 \cosh\bigl(C_2(\tau-s)\bigr)d\tau}
               {J_PC_2\|\sinh(C_2\tau)\|^2}.
-  \tag{D.9}
+  \tag{D.12}
 \end{equation}
 Three properties of $w$ finish the argument, and all three are checked
 in code (\texttt{error\_budget.py -{}-check}):
@@ -633,7 +643,7 @@ in code (\texttt{error\_budget.py -{}-check}):
   functions of non-negative arguments;
 \item $\int_0^T w = 1$, exactly. This is not a numerical coincidence
   and is worth doing, because it is what lets $\bar\rho$ enter (97)
-  bare. Integrate the numerator of (D.9) over $s$ and exchange the
+  bare. Integrate the numerator of (D.12) over $s$ and exchange the
   order: the region $0\le s\le\tau\le T$ is the same triangle read
   either way, so
   \[
@@ -650,7 +660,7 @@ in code (\texttt{error\_budget.py -{}-check}):
     = \frac{\sinh(C_2\tau)}{C_2},
   \]
   and putting it back reproduces the very norm that sits in the
-  denominator of (D.9),
+  denominator of (D.12),
   \[
     \frac{1}{C_2}\int_0^{T}\!\sinh^2(C_2\tau)\,d\tau
     = \frac{\|\sinh(C_2\tau)\|^2}{C_2}.
@@ -663,7 +673,7 @@ in code (\texttt{error\_budget.py -{}-check}):
   \]
   by $J_PC_2^{2} = \Wz$ --- the same identity that removes the inertia
   everywhere else in this document. Neither the window length nor any
-  constant survives. \texttt{error\_budget.py -{}-check} evaluates (D.9)
+  constant survives. \texttt{error\_budget.py -{}-check} evaluates (D.12)
   at $\rho\equiv1$ and returns $-1.0005$ to $-1.0001$ across five
   operating points, which is the quadrature error on an identity rather
   than evidence for it. The reading is that a uniform unmodelled moment
@@ -675,7 +685,7 @@ in code (\texttt{error\_budget.py -{}-check}):
 \end{enumerate}
 Property 1 plus 2 alone would give $|\Delta M_{\rm crit}|\le\rmax$. But
 $\rho$ is increasing and $w$ is decreasing, so \emph{Chebyshev applies a
-second time}, now to (D.9):
+second time}, now to (D.12):
 \[
   \Bigl|\int_0^T\!\rho\,w\Bigr|
   \;\le\; \frac{1}{T}\int_0^T\!\rho \int_0^T\! w
@@ -747,6 +757,15 @@ channel& $\rho_{\varphi,\max} = \tfrac12W a\,\varphi_{\max}^2$ & $76.98$~mN\,m\\
 \end{tabular}
 \end{center}
 
+Read the rows in two groups. The $R$, $\rbar$ and (96) rows are
+evaluated at $\bar x = 3.468$ rather than at the exact $x = 2.993$, and
+are illustrative rather than guaranteed: $R$ \emph{decreases}, so
+$\rbar(\bar x) = 9.54$ understates $\rbar(x) = 10.08$~mN\,m, and the
+$4.08\%$ exceeds the $3.86\%$ at the exact $x$ only because $\Psi R$
+happens to rise --- which Sec.~5 deliberately neither assumes nor
+proves. The guaranteed numbers are the (97) and (97b) rows, which
+contain no $x$ at all and use only the two bounds that were proved.
+
 Two readings. First, (97) costs about a quarter over (96) --- the price
 of dropping $x$ from the statement --- whereas the envelope form costs
 a factor of nine. Second, this is the \emph{worst admissible} case: the
@@ -777,9 +796,9 @@ $0.001$ to $0.004$~mm of offset.
       & (95): $R_\varphi\le\tfrac17$, $R_{GE}\le\tfrac15$ \\
 (96)  & divide by $\omega_{\rm nom,end}$, use $\Delta M_{\rm win}=\dot Mx/C_2$
       & $\Psi = x\coth(x/2)$; $\Wz$, $J_P$ gone \\
-      & $\Psi R_\varphi\uparrow\tfrac12$, $\Psi R_{GE}\uparrow1$
+      & $\Psi R_\varphi\le\tfrac12$, $\Psi R_{GE}\le1$
       & (97) left half; $x$ gone \\
-(D.8--9) & linearise the onset, Fubini, $w\ge0$, $\int w=1$
+(D.11--9) & linearise the onset, Fubini, $w\ge0$, $\int w=1$
       & $\Delta M_{\rm crit} = -\langle\rho\rangle_w$ \\
       & Chebyshev again, $\rho\uparrow$ against $w\downarrow$
       & (97) right half: $\tfrac17,\tfrac15$ \\
