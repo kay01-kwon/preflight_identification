@@ -658,20 +658,56 @@ could survive is the same drift entering the post-onset residual, but
 $dC_0/dt_c = \bigl(y(t_c) - C_0\bigr)/(t_c - t_a)$ for the mean, and at
 the onset the rate is still the baseline, so it vanishes there too.
 Dropping that term and solving,
-\[
+\begin{equation}
   \delta t_c = \frac{\langle e_\omega,\chi\rangle}{\|\chi\|^2},
   \qquad
   \langle a,b\rangle \triangleq \int_{t_c^*}^{t_{\rm end}}\!a(t)\,b(t)\,dt ,
-\]
+  \tag{D.11}
+\end{equation}
 the division legitimate because $\|\chi\|^2>0$ --- $\sinh(C_2\tau)$ is
-not identically zero on a window of positive length. With
+not identically zero on a window of positive length.
+
+\textbf{Where the second derivative of $\hat\omega$ went.} Only $\chi$
+appears in the stationarity condition because $\partial J/\partial t_c$
+differentiates the residual once; $\partial_{t_c}\chi$ belongs to the
+\emph{second} derivative of $J$, and (D.11) is the Gauss--Newton form
+that drops it. Writing the one-parameter Newton step exactly,
+\[
+  J'(t_c^*) = -2\langle e_\omega,\chi\rangle,
+  \qquad
+  J''(t_c^*) = 2\|\chi\|^2 - 2\langle e_\omega,\partial_{t_c}\chi\rangle,
+\]
+\[
+  \delta t_c = -\frac{J'}{J''}
+  = \frac{\langle e_\omega,\chi\rangle}
+         {\|\chi\|^2 - \langle e_\omega,\partial_{t_c}\chi\rangle},
+  \qquad
+  \partial_{t_c}\chi = C_1C_2^{2}\cosh(C_2\tau) .
+\]
+The neglected term is the residual times a curvature, the one nonlinear
+least squares always discards. It is legitimate here for a reason worth
+stating plainly: \emph{the expansion parameter is $e_\omega$, not
+$\delta t_c$}, and $\delta t_c$ is itself first order in $e_\omega$ by
+(D.11). So $\langle e_\omega,\chi\rangle$ and
+$\delta t_c\|\chi\|^2$ are both $\mathcal{O}(e_\omega)$ while
+$\delta t_c\langle e_\omega,\partial_{t_c}\chi\rangle$ is
+$\mathcal{O}(e_\omega^2)$ --- every term carrying a derivative of
+$\chi$ picks up an extra factor of the deviation, including the
+$(\delta t_c)^2\partial_{t_c}\chi$ left over from expanding the
+residual itself.
+
+Numerically, $\langle e_\omega,\partial_{t_c}\chi\rangle/\|\chi\|^2$ is
+$9.05\times10^{-5}$, $9.05\times10^{-4}$, $9.05\times10^{-3}$ and
+$9.05\times10^{-2}$ as the deviation grows through four decades: exactly
+proportional to it, as an $\mathcal{O}(e_\omega)$ relative error must
+be. That ratio is the whole of the discrepancy reported below. With
 $\Delta M_{\rm crit} = \dot M\,\delta t_c$ and $C_1 = \dot M/\Wz$ the
 amplitude $C_1$ cancels between numerator and denominator, leaving
 \begin{equation}
   \Delta M_{\rm crit}
   = -\,\frac{\Wz\,\langle e_\omega,\;\sinh(C_2\tau)\rangle}
             {C_2\,\|\sinh(C_2\tau)\|^2}.
-  \tag{D.11}
+  \tag{D.12}
 \end{equation}
 This is exactly the reduction \texttt{error\_budget.py} implements, and
 it is the manuscript's (98)--(101) written with $\chi$ named.
@@ -683,7 +719,7 @@ post-onset term alone gives the same answer to five figures at every
 size, which is the numerical form of the two paragraphs above.
 
 \textbf{It is an average of $\rho$ with a non-negative weight.}
-Substitute the Duhamel integral (D.2) into (D.11) and exchange the order
+Substitute the Duhamel integral (D.2) into (D.12) and exchange the order
 of integration (Fubini; both integrands are continuous on a bounded
 domain):
 \[
@@ -700,7 +736,7 @@ the inner limits changing from $s\in[0,\tau]$ to $\tau\in[s,T]$. Hence
   w(s) = \frac{\Wz\displaystyle\int_s^{T}\!\sinh(C_2\tau)
                 \cosh\bigl(C_2(\tau-s)\bigr)d\tau}
               {J_PC_2\|\sinh(C_2\tau)\|^2}.
-  \tag{D.12}
+  \tag{D.13}
 \end{equation}
 Three properties of $w$ finish the argument, and all three are checked
 in code (\texttt{error\_budget.py -{}-check}):
@@ -709,7 +745,7 @@ in code (\texttt{error\_budget.py -{}-check}):
   functions of non-negative arguments;
 \item $\int_c^T w = 1$, exactly. This is not a numerical coincidence
   and is worth doing, because it is what lets $\bar\rho$ enter (97)
-  bare. Integrate the numerator of (D.12) over $s$ and exchange the
+  bare. Integrate the numerator of (D.13) over $s$ and exchange the
   order: the region $0\le s\le\tau\le T$ is the same triangle read
   either way, so
   \[
@@ -726,7 +762,7 @@ in code (\texttt{error\_budget.py -{}-check}):
     = \frac{\sinh(C_2\tau)}{C_2},
   \]
   and putting it back reproduces the very norm that sits in the
-  denominator of (D.12),
+  denominator of (D.13),
   \[
     \frac{1}{C_2}\int_c^{T}\!\sinh^2(C_2\tau)\,d\tau
     = \frac{\|\sinh(C_2\tau)\|^2}{C_2}.
@@ -739,7 +775,7 @@ in code (\texttt{error\_budget.py -{}-check}):
   \]
   by $J_PC_2^{2} = \Wz$ --- the same identity that removes the inertia
   everywhere else in this document. Neither the window length nor any
-  constant survives. \texttt{error\_budget.py -{}-check} evaluates (D.12)
+  constant survives. \texttt{error\_budget.py -{}-check} evaluates (D.13)
   at $\rho\equiv1$ and returns $-1.0005$ to $-1.0001$ across five
   operating points, which is the quadrature error on an identity rather
   than evidence for it. The reading is that a uniform unmodelled moment
@@ -751,7 +787,7 @@ in code (\texttt{error\_budget.py -{}-check}):
 \end{enumerate}
 Property 1 plus 2 alone would give $|\Delta M_{\rm crit}|\le\rmax$. But
 $\rho$ is increasing and $w$ is decreasing, so \emph{Chebyshev applies a
-second time}, now to (D.12):
+second time}, now to (D.13):
 \[
   \Bigl|\int_c^T\!\rho\,w\Bigr|
   \;\le\; \frac{1}{T}\int_c^T\!\rho \int_c^T\! w
@@ -780,7 +816,7 @@ offset budget.
 \section*{7. The threshold bound by hand}
 
 The manuscript reports only the threshold bound, and that branch uses
-neither $\Psi$ nor $x$: the weight of (D.12) is normalised, so $\rbar$
+neither $\Psi$ nor $x$: the weight of (D.13) is normalised, so $\rbar$
 enters bare and the constants are the $R$'s themselves. What is left is
 arithmetic. No hyperbolic function appears below, $C_2$ never enters,
 and the window length is never solved for --- $\tfrac17$ and
@@ -946,7 +982,7 @@ $0.001$ to $0.004$~mm of offset.
       & $\Psi = x\coth(x/2)$; $\Wz$, $J_P$ gone \\
       & $\Psi R_\varphi\le\tfrac12$, $\Psi R_{GE}\le1$
       & (97) left half; $x$ gone \\
-(D.11--9) & linearise the onset, Fubini, $w\ge0$, $\int w=1$
+(D.12--13) & linearise the onset, Fubini, $w\ge0$, $\int w=1$
       & $\Delta M_{\rm crit} = -\langle\rho\rangle_w$ \\
       & Chebyshev again, $\rho\uparrow$ against $w\downarrow$
       & (97) right half: $\tfrac17,\tfrac15$ \\
