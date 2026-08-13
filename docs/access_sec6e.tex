@@ -200,9 +200,28 @@ $n_{\rm eff} = \langle n\rangle$ and $u^2f''/f = \langle n^2\rangle -
 \end{equation}
 raising $u$ shifts weight from low exponents to high ones, and a
 variance cannot be negative. The inequality is strict unless $f$ is a
-monomial, which neither kernel is. Physically, $\Lambda$ stiffens from
-cubic to exponential and concentrates each channel ever more sharply at
-the end of the window. Over the flown
+monomial, which neither kernel is.
+
+The same fact signs the derivatives of (95) directly, which is worth
+recording because doing so from their closed forms would take a
+twelve-stage differentiation. With $A = \int_0^x\!f$, so that
+$R = A/(xf)$, and $xf' = n_{\rm eff}f$,
+\begin{equation}
+  R'(x) = \frac{x f(x) - \bigl(1 + n_{\rm eff}(x)\bigr)A(x)}{x^2f(x)} ,
+  \tag{95b}
+\end{equation}
+and $n_{\rm eff}$ increasing gives $f(u)\ge f(x)(u/x)^{n_{\rm eff}(x)}$
+on $[0,x]$, whose integral is $A\ge xf/(1+n_{\rm eff})$: $f$ is at
+least as steep as the power law of its local order at $x$, so its
+average is at least the $1/(n{+}1)$ that power law would give, which is
+exactly the value $R$ would need for $R'$ to vanish. Hence $R'<0$ on
+both channels, and substituting $n_{\rm eff} = 2x\Lambda'/\Lambda$ and
+$(\Lambda + x\Lambda')/\Lambda$ into (95b) returns
+$dR_\varphi/dx = [x\Lambda^3 - (\Lambda + 2x\Lambda')\!\int_0^x\!
+\Lambda^2]/(x^2\Lambda^3)$ and $dR_{GE}/dx = [x^2\Lambda^2 - (2\Lambda
++ x\Lambda')\!\int_0^x\!u\Lambda]/(x^3\Lambda^2)$. Physically,
+$\Lambda$ stiffens from cubic to exponential and concentrates each
+channel ever more sharply at the end of the window. Over the flown
 $x\in[1.79,5.20]$ the factors are $0.089$--$0.133$ and
 $0.145$--$0.191$, so (95) gives away $10$--$60\%$; the same evaluation
 that returned $446\%$ returns $41.8\%$ with it in place.

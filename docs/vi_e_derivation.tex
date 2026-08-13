@@ -270,8 +270,63 @@ increasing for both channels and $R$ is strictly decreasing. The same
 distribution gives the origin values for free, since as $u\to0$ it
 concentrates on the lowest exponent present, $6$ and $4$.
 
-That route needs the series; the following one does not, and is worth
-recording because it settles the same two numbers independently.
+\textbf{The same fact as a closed-form derivative.} An appendix that
+quotes $dR/dx$ explicitly needs those expressions signed, and the
+argument above does it with no further machinery --- in particular
+without the twelve-stage differentiation that signing them directly
+would cost. Write $A(x) = \int_0^xf$, so $R = A/(xf)$. Then, using
+$A' = f$ and $xf' = n_{\rm eff}f$,
+\begin{equation}
+  R'(x) = \frac{A'\,xf - A\,(f + xf')}{x^2f^2}
+        = \frac{x f(x) - \bigl(1 + n_{\rm eff}(x)\bigr)A(x)}{x^2 f(x)} .
+  \tag{D.7a}
+\end{equation}
+The sign turns on whether $A$ exceeds $xf/(1+n_{\rm eff})$, and it does,
+for exactly the reason $n_{\rm eff}$ increases. Since
+$d\log f/d\log u = n_{\rm eff}$ and $n_{\rm eff}(t)\le n_{\rm eff}(x)$
+for $t\le x$,
+\[
+  \log\frac{f(x)}{f(u)} = \int_u^x n_{\rm eff}(t)\,\frac{dt}{t}
+  \;\le\; n_{\rm eff}(x)\,\log\frac{x}{u}
+  \quad\Longrightarrow\quad
+  f(u) \;\ge\; f(x)\Bigl(\frac{u}{x}\Bigr)^{n_{\rm eff}(x)} ,
+\]
+and integrating that minorant over $[0,x]$,
+\[
+  A(x) \;\ge\; f(x)\!\int_0^x\!\Bigl(\frac{u}{x}\Bigr)^{n_{\rm eff}(x)}\!du
+       \;=\; \frac{x\,f(x)}{1 + n_{\rm eff}(x)} ,
+\]
+strictly, since $n_{\rm eff}$ is not constant. The numerator of (D.7a)
+is therefore negative and $R'<0$. $\square$
+
+In words: $f$ is at least as steep as the power law of its local order
+at $x$, so its average over the window is at least the $1/(n{+}1)$ that
+power law would give --- and $1/(n{+}1)$ is precisely the value $R$
+would need for $R'$ to vanish.
+
+Substituting $n_{\rm eff} = 2x\Lambda'/\Lambda$ for $f = \Lambda^2$, and
+$n_{\rm eff} = (\Lambda + x\Lambda')/\Lambda$ for $f = u\Lambda$, and
+clearing denominators puts (D.7a) in the form an appendix would quote:
+\begin{equation}
+  \frac{dR_\varphi}{dx}
+  = \frac{x\Lambda^3 - (\Lambda + 2x\Lambda')\!\int_0^x\!\Lambda^2du}
+         {x^2\Lambda^3},
+  \quad
+  \frac{dR_{GE}}{dx}
+  = \frac{x^2\Lambda^2 - (2\Lambda + x\Lambda')\!\int_0^x\!u\Lambda\,du}
+         {x^3\Lambda^2},
+  \tag{D.7b}
+\end{equation}
+both negative for $x>0$. The factors of $x$ inside the brackets are
+load-bearing: with them the numerators cancel to order $x^{12}$ and
+$x^{10}$ at the origin, which is what leaves $R'$ finite there; drop
+either and the expression diverges as $x^{-2}$ instead. Both forms are
+checked against a five-point difference of $R$ by
+\texttt{analysis/closed\_form\_check.py}.
+
+The variance route needs the series; the following one does not, and
+is worth recording because it settles the same two numbers
+independently.
 The value of $\Psi_\varphi$ at the origin is
 l'H\^opital's rule, applied three times. Writing $\Psi_\varphi = N/D$
 with $N = u\cosh u - u$ and $D = \sinh u - u$, successive
