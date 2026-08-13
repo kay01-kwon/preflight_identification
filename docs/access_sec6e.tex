@@ -186,21 +186,24 @@ which turns either ratio into $R(x) = \int_0^1 f(xt)/f(x)\,dt$; the
 logarithmic derivative of that integrand is
 $\bigl[n_{\rm eff}(xt) - n_{\rm eff}(x)\bigr]/x$ with
 $n_{\rm eff} = u f'/f$ the local order, so $R$ decreases wherever
-$n_{\rm eff}$ rises. It does in both cases. Writing
-$f = \sum a_nu^n$ with $a_n\ge0$, as both kernels admit, the weights
-$p_n = a_nu^n/f$ are a probability distribution over the exponents,
-$n_{\rm eff} = \langle n\rangle$ and $u^2f''/f = \langle n^2\rangle -
-\langle n\rangle$, so
+$n_{\rm eff}$ rises. Since $n_{\rm eff} = d\log f/d\log u$, that is the
+statement that $\log f$ is \emph{convex} in $\log u$, which is stronger
+than the monotonicity of $f$ and does not follow from it: $1-e^{-u}$
+rises yet has $n_{\rm eff}$ falling, because a saturating signal
+averages closer to its endpoint the longer the window. It holds here
+because both kernels stiffen. Writing $f = \sum a_nu^n$ with $a_n\ge0$,
+as both admit, and $S_k = \sum n^ka_nu^n$, so that $uf' = S_1$ and
+$u^2f'' = S_2 - S_1$,
 \begin{equation}
-  \frac{dn_{\rm eff}}{du}
-  = \frac1u\Bigl[\frac{uf'}{f} + \frac{u^2f''}{f}
-                 - \Bigl(\frac{uf'}{f}\Bigr)^{\!2}\Bigr]
-  = \frac{\operatorname{Var}(n)}{u} \;\ge\; 0 :
+  u\,\frac{dn_{\rm eff}}{du}
+  = \frac{uf'}{f} + \frac{u^2f''}{f} - \Bigl(\frac{uf'}{f}\Bigr)^{\!2}
+  = \frac{S_0S_2 - S_1^2}{S_0^{\,2}} \;\ge\; 0
   \tag{95a}
 \end{equation}
-raising $u$ shifts weight from low exponents to high ones, and a
-variance cannot be negative. The inequality is strict unless $f$ is a
-monomial, which neither kernel is.
+by Cauchy--Schwarz on $\{\sqrt{a_nu^n}\}$ and $\{n\sqrt{a_nu^n}\}$,
+which the sign pattern of the coefficients licenses. Equality needs the
+two sequences proportional, i.e.\ a single non-zero $a_n$, which
+neither kernel has.
 
 The same fact signs the derivatives of (95) directly, which is worth
 recording because doing so from their closed forms would take a

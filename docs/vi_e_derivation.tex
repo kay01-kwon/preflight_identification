@@ -232,43 +232,58 @@ that Sec.~4 discarded as the wrong normaliser:
   \;\; \text{from } 4 \text{ to } \infty.
 \]
 
-\textbf{Why $n_{\rm eff}$ increases.} This is the one place a power
-series is used, and only for its sign pattern --- no coefficient is
-evaluated.
+\textbf{Why $n_{\rm eff}$ increases.} What is required here is easy to
+understate, so it is worth naming precisely. Since $n_{\rm eff} =
+d\log f/d\log u$, the claim
+\[
+  \frac{dn_{\rm eff}}{d\log u}
+  = \frac{d^2(\log f)}{d(\log u)^2} \;\ge\; 0
+\]
+says that $\log f$ is \emph{convex} in $\log u$ --- that the slope of
+$f$ on log--log axes grows. Monotonicity of $f$ gives only
+$n_{\rm eff}\ge0$, which is the slope's \emph{sign} and nothing more,
+and the two properties are independent: $f(u) = 1-e^{-u}$,
+$u/(1{+}u)$ and $\log(1{+}u)$ are all strictly increasing and all have
+$n_{\rm eff}$ strictly \emph{decreasing}, hence $R$ increasing. A
+saturating signal has a higher average relative to its endpoint the
+longer the window, not a lower one. The two channels here behave the
+opposite way not because they rise but because they \emph{stiffen}.
+
+Convexity does hold, and one place a power series is used --- only for
+its sign pattern, with no coefficient evaluated --- establishes it.
 
 \emph{Lemma.} Let $f(u) = \sum_{n\ge0}a_nu^n$ converge for all $u\ge0$
 with every $a_n\ge0$, and let $f$ not be a single monomial. Then
 $n_{\rm eff} = uf'/f$ is strictly increasing on $(0,\infty)$.
 
-\emph{Proof.} For $u>0$ put $p_n = a_nu^n/f(u)$. Each $p_n\ge0$ and
-$\sum_np_n = 1$, so the $p_n$ are a probability distribution over the
-exponents, and
+\emph{Proof.} Differentiating $n_{\rm eff}$,
 \[
-  \langle n\rangle = \sum_n n\,p_n = \frac{uf'}{f} = n_{\rm eff},
+  u\,\frac{dn_{\rm eff}}{du}
+  = \frac{uf'}{f} + \frac{u^2f''}{f}
+    - \Bigl(\frac{uf'}{f}\Bigr)^{\!2}
+  = \frac{S_0S_2 - S_1^2}{S_0^{\,2}},
   \qquad
-  \frac{u^2f''}{f} = \sum_n n(n-1)p_n
-                   = \langle n^2\rangle - \langle n\rangle .
+  S_k \triangleq \sum_n n^k a_nu^n ,
 \]
-Differentiating $n_{\rm eff}$ and grouping by these,
-\[
-  \frac{dn_{\rm eff}}{du}
-  = \frac{f'}{f} + u\,\frac{f''f - f'^2}{f^2}
-  = \frac{1}{u}\Bigl[\frac{uf'}{f} + \frac{u^2f''}{f}
-                     - \Bigl(\frac{uf'}{f}\Bigr)^{\!2}\Bigr]
-  = \frac{\operatorname{Var}(n)}{u} \;\ge\; 0 ,
-\]
-the bracket collapsing to $\langle n\rangle + \langle n^2\rangle -
-\langle n\rangle - \langle n\rangle^2$. The variance vanishes only for
-a point mass, i.e.\ only if $f$ is a monomial. $\square$
+since $uf' = S_1$ and $u^2f'' = S_2 - S_1$, so the first two terms
+combine to $S_2/S_0$. Cauchy--Schwarz applied to the two sequences
+$\bigl\{\sqrt{a_nu^n}\bigr\}$ and $\bigl\{n\sqrt{a_nu^n}\bigr\}$ ---
+legitimate because $a_nu^n\ge0$, which is the only place the sign
+pattern is needed --- gives $S_1^2\le S_0S_2$. Hence
+$dn_{\rm eff}/du\ge0$, with equality only when the two sequences are
+proportional, i.e.\ only when a single $a_n$ is non-zero. $\square$
 
-Raising $u$ shifts weight from low exponents to high ones, and a
-variance cannot be negative: that is the whole content. Both kernels
-qualify --- $\Lambda = \sum_{k\ge1}u^{2k+1}/(2k+1)!$ has non-negative
-coefficients, and so do the product $\Lambda^2$ and the shift
-$u\Lambda$ --- and neither is a monomial, so $n_{\rm eff}$ is strictly
-increasing for both channels and $R$ is strictly decreasing. The same
-distribution gives the origin values for free, since as $u\to0$ it
-concentrates on the lowest exponent present, $6$ and $4$.
+(Dividing through by $S_0$ turns $S_k/S_0$ into the moments of the
+weights $a_nu^n/f$ and the numerator into their variance, which is a
+shorter way to say the same thing; nothing below depends on reading it
+that way.)
+
+Both kernels qualify: $\Lambda = \sum_{k\ge1}u^{2k+1}/(2k+1)!$ has
+non-negative coefficients, and so do the product $\Lambda^2$ and the
+shift $u\Lambda$, and neither is a monomial. So $n_{\rm eff}$ is
+strictly increasing for both channels and $R$ is strictly decreasing.
+The same weights give the origin values for free, since as $u\to0$ they
+concentrate on the lowest exponent present, $6$ and $4$.
 
 \textbf{The same fact as a closed-form derivative.} An appendix that
 quotes $dR/dx$ explicitly needs those expressions signed, and the
