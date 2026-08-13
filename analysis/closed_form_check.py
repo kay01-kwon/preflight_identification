@@ -195,6 +195,12 @@ CLAIMS = [
                        / (m.cosh(x) + 1),
           lambda x: fd(E_ge, x), order=4, note='(100a), ground-effect bound'),
 
+    Claim('draft dR_phi/dx, x dropped from Dn\'',
+          lambda x, m: (x * lam(x, m) ** 3
+                        - int_lam2(x, m) * (lam(x, m) + 2 * lam_p(x, m)))
+                       / (x ** 2 * lam(x, m) ** 3),
+          lambda x: fd(R_phi, x), order=1, xfail=True,
+          note="d/dx[x Lam^2] = Lam^2 + 2 x Lam Lam'; agrees only at x = 1"),
     Claim('manuscript (B4):  -2(cosh x - 1)/(x Lam^3)',
           lambda x, m: -2 * lam_p(x, m) / (x * lam(x, m) ** 3),
           lambda x: fd(R_phi, x), order=1, xfail=True,
