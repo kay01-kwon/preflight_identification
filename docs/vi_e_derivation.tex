@@ -277,7 +277,13 @@ the proof.
   S_k \triangleq \sum_n n^k a_nu^n ,
 \]
 since $uf' = S_1$ and $u^2f'' = S_2 - S_1$, so the first two terms
-combine to $S_2/S_0$. Cauchy--Schwarz applied to the two sequences
+combine to $S_2/S_0$. Every $S_k$ runs from $n = 0$, including the two
+that come from differentiating: $f'$ starts at $n=1$ and $f''$ at
+$n=2$, but the coefficients $n$ and $n(n-1) = n^2 - n$ vanish on
+precisely the terms those shifts drop, so extending all three sums to
+the same index set neither adds nor loses anything. It is worth doing,
+because Cauchy--Schwarz is about to treat them as sequences over one
+index set. Cauchy--Schwarz applied to the two sequences
 $\bigl\{\sqrt{a_nu^n}\bigr\}$ and $\bigl\{n\sqrt{a_nu^n}\bigr\}$ ---
 legitimate because $a_nu^n\ge0$, which is the only place the sign
 pattern is needed --- gives $S_1^2\le S_0S_2$. Hence
