@@ -174,17 +174,35 @@ $u = C_2\tau$, the amplitudes cancel in the ratio and
 \end{equation}
 The two constants are simply the orders of the two channels at the
 onset: a signal going as $\tau^n$ averages to $1/(n{+}1)$ of its
-endpoint value, and the channels are sixth and fourth order. That
+endpoint value, and the channels are sixth and fourth order. Neither
+limit needs an expansion of the kernel. One application of l'H\^opital's
+rule to $R = \int_0^x\!f/(xf)$ gives $\lim_{x\to0}R =
+\lim f/(f + xf') = 1/\bigl(1 + n_{\rm eff}(0^+)\bigr)$ with
+$n_{\rm eff} = uf'/f$ the local order; three further applications, to
+$(u\cosh u - u)/(\sinh u - u)$, give $\Psi_\varphi(0^+) = 3$ and hence
+$n_{\rm eff}(0^+) = 6$ and $4$. That
 these are the suprema follows from rescaling the window, $u = xt$,
 which turns either ratio into $R(x) = \int_0^1 f(xt)/f(x)\,dt$; the
 logarithmic derivative of that integrand is
 $\bigl[n_{\rm eff}(xt) - n_{\rm eff}(x)\bigr]/x$ with
 $n_{\rm eff} = u f'/f$ the local order, so $R$ decreases wherever
-$n_{\rm eff}$ rises. It does in both cases --- $n_{\rm eff}$ equals
-$2\Psi_\varphi$ and $1+\Psi_\varphi$ respectively, with
-$\Psi_\varphi(u) = u\Lambda'/\Lambda$ increasing from $3$ --- because
-$\Lambda$ stiffens from cubic to exponential and concentrates each
-channel ever more sharply at the end of the window. Over the flown
+$n_{\rm eff}$ rises. It does in both cases. Writing
+$f = \sum a_nu^n$ with $a_n\ge0$, as both kernels admit, the weights
+$p_n = a_nu^n/f$ are a probability distribution over the exponents,
+$n_{\rm eff} = \langle n\rangle$ and $u^2f''/f = \langle n^2\rangle -
+\langle n\rangle$, so
+\begin{equation}
+  \frac{dn_{\rm eff}}{du}
+  = \frac1u\Bigl[\frac{uf'}{f} + \frac{u^2f''}{f}
+                 - \Bigl(\frac{uf'}{f}\Bigr)^{\!2}\Bigr]
+  = \frac{\operatorname{Var}(n)}{u} \;\ge\; 0 :
+  \tag{95a}
+\end{equation}
+raising $u$ shifts weight from low exponents to high ones, and a
+variance cannot be negative. The inequality is strict unless $f$ is a
+monomial, which neither kernel is. Physically, $\Lambda$ stiffens from
+cubic to exponential and concentrates each channel ever more sharply at
+the end of the window. Over the flown
 $x\in[1.79,5.20]$ the factors are $0.089$--$0.133$ and
 $0.145$--$0.191$, so (95) gives away $10$--$60\%$; the same evaluation
 that returned $446\%$ returns $41.8\%$ with it in place.

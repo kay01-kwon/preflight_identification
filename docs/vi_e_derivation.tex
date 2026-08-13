@@ -165,30 +165,23 @@ $\rho_{GE,\max} = B\,x\Lambda(x)$ and
   \tag{D.7}
 \end{equation}
 
-\textbf{Where $1/7$ and $1/5$ come from.} Expand
-$\Lambda(u) = u^3/6 + u^5/120 + \cdots$ and keep the leading term.
+\textbf{How to read $1/7$ and $1/5$.} The quickest way to see where
+these come from --- not the proof, which is below --- is the order of
+each channel. Keeping the leading term of
+$\Lambda(u) = u^3/6 + u^5/120 + \cdots$ makes $\Lambda^2\simeq u^6/36$
+and $u\Lambda\simeq u^4/6$, so the two channels are sixth and fourth
+order near the onset, and a $\tau^n$ signal averages over $[0,T]$ to
+$T^n/(n{+}1)$ against its endpoint value $T^n$: hence $\tfrac17$ and
+$\tfrac15$. At the other end $\Lambda\to\sinh u\simeq e^u/2$ gives
+$\int_0^x\Lambda^2\simeq e^{2x}/8$ and $\int_0^xu\Lambda\simeq xe^x/2$,
+so $R_\varphi\simeq1/(2x)$ and $R_{GE}\simeq1/x$ --- the origin of the
+$\tfrac12$ and $1$ that Sec.~5 needs, once $\Psi\simeq x$ multiplies
+them.
 
-\emph{Small $x$.} $\Lambda^2 \simeq u^6/36$, so
-$\int_0^x\Lambda^2 \simeq x^7/(7\cdot36)$ and
-\[
-  R_\varphi \simeq \frac{1}{x}\cdot
-  \frac{x^7/(7\cdot 36)}{x^6/36} = \frac{1}{7}.
-\]
-Similarly $u\Lambda \simeq u^4/6$, so $\int_0^x u\Lambda \simeq x^5/30$
-and
-\[
-  R_{GE} \simeq \frac{1}{x}\cdot\frac{x^5/30}{x\cdot x^3/6}
-  = \frac{x^4/30}{x^4/6} = \frac{1}{5}.
-\]
-The two numbers are just the orders of the channels: a $\tau^6$ signal
-averages to $1/7$ of its endpoint value, a $\tau^4$ signal to $1/5$.
-(For $\tau^n$ the average over $[0,T]$ is $T^n/(n+1)$ against the
-endpoint $T^n$.)
-
-\emph{Large $x$.} $\Lambda\to\sinh u\simeq e^u/2$, so
-$\int_0^x\Lambda^2\simeq e^{2x}/8$ and $R_\varphi\simeq1/(2x)$;
-$\int_0^x u\Lambda\simeq xe^x/2$ and $R_{GE}\simeq1/x$. Both fall off
-like $1/x$.
+Neither reading is used as a proof. (D.6b) below obtains the small-$x$
+limits from l'H\^opital's rule with no expansion of $f$ whatever, and
+Sec.~5 obtains the large-$x$ ones the same way. Only the monotonicity
+argument that follows uses a series, and only for its sign pattern.
 
 \textbf{Why the small-$x$ value is the supremum.} Both $R$'s decrease
 throughout, and this needs no numerics. Substituting $u = xt$ in the
@@ -198,14 +191,25 @@ numerator rescales the window to $[0,1]$:
        = \int_0^1 \frac{f(xt)}{f(x)}\,dt .
   \tag{D.6a}
 \end{equation}
-In this form the small-$x$ limit is immediate: if $f\simeq u^n$ near
-the origin then $f(xt)/f(x)\to t^n$ and $R\to\int_0^1t^ndt =
-1/(n{+}1)$. Now let
+Let
 \[
   n_{\rm eff}(u) \;\triangleq\; \frac{u f'(u)}{f(u)}
   \;=\; \frac{d\log f}{d\log u}
 \]
-be the \emph{local order} of $f$. Differentiating the integrand of
+be the \emph{local order} of $f$. The small-$x$ limit of $R$ follows
+from it by one application of l'H\^opital's rule, with no expansion of
+$f$: in the first form of (D.6a) numerator and denominator both vanish
+at $x=0$, so
+\begin{equation}
+  \lim_{x\to0}R(x)
+  = \lim_{x\to0}\frac{\int_0^x\!f(u)\,du}{x\,f(x)}
+  = \lim_{x\to0}\frac{f(x)}{f(x) + x f'(x)}
+  = \frac{1}{1 + n_{\rm eff}(0^+)} ,
+  \tag{D.6b}
+\end{equation}
+the last step dividing through by $f$. Only the limit of the local
+order is needed, never the coefficients of $f$. Differentiating the
+integrand of
 (D.6a) logarithmically,
 \[
   \frac{\partial}{\partial x}\log\frac{f(xt)}{f(x)}
@@ -225,10 +229,63 @@ that Sec.~4 discarded as the wrong normaliser:
   \;\; \text{from } 6 \text{ to } \infty;
   \qquad
   f = u\Lambda:\quad n_{\rm eff} = 1 + \Psi_\varphi(u)
-  \;\; \text{from } 4 \text{ to } \infty,
+  \;\; \text{from } 4 \text{ to } \infty.
 \]
-$\Psi_\varphi$ being increasing with $\Psi_\varphi(0^+) = 3$. The
-mechanism is physical: $\Lambda$ behaves as $u^3$ near the onset and
+
+\textbf{Why $n_{\rm eff}$ increases.} This is the one place a power
+series is used, and only for its sign pattern --- no coefficient is
+evaluated.
+
+\emph{Lemma.} Let $f(u) = \sum_{n\ge0}a_nu^n$ converge for all $u\ge0$
+with every $a_n\ge0$, and let $f$ not be a single monomial. Then
+$n_{\rm eff} = uf'/f$ is strictly increasing on $(0,\infty)$.
+
+\emph{Proof.} For $u>0$ put $p_n = a_nu^n/f(u)$. Each $p_n\ge0$ and
+$\sum_np_n = 1$, so the $p_n$ are a probability distribution over the
+exponents, and
+\[
+  \langle n\rangle = \sum_n n\,p_n = \frac{uf'}{f} = n_{\rm eff},
+  \qquad
+  \frac{u^2f''}{f} = \sum_n n(n-1)p_n
+                   = \langle n^2\rangle - \langle n\rangle .
+\]
+Differentiating $n_{\rm eff}$ and grouping by these,
+\[
+  \frac{dn_{\rm eff}}{du}
+  = \frac{f'}{f} + u\,\frac{f''f - f'^2}{f^2}
+  = \frac{1}{u}\Bigl[\frac{uf'}{f} + \frac{u^2f''}{f}
+                     - \Bigl(\frac{uf'}{f}\Bigr)^{\!2}\Bigr]
+  = \frac{\operatorname{Var}(n)}{u} \;\ge\; 0 ,
+\]
+the bracket collapsing to $\langle n\rangle + \langle n^2\rangle -
+\langle n\rangle - \langle n\rangle^2$. The variance vanishes only for
+a point mass, i.e.\ only if $f$ is a monomial. $\square$
+
+Raising $u$ shifts weight from low exponents to high ones, and a
+variance cannot be negative: that is the whole content. Both kernels
+qualify --- $\Lambda = \sum_{k\ge1}u^{2k+1}/(2k+1)!$ has non-negative
+coefficients, and so do the product $\Lambda^2$ and the shift
+$u\Lambda$ --- and neither is a monomial, so $n_{\rm eff}$ is strictly
+increasing for both channels and $R$ is strictly decreasing. The same
+distribution gives the origin values for free, since as $u\to0$ it
+concentrates on the lowest exponent present, $6$ and $4$.
+
+That route needs the series; the following one does not, and is worth
+recording because it settles the same two numbers independently.
+The value of $\Psi_\varphi$ at the origin is
+l'H\^opital's rule, applied three times. Writing $\Psi_\varphi = N/D$
+with $N = u\cosh u - u$ and $D = \sinh u - u$, successive
+differentiation gives the four pairs
+\[
+  \frac{u\cosh u - u}{\sinh u - u},\quad
+  \frac{\cosh u + u\sinh u - 1}{\cosh u - 1},\quad
+  \frac{2\sinh u + u\cosh u}{\sinh u},\quad
+  \frac{3\cosh u + u\sinh u}{\cosh u},
+\]
+of which the first three are $0/0$ at $u = 0$ while the fourth is
+$3/1$. Hence $\Psi_\varphi(0^+) = 3$, so $n_{\rm eff}(0^+)$ is $6$ for
+$\Lambda^2$ and $4$ for $u\Lambda$, and (D.6b) returns $\tfrac17$ and
+$\tfrac15$. The mechanism is physical: $\Lambda$ behaves as $u^3$ near the onset and
 grows exponentially later, so the larger the window the more sharply
 both channels are concentrated at its end, and the smaller their
 average is relative to the endpoint value. The small-$x$ values are
