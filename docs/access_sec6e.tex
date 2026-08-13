@@ -266,9 +266,17 @@ Applying the corollary to $\phi'$ (whose derivative is $\phi''\ge0$
 and which vanishes at $0$) gives $\phi'\ge0$; applying it to $\phi$
 gives $\phi\ge0$, hence $B\ge0$ and $D' = \Lambda B\ge0$; applying it
 to $D$ gives $D\ge0$, which is the claim. The second inequality of
-(99) follows the same way; equivalently its power series has the
-general coefficient $\bigl[2^{m-1}/m + (m^2-6m+2)/3\bigr]/(m-1)!$ with
-$m = 2n$, zero at $m = 2,4$ and positive for $m\ge6$. No monotonicity
+(99) needs the corollary only once: its difference $E = x\tanh(x/2)
+\Lambda - \int_0^x\!u\Lambda$ has $E(0) = 0$ and, on putting the
+derivative over $\cosh x + 1$ with $\operatorname{sech}^2(x/2) =
+2/(\cosh x+1)$,
+\begin{equation}
+  E'(x) = \frac{\sinh^2x - 2x\sinh x + x^2\cosh x}{\cosh x + 1}
+        = \frac{\Lambda(x)^2 + x^2\Lambda'(x)}{\cosh x + 1} \;\ge\; 0 ,
+  \tag{100a}
+\end{equation}
+a sum of two non-negative terms over a positive one, so $E\ge0$. No
+monotonicity
 of the products is used, and the limits $\tfrac12$ and $1$ enter the
 proof nowhere: they are values the constants are held to, and the
 $x\to\infty$ limit shows only that neither can be lowered. Hence

@@ -454,11 +454,31 @@ $B\ge0$, hence $D' = \Lambda B\ge0$.
 \emph{Third application.} $f = D$: $D'\ge0$ by the second application
 and $D(0) = 0$. The Lemma gives $D\ge0$, which is (D.10). $\square$
 
-Eq.~(D.11) follows the same way, its difference having $E(0) = 0$ and
-$E'\ge0$; alternatively its power series has the closed general
-coefficient $\bigl[2^{m-1}/m + (m^2-6m+2)/3\bigr]/(m-1)!$ with
-$m = 2n$, which vanishes at $m = 2, 4$ and is positive for $m\ge6$
-because both terms are.
+\textbf{Proof of (D.11).} The same Lemma settles the ground-effect
+channel, and here it is needed only once. Let $E$ be the right side of
+(D.11) minus the left,
+\[
+  E(x) \;=\; x\tanh\tfrac{x}{2}\,\Lambda(x)
+             \;-\; \int_0^x\! u\,\Lambda(u)\,du ,
+  \qquad E(0) = 0 .
+\]
+Differentiating --- the integral contributes $x\Lambda(x)$ --- and
+using $\operatorname{sech}^2(x/2) = 2/(\cosh x + 1)$ and
+$\tanh(x/2) = \sinh x/(\cosh x + 1)$ to put everything over
+$\cosh x + 1$, the hyperbolic terms collapse to
+\begin{equation}
+  E'(x) \;=\; \frac{\sinh^2x - 2x\sinh x + x^2\cosh x}{\cosh x + 1}
+        \;=\; \frac{\Lambda(x)^2 + x^2\Lambda'(x)}{\cosh x + 1} ,
+  \tag{D.12}
+\end{equation}
+the second equality being the identity $(\sinh x - x)^2 + x^2(\cosh x
+- 1) = \sinh^2x - 2x\sinh x + x^2\cosh x$. The numerator is a sum of
+two non-negative terms and the denominator is positive, so $E'\ge0$;
+the Lemma gives $E\ge0$, which is (D.11). $\square$
+
+No series is needed for either, and (D.11) costs one application of the
+Lemma against three for (D.10) --- the completed square in (D.12) does
+the work that $\phi$ did there.
 
 No monotonicity of the products is claimed or needed --- only that they
 do not exceed their limits, which is what (D.10) and (D.11) say.
