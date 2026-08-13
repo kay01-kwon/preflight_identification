@@ -283,10 +283,20 @@ $n=2$, but the coefficients $n$ and $n(n-1) = n^2 - n$ vanish on
 precisely the terms those shifts drop, so extending all three sums to
 the same index set neither adds nor loses anything. It is worth doing,
 because Cauchy--Schwarz is about to treat them as sequences over one
-index set. Cauchy--Schwarz applied to the two sequences
-$\bigl\{\sqrt{a_nu^n}\bigr\}$ and $\bigl\{n\sqrt{a_nu^n}\bigr\}$ ---
-legitimate because $a_nu^n\ge0$, which is the only place the sign
-pattern is needed --- gives $S_1^2\le S_0S_2$. Hence
+index set, and those sequences are infinite: $\Lambda$, and with it
+$\Lambda^2$ and $u\Lambda$, has infinitely many non-zero coefficients.
+That is what the hypothesis of convergence for every $u\ge0$ is for.
+A power series converging at some $u_0>0$ converges absolutely for
+$|u|<u_0$, so convergence at every $u\ge0$ makes the radius infinite,
+and the termwise derivatives $\sum na_nu^{n-1}$ and
+$\sum n(n{-}1)a_nu^{n-2}$ then converge on the same disc. Hence $f''$
+exists as written and $S_1$, $S_2$ are finite --- the two sequences lie
+in $\ell^2$, which is what Cauchy--Schwarz for infinite sums requires.
+
+Cauchy--Schwarz applied to $\bigl\{\sqrt{a_nu^n}\bigr\}$ and
+$\bigl\{n\sqrt{a_nu^n}\bigr\}$ --- the square roots real because
+$a_nu^n\ge0$, which is the only place the sign pattern is needed ---
+gives $S_1^2\le S_0S_2$. Hence
 $dn_{\rm eff}/du\ge0$, with equality only when the two sequences are
 proportional, i.e.\ only when a single $a_n$ is non-zero. $\square$
 
