@@ -487,75 +487,51 @@ $p_{\rm off}$ bounds the offset rather than displacing the contact
 point. The ceiling above is evaluated with $l_p + p_{\rm off}$ only
 because doing so lowers it and is therefore conservative for $\bar x$.
 
-\paragraph{Evaluation at the flown configurations.}
-The table above is the guarantee over the admissible box. The runs
-themselves sit well inside it, and reading the same bound at the
-excursions each window actually reached gives the sharper picture
-below.  Here every quantity must come off the \emph{same} window:
-$\rho_{\varphi,\max}$ and $\rho_{GE,\max}$ at the excursion that window
-reaches, $\Delta M_{\rm win}$ as its own moment increment.  Over the
-$140$ gate-passing runs, with the loaded weight $W = 31.59$~N,
-$l_p+\lambda_{\rm off} = 0.160/0.130$~m (roll/pitch), $z_{CoM} = 0.30$~m
-and $\beta_M = 0.0345$~rad$^{-1}$:
+\paragraph{What the bound covers, and where the realised budget is.}
+Every quantity above is available before a single run: the weight from a
+scale, $z_{CoM}$ and the arm from the box of Sec.~VI-D, $J_{CoM}$ from
+CAD, the tilt cap and the ramp rates from the excitation protocol,
+$\beta_M$ from Sec.~VI-B. Nothing measured during the campaign enters
+it. That is what makes it a pre-flight guarantee rather than a
+description of the runs that happened to be flown, and it is why a
+reader applying the method to a different airframe can evaluate it for
+their own vehicle from the six lines above.
+
+Its scope is worth stating as narrowly as it holds. The bound covers the
+displacement of the identified onset caused by the two forcing terms the
+estimator cannot absorb, the gravity remainder and the bilinear
+ground-effect coupling. It is not a total error budget: ground-contact
+geometry, the ramp-tracking residual and sensor faults lie outside it.
+Those, and the same bound re-evaluated at the excursions the runs
+actually reached, are reported with the realised budget in Sec.~VIII-E.
+
+\paragraph{The bound read as a design rule.}
+Because $\rho_{\varphi,\max} = \tfrac12Wa\varphi_{\max}^2$ carries about
+$91\%$ of the total, the tilt cap enters squared, while the ramp rate
+reaches the result only through $\rho_{GE,\max}\propto\dot M^{2/3}$:
 
 \begin{center}\small
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{@{}lrrrrrr@{}}
+\begin{tabular}{@{}rrcrrcrr@{}}
 \toprule
-$\dot M$ [N\,m/s] & $0.10$ & $0.30$ & $0.65$ & $1.20$ & median & worst \\
+\multicolumn{2}{c}{tilt cap} && \multicolumn{2}{c}{pivot arm} &&
+\multicolumn{2}{c}{ramp rate} \\
+\cmidrule(r){1-2}\cmidrule(lr){4-5}\cmidrule(l){7-8}
+$\varphi_{\max}$ & bound && $a$ [m] & bound && $\dot M$ & bound \\
+$[\deg]$ & [mm] &&  & [mm] && [N\,m/s] & [mm] \\
 \midrule
-$|\varphi|_{\rm end}$ [deg]          & $5.23$ & $5.90$ & $6.55$ & $6.17$ & $5.95$ & $9.33$\\
-$\Delta M_{\rm win}$ [N\,m]          & $0.072$& $0.165$& $0.306$& $0.479$& $0.221$& ---\\
-$\rho_{\varphi,\max}$ [mN\,m]        & $19.7$ & $22.5$ & $30.4$ & $27.2$ & $23.6$ & $58.3$\\
-$\rho_{GE,\max}$ [mN\,m]             & $0.24$ & $0.59$ & $1.24$ & $1.85$ & $0.68$ & $3.00$\\
-$x = C_2\tau_{\rm end}$              & $3.47$ & $2.64$ & $2.15$ & $1.79$ & $2.67$ & $5.20$\\
-\midrule
-$|e_\omega|/\omega_{\rm nom}$ [\%]   & $13.8$ & $6.0$  & $4.7$  & $2.9$  & $4.9$  & $25.1$\\
-$|\Delta M_{\rm crit}|$ [mN\,m]      & $1.94$ & $2.73$ & $3.77$ & $3.76$ & $3.01$ & $7.86$\\
-$|\Delta\lambda_{\rm off}|$ [mm]     & $0.061$& $0.086$& $0.119$& $0.119$& $0.095$& $0.249$\\
-\midrule
-ground-effect share of $\bar\rho$ [\%] & $1.8$ & $4.0$ & $6.0$ & $8.8$ & $5.1$ & $25.6$\\
+$10$ & $0.400$ && $0.160$ & $0.400$ && $0.10$ & $0.372$ \\
+$7$  & $0.201$ && $0.130$ & $0.331$ && $0.45$ & $0.384$ \\
+$5$  & $0.105$ && $0.100$ & $0.262$ && $1.20$ & $0.400$ \\
+$3$  & $0.040$ &&         &         && $3.00$ & $0.429$ \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-These too are bound evaluations, not measurements: each row forwards
-the \emph{unprojected} channel maximum through (96).  Using instead the
-$x$-free constants of (97) the same runs give
-$|\Delta M_{\rm crit}|\le 8.8$~mN\,m, i.e.\
-$|\Delta\lambda_{\rm off}|\le 0.28$~mm --- the price of not evaluating
-$R_\varphi, R_{GE}$ is under $12\%$, and the flown excursions buy a
-further $27\%$ over the $12.0$~mN\,m the box guarantees.
-
-The per-run propagation reported with the error budget is a separate
-and much smaller number, because it convolves the \emph{measured} $\rho$
-with the exact kernel after the estimator has absorbed its own span.
-Over the same runs the residual forcing that actually reaches the
-onset is $2.75$~mN\,m in the median ($12.28$ at worst) on the gravity
-channel and $0.53$ ($3.20$) on the ground-effect channel, the rate
-deviation $|e_\omega|/\omega_{\rm nom}$ is $0.24\%$ in the median
-($6.5\%$ at worst summed over channels), and the resulting threshold
-error is $0.04$~mN\,m in the median and $0.15$ at worst --- $0.001$ to
-$0.004$~mm of offset.  The two differ by roughly a factor of $50$,
-which is the price the envelope form pays for assuming nothing about
-$\rho$ but its size.
-
-The bilinear ground-effect channel contributes $5.1\%$ of $\bar\rho$ in
-the median and $25.6\%$ at worst; it grows with the ramp rate because
-$\rho_{GE}\propto\dot M\tau$, whereas the gravity remainder depends on
-the excursion alone.  Its own contribution to the threshold is
-$0.00$~mN\,m in the median and $0.01$ at worst once propagated, so the
-channel the reviewer asks about is not the one that sets the budget.
-\textcolor{blue}{The threshold bound
-$|\Delta\lambda_{\rm off}| \le 0.25$~mm is the figure that matters: it
-does not involve $\Delta M_{\rm win}$, and so does not inherit the loss
-the relative normalisation suffers at slow ramps.}  The relative bound
-is loosest at $0.10$~N\,m/s, where the window closes on a small moment
-increment while the excursion is unchanged --- the same ordering the
-excitation design reports --- and it is conservative by roughly a factor
-$5$ overall, since it forwards the \emph{unprojected} remainder
-($23.6$--$58.3$~mN\,m here, against $1.2$--$12.3$~mN\,m measured after
-the estimator absorbs its own degrees of freedom).
+Precision is therefore bought by lowering the tilt cap, not by slowing
+the ramp: a twelve-fold reduction in $\dot M$ moves the bound by $7\%$,
+whereas halving $\varphi_{\max}$ quarters it. The $10^\circ$ cap used
+here was chosen for onset visibility on the lightly loaded
+configurations, and the table is what that choice costs.
 
 \section*{VI-B: ramp input tracking (rate limits)}
 
