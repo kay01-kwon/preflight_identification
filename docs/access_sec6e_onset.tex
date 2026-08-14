@@ -1,6 +1,7 @@
 % ---------------------------------------------------------------------
-% Drop-in replacement for the main-text passage (98)-(103) of Sec. VI-E:
-% how the identified onset responds to a perturbation.
+% Drop-in replacement for the main-text passage (98)-(108) of Sec. VI-E:
+% how the identified onset responds to a perturbation, and what that
+% costs the reported threshold.
 %
 % What this changes against the current draft:
 %   - (99) introduces the true pre-onset level b, so that C has something
@@ -12,8 +13,13 @@
 %     identically, rather than being passed over.  This is the first
 %     thing a reader checks when a window endpoint is also the variable
 %     being optimised.
-%   - (104)-(105) carry the baseline error term the earlier flow lost,
+%   - (105)-(106) carry the baseline error term the earlier flow lost,
 %     and bound it in closed form.
+%   - (108) reads "|dM_crit,e| <= rho_bar <= rho_phi/7 + rho_GE/5", not
+%     "|dM_crit| <= rho_bar = ...".  Two repairs: the left side matches
+%     the sentence above it, which already says dM_crit,e; and rho_bar
+%     was defined at (95) as the window average, so the 1/7, 1/5 form
+%     bounds it rather than defining it.
 %   - the measured sizes are NOT here: they belong to the realised
 %     budget, Sec. VIII-E.  Only the a priori gain range is quoted.
 %
@@ -32,8 +38,8 @@
 \newcommand{\tc}{t_{\rm c}}
 \newcommand{\tcs}{t_{\rm c}^{*}}
 \newcommand{\tend}{t_{\rm end}}
-\title{\vspace{-16mm}\textbf{Sec.~VI-E, (98)--(105): the onset under a
-perturbation}\vspace{-3mm}}
+\title{\vspace{-16mm}\textbf{Sec.~VI-E, (98)--(108): the onset under a
+perturbation, and the threshold}\vspace{-3mm}}
 \date{\small drop-in main text; the measured sizes live in Sec.~VIII-E}
 \begin{document}\maketitle
 
@@ -149,5 +155,57 @@ the fast end being worse because the window is shorter. What the fitted
 baselines actually are, and how far the identified offset moves when
 $C$ is pinned to zero instead of fitted, are measurements and are
 reported with the realised budget in Sec.~VIII-E.
+
+\paragraph{From the onset shift to the threshold.}
+Substituting the Duhamel integral (88) for $e_\omega$ in (104) and
+exchanging the order of integration --- Fubini, both integrands being
+continuous on a bounded domain, the inner limits changing from
+$s\in[0,\tau]$ to $\tau\in[s,\tau_{\rm end}]$ --- turns the correlation
+into an average of $\rho$ against a fixed weight:
+\begin{equation}
+  \Delta M_{{\rm crit},e} = -\!\int_0^{\tau_{\rm end}}\!\rho(s)\,w(s)\,ds,
+  \quad
+  w(s) = \frac{\Wz\!\displaystyle\int_s^{\tau_{\rm end}}\!\!
+                \sinh(C_2\tau)\cosh\bigl(C_2(\tau-s)\bigr)d\tau}
+              {J_PC_2\,\bigl\|\sinh(C_2\tau)\bigr\|^{2}} .
+  \tag{107}
+\end{equation}
+
+Three properties of $w$ close the argument. It is non-negative, being an
+integral of hyperbolic functions of non-negative arguments. It
+integrates to one \emph{exactly}: the same exchange over the triangle
+$0\le s\le\tau\le\tau_{\rm end}$ reproduces in the numerator the very
+norm that sits in the denominator, leaving $\Wz/(J_PC_2^{2}) = 1$ by
+(20). And it is non-increasing in $s$, since both the integration range
+and the $\cosh$ factor shrink as $s$ grows.
+
+The first two properties alone would give
+$|\Delta M_{{\rm crit},e}|\le\rho_{\max}$. The third admits Chebyshev's
+inequality a second time --- a forcing that rises against a weight that
+falls, the same pairing as before --- and replaces that maximum by the
+window average already bounded at (95):
+\begin{equation}
+  \bigl|\Delta M_{{\rm crit},e}\bigr| \;\le\; \bar\rho
+  \;\le\; \tfrac17\,\rho_{\varphi,\max} + \tfrac15\,\rho_{GE,\max} .
+  \tag{108}
+\end{equation}
+Note that $\bar\rho$ is the average defined at (95), and the right-hand
+side bounds it rather than defining it. The constants here are the
+reduction factors themselves, not the factors multiplied by a kernel
+gain, because the onset is located by a \emph{normalised} correlation:
+$\int w = 1$ leaves nothing over.
+
+\paragraph{What (108) covers.}
+Only the displacement driven by the forcing the estimator cannot absorb.
+Two further contributions sit outside it and are measured rather than
+bounded a priori. The baseline error enters through (106), so that
+$|\Delta M_{\rm crit}| \le \bar\rho + |\Delta M_{{\rm crit},C}|$. And
+the applied moment departs from the linear ramp the model assumes:
+because $\dot M$ is the least-squares slope of the \emph{measured}
+moment over the window, the constant and linear parts of any tracking
+error are removed by the normal equations, but the non-affine remainder
+survives and pairs with the non-affine part of $w$. Both are reported
+with the realised budget in Sec.~VIII-E, alongside the ground-contact
+geometry that dominates all three.
 
 \end{document}
