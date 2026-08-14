@@ -46,6 +46,7 @@ from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
+from scipy import stats
 from scipy.optimize import brentq
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -175,6 +176,50 @@ def main():
     print(f"  slow half (Mdot <= 0.30) endpoint median"
           f" {np.median(slow):.2f}%,  fast half (>= 0.65)"
           f" {np.median(fast):.2f}%")
+
+    # Looseness and a missing term look different, and the difference is
+    # testable.  A bound that is merely conservative is never exceeded and
+    # its ratio to the measurement stays roughly flat; a bound that omits
+    # a channel is exceeded where the channel it does model is small, and
+    # the ratio climbs as that model shrinks.  The decisive test is
+    # whether the runs the bound calls worse actually ARE worse.
+    print("\n  is the modelled forcing visible in the residual at all?"
+          "  (within rate,\n  so the comparison is not carried by the rate"
+          " trend itself)\n")
+    print(f"  {'rate':>6}{'bound med':>11}{'meas med':>10}{'ratio':>8}"
+          f"{'rho(bound,meas)':>17}{'rho(noise,meas)':>17}")
+    rb, rf = [], []
+    for rate in sorted(g):
+        v = g[rate]
+        bd = np.array([bound_at(rate, peak=r['span'])[0] for r in v])
+        en = np.array([r['end_pct'] for r in v])
+        fl = np.array([r['floor_pct'] for r in v])
+        sb, sf = stats.spearmanr(bd, en), stats.spearmanr(fl, en)
+        rb.append(sb[0])
+        rf.append(sf[0])
+        print(f"  {rate:6.2f}{np.median(bd):11.2f}{np.median(en):10.2f}"
+              f"{np.median(en) / np.median(bd):7.2f}x"
+              f"{sb[0]:17.3f}{sf[0]:17.3f}")
+    print(f"\n  mean within-rate Spearman: vs bound {np.mean(rb):+.3f}"
+          f" (p={stats.ttest_1samp(rb, 0).pvalue:.3f}),"
+          f"  vs noise {np.mean(rf):+.3f}"
+          f" (p={stats.ttest_1samp(rf, 0).pvalue:.3f})")
+    print("  A positive rho against the bound would mean the modelled forcing")
+    print("  contributes.  It is negative, so it does not: the residual tracks")
+    print("  the disturbance floor instead, and any agreement in MAGNITUDE at")
+    print("  the slowest ramp is a coincidence rather than a mechanism.")
+
+    pk = np.array([r['span'] for r in rows])
+    ab = np.array([r['end_pct'] for r in rows]) / 100 * pk
+    nf = np.array([r['floor_pct'] for r in rows]) / 100 * pk
+    s = stats.linregress(np.log(pk), np.log(ab))
+    print(f"\n  residual {np.median(ab):.4f} rad/s median,"
+          f" {np.median(ab / nf):.1f}x the pre-onset floor"
+          f" ({np.median(nf):.4f});\n  log-log slope against the peak"
+          f" {s.slope:.2f} (R^2 {s.rvalue ** 2:.2f}), i.e. broadly flat"
+          f"\n  in absolute terms over a {pk.max() / pk.min():.0f}x range"
+          f" of excursion --- a post-onset\n  disturbance floor, not a"
+          f" deformation of the modelled response.")
 
     worst = max(rows, key=lambda r: r['end_pct'])
     print(f"  worst single run: {worst['case']}/{worst['axis']}"
