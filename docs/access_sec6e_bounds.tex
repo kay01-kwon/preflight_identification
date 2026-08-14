@@ -192,14 +192,64 @@ geometric ceiling in which the mass cancels,
   = \frac{g\,z_{CoM}}{z_{CoM}^2 + \lpo^2} ,
   \tag{110}
 \end{equation}
-giving $5.05$~s$^{-1}$ for roll and $5.25$ for pitch. At the fastest
-ramp $\bar x = 3.47$ and (90) returns $|e_\omega(\tau_{\rm end})| \le
-0.103$~rad/s against a nominal $1.91$~rad/s, i.e.\ $5.4\%$; at the
-slowest it returns $57\%$, because $\bar x$ enters through $\sinh$ and
-the cubic shortcut is exponentially lossy there. That degradation does
-not touch (109), which carries no $x$ at all --- which is why the
-threshold bound, and not the rate bound, is what the offset budget
-inherits.
+giving $5.05$~s$^{-1}$ for roll and $5.25$ for pitch. Note that here the
+inertia is taken at its \emph{lower} end, $J_P = m(z_{CoM}^2+\lpo^2)$,
+the opposite of (106): $J_PC_2 = \sqrt{J_P\Wz}$ sits in the denominator
+of (90), and a smaller $J_P$ both enlarges that quotient and raises
+$C_2$, hence $\bar x$. Continuing the roll row above:
+
+\begin{center}\small
+\begin{tabular}{@{}rlr@{}}
+\toprule
+ & quantity & value \\
+\midrule
+   & $J_P = m\bigl(z_{CoM}^2+\lpo^2\bigr)$, lower end
+     & $0.372253$~kg\,m$^2$ \\
+   & $\Wz = (31.59)(0.30)$ & $9.477000$~N\,m \\
+(7)& $C_2 = \sqrt{\Wz/J_P}$, and (110) agrees & $5.045639$~s$^{-1}$ \\
+\midrule
+   & $6\varphi_{\max}\Wz C_2/\dot M
+       = 6(0.174533)(9.477)(5.045639)/1.20$ & $41.728663$ \\
+(8)& $\bar x = (41.728663)^{1/3}$ & $3.468525$ \\
+   & $\sinh\bar x$ & $16.029105$ \\
+   & $J_PC_2 = \sqrt{J_P\Wz}$ & $1.878255$ \\
+\midrule
+(9)& $|e_\omega(\tau_{\rm end})| \le
+     \bar\rho\sinh\bar x/(J_PC_2)$, $\bar\rho = 0.012035$
+   & $0.102707$~rad/s \\
+\midrule
+   & $C_1 = \dot M/\Wz$ & $0.126622$ \\
+   & $\cosh\bar x - 1$ & $15.060268$ \\
+(10)& $\omega_{\rm nom,end} = C_1(\cosh\bar x - 1)$ & $1.906967$~rad/s \\
+(11)& relative, $(9)\div(10)$ & $5.39\%$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The $\bar\rho$ in (9) is the same $12.035$~mN\,m that line (5) produced;
+(93) bounds the average, and (90) then propagates it through the kernel.
+Across the ramp range the roll axis gives
+
+\begin{center}\small
+\begin{tabular}{@{}rrrrr@{}}
+\toprule
+$\dot M$ [N\,m/s] & $\bar x$ & $|e_\omega|$ [rad/s]
+ & $\omega_{\rm nom,end}$ [rad/s] & relative \\
+\midrule
+$0.10$ & $7.94$ & $8.378$ & $14.815$ & $56.6\%$ \\
+$0.45$ & $4.81$ & $0.377$ & $\phantom{0}2.866$ & $13.2\%$ \\
+$1.20$ & $3.47$ & $0.103$ & $\phantom{0}1.907$ & $\phantom{0}5.4\%$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The slow ramp is where this bound stops being useful, and the reason is
+visible in the arithmetic: $\bar x$ grows as $\dot M^{-1/3}$ but enters
+through $\sinh$, so the cubic shortcut $\Lambda(x)\ge x^3/6$ that makes
+(106) closed-form is exponentially lossy once $\bar x$ passes about six.
+That degradation does not touch (109), which carries no $x$ at all ---
+which is why the threshold bound, and not the rate bound, is what the
+offset budget inherits.
 
 \paragraph{What (109) covers.}
 The displacement of the identified onset caused by the two forcing terms
