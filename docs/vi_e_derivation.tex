@@ -619,7 +619,25 @@ window Sec.~2 averages over, so the $\rbar$ below is the same $\rbar$.
 
 Write the data as nominal plus deviation, $y = \hat\omega(t;t_c^*) +
 e_\omega$ --- the perturbation is $\rho$ itself, not its average --- and
-the minimiser as $t_c = t_c^* + \delta t_c$. Name the sensitivity
+the minimiser as $t_c = t_c^* + \delta t_c$.
+
+One point about that definition is worth making explicitly, because
+getting it wrong invalidates everything after it. \emph{$e_\omega$ is
+anchored at the true onset $t_c^*$, not at the candidate.} It is the
+difference between the recorded rate and the nominal solution of the
+true problem, so once the run is recorded it is a fixed function of $t$
+and
+\[
+  \frac{\partial e_\omega}{\partial t_c} \;=\; 0
+  \qquad\text{identically.}
+\]
+When the residual is written $e_\omega - \delta t_c\,\chi - C$ below,
+every appearance of the optimisation variable is in $\delta t_c$ and in
+$C$; none is in $e_\omega$. Reading $e_\omega$ instead as ``the residual
+at the current candidate'' would make it depend on $t_c$ and would
+count the same dependence twice.
+
+Name the sensitivity
 \[
   \chi(t) \;\triangleq\;
   \frac{\partial\hat\omega(t;t_c)}{\partial t_c}\bigg|_{t_c = t_c^*}
@@ -657,6 +675,8 @@ constant in the sample set, so $dC_0/dt_c = 0$ almost everywhere. What
 could survive is the same drift entering the post-onset residual, but
 $dC_0/dt_c = \bigl(y(t_c) - C_0\bigr)/(t_c - t_a)$ for the mean, and at
 the onset the rate is still the baseline, so it vanishes there too.
+Measured across the $140$ runs, $C_0$ moves by under
+$3.3\times10^{-4}$~rad/s when the candidate onset shifts by one sample.
 Dropping that term and solving,
 \begin{equation}
   \delta t_c = \frac{\langle e_\omega,\chi\rangle}{\|\chi\|^2},
@@ -695,6 +715,57 @@ $\mathcal{O}(e_\omega^2)$ --- every term carrying a derivative of
 $\chi$ picks up an extra factor of the deviation, including the
 $(\delta t_c)^2\partial_{t_c}\chi$ left over from expanding the
 residual itself.
+
+\textbf{Solving for $\delta t_c$ directly.} Once the residual is
+linearised, $J$ is an \emph{exact} quadratic in $\delta t_c$, so it is
+cleaner to differentiate in that variable and solve for the value that
+zeroes the derivative. Since $t_c = t_c^* + \delta t_c$ the operator is
+the same, but the two approximations then sit in separate places:
+linearising the residual is the only one, and the normal equation that
+follows is exact for the quadratic it is applied to.
+
+\textbf{What the baseline has to satisfy, and what it does not.} Keeping
+$C_0$ inside that square matters. Differentiating
+$(e_\omega - \delta t_c\chi - C_0)^2$ and solving gives
+\begin{equation}
+  \delta t_c = \frac{\langle e_\omega - C_0,\;\chi\rangle}{\|\chi\|^2}
+  = \frac{\langle e_\omega,\chi\rangle}{\|\chi\|^2}
+    \;-\; C_0\,\frac{\langle 1,\chi\rangle}{\|\chi\|^2},
+  \tag{D.11a}
+\end{equation}
+and the second term does not vanish: $\chi$ is of one sign, so
+$\langle1,\chi\rangle = -C_1(\cosh x - 1)\ne0$.
+
+It does not follow that $C_0$ must be driven to zero, which is the
+natural but wrong reading of the onset condition. Only the \emph{error}
+of $C_0$ against the true pre-onset level $b$ survives: a run whose gyro
+sits at $b = 0.2$~rad/s is displaced by nothing at all provided
+$C_0 = b$, while a mismatch of $0.001$~rad/s on a run with $b = 0$
+displaces the onset measurably. What is required is an unbiased estimate
+of the pre-onset level --- which is why the estimator fits $C_0$ rather
+than fixing it, and fits a median: the pre-onset gyro noise is
+heavy-tailed, and a candidate that overshoots leaks the rise into the
+segment being averaged.
+
+Carrying (D.11a) through $\Delta M_{\rm crit} = \dot M\,\delta t_c$ and
+$\|\chi\|^2 = C_1^2C_2\bigl[\tfrac14\sinh2x - \tfrac12 x\bigr]$, the
+amplitude cancels as everywhere else and
+\begin{equation}
+  \Delta M_{{\rm crit},C}
+  = \Wz\,(C_0 - b)\,
+    \frac{\cosh x - 1}{C_2\bigl[\tfrac14\sinh 2x - \tfrac12 x\bigr]} .
+  \tag{D.11b}
+\end{equation}
+Minimising the cost directly reproduces (D.11b) to three figures. Over
+the box the gain runs from $0.042$~N\,m per rad/s at the slowest ramp to
+$0.351$ at the fastest, the fast end being worse because the window is
+shorter. The fitted baselines are $8.5\times10^{-4}$~rad/s in the median
+and $1.68\times10^{-2}$ at worst over the $140$ runs; bounding
+$|C_0-b|$ by $|C_0|$ itself, which is conservative since $C_0$ estimates
+$b$ from the pre-onset samples, that is $0.010$~mm of offset in the
+median and $0.196$~mm at worst. The median is negligible against the
+$0.40$~mm the box guarantees; the worst case is not, and it is reported
+with the realised budget rather than buried here.
 
 Numerically, $\langle e_\omega,\partial_{t_c}\chi\rangle/\|\chi\|^2$ is
 $9.05\times10^{-5}$, $9.05\times10^{-4}$, $9.05\times10^{-3}$ and
