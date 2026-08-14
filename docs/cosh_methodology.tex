@@ -348,11 +348,80 @@ well developed, the sweep remains exhaustive over every feasible onset.
 \begin{remark}
 Because the model curve is fully determined before the post-onset data
 are seen, goodness of fit is a \emph{prediction test}, not flexibility:
-across all gate-passing runs the normalized post-onset residual is
-$\approx 6\%$ (gyro-noise dominated) and invariant over the twelvefold
-ramp-rate range — the empirical certificate that the response stays in
-the cosh family.
+across all $140$ gate-passing runs the normalized post-onset residual is
+$6.8\%$ in the median and invariant over the twelvefold ramp-rate range
+— the empirical certificate that the response stays in the cosh family.
 \end{remark}
+
+\paragraph{The residual, measured.}
+Table~\ref{tab:resid} carries the two normalizations that matter, both
+divided by the same post-onset peak excursion
+(\texttt{analysis/rate\_residual.py}). The window RMS is the quantity
+of the remark above. The endpoint residual — the last three samples,
+averaged — is the quantity the deviation bound of the companion
+analysis is stated for, and it is the larger of the two because the
+deviation accumulates towards the end of the window.
+
+\begin{table}[htbp]
+\centering\small
+\caption{Post-onset prediction residual by ramp rate, $140$ runs,
+$20$ per rate. All columns normalized by that run's peak excursion.
+The realized tilt is inferred from the peak through
+$\omega = C_1(\cosh x - 1)$.}
+\label{tab:resid}
+\begin{tabular}{@{}rrrrrrrr@{}}
+\toprule
+$\dot M$ & peak & $\varphi_{\rm end}$
+ & \multicolumn{2}{c}{endpoint [\%]} & RMS [\%] & floor [\%] \\
+\cmidrule(lr){4-5}
+[N\,m/s] & [rad/s] & [deg] & median & p90 & median & median \\
+\midrule
+$0.10$ & $0.447$ & $4.66$ & $\phantom{0}8.77$ & $19.24$ & $6.19$ & $3.34$\\
+$0.20$ & $0.460$ & $4.54$ & $\phantom{0}9.67$ & $15.35$ & $6.58$ & $3.16$\\
+$0.30$ & $0.515$ & $4.92$ & $\phantom{0}8.22$ & $16.68$ & $7.12$ & $2.92$\\
+$0.45$ & $0.607$ & $5.62$ & $\phantom{0}8.67$ & $16.59$ & $6.27$ & $2.40$\\
+$0.65$ & $0.630$ & $5.55$ & $\phantom{0}9.14$ & $15.93$ & $7.00$ & $2.20$\\
+$0.90$ & $0.658$ & $5.51$ & $12.59$ & $19.97$ & $7.55$ & $2.12$\\
+$1.20$ & $0.702$ & $5.61$ & $10.67$ & $16.30$ & $7.19$ & $1.73$\\
+\midrule
+all & & & $\phantom{0}9.19$ & $17.64$ & $6.75$ & $2.44$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Three readings. \emph{It is flat in rate}, $8.77\%$ over the slow half
+($\dot M \le 0.30$) against $10.06\%$ over the fast half
+($\ge 0.65$), which is the certificate the remark claims and the reason
+no ramp rate has to be preferred. \emph{It is not gyro noise}: in
+absolute terms the residual is $0.0452$~rad/s against a pre-onset floor
+of $0.0148$, a factor of $3.0$, and it stays near that level while the
+peak excursion varies sixfold across the runs (log--log slope $0.40$,
+$R^2 = 0.02$). What it is, then, is a post-onset disturbance floor —
+contact chatter and rotor vibration during the tip — rather than
+either sensor noise or a deformation of the modelled response.
+
+\emph{And it is not the modelled forcing either}, which is worth
+establishing rather than assuming. The deviation bound predicts a
+residual falling five-fold from the slowest ramp to the fastest, since
+the moment swept before the tilt limit is reached collapses as
+$\dot M^{2/3}$; Table~\ref{tab:resid} shows no such fall. The test that
+settles it is whether the runs the bound calls worse are in fact worse.
+Within each rate, so that the rate trend cannot carry the comparison,
+the rank correlation between the predicted bound and the measured
+residual is $-0.198$ ($p = 0.005$ across the seven rates) — the wrong
+sign — while against the pre-onset floor it is $+0.200$. The modelled
+forcing is therefore below the floor everywhere, and the bound should be
+read as a guarantee on one channel rather than as a description of what
+the runs do. Note also that the runs stop at $4.5$--$5.6^\circ$ of tilt
+rather than at the $10^\circ$ design limit, so a bound stated at that
+limit overstates the gravity channel by roughly the square of the
+ratio.
+
+None of this reaches the deliverable, for the reason given in
+Sec.~\ref{sec:static}: the onset is located by a normalized
+correlation, so a disturbance uncorrelated with its weight averages
+out. A residual of $9\%$ on the rate leaves the identified threshold
+displaced by $0.04$~mN\,m in the median and $0.15$ at worst.
 
 \section{Calibration of the effective constants}
 \label{sec:calibration}
@@ -1458,6 +1527,8 @@ gates, caps, calibration, Algorithm~\ref{alg:cosh};
 \item \texttt{analysis/ramp\_quality.py} — gates;
 \item \texttt{analysis/sensitivity.py} — $\pm20\%$ robustness;
 \item \texttt{analysis/cosh\_fidelity.py} — prediction-test residuals;
+\item \texttt{analysis/rate\_residual.py} — Table~\ref{tab:resid},
+endpoint and window residuals against the deviation bound;
 \item \texttt{analysis/excitation\_angle\_design.py} — rate/cutoff
 design;
 \item \texttt{analysis/ge\_linearity.py},
