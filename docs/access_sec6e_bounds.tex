@@ -130,6 +130,45 @@ pitch & $0.10$ & $0.3979$ & $0.161$ & $62.55$ & $0.72$ & $0.302$ \\
 \end{tabular}
 \end{center}
 
+\paragraph{The same row, by hand.}
+Roll at $\dot M = 1.20$~N\,m/s, every intermediate carried so the row can
+be checked on a calculator:
+
+\begin{center}\small
+\begin{tabular}{@{}rlr@{}}
+\toprule
+ & quantity & value \\
+\midrule
+   & $\varphi_{\max} = 10^\circ$ & $0.174533$~rad \\
+   & $m = W/g = 31.59/9.81$ & $3.220183$~kg \\
+   & $z_{CoM}^2 + \lpo^2 = 0.09 + 0.0256$ & $0.115600$~m$^2$ \\
+   & $m\bigl(z_{CoM}^2+\lpo^2\bigr)$ & $0.372253$~kg\,m$^2$ \\
+(1)& $J_P \le 0.0537 + 0.372253$ & $0.425953$~kg\,m$^2$ \\
+\midrule
+   & $6\varphi_{\max}J_P\dot M^{2}
+       = 6(0.174533)(0.425953)(1.44)$ & $0.642322$ \\
+(2)& $\Delta M_{\rm win} \le (0.642322)^{1/3}$ & $0.862815$~N\,m \\
+\midrule
+   & $\varphi_{\max}^2$ & $0.030462$ \\
+(3)& $\rho_{\varphi,\max}
+       = \tfrac12(31.59)(0.160)(0.030462)$ & $0.076983$~N\,m \\
+(4)& $\rho_{GE,\max} = (0.03446)(0.862815)(0.174533)$ & $0.005189$~N\,m \\
+\midrule
+   & $\rho_{\varphi,\max}/7$ & $10.998$~mN\,m \\
+   & $\rho_{GE,\max}/5$ & $\phantom{0}1.038$~mN\,m \\
+(5)& $\bigl|\Delta M_{{\rm crit},e}\bigr| \le$ sum & $12.035$~mN\,m \\
+(6)& $\div\,W = 30.08$~N & $0.400$~mm \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Note which weight goes where: $W = 31.59$~N, the ballasted value,
+enters (3) because a heavier vehicle makes the gravity remainder
+larger, while $W = 30.08$~N, the unloaded value, enters (6) because a
+lighter vehicle turns a given moment error into a larger offset. Each
+is taken at whichever end of the range is unfavourable for the quantity
+it appears in.
+
 The worst admissible case is $0.400$~mm for roll and $0.322$~mm for
 pitch, of which the gravity channel supplies $91$ and $92\%$. Two
 readings follow. The inertia, the one input that is not directly
@@ -140,27 +179,152 @@ the tilt cap rather than at the ramp: (107) is quadratic in
 $\varphi_{\max}$ while (108) is only $\dot M^{2/3}$, so a twelve-fold
 reduction in ramp rate moves the bound by $7\%$ whereas halving the cap
 quarters it. The $10^\circ$ used here was chosen for onset visibility
-on the lightly loaded configurations.
+on the lightly loaded configurations; at $5^\circ$ the worst case would
+fall to $0.105$~mm for roll and $0.084$~mm for pitch --- a little short
+of a factor of four, because $\rho_{GE,\max}$ carries only
+$\varphi_{\max}^{4/3}$ --- at the price of a $13$ to $17\%$ shorter
+fitting window and a rate at the cap that drops from $0.92$ to
+$0.48$~rad/s on the slowest ramp, roughly halving the signal the onset
+fit has to work with.
 
 \paragraph{The angular rate error.}
 Eq.~(90) bounds the rate deviation itself, and unlike (109) it needs the
-window. The same cubic inversion gives $x \le \bar x =
-\bigl(6\varphi_{\max}\Wz C_2/\dot M\bigr)^{1/3}$, and $C_2$ has a
-geometric ceiling in which the mass cancels,
+window --- not a bound on the window, but the window itself. The
+distinction matters. In (109) the reduction factors were replaced by
+their suprema $\tfrac17$ and $\tfrac15$, which hold for every $x$, so no
+value of $x$ had to be committed to. Here the kernel gain $\sinh x$
+survives, and the product $R(x)\sinh x$ is what the bound depends on;
+substituting a mere upper bound $\bar x$ would require knowing that this
+product is monotone. It is, but nothing needs to rest on that, because
+$x$ is not free: the run ends when the tilt cap is reached, so by (20)
+\begin{equation}
+  \Lambda(x) \;=\; \frac{\varphi_{\max}\Wz C_2}{\dot M},
+  \qquad \Lambda(x) = \sinh x - x ,
+  \tag{110}
+\end{equation}
+a scalar equation with a unique root, since $\Lambda$ is strictly
+increasing from $0$. The cubic shortcut of (106) is the same relation
+with $\Lambda(x)$ replaced by $x^3/6$; it is what makes (106)
+closed-form, and it costs little there because $\Delta M_{\rm win}$
+enters (109) only through the $8$--$9\%$ coupling channel. It would cost
+a great deal here, where $\Lambda$ exceeds $x^3/6$ by a factor of $3.6$
+at the slowest ramp and the difference is then exponentiated by $\sinh$.
+So (110) is solved as it stands.
+
+The reduction factors themselves are elementary integrals, and both windows close
+in finitely many terms:
+\begin{equation}
+\begin{aligned}
+  R_\varphi(x) &= \frac{A_\varphi(x)}{x\Lambda(x)^2}, &
+  A_\varphi(x) &= \tfrac14\sinh 2x - \tfrac12 x
+                  - 2x\cosh x + 2\sinh x + \tfrac13x^3, \\[2pt]
+  R_{GE}(x) &= \frac{A_{GE}(x)}{x^{2}\Lambda(x)}, &
+  A_{GE}(x) &= x\cosh x - \sinh x - \tfrac13x^3 .
+\end{aligned}
+  \tag{111}
+\end{equation}
+Finally $C_2$ has a geometric ceiling in which the mass cancels,
 \begin{equation}
   C_2^{2} = \frac{\Wz}{J_P}
   \;\le\; \frac{W z_{CoM}}{m\bigl(z_{CoM}^2 + \lpo^2\bigr)}
   = \frac{g\,z_{CoM}}{z_{CoM}^2 + \lpo^2} ,
-  \tag{110}
+  \tag{112}
 \end{equation}
-giving $5.05$~s$^{-1}$ for roll and $5.25$ for pitch. At the fastest
-ramp $\bar x = 3.47$ and (90) returns $|e_\omega(\tau_{\rm end})| \le
-0.103$~rad/s against a nominal $1.91$~rad/s, i.e.\ $5.4\%$; at the
-slowest it returns $57\%$, because $\bar x$ enters through $\sinh$ and
-the cubic shortcut is exponentially lossy there. That degradation does
-not touch (109), which carries no $x$ at all --- which is why the
-threshold bound, and not the rate bound, is what the offset budget
-inherits.
+giving $5.05$~s$^{-1}$ for roll and $5.25$ for pitch. Note that here the
+inertia is taken at its \emph{lower} end, $J_P = m(z_{CoM}^2+\lpo^2)$,
+the opposite of (106): $J_PC_2 = \sqrt{J_P\Wz}$ sits in the denominator
+of (90), and a smaller $J_P$ both enlarges that quotient and raises
+$C_2$, hence $x$. The two ends coexist without contradiction because
+they enter different factors --- $\rho_{GE,\max}$ keeps the upper end it
+was given at line (4), the kernel takes the lower --- and each is the
+end unfavourable to the factor it appears in. Continuing the roll row
+above:
+
+\begin{center}\small
+\begin{tabular}{@{}rlr@{}}
+\toprule
+ & quantity & value \\
+\midrule
+   & $J_P = m\bigl(z_{CoM}^2+\lpo^2\bigr)$, lower end
+     & $0.372253$~kg\,m$^2$ \\
+   & $\Wz = (31.59)(0.30)$ & $9.477000$~N\,m \\
+(7)& $C_2 = \sqrt{\Wz/J_P}$, and (112) agrees & $5.045639$~s$^{-1}$ \\
+\midrule
+   & $\varphi_{\max}\Wz C_2/\dot M
+       = (0.174533)(9.477)(5.045639)/1.20$ & $6.954777$ \\
+(8)& $x$, the root of $\sinh x - x = 6.954777$ & $2.993015$ \\
+   & \quad check: $\sinh(2.993015) = 9.947796$, less $x$
+     & $6.954781$ \\
+   & $\Lambda(x) = 6.954781$, $\Lambda(x)^2$ & $48.368980$ \\
+\midrule
+   & $A_\varphi$ from (111), $\tfrac14(198.914782) - \tfrac12(2.993015)$ & \\
+   & \quad $-\,2(2.993015)(9.997932) + 2(9.947796) + 8.937281$
+     & $17.217140$ \\
+(9)& $R_\varphi = 17.217140/\bigl[(2.993015)(48.368980)\bigr]$
+   & $0.118928$ \\
+   & $A_{GE} = (2.993015)(9.997932) - 9.947796 - 8.937281$
+     & $11.038884$ \\
+(10)& $R_{GE} = 11.038884/\bigl[(2.993015)^2(6.954781)\bigr]$
+   & $0.177184$ \\
+\midrule
+   & $R_\varphi\,\rho_{\varphi,\max} = (0.118928)(0.076983)$ & $0.009155$ \\
+   & $R_{GE}\,\rho_{GE,\max} = (0.177184)(0.005189)$ & $0.000919$ \\
+(11)& $\bar\rho = R_\varphi\rho_{\varphi,\max} + R_{GE}\rho_{GE,\max}$
+   & $0.010075$~N\,m \\
+\midrule
+   & $J_PC_2 = \sqrt{J_P\Wz}$ & $1.878255$ \\
+(12)& $|e_\omega(\tau_{\rm end})| \le \bar\rho\sinh x/(J_PC_2)$
+   & $0.053360$~rad/s \\
+\midrule
+   & $C_1 = \dot M/\Wz$ & $0.126622$ \\
+   & $\cosh x - 1$ & $8.997932$ \\
+(13)& $\omega_{\rm nom,end} = C_1(\cosh x - 1)$ & $1.139339$~rad/s \\
+(14)& relative, $(12)\div(13)$ & $4.68\%$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Line (11) is where this calculation parts company with (109). There the
+average was bounded by $\rho_{\varphi,\max}/7 + \rho_{GE,\max}/5$, the
+$x\to0$ suprema; here the same average is evaluated at the $x$ the run
+actually reaches, which is smaller --- $0.010075$ against $0.012035$ ---
+because $R_\varphi$ and $R_{GE}$ decrease. The two are consistent, the
+second simply being the sharper of the pair. Across the ramp range the
+roll axis gives
+
+\begin{center}\small
+\begin{tabular}{@{}rrrrrr@{}}
+\toprule
+$\dot M$ [N\,m/s] & $x$ & $\bar\rho$ [mN\,m] & $|e_\omega|$ [rad/s]
+ & $\omega_{\rm nom,end}$ [rad/s] & relative \\
+\midrule
+$0.10$ & $5.18$ & $7.041$ & $0.332$ & $0.925$ & $35.9\%$ \\
+$0.45$ & $3.80$ & $8.751$ & $0.104$ & $1.015$ & $10.3\%$ \\
+$1.20$ & $2.99$ & $10.075$ & $0.053$ & $1.139$ & $\phantom{0}4.7\%$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Pitch is milder on all three rows, $30.1$, $8.6$ and $3.9\%$, the
+shorter pivot arm reducing $\rho_{\varphi,\max}$ faster than it raises
+$C_2$.
+
+Two things are worth reading off. The slow ramp remains where this bound
+is weakest, but no longer for an artefact of the algebra: the cubic
+shortcut is gone, and what is left is the genuine behaviour of the
+estimator. A slow ramp reaches the tilt cap at a low rate --- $0.925$
+against $1.139$~rad/s --- while the forcing has had longer to
+accumulate, so the same absolute deviation is measured against a smaller
+signal. Precision here is bought by ramping faster, the opposite of the
+rule for (109), which is why the two bounds want different operating
+points and why the section reports both.
+
+And these percentages are relative to the peak nominal rate, so they
+overstate what the estimator suffers. The onset is located by the
+normalised correlation of (107), not by the rate at a single instant, so
+the quantity that reaches the offset budget is (109), not this. The rate
+bound is reported because it is the one a reader can compare against a
+gyro specification, not because the budget rests on it.
 
 \paragraph{What (109) covers.}
 The displacement of the identified onset caused by the two forcing terms
