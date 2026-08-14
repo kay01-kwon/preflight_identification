@@ -22,6 +22,15 @@ runs actually do, in the same currency, so the two can be compared:
   noise floor pre-onset std, so that a residual can be told apart from
               the gyro.
 
+The bound is printed twice.  The a-priori column is VI-E as published,
+set at the 10-degree tilt cap.  The runs stop at 4.5 to 5.6 degrees, so
+that column overstates the disturbance by roughly the square of the
+ratio and is not the honest comparison; the realised column re-solves
+the window from each rate's measured peak and evaluates the same bound
+there.  Expect the measured residual to sit near the realised bound at
+the slowest ramp and well above it at the fastest -- the bound covers
+only the modelled forcing, and what dominates in practice is rate-flat.
+
 The fit has no free shape parameter per run (C1 = K*Mdot with Mdot
 measured, C2 shared across the configuration, baseline by continuity),
 so the post-onset curve is a prediction rather than a fit and the
@@ -37,6 +46,7 @@ from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
+from scipy.optimize import brentq
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -45,15 +55,49 @@ from critical_value_getter_piecewise import (commanded_ramp_rate,
                                              extract_piecewise_batch)
 from utils.extractor import load_excitation_dataset
 
-# Sec. VI-E, roll, evaluated at the exact window of (110).  Interpolated
-# in log Mdot for the rates the sweep uses that VI-E does not tabulate.
-BOUND = {0.10: 35.9, 0.45: 10.3, 1.20: 4.7}
+# Sec. VI-D box, roll, for re-deriving the VI-E bound alongside.
+W, G, Z, ARM = 31.59, 9.81, 0.30, 0.160
+BETA_M, J_CAD = 0.03446, 0.0537
+WZ = W * Z
+J_LO = (W / G) * (Z ** 2 + ARM ** 2)
+C2 = np.sqrt(WZ / J_LO)
 
 
-def bound_at(rate):
-    xs = np.log(sorted(BOUND))
-    ys = [BOUND[r] for r in sorted(BOUND)]
-    return float(np.interp(np.log(rate), xs, ys))
+def _lam(u):
+    return np.sinh(u) - u
+
+
+def _r_phi(x):
+    A = (np.sinh(2 * x) / 4 - x / 2 - 2 * x * np.cosh(x)
+         + 2 * np.sinh(x) + x ** 3 / 3)
+    return A / (x * _lam(x) ** 2)
+
+
+def _r_ge(x):
+    return (x * np.cosh(x) - np.sinh(x) - x ** 3 / 3) / (x ** 2 * _lam(x))
+
+
+def bound_at(rate, peak=None, cap_deg=10.0):
+    """The VI-E relative rate bound.
+
+    With `peak` given, the window is the one the runs actually reached,
+    inferred from the measured peak rate through omega = C1(cosh x - 1);
+    this is the comparison that means something, because the a-priori
+    figure is set at the tilt cap and the runs stop well short of it.
+    With `peak` omitted, the a-priori figure at the cap is returned.
+    """
+    c1 = rate / WZ
+    if peak is None:
+        phi = np.deg2rad(cap_deg)
+        x = brentq(lambda t: _lam(t) - phi * WZ * C2 / rate, 1e-9, 40.0)
+        d_m = (6 * phi * (J_CAD + J_LO) * rate ** 2) ** (1 / 3)
+        peak = c1 * (np.cosh(x) - 1.0)
+    else:
+        x = brentq(lambda t: c1 * (np.cosh(t) - 1.0) - peak, 1e-9, 40.0)
+        phi = (c1 / C2) * _lam(x)
+        d_m = rate * x / C2
+    rho = 0.5 * W * ARM * phi ** 2 * _r_phi(x) + BETA_M * phi * d_m * _r_ge(x)
+    return 100.0 * rho * np.sinh(x) / (J_LO * C2) / peak, np.rad2deg(phi)
 
 
 def main():
@@ -100,20 +144,25 @@ def main():
         g[r['rate']].append(r)
 
     print(f"\n  measured residual against the VI-E bound, by ramp rate\n")
-    print(f"  {'rate':>6}{'n':>4}{'peak':>9}{'endpoint %':>21}"
-          f"{'window RMS %':>15}{'noise %':>9}{'VI-E bound %':>14}")
-    print(f"  {'':6}{'':4}{'[rad/s]':>9}{'median':>11}{'p90':>10}"
-          f"{'median':>15}{'median':>9}{'':>14}")
+    print(f"  {'rate':>6}{'n':>4}{'peak':>9}{'phi_end':>9}{'endpoint %':>21}"
+          f"{'RMS %':>8}{'noise %':>9}{'bound @cap':>12}{'@realised':>11}")
+    print(f"  {'':6}{'':4}{'[rad/s]':>9}{'[deg]':>9}{'median':>11}{'p90':>10}"
+          f"{'median':>8}{'median':>9}{'%':>12}{'%':>11}")
     for rate in sorted(g):
         v = g[rate]
         pk = np.array([r['span'] for r in v])
         en = np.array([r['end_pct'] for r in v])
         rm = np.array([r['rms_pct'] for r in v])
         fl = np.array([r['floor_pct'] for r in v])
-        print(f"  {rate:6.2f}{len(v):4d}{np.median(pk):9.3f}"
+        cap, _ = bound_at(rate)
+        real, phi = bound_at(rate, peak=float(np.median(pk)))
+        print(f"  {rate:6.2f}{len(v):4d}{np.median(pk):9.3f}{phi:9.2f}"
               f"{np.median(en):11.2f}{np.percentile(en, 90):10.2f}"
-              f"{np.median(rm):15.2f}{np.median(fl):9.2f}"
-              f"{bound_at(rate):14.1f}")
+              f"{np.median(rm):8.2f}{np.median(fl):9.2f}"
+              f"{cap:12.1f}{real:11.1f}")
+    print("\n  The runs stop well short of the 10-degree cap, so the a-priori"
+          "\n  column is not the one to compare against; the realised column"
+          " is.")
 
     en = np.array([r['end_pct'] for r in rows])
     rm = np.array([r['rms_pct'] for r in rows])
