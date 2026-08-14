@@ -309,15 +309,28 @@ Pitch is milder on all three rows, $30.1$, $8.6$ and $3.9\%$, the
 shorter pivot arm reducing $\rho_{\varphi,\max}$ faster than it raises
 $C_2$.
 
-Two things are worth reading off. The slow ramp remains where this bound
-is weakest, but no longer for an artefact of the algebra: the cubic
-shortcut is gone, and what is left is the genuine behaviour of the
-estimator. A slow ramp reaches the tilt cap at a low rate --- $0.925$
-against $1.139$~rad/s --- while the forcing has had longer to
-accumulate, so the same absolute deviation is measured against a smaller
-signal. Precision here is bought by ramping faster, the opposite of the
-rule for (109), which is why the two bounds want different operating
-points and why the section reports both.
+Two things are worth reading off, and the first is not the window. It is
+natural to read the slow rows as the forcing having had longer to act on
+an unstable plant, and for the \emph{absolute} deviation that is exactly
+right: $0.053$ grows to $0.332$~rad/s because $\sinh x$ grows ninefold.
+But $\omega_{\rm nom}$ is the output of the same plant, driven by the
+ramp instead of by $\rho$, so the amplification is common to both and
+cancels. Using $J_PC_2^{2} = \Wz$ the ratio collapses to
+\begin{equation}
+  \frac{|e_\omega|_{\rm end}}{\omega_{\rm nom,end}}
+  \;\le\; \coth\frac{x}{2}\;\cdot\;\frac{\bar\rho\,C_2}{\dot M} ,
+  \tag{113}
+\end{equation}
+in which the window survives only through $\coth(x/2)$, running from
+$1.106$ to $1.011$ across the sweep --- eight per cent, and in the
+favourable direction. What remains is the disturbance measured against
+$\dot M/C_2$, the moment the ramp sweeps in one time constant
+$1/C_2 = 0.198$~s of the error dynamics: $238$~mN\,m at the fastest ramp
+against $19.8$ at the slowest, while $\bar\rho$ only falls from $10.1$
+to $7.0$. Twelve times slower is twelve times worse, and almost nothing
+else is happening. Precision here is therefore bought by ramping faster,
+the opposite of the rule for (109), which is why the two bounds want
+different operating points and why the section reports both.
 
 And these percentages are relative to the peak nominal rate, so they
 overstate what the estimator suffers. The onset is located by the

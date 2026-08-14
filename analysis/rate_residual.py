@@ -98,7 +98,8 @@ def bound_at(rate, peak=None, cap_deg=10.0):
         phi = (c1 / C2) * _lam(x)
         d_m = rate * x / C2
     rho = 0.5 * W * ARM * phi ** 2 * _r_phi(x) + BETA_M * phi * d_m * _r_ge(x)
-    return 100.0 * rho * np.sinh(x) / (J_LO * C2) / peak, np.rad2deg(phi)
+    return (100.0 * rho * np.sinh(x) / (J_LO * C2) / peak, x,
+            np.rad2deg(phi))
 
 
 def main():
@@ -129,12 +130,20 @@ def main():
             span = float(np.max(np.abs(om[j:] - base)))
             if span <= 0:
                 continue
-            # The endpoint is taken as the mean of the last three samples,
-            # so a single noisy sample cannot carry the statistic.
+            # x is taken from the fit, not from the box: C_2 is the fitted
+            # alpha of this run's own cosh branch and tau_end the post-onset
+            # window it actually spanned.  The tilt follows by integrating
+            # the fitted curve, which is what the model claims the vehicle
+            # did, rather than the raw rate, which carries the residual.
+            tw = crit.t[i0:i1 + 1]
+            c2_fit = float(pw['alpha'])
+            tau_end = float(tw[-1] - tw[j])
+            phi_end = float(np.trapz(pred[j:] - float(pw['c']), tw[j:]))
             rows.append(dict(
                 case=d.parent.name, axis=d.name, bag=crit.bag_name,
                 rate=commanded_ramp_rate(crit.bag_name) or np.nan,
-                span=span,
+                span=span, c2_fit=c2_fit, tau_end=tau_end,
+                x_fit=c2_fit * tau_end, phi_deg=np.rad2deg(phi_end),
                 end_pct=100.0 * abs(float(np.mean(res[-3:]))) / span,
                 rms_pct=100.0 * float(np.sqrt(np.mean(res ** 2))) / span,
                 floor_pct=100.0 * float(np.std(om[:j] - base)) / span))
@@ -144,10 +153,29 @@ def main():
     for r in rows:
         g[r['rate']].append(r)
 
+    print("\n  the window the runs actually spanned, from the fit itself:"
+          "\n  C_2 is each run's fitted alpha and tau_end its post-onset span,"
+          "\n  so x = C_2 tau_end is measured rather than solved from the box.\n")
+    print(f"  {'rate':>6}{'n':>4}{'C2 fit':>9}{'tau_end':>9}{'x = C2 tau':>12}"
+          f"{'phi_end':>10}{'x @cap':>9}{'phi cap':>9}")
+    print(f"  {'':6}{'':4}{'[1/s]':>9}{'[s]':>9}{'median (p10-p90)':>12}"
+          f"{'[deg]':>10}{'(110)':>9}{'[deg]':>9}")
+    for rate in sorted(g):
+        v = g[rate]
+        c2 = np.array([r['c2_fit'] for r in v])
+        te = np.array([r['tau_end'] for r in v])
+        xf = np.array([r['x_fit'] for r in v])
+        ph = np.array([r['phi_deg'] for r in v])
+        xcap, phicap = bound_at(rate)[1:]
+        print(f"  {rate:6.2f}{len(v):4d}{np.median(c2):9.3f}{np.median(te):9.3f}"
+              f"{np.median(xf):8.2f} ({np.percentile(xf, 10):.1f}"
+              f"-{np.percentile(xf, 90):.1f})"
+              f"{np.median(ph):10.2f}{xcap:9.2f}{phicap:9.1f}")
+
     print(f"\n  measured residual against the VI-E bound, by ramp rate\n")
-    print(f"  {'rate':>6}{'n':>4}{'peak':>9}{'phi_end':>9}{'endpoint %':>21}"
+    print(f"  {'rate':>6}{'n':>4}{'peak':>9}{'endpoint %':>21}"
           f"{'RMS %':>8}{'noise %':>9}{'bound @cap':>12}{'@realised':>11}")
-    print(f"  {'':6}{'':4}{'[rad/s]':>9}{'[deg]':>9}{'median':>11}{'p90':>10}"
+    print(f"  {'':6}{'':4}{'[rad/s]':>9}{'median':>11}{'p90':>10}"
           f"{'median':>8}{'median':>9}{'%':>12}{'%':>11}")
     for rate in sorted(g):
         v = g[rate]
@@ -155,9 +183,9 @@ def main():
         en = np.array([r['end_pct'] for r in v])
         rm = np.array([r['rms_pct'] for r in v])
         fl = np.array([r['floor_pct'] for r in v])
-        cap, _ = bound_at(rate)
-        real, phi = bound_at(rate, peak=float(np.median(pk)))
-        print(f"  {rate:6.2f}{len(v):4d}{np.median(pk):9.3f}{phi:9.2f}"
+        cap = bound_at(rate)[0]
+        real = bound_at(rate, peak=float(np.median(pk)))[0]
+        print(f"  {rate:6.2f}{len(v):4d}{np.median(pk):9.3f}"
               f"{np.median(en):11.2f}{np.percentile(en, 90):10.2f}"
               f"{np.median(rm):8.2f}{np.median(fl):9.2f}"
               f"{cap:12.1f}{real:11.1f}")
