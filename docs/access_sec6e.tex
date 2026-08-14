@@ -6,10 +6,19 @@
 \title{\vspace{-16mm}\textbf{Drop-in text for Sec.~VI-E (deviation bound)
 and Sec.~VI-B (ramp tracking)}\vspace{-3mm}}
 \date{\small numbering continues from Eq.~(86); symbols follow the manuscript}
-% Every step of (90)-(98) is written out at length in
+% Every step of (90)-(97) is written out at length in
 % docs/vi_e_derivation.tex, and every constant quoted here is recomputed
 % from the calibration by analysis/vi_e_bound_constants.py.  Keep the
 % three in step when editing.
+%
+% This file stops at (97) and at (109), the exact gravity remainder.  The
+% passage that carries the deviation on to the reported threshold --
+% the onset linearisation, the reduction weight, and the second use of
+% Chebyshev -- is docs/access_sec6e_onset.tex, (98)-(108); it replaced a
+% compressed version that lived here and that omitted the baseline the
+% two-segment cost carries.  The Psi-R proof equations were renumbered
+% into the 96 block, which both clears the collision with that file and
+% repairs their earlier out-of-order numbering.
 \begin{document}\maketitle
 
 \section*{VI-E continuation: impulse response and the bound on $e_\varphi$}
@@ -269,12 +278,12 @@ $\Psi = x\coth(x/2)$, the two claims read
   \int_0^x\!\Lambda(u)^2du \le \tfrac12\tanh\tfrac{x}{2}\Lambda(x)^2,
   \qquad
   \int_0^x\! u\,\Lambda(u)\,du \le x\tanh\tfrac{x}{2}\,\Lambda(x),
-  \tag{99}
+  \tag{96a}
 \end{equation}
 with $\Lambda(u) = \sinh u - u$; the half-angle tangent enters because
-$\tanh(x/2) = \Lambda'(x)/\sinh x$. Each step from (95)--(96) to (99)
+$\tanh(x/2) = \Lambda'(x)/\sinh x$. Each step from (95)--(96) to (96a)
 divides by a quantity that is positive for $x>0$ --- $\coth(x/2)$,
-$\Lambda$, $\Lambda^2$ and $\cosh^2(x/2)$ --- so (99) is equivalent to
+$\Lambda$, $\Lambda^2$ and $\cosh^2(x/2)$ --- so (96a) is equivalent to
 the two claims and not merely sufficient for them.
 
 Both are proved from one corollary of the mean value theorem, used
@@ -282,7 +291,7 @@ three times and nowhere supplemented. \emph{If $f$ is continuous on
 $[0,b]$, differentiable on $(0,b)$ with $f'\ge0$, and $f(0)=0$, then
 $f\ge0$ on $[0,b]$}: for $t\in(0,b]$ the theorem gives
 $f(t) = f(t)-f(0) = f'(\xi)\,t \ge 0$ for some $\xi\in(0,t)$. Write
-the first claim of (99) as $D(x) \triangleq \tfrac12\tanh(x/2)
+the first claim of (96a) as $D(x) \triangleq \tfrac12\tanh(x/2)
 \Lambda(x)^2 - \int_0^x\Lambda^2$, so $D(0)=0$; differentiating and
 factoring out $\Lambda>0$ leaves $D' = \Lambda B$ with $B =
 \phi/\bigl(4\cosh^2(x/2)\bigr)$ and
@@ -290,20 +299,20 @@ factoring out $\Lambda>0$ leaves $D' = \Lambda B$ with $B =
   \phi(x) \triangleq x + 2x\cosh x - 3\sinh x ,
   \qquad
   \phi''(x) = \sinh x + 2x\cosh x \ge 0 .
-  \tag{100}
+  \tag{96b}
 \end{equation}
 Applying the corollary to $\phi'$ (whose derivative is $\phi''\ge0$
 and which vanishes at $0$) gives $\phi'\ge0$; applying it to $\phi$
 gives $\phi\ge0$, hence $B\ge0$ and $D' = \Lambda B\ge0$; applying it
 to $D$ gives $D\ge0$, which is the claim. The second inequality of
-(99) needs the corollary only once: its difference $E = x\tanh(x/2)
+(96a) needs the corollary only once: its difference $E = x\tanh(x/2)
 \Lambda - \int_0^x\!u\Lambda$ has $E(0) = 0$ and, on putting the
 derivative over $\cosh x + 1$ with $\operatorname{sech}^2(x/2) =
 2/(\cosh x+1)$,
 \begin{equation}
   E'(x) = \frac{\sinh^2x - 2x\sinh x + x^2\cosh x}{\cosh x + 1}
         = \frac{\Lambda(x)^2 + x^2\Lambda'(x)}{\cosh x + 1} \;\ge\; 0 ,
-  \tag{100a}
+  \tag{96c}
 \end{equation}
 a sum of two non-negative terms over a positive one, so $E\ge0$. No
 monotonicity
@@ -324,52 +333,11 @@ independently of $x$, $C_2$, $J_P$ and $\Wz$: the window length that
 conclusion, and is needed only to bound $\rho_{GE,\max}$ through (93).
 
 The second inequality of (97) is the same argument carried one step
-further, to the quantity actually reported. The onset minimises the
-two-segment residual, so perturbing the data by $e_\omega$ displaces
-the minimiser by
-$\delta = \langle e_\omega,\partial_{t_0}\hat\omega\rangle/
-\|\partial_{t_0}\hat\omega\|^2$ with
-$\partial_{t_0}\hat\omega = -C_1C_2\sinh(C_2\tau)$; multiplying by
-$\dot M$ and substituting (88), then exchanging the order of
-integration, collapses the double integral to a weighted average of
-the forcing itself,
-\begin{equation}
-  \Delta M_{\rm crit} = -\!\int_0^{\tau_{\rm end}}\!\!\rho(s)\,w(s)\,ds,
-  \qquad
-  w(s) = \frac{\Wz\int_s^{\tau_{\rm end}}\sinh(C_2\tau)
-                \cosh\bigl(C_2(\tau-s)\bigr)d\tau}
-              {J_PC_2\,\|\sinh(C_2\tau)\|^2} .
-  \tag{98}
-\end{equation}
-The weight is non-negative, being an integral of a product of
-hyperbolic functions of non-negative arguments; it is non-increasing
-in $s$, both the integration range and the $\cosh$ factor shrinking as
-$s$ grows; and it integrates to unity exactly. The last is worth a
-line, since it is what lets $\bar\rho$ enter (97) bare. Integrating
-(98) over $s$ and exchanging the order --- the region
-$0\le s\le\tau\le\tau_{\rm end}$ being the same triangle read either
-way --- the inner integral is $\int_0^{\tau}\cosh(C_2(\tau-s))ds =
-\sinh(C_2\tau)/C_2$, which reproduces the norm in the denominator, so
-$\int w = \Wz/(J_PC_2^{2}) = 1$ by the same identity that removes the
-inertia elsewhere. Neither the window length nor any constant
-survives, and a uniform unmodelled moment therefore displaces the
-identified threshold one-for-one as a consequence rather than as an
-assumption. The first two properties alone would give
-$|\Delta M_{\rm crit}|\le\rho_{\max}$. The third makes $\rho$ and $w$
-oppositely monotone, so Chebyshev applies a second time and returns
-$|\Delta M_{\rm crit}|\le\bar\rho$, which with (95) is the stated
-bound.
-
-The constants differ between the two halves of (97) because the two
-questions do. The first asks how far the fitted rate curve is
-displaced, so the kernel integral $\Psi$ multiplies $\bar\rho$ and the
-products climb to $\tfrac12$ and $1$; the second asks how far the
-\emph{minimiser} moves, and by (98) that is a normalised correlation
-with no kernel gain left over, so $\bar\rho$ enters bare and the
-constants are the reduction factors themselves. The threshold bound is
-the stronger of the two by about a factor of four, which is why it,
-and not the relative rate bound, is what the offset budget inherits. A
-reviewer can evaluate either from numbers already in the paper.
+further, to the quantity actually reported: the onset minimises the
+two-segment residual, so a perturbation of the data displaces the
+minimiser, and that displacement is what moves $M_{\rm crit}$. The
+reduction is written out at (98)--(108), which also accounts for the
+pre-onset baseline the two-segment cost carries.
 
 \paragraph{How the pivot inertia enters, and how little of it is needed.}
 The two bounds want $J_P$ from opposite sides, and the parallel-axis
@@ -429,7 +397,7 @@ $\dot M$ [N\,m/s] & $0.10$ & $0.45$ & $1.20$ & $0.10$ & $0.45$ & $1.20$\\
 $x$ at the cap                  & $5.18$ & $3.80$ & $2.99$ & $5.21$ & $3.83$ & $3.02$\\
 $\bar x$ by (92)                & $7.94$ & $4.81$ & $3.47$ & $8.04$ & $4.87$ & $3.51$\\
 $\Delta M_{\rm win}$ [N\,m]     & $0.103$& $0.339$& $0.712$& $0.099$& $0.329$& $0.692$\\
-$\rho_{\varphi,\max}$ by (101) [mN\,m] & \multicolumn{3}{c}{$68.40$} & \multicolumn{3}{c}{$54.01$}\\
+$\rho_{\varphi,\max}$ by (109) [mN\,m] & \multicolumn{3}{c}{$68.40$} & \multicolumn{3}{c}{$54.01$}\\
 $\rho_{GE,\max}$ [mN\,m]        & $0.62$ & $2.04$ & $4.29$ & $0.60$ & $1.98$ & $4.16$\\
 $\bar\rho$ by (95) [mN\,m]      & $6.99$ & $8.64$ & $9.92$ & $5.66$ & $7.04$ & $8.15$\\
 \midrule
@@ -455,7 +423,7 @@ gravity moment rather than its Taylor bound,
   \rho_\varphi = G(\varphi)-G(0)-G'(0)\varphi
   = W\bigl[a(1-\cos\varphi) + z_{CoM}(\sin\varphi-\varphi)\bigr]
   \;\le\; \tfrac12 W a\,\varphi_{\max}^2 ,
-  \tag{101}
+  \tag{109}
 \end{equation}
 the second term being negative; the customary bound on the right is
 loose by $8$--$14\%$ over the box and there is no reason to pay it.

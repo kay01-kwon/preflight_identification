@@ -809,88 +809,138 @@ term, as claimed. Minimising the full two-segment cost and the
 post-onset term alone gives the same answer to five figures at every
 size, which is the numerical form of the two paragraphs above.
 
-\textbf{It is an average of $\rho$ with a non-negative weight.}
-Substitute the Duhamel integral (D.2) into (D.12) and exchange the order
-of integration (Fubini; both integrands are continuous on a bounded
-domain):
+\textbf{From (D.12) to (97b), step by step.} The reduction is short but
+has three distinct moves in it, so they are separated here. Throughout,
+$\tau$ runs from $0$ at the onset to $\te$ at the window end, and
+$\langle a,b\rangle = \int_0^{\te}ab\,d\tau$.
+
+\emph{Step 1: write the inner product out.} (D.12) reads
 \[
-  \int_c^{T}\!\!\sinh(C_2\tau)\!\int_c^{\tau}\!\!\dot h_\varphi(\tau-s)
-    \rho(s)\,ds\,d\tau
-  = \int_c^{T}\!\!\rho(s)
-    \underbrace{\left[\int_s^{T}\!\!\sinh(C_2\tau)\,
-      \dot h_\varphi(\tau-s)\,d\tau\right]}_{\text{depends on }s\text{ only}}\!ds,
+  \Delta M_{{\rm crit},e}
+  = -\,\frac{\Wz}{C_2}\,
+    \frac{\int_0^{\te} e_\omega(\tau)\sinh(C_2\tau)\,d\tau}
+         {\|\sinh(C_2\tau)\|^2}.
 \]
-the inner limits changing from $s\in[0,\tau]$ to $\tau\in[s,T]$. Hence
+
+\emph{Step 2: substitute the deviation.} $e_\omega$ is not free: (D.2)
+gives it as the Duhamel integral of the forcing, with
+$\dot h_\varphi(u) = \cosh(C_2u)/J_P$ from (87). Putting that in makes
+the numerator a double integral over the triangle
+$0\le s\le\tau\le\te$,
+\[
+  \int_0^{\te}\!\!\sinh(C_2\tau)
+  \left[\int_0^{\tau}\!\frac{\cosh\bigl(C_2(\tau-s)\bigr)}{J_P}\,
+        \rho(s)\,ds\right]dt .
+\]
+
+\emph{Step 3: exchange the order.} Fubini applies --- both integrands
+are continuous on a bounded domain --- and the same triangle read the
+other way has $s$ outermost with $\tau$ running from $s$ up to $\te$:
+\[
+  = \int_0^{\te}\!\rho(s)
+    \underbrace{\left[\frac{1}{J_P}\int_s^{\te}\!\sinh(C_2\tau)
+      \cosh\bigl(C_2(\tau-s)\bigr)\,d\tau\right]}
+     _{\text{a function of }s\text{ alone}}ds .
+\]
+The forcing is now outside, multiplied by something that no longer
+depends on it. That is the whole point of the step: what began as a
+correlation of $e_\omega$ against a kernel has become a weighted
+average of $\rho$ itself,
 \begin{equation}
-  \Delta M_{\rm crit} = -\!\int_c^{T}\!\rho(s)\,w(s)\,ds,
-  \qquad
-  w(s) = \frac{\Wz\displaystyle\int_s^{T}\!\sinh(C_2\tau)
+  \Delta M_{{\rm crit},e} = -\!\int_0^{\te}\!\rho(s)\,w(s)\,ds,
+  \quad
+  w(s) = \frac{\Wz\displaystyle\int_s^{\te}\!\sinh(C_2\tau)
                 \cosh\bigl(C_2(\tau-s)\bigr)d\tau}
               {J_PC_2\|\sinh(C_2\tau)\|^2}.
   \tag{D.13}
 \end{equation}
-Three properties of $w$ finish the argument, and all three are checked
-in code (\texttt{error\_budget.py -{}-check}):
+
+\emph{Step 4: three properties of the weight.} All three are checked in
+code (\texttt{error\_budget.py -{}-check}).
+
 \begin{enumerate}
-\item $w\ge0$, because the integrand is a product of two hyperbolic
-  functions of non-negative arguments;
-\item $\int_c^T w = 1$, exactly. This is not a numerical coincidence
-  and is worth doing, because it is what lets $\bar\rho$ enter (97)
-  bare. Integrate the numerator of (D.13) over $s$ and exchange the
-  order: the region $0\le s\le\tau\le T$ is the same triangle read
-  either way, so
+\item[(i)] $w\ge0$: the integrand is a product of two hyperbolic
+  functions of non-negative arguments.
+\item[(ii)] $\int_0^{\te} w = 1$, \emph{exactly}. Integrate the
+  numerator of (D.13) over $s$ and exchange the order once more --- the
+  same triangle again ---
   \[
-    \int_c^{T}\!\!\int_s^{T}\!\sinh(C_2\tau)\cosh\bigl(C_2(\tau-s)\bigr)
-      d\tau\,ds
-    = \int_c^{T}\!\sinh(C_2\tau)
-      \left[\int_c^{\tau}\!\cosh\bigl(C_2(\tau-s)\bigr)ds\right]d\tau .
+    \int_0^{\te}\!\!\int_s^{\te}\!\sinh(C_2\tau)
+      \cosh\bigl(C_2(\tau-s)\bigr)d\tau\,ds
+    = \int_0^{\te}\!\sinh(C_2\tau)
+      \left[\int_0^{\tau}\!\cosh\bigl(C_2(\tau-s)\bigr)ds\right]d\tau .
   \]
-  The inner integral is elementary --- substitute $u = \tau - s$, whose
-  sign flip is cancelled by the reversed limits ---
+  The inner integral is elementary, $u = \tau-s$ turning it into
+  $\int_0^{\tau}\cosh(C_2u)du = \sinh(C_2\tau)/C_2$, so the whole
+  numerator becomes $\|\sinh(C_2\tau)\|^2/C_2$ --- the very norm sitting
+  in the denominator of (D.13). Hence
   \[
-    \int_c^{\tau}\!\cosh\bigl(C_2(\tau-s)\bigr)ds
-    = \int_c^{\tau}\!\cosh(C_2u)\,du
-    = \frac{\sinh(C_2\tau)}{C_2},
-  \]
-  and putting it back reproduces the very norm that sits in the
-  denominator of (D.13),
-  \[
-    \frac{1}{C_2}\int_c^{T}\!\sinh^2(C_2\tau)\,d\tau
-    = \frac{\|\sinh(C_2\tau)\|^2}{C_2}.
-  \]
-  Hence
-  \[
-    \int_c^T w
+    \int_0^{\te} w
     = \frac{\Wz\,\|\sinh\|^2/C_2}{J_PC_2\|\sinh\|^2}
     = \frac{\Wz}{J_PC_2^{2}} = 1
   \]
-  by $J_PC_2^{2} = \Wz$ --- the same identity that removes the inertia
+  by $J_PC_2^{2} = \Wz$, the identity that removes the inertia
   everywhere else in this document. Neither the window length nor any
-  constant survives. \texttt{error\_budget.py -{}-check} evaluates (D.13)
-  at $\rho\equiv1$ and returns $-1.0005$ to $-1.0001$ across five
-  operating points, which is the quadrature error on an identity rather
-  than evidence for it. The reading is that a uniform unmodelled moment
-  displaces the identified threshold one-for-one, and now that is a
-  consequence rather than an assumption;
-\item $w$ is non-increasing in $s$ --- as $s$ grows both the
-  integration range and the $\cosh$ factor shrink (verified
-  numerically over the window).
+  constant survives. \texttt{error\_budget.py -{}-check} evaluates
+  (D.13) at $\rho\equiv1$ and returns $-1.0005$ to $-1.0001$ across five
+  operating points, which is quadrature error on an identity rather than
+  evidence for it.
+\item[(iii)] $w$ is non-increasing in $s$: as $s$ grows both the
+  integration range and the $\cosh$ factor shrink.
 \end{enumerate}
-Property 1 plus 2 alone would give $|\Delta M_{\rm crit}|\le\rmax$. But
-$\rho$ is increasing and $w$ is decreasing, so \emph{Chebyshev applies a
-second time}, now to (D.13):
+
+\emph{Step 5: what (i) and (ii) alone give.} A non-negative weight of
+unit mass can do no more than pick out the largest value of what it
+averages, so
 \[
-  \Bigl|\int_c^T\!\rho\,w\Bigr|
-  \;\le\; \frac{1}{T}\int_c^T\!\rho \int_c^T\! w
-  \;=\; \rbar\cdot 1 \;=\; \rbar ,
+  \bigl|\Delta M_{{\rm crit},e}\bigr|
+  \;\le\; \rmax\!\int_0^{\te}\! w \;=\; \rmax .
 \]
-and substituting (95),
+This is already a result --- a uniform unmodelled moment displaces the
+identified threshold one-for-one, as a consequence rather than an
+assumption --- but it is the weak form, and over the box it is
+$2.70$~mm of offset, larger than the accuracy actually achieved.
+
+\emph{Step 6: what (iii) adds.} The forcing rises across the window
+while the weight falls, so the two are oppositely monotone and
+Chebyshev's inequality (D.4) applies a second time, in the same
+direction as the first:
+\[
+  \Bigl|\int_0^{\te}\!\rho\,w\Bigr|
+  \;\le\; \frac{1}{\te}\int_0^{\te}\!\rho \;\cdot\!\int_0^{\te}\! w
+  \;=\; \rbar\cdot1 \;=\; \rbar .
+\]
+The maximum has been replaced by the window average, and by (ii) no
+kernel gain is left over to multiply it.
+
+\emph{Step 7: bound the average.} $\rbar$ was computed at (95) as
+$R_\varphi\rho_{\varphi,\max} + R_{GE}\rho_{GE,\max}$, and the two
+reduction factors are bounded there by $\tfrac17$ and $\tfrac15$.
+Chaining Steps 6 and 7,
 \begin{equation}
-  |\Delta M_{\rm crit}| \;\le\; \rbar
+  \bigl|\Delta M_{{\rm crit},e}\bigr| \;\le\; \rbar
   \;\le\; \frac{\rho_{\varphi,\max}}{7} + \frac{\rho_{GE,\max}}{5},
   \tag{97b}
 \end{equation}
-the right half of (97).
+the right half of (97). Note the direction of the second inequality:
+$\rbar$ is the average, and the right-hand side bounds it --- it is not
+a definition of $\rbar$.
+
+\begin{center}\small
+\begin{tabular}{@{}rll@{}}
+\toprule
+step & what changes & why it is allowed \\
+\midrule
+1--2 & $e_\omega \to$ Duhamel double integral & (D.2), the exact solution \\
+3 & double integral $\to \int\rho\,w$ & Fubini on the triangle \\
+4 & --- & $w\ge0$, $\int w = 1$, $w\downarrow$ \\
+5 & $\int\rho w \to \rmax$ & (i) and (ii) \\
+6 & $\rmax \to \rbar$ & (iii) plus Chebyshev (D.4) \\
+7 & $\rbar \to \rho_{\varphi}/7 + \rho_{GE}/5$ & (95) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
 
 \textbf{Why the constants differ from the left half.} The left half
 asks how far the rate curve is displaced, so the kernel integral
@@ -1067,7 +1117,7 @@ $0.001$ to $0.004$~mm of offset.
       & $\rmax \to \rbar$ \\
 (D.6--7) & known shapes $\Lambda^2$ and $u\Lambda$
       & the ratios $\rbar/\rmax$ \\
-(D.6a) & $R = \int_c^1 f(xt)/f(x)dt$, $n_{\rm eff}\uparrow$
+(D.6a) & $R = \int_0^1 f(xt)/f(x)dt$, $n_{\rm eff}\uparrow$
       & (95): $R_\varphi\le\tfrac17$, $R_{GE}\le\tfrac15$ \\
 (96)  & divide by $\omega_{\rm nom,end}$, use $\Delta M_{\rm win}=\dot Mx/C_2$
       & $\Psi = x\coth(x/2)$; $\Wz$, $J_P$ gone \\
