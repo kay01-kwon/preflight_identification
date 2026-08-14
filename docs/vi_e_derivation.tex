@@ -1038,6 +1038,43 @@ number above depends on it.
 
 \section*{8. A worked example, checkable by hand}
 
+\emph{On which $x$ to use.} Two values circulate below and they must not
+be confused. The cubic shortcut (92) supplies $\bar x =
+(6\Lambda_{\max})^{1/3}$, an \emph{upper bound} on $x$ obtained by
+replacing $\Lambda(x)$ with its leading term $x^3/6$. The exact value
+solves
+\begin{equation}
+  \Lambda(x) \;=\; \Lambda_{\max}
+  \;\triangleq\; \frac{\varphi_{\max}\Wz C_2}{\dot M},
+  \tag{D.14}
+\end{equation}
+which has a unique root because $\Lambda$ increases strictly from $0$.
+The shortcut exists only to spare (97b) a transcendental solve it does
+not need --- there $x$ appears nowhere, and $\Delta M_{\rm win}$ enters
+through a channel worth under a tenth of the total. Wherever $x$ itself
+appears, (D.14) is solved instead, for two reasons. It is loose: at the
+slowest ramp $\Lambda$ exceeds $x^3/6$ by $3.6\times$, and anything
+downstream of $\sinh$ exponentiates that. And it is not automatically
+valid: substituting an upper bound into $R(x)\sinh x$ presumes that
+product monotone, which is true but is not among the facts Sec.~5
+proves, whereas solving (D.14) presumes nothing.
+
+Both reduction factors close in finitely many terms, so the rows below
+need no quadrature:
+\begin{equation}
+\begin{aligned}
+  R_\varphi(x) &= \frac{A_\varphi(x)}{x\Lambda(x)^2}, &
+  A_\varphi(x) &= \tfrac14\sinh 2x - \tfrac12 x
+                  - 2x\cosh x + 2\sinh x + \tfrac13x^3, \\[2pt]
+  R_{GE}(x) &= \frac{A_{GE}(x)}{x^{2}\Lambda(x)}, &
+  A_{GE}(x) &= x\cosh x - \sinh x - \tfrac13x^3 ,
+\end{aligned}
+  \tag{D.15}
+\end{equation}
+each being $\int_0^x\Lambda^2$ and $\int_0^x u\Lambda$ integrated by
+parts against $\int\sinh^2 = \tfrac14\sinh 2x - \tfrac12x$ and
+$\int u\sinh u = u\cosh u - \sinh u$.
+
 Take the roll axis at the fastest ramp, evaluated over the geometric
 box of Sec.~VI-D rather than at any fitted constant: $W = 31.59$~N
 (fully ballasted, $m = 3.221$~kg), $z_{CoM} = 0.30$~m, $a = l_p + p_{\rm off}
@@ -1056,44 +1093,48 @@ geometry & $\Wz = Wz_{CoM}$ & $9.477$~N\,m\\
        & $C_2 \le \sqrt{g z_{CoM}/(z_{CoM}^2+a^2)}$ & $5.045$~s$^{-1}$\\
 \midrule
 tilt cap $\to\Lambda$ & $\Lambda_{\max} = \varphi_{\max}\Wz C_2/\dot M$ & $6.954$\\
-(92)   & $\bar x = (6\Lambda_{\max})^{1/3}$ & $3.468$\\
-exact  & solve $\sinh x - x = \Lambda_{\max}$ & $x = 2.993$\\
+(D.14) & solve $\sinh x - x = 6.954$ & $x = 2.9930$\\
+       & \quad check: $\sinh(2.9930) - 2.9930$ & $6.9548$\\
+(92)   & $\bar x = (6\Lambda_{\max})^{1/3}$, the shortcut & $3.4685$\\
 (93)   & $\tau_{\rm end}\le(6\varphi_{\max}J_P/\dot M)^{1/3}$ & $0.719$~s\\
 (93)   & $\Delta M_{\rm win} = \dot M\tau_{\rm end}$ & $0.863$~N\,m\\
 \midrule
 channel& $\rho_{\varphi,\max} = \tfrac12W a\,\varphi_{\max}^2$ & $76.98$~mN\,m\\
 (93)   & $\rho_{GE,\max} = |\beta_M|\Delta M_{\rm win}\varphi_{\max}$ & $5.20$~mN\,m\\
 \midrule
-(D.6)  & $R_\varphi(3.468)$ & $0.1125$\\
-(D.7)  & $R_{GE}(3.468)$ & $0.1705$\\
+(D.15) & $\Lambda(x) = 6.9548$, $\Lambda(x)^2$ & $48.3690$\\
+(D.15) & $A_\varphi(x)$ & $17.2171$\\
+(D.6)  & $R_\varphi(x) = 17.2171/[(2.9930)(48.3690)]$ & $0.1189$\\
+(D.15) & $A_{GE}(x)$ & $11.0389$\\
+(D.7)  & $R_{GE}(x) = 11.0389/[(2.9930)^2(6.9548)]$ & $0.1772$\\
 (95)   & $\rbar = R_\varphi\rho_{\varphi,\max}+R_{GE}\rho_{GE,\max}$
-       & $9.54$~mN\,m\\
+       & $10.08$~mN\,m\\
        & (against $\rmax = 82.2$~mN\,m) & \\
 \midrule
-(96)   & $\Psi(\bar x) = \bar x\coth(\bar x/2)$ & $3.692$\\
-(96)   & $\Psi\rbar/\Delta M_{\rm win}$ & $4.08\%$\\
+(96)   & $\Psi(x) = x\coth(x/2)$ & $3.309$\\
+(96)   & $\Psi\rbar/\Delta M_{\rm win}$ & $3.86\%$\\
 (97)   & $(\tfrac12\rho_{\varphi,\max}+\rho_{GE,\max})/\Delta M_{\rm win}$
        & $5.06\%$\\
 (97b)  & $\rho_{\varphi,\max}/7 + \rho_{GE,\max}/5$ & $12.04$~mN\,m\\
        & $\div\,W_{\min}$ & $0.400$~mm\\
 \midrule
-(D.3)  & envelope only, $\Psi\rmax/\Delta M_{\rm win}$ & $35.2\%$\\
+(D.3)  & envelope only, $\Psi\rmax/\Delta M_{\rm win}$ & $31.5\%$\\
 \bottomrule
 \end{tabular}
 \end{center}
 
-Read the rows in two groups. The $R$, $\rbar$ and (96) rows are
-evaluated at $\bar x = 3.468$ rather than at the exact $x = 2.993$, and
-are illustrative rather than guaranteed: $R$ \emph{decreases}, so
-$\rbar(\bar x) = 9.54$ understates $\rbar(x) = 10.08$~mN\,m, and the
-$4.08\%$ exceeds the $3.86\%$ at the exact $x$ only because $\Psi R$
-happens to rise --- which Sec.~5 deliberately neither assumes nor
-proves. The guaranteed numbers are the (97) and (97b) rows, which
-contain no $x$ at all and use only the two bounds that were proved.
+Read the rows in two groups. Everything from (D.15) down to (96) is
+evaluated at the exact $x$ of (D.14), so each is the value the run
+actually realises; the $\bar x$ row is carried only to show what the
+shortcut costs, and using it would have given $\rbar = 9.54$ instead of
+$10.08$~mN\,m --- an \emph{under}statement, since $R$ decreases. The
+(97) and (97b) rows are of a different kind again: they contain no $x$
+at all, so they hold whatever the window turns out to be. That is why
+(97b), and not the $3.86\%$, is what the offset budget inherits.
 
-Two readings. First, (97) costs about a quarter over (96) --- the price
+Two readings. First, (97) costs about a third over (96) --- the price
 of dropping $x$ from the statement --- whereas the envelope form costs
-a factor of nine. Second, this is the \emph{worst admissible} case: the
+a factor of eight. Second, this is the \emph{worst admissible} case: the
 box is evaluated at the $10^\circ$ tilt cap, at the top of the
 $z_{CoM}$ range, and with the inertia at whichever end of (82) is
 unfavourable for the quantity being bounded. Over the runs actually
