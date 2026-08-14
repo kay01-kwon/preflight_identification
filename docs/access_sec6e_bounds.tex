@@ -130,6 +130,45 @@ pitch & $0.10$ & $0.3979$ & $0.161$ & $62.55$ & $0.72$ & $0.302$ \\
 \end{tabular}
 \end{center}
 
+\paragraph{The same row, by hand.}
+Roll at $\dot M = 1.20$~N\,m/s, every intermediate carried so the row can
+be checked on a calculator:
+
+\begin{center}\small
+\begin{tabular}{@{}rlr@{}}
+\toprule
+ & quantity & value \\
+\midrule
+   & $\varphi_{\max} = 10^\circ$ & $0.174533$~rad \\
+   & $m = W/g = 31.59/9.81$ & $3.220183$~kg \\
+   & $z_{CoM}^2 + \lpo^2 = 0.09 + 0.0256$ & $0.115600$~m$^2$ \\
+   & $m\bigl(z_{CoM}^2+\lpo^2\bigr)$ & $0.372253$~kg\,m$^2$ \\
+(1)& $J_P \le 0.0537 + 0.372253$ & $0.425953$~kg\,m$^2$ \\
+\midrule
+   & $6\varphi_{\max}J_P\dot M^{2}
+       = 6(0.174533)(0.425953)(1.44)$ & $0.642322$ \\
+(2)& $\Delta M_{\rm win} \le (0.642322)^{1/3}$ & $0.862815$~N\,m \\
+\midrule
+   & $\varphi_{\max}^2$ & $0.030462$ \\
+(3)& $\rho_{\varphi,\max}
+       = \tfrac12(31.59)(0.160)(0.030462)$ & $0.076983$~N\,m \\
+(4)& $\rho_{GE,\max} = (0.03446)(0.862815)(0.174533)$ & $0.005189$~N\,m \\
+\midrule
+   & $\rho_{\varphi,\max}/7$ & $10.998$~mN\,m \\
+   & $\rho_{GE,\max}/5$ & $\phantom{0}1.038$~mN\,m \\
+(5)& $\bigl|\Delta M_{{\rm crit},e}\bigr| \le$ sum & $12.035$~mN\,m \\
+(6)& $\div\,W = 30.08$~N & $0.400$~mm \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Note which weight goes where: $W = 31.59$~N, the ballasted value,
+enters (3) because a heavier vehicle makes the gravity remainder
+larger, while $W = 30.08$~N, the unloaded value, enters (6) because a
+lighter vehicle turns a given moment error into a larger offset. Each
+is taken at whichever end of the range is unfavourable for the quantity
+it appears in.
+
 The worst admissible case is $0.400$~mm for roll and $0.322$~mm for
 pitch, of which the gravity channel supplies $91$ and $92\%$. Two
 readings follow. The inertia, the one input that is not directly
