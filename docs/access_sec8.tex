@@ -11,6 +11,8 @@
 %   VIII-E  analysis/error_budget.py           (propagated budget)
 %           analysis/vi_e_geometric_box.py     (bound at the flown excursions)
 %           analysis/ramp_linearity.py         (ramp tracking residual)
+%           analysis/baseline_bias.py          (baseline gain and sizes)
+%           analysis/baseline_stat_ablation.py (C fitted vs pinned to zero)
 %   VIII-F  analysis/moff_flight_check.py      (flown vs final pipeline)
 %
 % PLACEHOLDERS the author must fill -- marked \TODO below:
@@ -221,6 +223,24 @@ in the box; the resulting threshold contribution is $0.117$~mm in the
 median and $0.431$~mm at worst. This channel lies outside the a priori
 bound, and at its worst it is the largest of the three --- still an
 order of magnitude below the $1.64$~mm achieved.
+
+\emph{The pre-onset baseline is estimated, not assumed.} Eq.~(106)
+shows the identified threshold responding to the baseline \emph{error}
+$C - b$ with a gain of $0.042$ to $0.351$~N\,m per rad/s over the box.
+The baselines the sweep forms --- medians over the excitation window up
+to the candidate --- are $3.5$~mrad/s across the $140$ runs and
+$47.8$~mrad/s at worst, which bounds the term at $0.054$~mm in the
+median and $0.558$~mm at worst. That bound is loose, and the direct
+test says by how much: re-running the whole pipeline with $C$ pinned to
+zero, the largest perturbation the term admits and the one the onset
+conditions would motivate, moves the direction-paired offset by
+$0.027$~mm in the median and $0.163$~mm at worst. The pairing cancels
+most of what the bound forwards. Neither choice measures better --- the
+ramp-invariance coefficient of variation is $0.0287$ fitted against
+$0.0292$ pinned, a paired $t$ of $0.87$ on $19$ degrees of freedom, and
+$66$ of the $140$ runs return an identical onset index either way. $C$
+is fitted, and fitted as a median, because a pinned zero has no defence
+against genuine pre-excitation motion, not because it scores better.
 
 Every figure above is at least four times inside that $1.64$~mm, which
 locates the residual outside the estimator and is consistent with the
