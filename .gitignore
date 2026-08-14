@@ -28,6 +28,7 @@ small_angle_runs.csv
 tilt_range_runs.csv
 zcom_tilt_runs.csv
 cosh_fidelity_runs.csv
+rate_residual_runs.csv
 postonset_linearity_runs.csv
 nls_comparison_runs.csv
 nls_comparison_summary.csv
