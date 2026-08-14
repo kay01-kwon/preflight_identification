@@ -326,6 +326,32 @@ the quantity that reaches the offset budget is (109), not this. The rate
 bound is reported because it is the one a reader can compare against a
 gyro specification, not because the budget rests on it.
 
+\paragraph{What the measured residual does, and why it differs.}
+A reader who puts this table beside the fit residual of Sec.~VIII will
+find two mismatches, and both are informative rather than symptoms of a
+broken bound. The residual is $9.2\%$ of the peak in the median and
+\emph{flat} across the ramp sweep, so it neither falls as the table
+predicts nor stays under the $4.7\%$ row at the fastest ramp.
+
+The first mismatch is the tilt. The rows above are set at
+$\varphi_{\max} = 10^\circ$, whereas the runs reach $4.5$ to
+$5.6^\circ$; since $\rho_{\varphi,\max}$ is quadratic in the excursion,
+that alone accounts for a factor near three, and re-solving (110) at the
+realised tilt lowers the three rows to $8.7$, $3.6$ and $1.7\%$.
+
+The second is that the measured residual is not this channel at all. If
+it were, the runs assigned a larger bound would show a larger residual;
+within each ramp rate the rank correlation is $-0.198$, the wrong sign,
+while against the pre-onset noise floor it is $+0.200$. The residual is
+three times that floor in absolute terms and stays near its level while
+the excursion varies sixfold, which places it with the contact chatter
+and rotor vibration of the tip rather than with $\rho$. So (110)--(112)
+bound one channel, and in these experiments that channel sits below the
+floor at every rate --- which is the outcome the section wants, since it
+means the forcing the estimator cannot absorb is not what limits the
+result. The measured budget, including the channels bounded nowhere
+here, is Sec.~VIII-E.
+
 \paragraph{What (109) covers.}
 The displacement of the identified onset caused by the two forcing terms
 the estimator cannot absorb, and nothing else. The baseline error of
