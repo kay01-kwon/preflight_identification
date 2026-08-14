@@ -113,13 +113,20 @@ def main():
             seen = {b.name: b for b in bags}
         for c in crits:
             with contextlib.redirect_stdout(io.StringIO()):
-                om = cvp.prepare_signals(seen[c.bag_name], axis)['omega']
+                sig = cvp.prepare_signals(seen[c.bag_name], axis)
+            om = sig['omega']
+            # The sweep averages over the EXCITATION WINDOW up to the
+            # candidate, not over the whole record before it: a longer,
+            # quieter stretch gives a baseline four times smaller and is
+            # not the quantity the estimator forms.
+            i0, _ = cvp.detect_excitation_window(
+                sig['moment'], moment_cap=cvp.MOMENT_CAP.get(axis))
             j = c.onset_idx
-            if j < 20 or j + 2 >= len(om):
+            if j - i0 < 8 or j + 2 >= len(om):
                 continue
-            C.append(abs(cvp._baseline_of(om[:j])))
-            dC.append(abs(cvp._baseline_of(om[:j + 1])
-                          - cvp._baseline_of(om[:j - 1])) / 2)
+            C.append(abs(cvp._baseline_of(om[i0:j])))
+            dC.append(abs(cvp._baseline_of(om[i0:j + 1])
+                          - cvp._baseline_of(om[i0:j - 1])) / 2)
 
     C, dC = np.array(C), np.array(dC)
     print(f"  {'':26}{'median':>10}{'p90':>10}{'max':>10}")

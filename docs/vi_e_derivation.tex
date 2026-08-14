@@ -676,7 +676,7 @@ could survive is the same drift entering the post-onset residual, but
 $dC_0/dt_c = \bigl(y(t_c) - C_0\bigr)/(t_c - t_a)$ for the mean, and at
 the onset the rate is still the baseline, so it vanishes there too.
 Measured across the $140$ runs, $C_0$ moves by under
-$3.3\times10^{-4}$~rad/s when the candidate onset shifts by one sample.
+$7.4\times10^{-4}$~rad/s when the candidate onset shifts by one sample.
 Dropping that term and solving,
 \begin{equation}
   \delta t_c = \frac{\langle e_\omega,\chi\rangle}{\|\chi\|^2},
@@ -759,13 +759,22 @@ amplitude cancels as everywhere else and
 Minimising the cost directly reproduces (D.11b) to three figures. Over
 the box the gain runs from $0.042$~N\,m per rad/s at the slowest ramp to
 $0.351$ at the fastest, the fast end being worse because the window is
-shorter. The fitted baselines are $8.5\times10^{-4}$~rad/s in the median
-and $1.68\times10^{-2}$ at worst over the $140$ runs; bounding
-$|C_0-b|$ by $|C_0|$ itself, which is conservative since $C_0$ estimates
-$b$ from the pre-onset samples, that is $0.010$~mm of offset in the
-median and $0.196$~mm at worst. The median is negligible against the
-$0.40$~mm the box guarantees; the worst case is not, and it is reported
-with the realised budget rather than buried here.
+shorter. The baselines the sweep actually forms --- medians over the
+excitation window up to the candidate, not over the whole quiet record
+before it --- are $3.5$~mrad/s in the median and $47.8$ at worst across
+the $140$ runs, so bounding $|C_0-b|$ by $|C_0|$ gives $0.054$~mm of
+offset in the median and $0.558$~mm at worst.
+
+That bound is loose, and the direct measurement says so. Rerunning the
+whole pipeline with $C_0$ pinned to zero instead of fitted, which is the
+largest perturbation this term admits, moves the direction-paired
+$M_{ff}$ by $0.80$~mN\,m in the median and $4.91$ at worst ---
+$0.027$~mm and $0.163$~mm. The pairing cancels most of what the bound
+forwards. Neither statistic is better: the ramp-invariance CV is
+$0.0287$ against $0.0292$, a paired $t$ of $0.87$ on $19$ degrees of
+freedom, and $66$ of the $140$ runs return an identical onset index
+either way. The median is kept because a pinned zero has no defence
+against genuine pre-onset motion, not because it measures better.
 
 Numerically, $\langle e_\omega,\partial_{t_c}\chi\rangle/\|\chi\|^2$ is
 $9.05\times10^{-5}$, $9.05\times10^{-4}$, $9.05\times10^{-3}$ and

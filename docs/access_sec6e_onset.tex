@@ -1,0 +1,153 @@
+% ---------------------------------------------------------------------
+% Drop-in replacement for the main-text passage (98)-(103) of Sec. VI-E:
+% how the identified onset responds to a perturbation.
+%
+% What this changes against the current draft:
+%   - (99) introduces the true pre-onset level b, so that C has something
+%     to estimate; without it C appears in (98) and vanishes by (102)
+%     with no accounting, which reads as a dropped term.
+%   - a sentence fixing e_omega to the TRUE onset, so that it carries no
+%     dependence on the optimisation variable.
+%   - the Leibniz boundary terms are named and shown to cancel
+%     identically, rather than being passed over.  This is the first
+%     thing a reader checks when a window endpoint is also the variable
+%     being optimised.
+%   - (104)-(105) carry the baseline error term the earlier flow lost,
+%     and bound it in closed form.
+%   - the measured sizes are NOT here: they belong to the realised
+%     budget, Sec. VIII-E.  Only the a priori gain range is quoted.
+%
+% Symbols follow the manuscript: t_0 record start, t_c onset, t_c^* its
+% true value, \hat t_c the minimiser, x = C_2 tau_end.
+%
+% Equation numbers continue from (97); renumber if the host document
+% differs.
+% ---------------------------------------------------------------------
+
+\documentclass[10pt]{article}
+\usepackage[a4paper,margin=22mm]{geometry}
+\usepackage{amsmath,amssymb,booktabs}
+\setlength{\parskip}{0.35em}\setlength{\parindent}{0pt}
+\newcommand{\Wz}{W\!z_{CoM}}
+\newcommand{\tc}{t_{\rm c}}
+\newcommand{\tcs}{t_{\rm c}^{*}}
+\newcommand{\tend}{t_{\rm end}}
+\title{\vspace{-16mm}\textbf{Sec.~VI-E, (98)--(105): the onset under a
+perturbation}\vspace{-3mm}}
+\date{\small drop-in main text; the measured sizes live in Sec.~VIII-E}
+\begin{document}\maketitle
+
+Because the measured angular rate $y(t)$ can be regarded as the nominal
+response perturbed by the unmodelled forcing $\rho$, the minimiser
+selects $\hat\tc$ by minimising the two-segment cost over the record.
+Both segments enter, and both share the pre-onset level $C$:
+\begin{equation}
+\begin{aligned}
+  J(\tc) = &\int_{t_0}^{\tc}\bigl(y(t) - C\bigr)^2dt \\
+    &+ \int_{\tc}^{\tend}
+       \Bigl(y(t) - \bigl(\hat\omega(t;\tc) + C\bigr)\Bigr)^2dt .
+\end{aligned}
+  \tag{98}
+\end{equation}
+
+Write the recorded rate as the true pre-onset level, the nominal
+response from the true onset, and a deviation:
+\begin{equation}
+  y(t) = b + \hat\omega(t;\tcs) + e_\omega(t),
+  \qquad
+  \hat\tc = \tcs + \delta \tc .
+  \tag{99}
+\end{equation}
+Here $b$ is the rate the vehicle actually holds before the excitation,
+zero under the onset conditions. The rate is taken from the navigation
+filter, whose delta-angle bias states remove the gyro bias, so $b$
+represents residual pre-excitation motion rather than sensor bias; $C$
+is its estimate, formed over the pre-onset segment. Note also that
+$e_\omega$ is anchored at the \emph{true} onset $\tcs$: once a run is
+recorded it is a fixed function of $t$, and it carries no dependence on
+the optimisation variable.
+
+A first-order expansion of the estimated rate gives
+\begin{equation}
+  \hat\omega\bigl(t;\hat\tc\bigr)
+  \;\simeq\; \hat\omega\bigl(t;\tcs\bigr) + \delta\tc\,\chi(t)
+  \tag{100}
+\end{equation}
+with the sensitivity
+\begin{equation}
+  \chi(t) \triangleq
+  \frac{\partial\hat\omega(t;\tc)}{\partial \tc}\bigg|_{\tc = \tcs}
+  = -\,C_1C_2\sinh C_2\bigl(t - \tcs\bigr).
+  \tag{101}
+\end{equation}
+
+Two features of (98) make the differentiation clean, and both are worth
+stating because each looks like an omission otherwise.
+
+First, $\tc$ is the upper limit of one integral and the lower limit of
+the other, so the Leibniz rule produces two boundary terms. They cancel
+identically. The rise contributes $C_1(\cosh 0 - 1) = 0$ at $t = \tc$,
+so the two segments agree there and both terms equal
+$\bigl(y(\tc) - C\bigr)^2$ with opposite signs. Nothing is discarded,
+and the cancellation is exact rather than asymptotic.
+
+Second, substituting (99) and (100), the post-onset residual is
+\begin{equation}
+  y(t) - \hat\omega(t;\hat\tc) - C
+  = e_\omega(t) - \delta\tc\,\chi(t) - (C - b),
+  \tag{102}
+\end{equation}
+so $C$ enters only through the baseline \emph{error} $C - b$, not
+through its own size. A large but correctly estimated pre-onset level
+is harmless.
+
+Differentiating (98) with respect to $\delta\tc$ --- the same operator
+as $\partial/\partial\tc$ by (99), but the variable in which the
+linearised cost is an exact quadratic --- and setting the result to zero
+gives, when the pre-onset fit is unbiased,
+\begin{equation}
+  \frac{\partial J}{\partial\,\delta\tc}
+  = -2\int_{\tc}^{\tend}\bigl(e_\omega(t) - \delta\tc\,\chi(t)\bigr)
+    \chi(t)\,dt = 0 ,
+  \tag{103}
+\end{equation}
+which implies
+\begin{equation}
+  \delta\tc = \frac{\langle e_\omega,\chi\rangle}{\|\chi\|^{2}} .
+  \tag{104}
+\end{equation}
+Here $\langle a,b\rangle$ denotes the $L^2$ inner product over the
+fitting window $[\tcs,\tend]$, i.e.\ $\langle a,b\rangle \triangleq
+\int_{\tcs}^{\tend}a(t)b(t)\,dt$, and $\|b\|^2 \triangleq \langle
+b,b\rangle$. The shift $\delta\tc$ is well defined because the
+maximum-angle event occurs after the onset, $\tau_{\rm end} > 0$, so
+$\sinh C_2\tau$ does not vanish identically and $\|\chi\|^2 > 0$.
+
+\paragraph{The baseline error, retained.}
+Keeping the last term of (102) rather than assuming it away replaces
+(104) by
+\begin{equation}
+  \delta\tc = \frac{\langle e_\omega,\chi\rangle}{\|\chi\|^{2}}
+   \;-\; (C - b)\,\frac{\langle 1,\chi\rangle}{\|\chi\|^{2}} ,
+  \tag{105}
+\end{equation}
+and the second term does not vanish: $\chi$ is of one sign, so
+$\langle1,\chi\rangle = -C_1(\cosh x - 1)$. Evaluating it with
+$\|\chi\|^2 = C_1^2C_2\bigl[\tfrac14\sinh 2x - \tfrac12 x\bigr]$ and
+carrying it through $\Delta M_{\rm crit} = \dot M\,\delta\tc$, the
+amplitude $C_1$ cancels as it does elsewhere and
+\begin{equation}
+  \Delta M_{{\rm crit},C}
+  = \Wz\,(C - b)\,
+    \frac{\cosh x - 1}
+         {C_2\bigl[\tfrac14\sinh 2x - \tfrac12 x\bigr]} .
+  \tag{106}
+\end{equation}
+Over the operating box of Sec.~VI-D the gain of (106) runs from
+$0.042$~N\,m per rad/s at the slowest ramp to $0.351$ at the fastest,
+the fast end being worse because the window is shorter. What the fitted
+baselines actually are, and how far the identified offset moves when
+$C$ is pinned to zero instead of fitted, are measurements and are
+reported with the realised budget in Sec.~VIII-E.
+
+\end{document}
