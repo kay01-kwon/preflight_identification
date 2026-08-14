@@ -66,13 +66,17 @@ W = max(W_RANGE)                   # conservative for Wz, rho_phi, J_P
 W_MIN = min(W_RANGE)               # conservative for omega_nom and d lambda
 MASS = W / G
 PHI_MAX = np.deg2rad(10.0)         # tilt cap of the excitation design
-BETA_M = 0.0345                    # rad^-1, bilinear moment-channel slope
+# The bilinear moment-channel slope of (80) is per axis; table 3 gives
+# 0.03446 for roll and 0.02573 for pitch.  Earlier working used the roll
+# value on both, which overstates the pitch bound (0.331 mm, not 0.322).
 J_COM_CAD = 0.0537                 # kg m^2, both axes
 Z_RANGE = (0.20, 0.30)             # m
 RATES = (0.10, 0.45, 1.20)         # N m/s, Sec. V-B
 AXES = {
-    'roll  (Mx)': dict(arm=0.140 + 0.020, m_lo=0.7, m_hi=2.1, cap=2.37),
-    'pitch (My)': dict(arm=0.110 + 0.020, m_lo=0.4, m_hi=1.7, cap=2.74),
+    'roll  (Mx)': dict(arm=0.140 + 0.020, m_lo=0.7, m_hi=2.1, cap=2.37,
+                       beta=0.03446),
+    'pitch (My)': dict(arm=0.110 + 0.020, m_lo=0.4, m_hi=1.7, cap=2.74,
+                       beta=0.02573),
 }
 
 
@@ -150,7 +154,9 @@ def span_constants(x, n=4001):
 
 
 print(f"W in {W_RANGE} N (unloaded .. ballasted), m_max = {MASS:.3f} kg,")
-print(f"phi_max = 10 deg, beta_M = {BETA_M} /rad.  Each quantity is taken at")
+print(f"phi_max = 10 deg, beta_M = "
+      + ", ".join(f"{n.split()[0]} {p['beta']}" for n, p in AXES.items())
+      + " /rad.  Each quantity is taken at")
 print(f"whichever end of the weight range is unfavourable for it: W_max for")
 print(f"Wz, rho_phi and J_P, W_min for omega_nom and the offset conversion.\n")
 
@@ -205,7 +211,7 @@ for name, p in AXES.items():
     rp = 0.5 * W * p['arm'] * PHI_MAX ** 2
     for md in RATES:
         w = win[(name, md)]
-        rg = BETA_M * w['dm'] * PHI_MAX
+        rg = p['beta'] * w['dm'] * PHI_MAX
         rb = r_phi(w['x']) * rp + r_ge(w['x']) * rg
         chan[(name, md)] = (rp, rg, rb)
         print(f"  {name:12}{md:6.2f}{1e3 * rp:9.2f}{1e3 * rg:8.2f}"
@@ -225,7 +231,7 @@ for name, p in AXES.items():
         w_nom = (md / (W_MIN * w['wz'] / W)) * (np.cosh(x) - 1.0)
         rel = psi(x) * rb / w['dm']
         env = psi(x) * (rp + rg) / w['dm']
-        rg93 = BETA_M * w['dm93'] * PHI_MAX
+        rg93 = p['beta'] * w['dm93'] * PHI_MAX
         dmc = rp / 7 + rg93 / 5
         print(f"  {name:12}{md:6.2f}{w_nom:9.3f}{rel * w_nom:9.4f}"
               f"{100 * env:7.0f}{100 * rel:7.2f}"
@@ -236,7 +242,7 @@ print(f"\n  the x-free form (97) is rate-independent up to rho_GE;"
 for name, p in AXES.items():
     w = win[(name, max(RATES))]
     rp = 0.5 * W * p['arm'] * PHI_MAX ** 2
-    rg93 = BETA_M * w['dm93'] * PHI_MAX
+    rg93 = p['beta'] * w['dm93'] * PHI_MAX
     print(f"    {name}:  |dM_crit| <= {1e3 * rp:.2f}/7 + {1e3 * rg93:.2f}/5"
           f" = {1e3 * (rp / 7 + rg93 / 5):.2f} mN.m"
           f"  ->  {1e3 * (rp / 7 + rg93 / 5) / W_MIN:.3f} mm"
@@ -254,7 +260,7 @@ for name, p in AXES.items():
         for z in np.linspace(*Z_RANGE, 11):
             wz, c2 = W * z, np.sqrt(G * z / (z ** 2 + a ** 2))
             x = brentq(lambda t: lam(t) - PHI_MAX * wz * c2 / md, 1e-9, 40.0)
-            rp, rg = rho_phi_exact(a, z), BETA_M * (md * x / c2) * PHI_MAX
+            rp, rg = rho_phi_exact(a, z), p['beta'] * (md * x / c2) * PHI_MAX
             _, kp, kg = span_constants(x)
             v = (min(kp, r_phi(x)) * rp + min(kg, r_ge(x)) * rg)
             if rec is None or v > rec[0]:
@@ -295,3 +301,30 @@ if bad:
               f"{np.sqrt(G * Z_RANGE[0] / (Z_RANGE[0] ** 2 + (p['arm'] - 0.020) ** 2)):.3f} /s")
     print(f"  so either p_off is excluded from the arm of (82), or the")
     print(f"  contact is not a rigid pivot for that run.  Worth a footnote.")
+
+print("\n7. the rate table of VI-E, in that section's own conventions\n")
+print("  Section 4 above takes rho_GE from the window x actually implies.")
+print("  The hand table of VI-E instead reuses its own line (4), the cubic")
+print("  bound (106) on dM_win, so that the row needs no extra number; that")
+print("  is the conservative side, so the two differ only by a fraction of a")
+print("  point.  Wz is the ballasted value throughout the block, so |e_w| and")
+print("  omega_nom share one vehicle.\n")
+print(f"  {'axis':12}{'Mdot':>6}{'x':>7}{'R_phi':>8}{'R_GE':>8}{'rho_bar':>10}"
+      f"{'|e_w|':>9}{'w_nom':>8}{'rel':>8}   [mN.m], [rad/s]")
+for name, p in AXES.items():
+    a = p['arm']
+    z = max(Z_RANGE)
+    wz = W * z
+    jp_lo = MASS * (z ** 2 + a ** 2)          # kernel: lower end
+    jp_hi = J_COM_CAD + jp_lo                 # dM_win: upper end
+    c2 = np.sqrt(wz / jp_lo)
+    rp = 0.5 * W * a * PHI_MAX ** 2
+    for md in RATES:
+        x = brentq(lambda t: lam(t) - PHI_MAX * wz * c2 / md, 1e-9, 40.0)
+        dm = (6 * PHI_MAX * jp_hi * md ** 2) ** (1 / 3)
+        rg = p['beta'] * PHI_MAX * dm
+        rb = r_phi(x) * rp + r_ge(x) * rg
+        e = rb * np.sinh(x) / (jp_lo * c2)
+        wn = (md / wz) * (np.cosh(x) - 1.0)
+        print(f"  {name:12}{md:6.2f}{x:7.3f}{r_phi(x):8.4f}{r_ge(x):8.4f}"
+              f"{1e3 * rb:10.3f}{e:9.4f}{wn:8.3f}{100 * e / wn:7.1f}%")
