@@ -362,32 +362,62 @@ averaged — is the quantity the deviation bound of the companion
 analysis is stated for, and it is the larger of the two because the
 deviation accumulates towards the end of the window.
 
+The window is reported from the fit rather than from any design figure:
+$C_2$ is that run's own fitted $\alpha$, $\tau_{\rm end}$ the post-onset
+span it actually covered, and $\varphi_{\rm end}$ the integral of the
+fitted curve over that span — the trajectory the model claims, not the
+raw rate, which carries the residual itself. The dimensionless window
+$x = C_2\tau_{\rm end}$ then follows without solving anything.
+
 \begin{table}[htbp]
-\centering\small
-\caption{Post-onset prediction residual by ramp rate, $140$ runs,
-$20$ per rate. All columns normalized by that run's peak excursion.
-The realized tilt is inferred from the peak through
-$\omega = C_1(\cosh x - 1)$.}
+\centering\footnotesize
+\caption{The window each run spanned, and its post-onset prediction
+residual, by ramp rate; $140$ runs, $20$ per rate, medians unless
+noted. Residual columns are normalized by that run's peak excursion.
+The fitted $C_2$ has median $5.062$~s$^{-1}$ at every rate — it is a
+per-configuration constant, not a per-run one — against the $5.05$
+geometric ceiling; the spread across configurations is $4.50$ on pitch
+and $6.13$ on roll.}
 \label{tab:resid}
-\begin{tabular}{@{}rrrrrrrr@{}}
+\begin{tabular}{@{}rrlrrrrrr@{}}
 \toprule
-$\dot M$ & peak & $\varphi_{\rm end}$
+$\dot M$ & $\tau_{\rm end}$ & \multicolumn{1}{c}{$x = C_2\tau_{\rm end}$}
+ & $\varphi_{\rm end}$ & peak
  & \multicolumn{2}{c}{endpoint [\%]} & RMS [\%] & floor [\%] \\
-\cmidrule(lr){4-5}
-[N\,m/s] & [rad/s] & [deg] & median & p90 & median & median \\
+\cmidrule(lr){6-7}
+[N\,m/s] & [s] & \multicolumn{1}{c}{med (p10--p90)} & [deg] & [rad/s]
+ & median & p90 & median & median \\
 \midrule
-$0.10$ & $0.447$ & $4.66$ & $\phantom{0}8.77$ & $19.24$ & $6.19$ & $3.34$\\
-$0.20$ & $0.460$ & $4.54$ & $\phantom{0}9.67$ & $15.35$ & $6.58$ & $3.16$\\
-$0.30$ & $0.515$ & $4.92$ & $\phantom{0}8.22$ & $16.68$ & $7.12$ & $2.92$\\
-$0.45$ & $0.607$ & $5.62$ & $\phantom{0}8.67$ & $16.59$ & $6.27$ & $2.40$\\
-$0.65$ & $0.630$ & $5.55$ & $\phantom{0}9.14$ & $15.93$ & $7.00$ & $2.20$\\
-$0.90$ & $0.658$ & $5.51$ & $12.59$ & $19.97$ & $7.55$ & $2.12$\\
-$1.20$ & $0.702$ & $5.61$ & $10.67$ & $16.30$ & $7.19$ & $1.73$\\
+$0.10$ & $0.720$ & $3.47$ ($2.9$--$5.0$) & $4.43$ & $0.447$
+ & $\phantom{0}8.77$ & $19.24$ & $6.19$ & $3.34$\\
+$0.20$ & $0.610$ & $2.90$ ($2.4$--$4.2$) & $4.33$ & $0.460$
+ & $\phantom{0}9.67$ & $15.35$ & $6.58$ & $3.16$\\
+$0.30$ & $0.545$ & $2.64$ ($2.0$--$4.0$) & $4.67$ & $0.515$
+ & $\phantom{0}8.22$ & $16.68$ & $7.12$ & $2.92$\\
+$0.45$ & $0.525$ & $2.33$ ($1.9$--$3.7$) & $5.24$ & $0.607$
+ & $\phantom{0}8.67$ & $16.59$ & $6.27$ & $2.40$\\
+$0.65$ & $0.470$ & $2.15$ ($1.6$--$3.5$) & $5.07$ & $0.630$
+ & $\phantom{0}9.14$ & $15.93$ & $7.00$ & $2.20$\\
+$0.90$ & $0.430$ & $1.90$ ($1.5$--$3.2$) & $5.37$ & $0.658$
+ & $12.59$ & $19.97$ & $7.55$ & $2.12$\\
+$1.20$ & $0.405$ & $1.79$ ($1.4$--$3.0$) & $5.22$ & $0.702$
+ & $10.67$ & $16.30$ & $7.19$ & $1.73$\\
 \midrule
-all & & & $\phantom{0}9.19$ & $17.64$ & $6.75$ & $2.44$\\
+all & $0.520$ & $2.67$ ($1.7$--$4.0$) & $4.90$ &
+ & $\phantom{0}9.19$ & $17.64$ & $6.75$ & $2.44$\\
 \bottomrule
 \end{tabular}
 \end{table}
+
+Two things about the window itself. The fitted $C_2$ agrees with the
+geometric ceiling $\sqrt{gz_{CoM}/(z_{CoM}^2+(l_p+p_{\rm off})^2)}$ to
+$0.3\%$ in the median, which is a check on that ceiling and not
+something the calibration was asked to produce. And the runs stop well
+inside the $10^\circ$ design limit, at $4.9^\circ$ in the median and
+$0.9$--$7.8^\circ$ over individual runs, because the excitation window
+closes on the moment rather than on the tilt: $x$ runs $3.47$ down to
+$1.79$ across the sweep where the tilt limit alone would give $5.18$
+down to $2.99$.
 
 Three readings. \emph{It is flat in rate}, $8.77\%$ over the slow half
 ($\dot M \le 0.30$) against $10.06\%$ over the fast half
@@ -412,7 +442,7 @@ residual is $-0.198$ ($p = 0.005$ across the seven rates) — the wrong
 sign — while against the pre-onset floor it is $+0.200$. The modelled
 forcing is therefore below the floor everywhere, and the bound should be
 read as a guarantee on one channel rather than as a description of what
-the runs do. Note also that the runs stop at $4.5$--$5.6^\circ$ of tilt
+the runs do. Note also that the runs stop at $4.9^\circ$ of tilt
 rather than at the $10^\circ$ design limit, so a bound stated at that
 limit overstates the gravity channel by roughly the square of the
 ratio.
