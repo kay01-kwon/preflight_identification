@@ -617,9 +617,17 @@ from the samples to its left. In the shifted variable $\tau = t - t_c$
 the post-onset window is $[0,T]$ with $T = t_{\rm end}-t_c = \te$, the
 window Sec.~2 averages over, so the $\rbar$ below is the same $\rbar$.
 
-Write the data as nominal plus deviation, $y = \hat\omega(t;t_c^*) +
-e_\omega$ --- the perturbation is $\rho$ itself, not its average --- and
-the minimiser as $t_c = t_c^* + \delta t_c$.
+Write the data as the true pre-onset level, the nominal response from
+the true onset, and a deviation,
+\[
+  y(t) = b + \hat\omega(t;t_c^*) + e_\omega(t),
+  \qquad
+  t_c = t_c^* + \delta t_c ,
+\]
+the perturbation being $\rho$ itself and not its average. Carrying $b$
+rather than setting it to zero is what later gives $C_0$ something to
+estimate; without it $C_0$ would enter the cost and leave the
+stationarity condition unaccounted for.
 
 One point about that definition is worth making explicitly, because
 getting it wrong invalidates everything after it. \emph{$e_\omega$ is
@@ -646,8 +654,10 @@ Name the sensitivity
 It needs a symbol of its own, and not $\varphi$: that is the tilt angle
 everywhere else, and $\langle e_\omega,\varphi\rangle$ would read as a
 rate correlated against an angle. To first order
-$\hat\omega(t;t_c^*+\delta t_c)\simeq\hat\omega(t;t_c^*) + \delta t_c\,\chi$, so
-the residual is $e_\omega - \delta t_c\,\chi$ and
+$\hat\omega(t;t_c^*+\delta t_c)\simeq\hat\omega(t;t_c^*) + \delta t_c\,\chi$,
+so the post-onset residual is $e_\omega - \delta t_c\,\chi - (C_0-b)$:
+the baseline enters only through its \emph{error}, a point taken up
+below. Setting that error aside for the moment,
 \[
   \frac{\partial J}{\partial t_c}
   = \underbrace{\bigl(y(t_c) - C_0\bigr)^2
@@ -790,7 +800,8 @@ amplitude $C_1$ cancels between numerator and denominator, leaving
   \tag{D.12}
 \end{equation}
 This is exactly the reduction \texttt{error\_budget.py} implements, and
-it is the manuscript's (98)--(101) written with $\chi$ named.
+it is the manuscript's (98)--(106) written with $\chi$ named:
+(D.11) is its (104), the baseline term below is its (105)--(106).
 Minimising $J$ numerically against a deviation of the true shape, over
 four decades of deviation size, gives ratios to the formula of
 $0.99995$, $0.99953$, $0.99530$ and $0.95559$: it is the first-order
