@@ -403,7 +403,20 @@ here, is Sec.~VIII-E.
 The displacement of the identified onset caused by the two forcing terms
 the estimator cannot absorb, and nothing else. The baseline error of
 (104), the departure of the applied moment from a linear ramp, and the
-ground-contact geometry all lie outside it. Those are measured rather
+ground-contact geometry all lie outside it. So does one term that is
+not a disturbance at all and is worth stating in closed form, since it
+is the larger of the two at the fast end of the sweep: the onset is an
+integer index, so it cannot be placed better than half a sample and the
+threshold inherits
+\begin{equation}
+  \bigl|\Delta M_{\rm crit}\bigr|_{\rm grid} \le \tfrac12 T_s\dot M ,
+  \tag{115}
+\end{equation}
+which at $T_s = 10$~ms runs from $0.50$~mN\,m at the slowest ramp to
+$6.00$ at the fastest --- $4\%$ and $50\%$ of the $12.04$ above. Being a
+quantisation rather than a forcing it does not average out under (107),
+though it is common-mode across the two tip directions and so cancels
+in the differenced offset. It prefers a slow ramp, as (109) does. Those are measured rather
 than bounded a priori, and are reported with the realised budget in
 Sec.~VIII-E, where the same runs give an actual propagated error some
 fifty times inside (109).

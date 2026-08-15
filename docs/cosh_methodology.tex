@@ -468,6 +468,20 @@ correlation between the two is $+0.465$ ($p = 0.001$), rising from
 $+0.20$ at the slowest ramp to $+0.70$ at the fastest. A quiet run
 stays quiet through the tip.
 
+\emph{Its rate trend is the onset grid, which the noise floor cannot
+explain.} The onset is an integer index at $T_s = 10$~ms, so it cannot
+be placed better than $|\delta t_c| \le T_s/2$, and what that leaves at
+the window end is $\delta t_c\,\dot\omega_{\rm end} =
+\delta t_c\,C_1C_2\sinh x$. Relative to the peak this is $2.8\%$ at the
+slowest ramp rising to $3.5\%$ at the fastest — flat, as the
+measurement is. In absolute terms the two are nearly parallel: the grid
+term rises $0.013$ to $0.025$~rad/s across the sweep and the measured
+residual $0.030$ to $0.062$, a factor $1.9$ against $2.1$, while the
+pre-onset floor is flat at $0.014$ and accounts for none of the rise.
+The two readings compose rather than compete: within a ramp rate the
+noise sets how far the integer onset lands from the optimum, and across
+rates the grid sets how much that displacement costs.
+
 \emph{It is not a growth-rate mismatch}, which is worth reporting
 because that is the first thing to suspect once $C_2$ is pinned: a
 discrepancy in it would survive into the residual as
@@ -495,11 +509,34 @@ rather than at the $10^\circ$ design limit, so a bound stated at that
 limit overstates the gravity channel by roughly the square of the
 ratio.
 
-None of this reaches the deliverable, for the reason given in
-Sec.~\ref{sec:static}: the onset is located by a normalized
-correlation, so a disturbance uncorrelated with its weight averages
-out. A residual of $9\%$ on the rate leaves the identified threshold
-displaced by $0.04$~mN\,m in the median and $0.15$ at worst.
+Only one of these reaches the deliverable, and it does so in closed
+form. A disturbance uncorrelated with the correlation weight averages
+out, for the reason given in Sec.~\ref{sec:static}: a residual of $7\%$
+on the rate leaves the identified threshold displaced by $0.04$~mN\,m
+in the median and $0.15$ at worst. The onset grid does not average out,
+because it is a quantization rather than a disturbance, and it costs
+\begin{equation}
+\bigl|\Delta M_{\mathrm{crit}}\bigr|_{\rm grid}
+\;\le\; \tfrac12 T_s\,\dot M ,
+\label{eq:grid}
+\end{equation}
+which is $0.50$~mN\,m at $\dot M = 0.10$ and $6.00$ at $1.20$ — $4\%$
+and $50\%$ of the $12.04$~mN\,m the a priori forcing budget allows.
+It therefore prefers a slow ramp, the same direction as that budget,
+and at the fast end it is the larger of the two. It is also common-mode
+in time across the two tip directions, so like the constants themselves
+it cancels in $M_{\mathrm{ff}}$; what it bounds is the per-direction
+threshold, not the offset.
+
+That crossing is what Table~\ref{tab:resid} shows against the deviation
+bound. The bound falls fivefold across the sweep while the measurement
+and the grid term stay flat, so the measurement sits inside the bound
+for $\dot M \le 0.65$ and outside it at $0.90$ and $1.20$
+(\texttt{analysis/rate\_budget\_figure.py}). Nothing about that is a
+failure of the bound: it covers the forcing the estimator cannot
+absorb, and by the tests above that channel is below the floor at every
+rate, whereas the residual is carrying a quantization and a noise term
+the bound does not claim.
 
 \section{Calibration of the effective constants}
 \label{sec:calibration}
@@ -1660,6 +1697,11 @@ gates, caps, calibration, Algorithm~\ref{alg:cosh};
 \item \texttt{analysis/ramp\_quality.py} — gates;
 \item \texttt{analysis/sensitivity.py} — $\pm20\%$ robustness;
 \item \texttt{analysis/cosh\_fidelity.py} — prediction-test residuals;
+\item \texttt{analysis/rate\_budget\_figure.py},
+\texttt{analysis/pnls\_fit\_figure.py},
+\texttt{analysis/c2\_ceiling\_figure.py} — the fit and its
+residual drawn per ramp rate and per configuration, and the
+boundary hit of the closed-form calibration;
 \item \texttt{analysis/rate\_residual.py} — Table~\ref{tab:resid},
 endpoint and window residuals against the deviation bound;
 \item \texttt{analysis/excitation\_angle\_design.py} — rate/cutoff
