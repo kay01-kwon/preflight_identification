@@ -36,6 +36,7 @@ import contextlib
 import collections
 import io
 import os
+import pickle
 import sys
 
 import matplotlib
@@ -131,7 +132,17 @@ def collect():
 
 def main():
     out = sys.argv[1] if len(sys.argv) > 1 else 'residual_budget.png'
-    rows = collect()
+    # Re-reading 140 bags to redraw a figure is a waste; cache the pass.
+    # Delete the file to force a fresh collection.
+    cache = ROOT / 'residual_budget_cache.pkl'
+    if cache.exists():
+        with open(cache, 'rb') as f:
+            rows = pickle.load(f)
+        print(f"  loaded {len(rows)} runs from {cache}")
+    else:
+        rows = collect()
+        with open(cache, 'wb') as f:
+            pickle.dump(rows, f)
     g = collections.defaultdict(list)
     for r in rows:
         g[r['rate']].append(r)
@@ -204,8 +215,8 @@ def main():
             ax.legend(fontsize=6.5, loc='upper left', framealpha=0.9)
 
     ax = fig.add_subplot(gs[1, 3])
-    for lab, sub, col in (('slow, $\\dot M\\le0.45$', slow, '#1e8449'),
-                          ('fast, $\\dot M\\ge0.65$', fast, '#c0392b')):
+    for lab, sub, col in (('slow, $\\dot M \\leq 0.45$', slow, '#1e8449'),
+                          ('fast, $\\dot M \\geq 0.65$', fast, '#c0392b')):
         ax.plot(KS, [100 * np.median([frac(r, k) for r in sub]) for k in KS],
                 'o-', lw=1.8, ms=6, color=col, label=lab)
     ax.plot(KS, [exp[k] for k in KS], 's--', lw=1.6, ms=6, color='0.35',
