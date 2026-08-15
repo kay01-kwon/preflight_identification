@@ -184,6 +184,7 @@ def main():
               f"{1e3*d['rb_true']:14.3f}{o:12.2f}{ot_:10.1f}")
     scaling_law()
     conservatism()
+    chebyshev_gap()
     return 0
 
 
@@ -257,6 +258,61 @@ def conservatism():
           f" {first[1]/last[1]:.2f}x,")
     print(f"  so the reduction factors set an almost constant offset and")
     print(f"  the Chebyshev step is what makes the slow ramp retreat.")
+
+
+def chebyshev_gap():
+    """Read the looseness of (93) off Chebyshev itself, as a covariance.
+
+    Chebyshev's integral inequality is the statement that the covariance
+    of two oppositely monotone functions is non-positive.  Keeping the
+    covariance instead of discarding it turns the inequality into an
+    IDENTITY, and the identity says exactly how loose the bound is:
+
+        (1/T) int rho h  =  rho_bar h_bar + Cov(rho, h)
+
+        =>  e_omega / E  =  1 + corr(rho,h) CV_rho CV_h
+
+    with the moments taken against the uniform measure on the window.
+    Chebyshev is then just corr <= 0, and the size of the gap is carried
+    by the two coefficients of variation.
+
+    Lengthening the window makes both rho ~ exp(2 C2 s) and
+    h ~ exp(C2 (tau-s)) more extreme, so both CVs grow -- faster than
+    the correlation weakens -- the product approaches one, and the ratio
+    approaches zero.  That is the whole of "the slow ramp retreats from
+    its bound", read off the inequality that produced it.
+    """
+    print(f"\n\n  the Chebyshev gap as a covariance -- an identity,"
+          f" not a bound\n")
+    print(f"  {'Mdot':>6}{'x':>7}{'corr':>9}{'CV_rho':>9}{'CV_h':>8}"
+          f"{'product':>10}{'1 - product':>13}{'e/E direct':>12}")
+    for md in RATES:
+        d = band(md)
+        tau, rho, x = d['tau'], d['rho'], d['x']
+        T = tau[-1]
+        h = np.cosh(C2 * (T - tau))
+        m = lambda f: float(np.trapz(f, tau) / T)
+        rb, hb = m(rho), m(h)
+        sr = np.sqrt(max(m(rho ** 2) - rb ** 2, 0.0))
+        sh = np.sqrt(max(m(h ** 2) - hb ** 2, 0.0))
+        corr = (m(rho * h) - rb * hb) / (sr * sh)
+        prod = -corr * (sr / rb) * (sh / hb)
+        print(f"  {md:6.2f}{x:7.3f}{corr:9.4f}{sr/rb:9.4f}{sh/hb:8.4f}"
+              f"{prod:10.4f}{1-prod:13.5f}{m(rho*h)/(rb*hb):12.5f}")
+    print(f"\n  The last two columns agree to machine precision, so this is")
+    print(f"  the identity and not a fit.  |corr| actually FALLS as the")
+    print(f"  window grows, from 0.52 to 0.36, but the two CVs grow faster,")
+    print(f"  so the product climbs towards one and e_omega/E towards zero.")
+    print(f"\n  Note what this does and does not say.  The curve approaches")
+    print(f"  the lower edge only RELATIVE to the band.  Measured against")
+    print(f"  the nominal itself the deviation is LARGER at the slow ramp:")
+    print(f"\n  {'Mdot':>6}{'x':>7}{'e_omega end':>13}{'e/omega_nom':>13}"
+          f"{'e/E':>9}")
+    for md in RATES:
+        d = band(md)
+        print(f"  {md:6.2f}{d['x']:7.3f}{d['e'][-1]:13.5f}"
+              f"{100*d['e'][-1]/d['nom'][-1]:12.3f}%"
+              f"{100*d['e'][-1]/d['E_sup'][-1]:8.2f}%")
 
 
 if __name__ == '__main__':
