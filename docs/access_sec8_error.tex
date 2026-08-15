@@ -91,9 +91,20 @@ and lengthening the window makes both coefficients of variation grow
 faster than the correlation weakens. Measured, the realised deviation is
 $3.2\%$ of the bound at $\Mdot = 0.10$ and $20.8\%$ at $1.20$; the
 reduction factors evaluated at their suprema account for a further
-factor of $1.5$ to $2.1$, roughly constant across the rates. The
-guarantee is therefore sharpest at the fast ramps, which is one of three
-independent reasons to prefer them.
+factor of $1.5$ to $2.1$, roughly constant across the rates.
+
+This says how informative the guarantee is and nothing else, and the
+distinction is worth making explicitly because the two are easily
+conflated. A larger occupancy means the bound is closer to the truth,
+not that the truth is larger or smaller. On the $\rho$ channel the fast
+ramp is in fact slightly \emph{worse}: the deviation is less aligned
+with the onset direction there ($31.4^\circ$ against $23.0^\circ$, so
+$82\%$ of it is absorbable rather than $89\%$), but
+$\Delta M_{\rm crit} = \Mdot\,\delta$ and $\delta$ falls only
+$2.3\times$ across the rate range while $\Mdot$ rises twelvefold, so the
+channel contributes $0.35$~mN\,m at $\Mdot = 0.10$ and $1.82$ at
+$1.20$. The recommendation on excitation rate is made separately below,
+on measured grounds, and does not rest on this paragraph.
 
 \subsection{The fit against its cap}
 
@@ -207,6 +218,52 @@ Per $1\%$ of calibration error that is $0.027\%$ of $W$ from the
 amplitude channel and $0.077\%$ from the exponent, the exponent being
 the more damaging by about three; the closed forms are
 $A(x)/B(x)$ and $D(x)/B(x)$ times $\Mdot/C_2$.
+
+\subsection{Choosing the excitation rate}
+
+The protocol's seven rates permit the choice to be made on measurement
+rather than argument. Taking each configuration's half-sum at a given
+rate against its own mean over all rates isolates the error contributed
+by that rate:
+
+\begin{center}\small
+\begin{tabular}{@{}rrrrr@{}}
+\toprule
+$\Mdot$ & post-onset & window & RMS error & p90 \\
+N\,m/s & samples & s & mm & mm \\
+\midrule
+$0.10$ & $74$ & $0.740$ & $0.810$ & $1.035$ \\
+$0.20$ & $64$ & $0.635$ & $0.569$ & $0.975$ \\
+$0.30$ & $58$ & $0.575$ & $0.708$ & $0.994$ \\
+$0.45$ & $54$ & $0.545$ & $0.707$ & $1.374$ \\
+$0.65$ & $48$ & $0.480$ & $0.528$ & $0.924$ \\
+$0.90$ & $44$ & $0.445$ & $0.443$ & $0.696$ \\
+$1.20$ & $41$ & $0.410$ & $\mathbf{0.422}$ & $\mathbf{0.637}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+There is no interior optimum: the error falls to the fastest rate
+tested. That is worth checking against the obvious objection, which is
+that a faster ramp shortens the window and leaves fewer samples to fit.
+It does --- $74$ down to $41$ --- but the onset is located by
+$\|\chi\|^2 = C_1^2C_2B(x)$ with $C_1 = \Mdot/W\!z_{CoM}$, so the
+amplitude rises twelvefold while the sample count falls only $1.8\times$,
+and the product improves: $\|\chi\|$ grows $1.35\times$ and the onset
+uncertainty $\sigma_\delta$ falls by $26\%$. Forty-one samples remain
+ample for a two-parameter fit.
+
+Two effects would eventually create an interior optimum and neither has
+taken over by $1.20$~N\,m/s. The onset is quantised to the sample grid,
+contributing $T_s\Mdot/\sqrt{12}$ per direction, or $0.081$~mm to the
+half-sum at the fastest rate against the $0.422$ measured --- under
+$4\%$ of the variance, and removable outright by refining the onset
+below the grid. And the pseudo-inverse allocation saturates at
+$M_{x,\max} = 2.371$ and $M_{y,\max} = 2.737$~N\,m (Figs.~13--14),
+which caps the usable rate from above. Within the range tested the
+recommendation is simply the top of it, and restricting to
+$\Mdot\ge0.65$~N\,m/s takes the reported spread from $0.522$ to
+$0.327$~mm.
 
 \subsection{Summary}
 
