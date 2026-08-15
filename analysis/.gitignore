@@ -2,3 +2,4 @@
 .fitq_cache.pkl
 .mcrit_cache.pkl
 .subsample_cache.pkl
+.ptwise_cache.pkl
