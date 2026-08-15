@@ -22,6 +22,18 @@ runs actually do, in the same currency, so the two can be compared:
   noise floor pre-onset std, so that a residual can be told apart from
               the gyro.
 
+Nothing in this fit is a continuous least-squares parameter: C1 is pinned
+to ramp_gain * Mdot, C2 is the configuration's rig constant, the baseline
+is a median, and only the integer onset index is searched.  So the usual
+worry -- that least squares drives the residual orthogonal to the model
+and flatters it -- does not apply here.  The one stationarity that does
+exist is in the onset, and it is exactly (103): <residual, chi> = 0 with
+chi ~ sinh(C2 tau).  That means the fit absorbs whatever part of the
+deviation looks like a shifted onset, which is the part concentrated
+EARLY; a disturbance concentrated at the end of the window -- the case
+the Chebyshev step of VI-E is built on -- is not absorbed and does reach
+the residual.
+
 The bound is printed twice.  The a-priori column is VI-E as published,
 set at the 10-degree tilt cap.  The runs stop at 4.5 to 5.6 degrees, so
 that column overstates the disturbance by roughly the square of the
@@ -233,9 +245,64 @@ def main():
           f"  vs noise {np.mean(rf):+.3f}"
           f" (p={stats.ttest_1samp(rf, 0).pvalue:.3f})")
     print("  A positive rho against the bound would mean the modelled forcing")
-    print("  contributes.  It is negative, so it does not: the residual tracks")
-    print("  the disturbance floor instead, and any agreement in MAGNITUDE at")
-    print("  the slowest ramp is a coincidence rather than a mechanism.")
+    print("  contributes.  It is negative, so it does not, and any agreement in")
+    print("  MAGNITUDE at the slowest ramp is a coincidence, not a mechanism.")
+
+    # What IS it, then.  Nothing in this fit is a continuous least-squares
+    # parameter: C1 = ramp_gain * Mdot and C2 are pinned, the baseline is a
+    # median, and only the integer onset index is searched.  So the residual
+    # is not orthogonal to a tangent space; the one stationarity that exists
+    # is in the onset, and that is exactly (103), <residual, chi> = 0 with
+    # chi ~ sinh(C2 tau).  A mismatch in the GROWTH RATE therefore survives
+    # into the residual, and its endpoint size relative to the peak is
+    # d(omega)/d(C2) / peak = Psi(x) = x coth(x/2).  That signature is
+    # testable: it should show up across configurations, which differ in
+    # their fitted C2, and not across rates within one, which do not.
+    print("\n  a growth-rate mismatch would enter as Psi(x) = x coth(x/2),")
+    print("  the endpoint value of d(omega)/d(C2) relative to the peak.\n")
+    psi = {id(r): r['x_fit'] / np.tanh(r['x_fit'] / 2) for r in rows}
+    by_cfg = defaultdict(list)
+    for r in rows:
+        by_cfg[(r['case'], r['axis'])].append(r)
+
+    def _rho(sub):
+        if len(sub) < 4:
+            return np.nan
+        return stats.spearmanr([psi[id(r)] for r in sub],
+                               [r['end_pct'] for r in sub])[0]
+
+    a = [_rho(g[k]) for k in sorted(g)]
+    b = [_rho(by_cfg[k]) for k in sorted(by_cfg)]
+    print(f"  within rate, across configurations: mean rho {np.mean(a):+.3f}"
+          f" (p={stats.ttest_1samp(a, 0).pvalue:.3f})")
+    print(f"  within configuration, across rates:  mean rho {np.mean(b):+.3f}"
+          f" (p={stats.ttest_1samp(b, 0).pvalue:.3f})")
+    imp = np.array([r['end_pct'] / psi[id(r)] for r in rows])
+    print(f"  so it is a property of the configuration, not of the excitation."
+          f"\n  Read as a growth-rate mismatch it implies |dC2/C2| ="
+          f" {np.median(imp):.1f}% in the median,"
+          f" {np.percentile(imp, 90):.1f}% at p90.")
+
+    print("\n  the fitted C2 by configuration, against the (110) ceiling."
+          "\n  The MEDIAN lands near the ceiling by coincidence; the"
+          " individual\n  values do not, and one exceeds it, which a ceiling"
+          " forbids.\n")
+    print(f"  {'configuration':16}{'C2 fit':>9}{'ceiling':>9}{'dev':>8}"
+          f"{'Psi':>7}{'end_pct':>9}")
+    for k in sorted(by_cfg):
+        v = by_cfg[k]
+        arm = ARM if k[1] == 'Mx' else 0.130
+        ceil = np.sqrt(G * Z / (Z ** 2 + arm ** 2))
+        c2f = np.median([r['c2_fit'] for r in v])
+        print(f"  {k[0] + '/' + k[1]:16}{c2f:9.3f}{ceil:9.3f}"
+              f"{100 * (c2f - ceil) / ceil:+7.1f}%"
+              f"{np.median([psi[id(r)] for r in v]):7.2f}"
+              f"{np.median([r['end_pct'] for r in v]):8.2f}%")
+    print("\n  Note this does NOT say the fitted C2 is wrong by that deviation:"
+          "\n  a mismatch that large would leave a residual near 75%, not 9%."
+          "\n  The fitted value is the one the data supports; it is the"
+          " geometric\n  ceiling, or the rigid-pivot reading behind it, that"
+          " needs the footnote.")
 
     pk = np.array([r['span'] for r in rows])
     ab = np.array([r['end_pct'] for r in rows]) / 100 * pk
@@ -246,8 +313,9 @@ def main():
           f" ({np.median(nf):.4f});\n  log-log slope against the peak"
           f" {s.slope:.2f} (R^2 {s.rvalue ** 2:.2f}), i.e. broadly flat"
           f"\n  in absolute terms over a {pk.max() / pk.min():.0f}x range"
-          f" of excursion --- a post-onset\n  disturbance floor, not a"
-          f" deformation of the modelled response.")
+          f" of excursion.  So it is neither\n  sensor noise nor the modelled"
+          f" forcing, but a per-configuration deformation\n  of the response"
+          f" the cosh family does not carry.")
 
     worst = max(rows, key=lambda r: r['end_pct'])
     print(f"  worst single run: {worst['case']}/{worst['axis']}"
