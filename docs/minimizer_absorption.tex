@@ -349,6 +349,21 @@ search --- at every ramp rate, with the amplitude moving from $-17$ to
 $+44\%$. At $\dot M = 1.20$~N\,m/s, $150$~ms of onset is $180$~mN\,m of
 threshold, fifteen times the entire a priori budget.
 
+\textbf{(iv) The fitted curve stays in the band the data is in.} Since
+$C_1$ is pinned, the only freedom left is $\delta$, and
+$\hat\omega - \omega_{\rm nom}
+ = -2C_1\sinh\frac{C_2\delta}{2}\sinh C_2(\tau - \frac\delta2)$
+exactly. To first order that is $C_1C_2|\delta|\sinh C_2\tau$, and with
+$|\delta| \le \bar\rho/\dot M$ and $\Wz = J_PC_2^{2}$ it equals
+$\bar\rho\sinh(C_2\tau)/(J_PC_2)$ --- the same envelope that bounds
+$e_\omega$ itself. So the minimiser returns a cosh lying somewhere
+between $\omega_{\rm nom} \pm \bar\rho\sinh(C_2\tau)/(J_PC_2)$, and the
+band edges are attained at the extreme $\delta$, so the band is the
+reachable set rather than a container. This is (i) read geometrically:
+$|\Delta M_{\rm crit}| \le \bar\rho$ and ``the fit lies in the band''
+are the same inequality. Derived in full, with the second-order term
+kept, in \texttt{docs/vi\_e\_derivation.tex}, (D.13d)--(D.13g).
+
 \begin{center}\small
 \begin{tabular}{@{}lll@{}}
 \toprule

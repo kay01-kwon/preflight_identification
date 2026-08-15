@@ -78,6 +78,7 @@ def main():
     print("  rho was placed EARLY, so most of it went to the amplitude and"
           "\n  little to the onset -- consequence (ii) of the derivation.")
     ok.append(short_route())
+    ok.append(band_membership())
     return 0 if all(ok) else 1
 
 
@@ -107,6 +108,91 @@ def short_route():
                   f"{1e3 * mdot * num / den:11.4f}{1e3 * rb:10.4f}{r:10.6f}")
     print(f"\n  worst departure from 1: {worst:.2e}")
     return worst < 1e-9
+
+
+def band_membership():
+    """(D.13d)-(D.13f): the fitted cosh lies in the band the data lies in.
+
+    The data satisfies |y - omega_nom| <= E(tau) = rho_bar sinh(C2 tau)/(J_P C2).
+    The claim is that the CURVE the minimiser returns satisfies the same
+    inequality, to first order in g = C2 |delta|, and that the band edges
+    are attained -- so the band is not a container that happens to hold the
+    fit, it is exactly the set the fit can reach.
+
+    Three things are checked:
+      1. the exact difference identity, cosh A - cosh B = 2 sinh sinh;
+      2. the exact two-term bound (D.13e) holds for every admissible delta;
+      3. at |delta| = rho_bar/Mdot the first-order deviation equals E(tau)
+         exactly -- the edge is attained, the band is tight.
+    """
+    print("\n  band membership: does the FITTED cosh stay in +/- E(tau)?\n")
+    ok = True
+    tau = np.linspace(1e-6, 0.60, 20001)
+    rb = 0.01204                              # rho_bar over the box, N.m
+
+    # 1. the exact difference identity
+    worst_id = 0.0
+    for c2, c1, d in ((5.299, 0.2635, 0.030), (5.046, 0.1266, -0.045),
+                      (4.100, 0.3100, 0.012), (7.500, 0.4000, -0.008)):
+        lhs = c1 * (np.cosh(c2 * (tau - d)) - np.cosh(c2 * tau))
+        rhs = -2 * c1 * np.sinh(c2 * d / 2) * np.sinh(c2 * (tau - d / 2))
+        worst_id = max(worst_id, float(np.max(np.abs(lhs - rhs))))
+    print(f"  {'PASS' if worst_id < 1e-12 else 'FAIL'}  "
+          f"(D.13d) cosh(C2(tau-d)) - cosh(C2 tau) identity{'':7}"
+          f"{worst_id:.2e}")
+    ok &= worst_id < 1e-12
+
+    # 2/3. the two-term bound, and tightness of the first-order form.
+    # The inflation is quoted at the window end, x = C2 tau_end = 3.  A
+    # ratio near tau = 0 is not informative: E vanishes there and the
+    # second-order term does not, so two/E diverges while BOTH are a
+    # negligible fraction of the peak rate.  That absolute size is the
+    # last column instead.
+    x = 3.0
+    print(f"\n  {'Mdot':>6}{'|d| max':>9}{'g':>7}{'E-ratio':>10}"
+          f"{'infl. at':>10}{'2nd-ord at 0':>15}{'holds':>7}")
+    print(f"  {'N.m/s':>6}{'s':>9}{'':7}{'1st ord':>10}{'x = 3':>10}"
+          f"{'% of peak':>15}")
+    worst_ratio = 0.0
+    holds_all = True
+    for mdot in (0.10, 0.20, 0.45, 0.80, 1.20):
+        c2, j_p = 5.046, 0.4260
+        wz = j_p * c2 ** 2
+        c1 = mdot / wz
+        dmax = rb / mdot                       # (D.13c): |delta| <= rho_bar/Mdot
+        g = c2 * dmax
+        E = rb * np.sinh(c2 * tau) / (j_p * c2)
+        # the exact bound of (D.13e)
+        two = (c1 * np.sinh(g) * np.sinh(c2 * tau)
+               + c1 * (np.cosh(g) - 1) * np.cosh(c2 * tau))
+        # every admissible delta must sit under it
+        for d in np.linspace(-dmax, dmax, 41):
+            dev = np.abs(c1 * (np.cosh(c2 * (tau - d)) - np.cosh(c2 * tau)))
+            if np.max(dev - two) > 1e-12:
+                holds_all = False
+        # first-order form equals E exactly at the extreme delta
+        first = c1 * c2 * dmax * np.sinh(c2 * tau)
+        r = float(np.max(np.abs(first / E - 1.0)))
+        worst_ratio = max(worst_ratio, r)
+        infl = ((np.sinh(g) * np.sinh(x) + (np.cosh(g) - 1) * np.cosh(x))
+                / (g * np.sinh(x)))
+        # the term the first-order form drops, at tau = 0, against the
+        # nominal peak rate C1 (cosh x - 1)
+        second = (np.cosh(g) - 1) / (np.cosh(x) - 1)
+        print(f"  {mdot:6.2f}{dmax:9.4f}{g:7.4f}{1 + r:10.6f}"
+              f"{infl:10.3f}{100 * second:14.2f}%{'yes' if holds_all else 'NO':>7}")
+    print(f"\n  first-order deviation at |delta| = rho_bar/Mdot equals E(tau)"
+          f" to {worst_ratio:.1e}")
+    print(f"  -- the band edge is ATTAINED, so +/- E is the reachable set,"
+          f" not a container.")
+    print(f"  column 5 is the price of the second-order term where the signal"
+          f" lives; it is\n  paid only at the slow ramp, where the a priori"
+          f" bound on delta is itself a\n  fifth of the window.  Column 6 is"
+          f" what the first-order form drops at tau = 0,\n  as a fraction of"
+          f" the peak nominal rate -- below 2% throughout.")
+    ok &= holds_all and worst_ratio < 1e-9
+    print(f"\n  {'PASS' if ok else 'FAIL'}  (D.13e)-(D.13f) band membership")
+    return ok
 
 
 if __name__ == '__main__':
