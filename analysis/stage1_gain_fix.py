@@ -340,6 +340,27 @@ def main():
           f" {np.median(sp_b):.3f} mm,  offset moves"
           f" {np.median(dd):.3f} mm in the median and {dd.max():.3f} at worst")
     print(f"  runs inside the cap {ins_a}/140 -> {ins_c}/140")
+    # A compact summary for the Sec. VIII figure, so it need not repeat
+    # the sweep.
+    summary = dict(
+        scales=[float(s) for s in SCALES],
+        per_cfg={f"{cfg[0]}/{cfg[1]}":
+                 dict(k=k0, s_inv=si, s_resid=sr,
+                      half={float(s): tab[float(s)][0]['half'] for s in SCALES},
+                      spread={float(s): tab[float(s)][0]['spread']
+                              for s in SCALES},
+                      inside={float(s): tab[float(s)][0]['inside']
+                              for s in SCALES},
+                      n={float(s): tab[float(s)][0]['n'] for s in SCALES},
+                      resid={float(s): tab[float(s)][0]['resid']
+                             for s in SCALES},
+                      cv={float(s): tab[float(s)][0]['cv'] for s in SCALES})
+                 for cfg, k0, sr, si, _, tab in rows_out})
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                           '.ridge_summary.pkl'), 'wb') as fh:
+        pickle.dump(summary, fh)
+    print(f"\n  wrote .ridge_summary.pkl for the Sec. VIII figure")
+
     print(f"\n  The per-configuration optima run"
           f" {min(r[3] for r in rows_out):.2f} to"
           f" {max(r[3] for r in rows_out):.2f} on fourteen runs each, which"
