@@ -158,12 +158,14 @@ def main():
             tw = crit.t[i0:i1 + 1]
             c2_fit = float(pw['alpha'])
             tau_end = float(tw[-1] - tw[j])
+            # magnitude: the negative-direction runs integrate negative and
+            # would cancel in any median taken over both.
             phi_end = float(np.trapz(pred[j:] - float(pw['c']), tw[j:]))
             rows.append(dict(
                 case=d.parent.name, axis=d.name, bag=crit.bag_name,
                 rate=commanded_ramp_rate(crit.bag_name) or np.nan,
                 span=span, c2_fit=c2_fit, tau_end=tau_end,
-                x_fit=c2_fit * tau_end, phi_deg=np.rad2deg(phi_end),
+                x_fit=c2_fit * tau_end, phi_deg=abs(np.rad2deg(phi_end)),
                 end_pct=100.0 * abs(float(np.mean(res[-3:]))) / span,
                 rms_pct=100.0 * float(np.sqrt(np.mean(res ** 2))) / span,
                 floor_pct=100.0 * float(np.std(om[:j] - base)) / span))
