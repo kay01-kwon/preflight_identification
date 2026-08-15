@@ -448,6 +448,7 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
         if full_sweep:
             lo, hi = 8, max(9, N - 8)
         best = (np.inf, lo, None)
+        cost_of = {}
         for j in range(lo, max(lo + 1, hi), step):
             tau = t[j:] - t[j]
             gfun = np.cosh(np.clip(c2_val * tau, 0, 30)) - 1
@@ -455,15 +456,33 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
             post = np.sum((omega[j:] - (C1_fix * gfun + C0)) ** 2)
             pre = np.sum((omega[:j] - C0) ** 2) if j > 0 else 0.0
             cost = float(post + pre)
+            cost_of[j] = cost
             if cost < best[0]:
                 best = (cost, j, (C1_fix, c2_val, C0))
         cost, j_star, params = best
+        # Sub-sample refinement.  The cost is a smooth function of the
+        # CONTINUOUS onset -- the linearised form is exactly quadratic in
+        # it -- and the sweep only samples that function on the data grid,
+        # so the grid minimum is short of the true one by up to half a
+        # step.  A parabola through the three costs around j_star has its
+        # vertex at the sub-sample offset below.  This is not a fitted
+        # curve but the correct local model, and it turns an onset error
+        # of order Ts into one of order Ts^2 times the local curvature.
+        frac = 0.0
+        a = cost_of.get(j_star - step)
+        c_ = cost_of.get(j_star + step)
+        if a is not None and c_ is not None:
+            den = a - 2.0 * cost + c_
+            if den > 0.0:
+                frac = float(np.clip(0.5 * (a - c_) / den, -0.5, 0.5)) * step
         C1, C2, C = params
         tau = t[j_star:] - t[j_star]
         omega_pred = np.full(N, float(C))
         omega_pred[j_star:] = C1 * (np.cosh(np.clip(C2 * tau, 0, 30)) - 1) + C
         return dict(
             onset_idx=j_star,
+            onset_frac=float(frac),
+            onset_t=float(t[j_star] + frac * dt),
             c=float(C), alpha=float(C2),
             total_residual=float(cost),
             omega_pred=omega_pred,
