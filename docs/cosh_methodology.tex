@@ -374,10 +374,9 @@ $x = C_2\tau_{\rm end}$ then follows without solving anything.
 \caption{The window each run spanned, and its post-onset prediction
 residual, by ramp rate; $140$ runs, $20$ per rate, medians unless
 noted. Residual columns are normalized by that run's peak excursion.
-The fitted $C_2$ has median $5.062$~s$^{-1}$ at every rate — it is a
-per-configuration constant, not a per-run one — against the $5.05$
-geometric ceiling; the spread across configurations is $4.50$ on pitch
-and $6.13$ on roll.}
+$C_2$ is a per-configuration constant, not a per-run one, so it does
+not vary down the table; across the ten configurations it runs $3.50$
+to $8.00$~s$^{-1}$.}
 \label{tab:resid}
 \begin{tabular}{@{}rrlrrrrrr@{}}
 \toprule
@@ -409,15 +408,37 @@ all & $0.520$ & $2.67$ ($1.7$--$4.0$) & $4.90$ &
 \end{tabular}
 \end{table}
 
-Two things about the window itself. The fitted $C_2$ agrees with the
-geometric ceiling $\sqrt{gz_{CoM}/(z_{CoM}^2+(l_p+p_{\rm off})^2)}$ to
-$0.3\%$ in the median, which is a check on that ceiling and not
-something the calibration was asked to produce. And the runs stop well
-inside the $10^\circ$ design limit, at $4.9^\circ$ in the median and
+Two things about the window itself. The runs stop well inside the
+$10^\circ$ design limit, at $4.9^\circ$ in the median and
 $0.9$--$7.8^\circ$ over individual runs, because the excitation window
 closes on the moment rather than on the tilt: $x$ runs $3.47$ down to
 $1.79$ across the sweep where the tilt limit alone would give $5.18$
-down to $2.99$.
+down to $2.99$. And the fitted $C_2$ does \emph{not} sit at the
+geometric ceiling
+$\sqrt{gz_{CoM}/(z_{CoM}^2+(l_p+p_{\rm off})^2)}$ of $5.05$ on roll and
+$5.25$ on pitch. Its median across configurations lands at $5.06$, but
+that is an accident of the median: the ten values are $3.50$, $3.75$,
+$3.88$, $3.88$, $4.50$, $5.63$, $6.13$, $6.63$, $6.88$ and $8.00$, and
+the largest exceeds the ceiling by $59\%$ — which a ceiling forbids.
+Either $p_{\rm off}$ does not belong in the arm of that bound, or the
+contact is not the rigid pivot the bound assumes. Nothing downstream
+rests on it: $C_2$ enters the identified threshold only through the
+onset index, and Sec.~\ref{sec:nls} shows the seven detectors agreeing
+to $3$--$45$~mN\,m regardless.
+
+Before reading the residual it is worth saying what the fit leaves free,
+because the usual objection to a fit residual — that least squares
+drives it orthogonal to the model and so flatters it — does not apply
+here. Nothing in this fit is a continuous parameter: $C_1$ is pinned to
+$K\dot M$, $C_2$ is the configuration's constant, the baseline is a
+median rather than a least-squares estimate, and only the integer onset
+index is searched. The one stationarity that does exist is in that
+index, and it is the orthogonality
+$\langle \text{residual}, \chi\rangle = 0$ with
+$\chi = \partial\hat\omega/\partial t_c \propto \sinh C_2\tau$. So the
+fit absorbs whatever part of the deviation looks like a shifted onset,
+which is the part concentrated \emph{early}: a disturbance concentrated
+at the end of the window is not absorbed and does reach the residual.
 
 Three readings. \emph{It is flat in rate}, $8.77\%$ over the slow half
 ($\dot M \le 0.30$) against $10.06\%$ over the fast half
@@ -426,9 +447,22 @@ no ramp rate has to be preferred. \emph{It is not gyro noise}: in
 absolute terms the residual is $0.0452$~rad/s against a pre-onset floor
 of $0.0148$, a factor of $3.0$, and it stays near that level while the
 peak excursion varies sixfold across the runs (log--log slope $0.40$,
-$R^2 = 0.02$). What it is, then, is a post-onset disturbance floor —
-contact chatter and rotor vibration during the tip — rather than
-either sensor noise or a deformation of the modelled response.
+$R^2 = 0.02$).
+
+\emph{And it behaves like a growth-rate mismatch.} Because $C_2$ is
+pinned, a discrepancy in it survives into the residual as
+$\partial\omega/\partial C_2 = C_1\tau\sinh C_2\tau$, whose endpoint
+value relative to the peak is exactly $\Psi(x) = x\coth(x/2)$. That
+signature is testable, and it holds: across configurations at a fixed
+rate the rank correlation between $\Psi(x)$ and the endpoint residual is
+$+0.379$ ($p = 0.010$), while across rates within one configuration it
+is $-0.051$ ($p = 0.73$). The residual is therefore a property of the
+configuration and not of the excitation, which is also why it is flat in
+rate — $C_2$ is a configuration constant. Read that way it implies a
+residual $|\delta C_2/C_2|$ of $3.0\%$ in the median and $5.5\%$ at p90.
+That is not the same as saying the fitted $C_2$ is wrong by its
+departure from the geometric ceiling above: a mismatch of that size
+would leave a residual near $75\%$, not $9\%$.
 
 \emph{And it is not the modelled forcing either}, which is worth
 establishing rather than assuming. The deviation bound predicts a
