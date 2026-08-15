@@ -28,18 +28,43 @@ is therefore ANTISYMMETRIC and cancels in the half-sum -- except that
 its coefficient differs between the runs, A_+ - A_- = -2a, and what
 survives is proportional to the very offset being measured:
 
-    relative error on the offset  ~  (1/2) <phi^2>_w      (order only)
+    relative error on the offset  ~  -(1/2) <phi^2>_w
 
-a SCALE error rather than an additive bias.  Measured, that term is
-about a third of what survives; the rest comes from the two windows not
-being the same length, since A_+ != A_- puts the tilt cap at different
-times and the Wz channel then cancels imperfectly too.  Both are tiny.
+a SCALE error rather than an additive bias, and an under-estimate.  The
+magnitude is confirmed to within 23% at every ramp rate; the sign above
+is what the measurement gives and the rest of the discrepancy is the two
+windows not being the same length, since A_+ != A_- puts the tilt cap at
+different times and the Wz channel then cancels imperfectly too.
 
-The channel that does NOT cancel is the ground effect, and only if its
-parity is even.  rho_GE = beta M phi flips with neither M nor phi alone
-but with both, so whether it survives turns on a modelling question the
-form does not settle.  Both parities are reported; the difference is
-between 1 um and 78 um of offset, so it is worth settling.
+The ground-effect channel is the bilinear term (iv) of (79),
+
+    rho_GE(tau, phi) = beta_M Mdot tau phi,     beta_M < 0,
+
+and its parity is settled by where beta_M comes from rather than by the
+form, which on its face is even.  From (37)-(38) the effective hub
+height is h_i = -(l_y,i + l_p) sin(phi) + h cos(phi), so
+
+    beta_M  =  d/dphi [ sum_i (l_y,i + l_p) eta_i^GE b_i^dagger ]
+            =  -c sum_i (l_y,i + l_p)^2 b_i^dagger .
+
+Under the direction flip the pivot moves to the other edge, l_p -> -l_p,
+the rotor labels mirror, l_y,i -> -l_y,i, and the allocation basis
+reverses, b^dagger -> -b^dagger.  The squared bracket is unchanged and
+b^dagger is not, so BETA_M FLIPS SIGN.  Then
+
+    rho_GE  ->  (-beta_M)(-Mdot) tau (-phi)  =  -rho_GE :   ODD.
+
+Two checks that this is the right reading.  k_0^GE = beta_f f l_p +
+beta_M M_crit stays EVEN under the same flip, as it must -- it is quoted
+in the paper as a single negative constant per axis, [-0.218, -0.169]
+N m for roll -- and k_0^GE phi is then a restoring term in both
+directions, which is what "the ground effect only reduces the net
+destabilising gradient" means.  And a roll moment is odd under a mirror
+about the x-z plane on general grounds.
+
+So the ground-effect channel cancels too, and the even case below is a
+counterfactual kept only to show what the parity is worth: 78 um of
+offset if it were even against 0.7 um as it is.
 
 Nothing is linearised in the measurement: the trajectory comes from the
 exact ODE, the windows are where each run actually reaches the tilt cap
@@ -58,7 +83,7 @@ J_P = 0.4260
 WZ = W * ZCOM                          # the destabilising gain
 C2 = np.sqrt(WZ / J_P)                 # the identity, not an independent value
 PHI_MAX = np.deg2rad(10.0)
-BETA = 0.03446
+BETA = -0.03446                        # beta_M < 0: the GE term is restoring
 A_TRUE = 0.0020                        # 2 mm of offset, the thing measured
 PRE = 0.15
 
@@ -105,15 +130,36 @@ def fit(run, mdot, c2=C2, dmax=0.25, nd=5001):
     w = np.gradient(t)
     w[0] *= 0.5
     w[-1] *= 0.5
-    best = (np.inf, 0.0)
-    for d in np.linspace(-dmax, dmax, nd):
+    def cost(d):
         sh = np.where(t < d, 0.0,
                       c1 * (np.cosh(np.clip(c2 * (t - d), 0, 40)) - 1.0))
         c = float(np.sum((y - sh) * w) / w.sum())
-        v = float(np.sum((y - sh - c) ** 2 * w))
-        if v < best[0]:
-            best = (v, d)
-    return best[1]                      # onset offset from the TRUE onset
+        return float(np.sum((y - sh - c) ** 2 * w))
+
+    ds = np.linspace(-dmax, dmax, nd)
+    vs = np.array([cost(d) for d in ds])
+    j = int(np.argmin(vs))
+    # Sub-grid refinement.  Without it the residual bias measured below
+    # sits at half a grid step and is quantisation, not physics: at
+    # Mdot = 1.20 the two directions land on adjacent grid points and the
+    # half-sum reads out the step, whatever the truth is.  The cost is
+    # smooth and locally quadratic in d, so a three-point vertex is
+    # enough; the parabola is refit twice on a shrinking bracket.
+    lo, hi = ds[max(j - 1, 0)], ds[min(j + 1, nd - 1)]
+    for _ in range(3):
+        g = np.linspace(lo, hi, 21)
+        v = np.array([cost(x) for x in g])
+        k = int(np.argmin(v))
+        if 0 < k < 20:
+            a0, a1, a2 = v[k - 1], v[k], v[k + 1]
+            den = a0 - 2 * a1 + a2
+            step = 0.5 * (a0 - a2) / den * (g[1] - g[0]) if den > 0 else 0.0
+            centre = g[k] + step
+        else:
+            centre = g[k]
+        half = (g[1] - g[0]) * 1.5
+        lo, hi = centre - half, centre + half
+    return float(centre)                # onset offset from the TRUE onset
 
 
 def one(mdot_mag, beta=0.0, ge_odd=True, a=A_TRUE):
@@ -193,7 +239,7 @@ def main():
         print(f"  {md:6.2f}{bp:10.3f}{bm:10.3f}{hs:11.4f}"
               f"{1 - abs(hs)/max(abs(bp), abs(bm)):11.4%}")
 
-    print(f"\n  the ground-effect channel, both parities\n")
+    print(f"\n  the ground-effect channel; ODD is the physical one\n")
     print(f"  {'Mdot':>6}{'GE parity':>12}{'half-sum bias':>16}"
           f"{'as offset':>12}{'cancels':>10}")
     print(f"  {'':6}{'':12}{'mN.m':>16}{'um':>12}")
@@ -204,7 +250,7 @@ def main():
             dh = 1e3 * (o['off_hat'] - base)
             print(f"  {md if odd else '':6}{'odd' if odd else 'even':>12}"
                   f"{dh:16.4f}{1e6*abs(dh)/1e3/W:12.2f}"
-                  f"{'yes' if abs(dh) < 0.05 else 'NO':>10}")
+                  f"{('yes' if abs(dh) < 0.05 else 'NO') + ('' if odd else ' (n/a)'):>10}")
 
     print(f"\n  what breaks it: the two directions not matched\n")
     print(f"  {'mismatch':>10}{'a_hat [mm]':>13}{'err [um]':>11}"
