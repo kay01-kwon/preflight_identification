@@ -66,6 +66,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from critical_value_getter_piecewise import (commanded_ramp_rate,
                                              detect_excitation_window,
                                              extract_piecewise_batch)
+from analysis.pnls_constants import PNLS_CONSTANTS
 from utils.extractor import load_excitation_dataset
 
 # Sec. VI-D box, roll, for re-deriving the VI-E bound alongside.
@@ -123,9 +124,16 @@ def main():
     rows = []
     for d in dirs:
         axis = 'x' if d.name == 'Mx' else 'y'
+        # The REPORTED configuration uses the frozen two-stage constants,
+        # as analysis/nls_comparison.py does.  Letting the batch estimate
+        # its own runs a different calibration: on case_01/Mx that route
+        # hits the top of its search interval at C_2 = 8.000, which is not
+        # what any reported number was produced with.
+        c2_pn, k_pn = PNLS_CONSTANTS[(d.parent.name, d.name)]
         with contextlib.redirect_stdout(io.StringIO()):
             bags = load_excitation_dataset(d)
-            crits, fits = extract_piecewise_batch(bags, axis)
+            crits, fits = extract_piecewise_batch(bags, axis, cosh_c2=c2_pn,
+                                                 ramp_gain=k_pn)
         for crit, pw in zip(crits, fits):
             if pw.get('model') != 'cosh' or 'omega_pred' not in pw:
                 continue
