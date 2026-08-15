@@ -244,8 +244,14 @@ free cannot see $e_\omega$ at all, because $e_\omega$ has moved the
 signal along the model family rather than off it.
 
 \textbf{Case B: the amplitude pinned, $\hat C_1 = C_1 = K\dot M$.} Now
-there are two unknowns for three equations. The $\sinh$ row fixes the
-onset,
+there are two unknowns for three equations, and the system is
+overdetermined. \emph{A least-squares fit does not respond to that by
+satisfying two rows and calling the third a residual} --- it trades
+across all three to minimise the norm, and it will happily accept error
+in the $\sinh$ row to reduce a larger error in the $\cosh$ row. The
+solution below therefore describes coefficient \emph{matching}, which is
+a different estimator from the one deployed; \S7 gives the difference
+and it is not small. Matching the $\sinh$ row fixes the onset,
 \begin{equation}
   \sinh C_2\hat\delta = -\frac{b}{C_1} = \frac{Q}{J_PC_1},
   \label{eq:deltafix}
@@ -306,21 +312,53 @@ never matters here, but it is what a numerical check will find if the
 two forms are compared to machine precision
 (\texttt{analysis/absorption\_check.py}).
 
-\textbf{A caveat on \eqref{eq:dmcrit}.} It was obtained by matching
-coefficients, which is exact only when $P$ and $Q$ have stopped growing
---- that is, when $\rho$ acts early and then dies. In general the
-estimator does least squares over the whole window rather than matching
-coefficients, and the onset it picks is
+\textbf{\eqref{eq:dmcrit} is not what the estimator computes.} It was
+obtained by matching coefficients. The deployed estimator does least
+squares over the whole window, and picks
 \begin{equation}
   \hat\delta = \frac{\langle e_\omega,\chi\rangle}{\|\chi\|^{2}},
   \qquad
   \chi \triangleq \frac{\partial\hat\omega}{\partial\tc}
       = -C_1C_2\sinh C_2\tau ,
+  \label{eq:proj}
 \end{equation}
-which is the projection of the deviation onto the one direction the
-onset can move it. The two agree in the early-$\rho$ limit and differ
-otherwise; the manuscript uses the projection form throughout, and it is
-that form which produces the normalised weight $w$ with $\int w = 1$.
+the projection of the deviation onto the one direction the onset can
+move it. These do not merely differ in the tail --- \emph{they can carry
+opposite signs}, and the reason is the $3.4^\circ$ of \S8(v). Take
+$\rho$ an impulse of mass $m$ at $s$, so that $P = m\cosh C_2s$ and
+$Q = m\sinh C_2s$ exactly and $P$, $Q$ are constant thereafter: the
+early-$\rho$ limit in which \eqref{eq:dmcrit} was supposed to be exact.
+It gives $\Delta M_{\rm crit} = +C_2m\sinh C_2s$, the onset moving
+\emph{later}. Measured on the deployed estimator at $s = 77$~ms and
+$\dot M = 1.20$~N\,m/s, the onset moves $26$~ms \emph{earlier}, a
+threshold error of $-31.7$~mN\,m against the $+20.2$ predicted by
+\eqref{eq:dmcrit}.
+
+The mechanism is plain once stated. A positive $\rho$ raises the
+amplitude, $R > C_1$; with $C_1$ pinned the fit cannot follow, and the
+only way to make a fixed-amplitude $\cosh$ larger is to start it
+earlier. That pull is proportional to $P$ and it overwhelms the $+Q$
+term from the $\sinh$ row. Keeping it,
+\begin{equation}
+  \Delta M_{\rm crit} \;\simeq\; C_2\Bigl[\,Q
+    \;-\; \frac{A(x)}{B(x)}\,P\,\Bigr],
+  \quad
+  \begin{aligned}
+   A &= \tfrac14\cosh 2x - \cosh x + \tfrac34,\\
+   B &= \tfrac14\sinh 2x - \tfrac12 x,
+  \end{aligned}
+  \label{eq:dmfix}
+\end{equation}
+with $A/B = 0.85$ at $x = 3.1$ and $\to1$ for large $x$. On the impulse
+above this returns $-29.3$~mN\,m against the measured $-31.7$, an $8\%$
+agreement where \eqref{eq:dmcrit} had the sign wrong.
+Equation~\eqref{eq:dmfix} still assumes $P$ and $Q$ have stopped
+growing; when $\rho$ acts across the whole window neither form applies
+and only \eqref{eq:proj} does. \textbf{The manuscript uses
+\eqref{eq:proj} throughout} --- it is that form which produces the
+normalised weight $w$ with $\int w = 1$, and (107), (108) and the
+reported bound are unaffected by anything in this paragraph. What is
+affected is the story told about them, below.
 
 \section{Three consequences, and the numbers}
 
@@ -332,14 +370,27 @@ $\chi$-projection the residual has thrown away. Neither carries any
 information about the other, and comparing a fit residual against a
 bound on $\Delta M_{\rm crit}$ tests nothing.
 
-\textbf{(ii) An impulse at the onset does not move the onset.} If
-$\rho$ acts only at $\tau \approx 0$ then $Q = \int\sinh(C_2s)\rho\,ds
-\approx 0$ because $\sinh 0 = 0$, while $P \approx \int\rho$. By
-\eqref{eq:dmcrit} the threshold does not move at all; by
-\eqref{eq:resid} the whole thing shows up as an amplitude error. The
-later $\rho$ acts, the more of it is $\sinh$-weighted and the more it
-displaces the onset --- which is why the manuscript's Chebyshev step,
-which assumes $\rho$ concentrated \emph{late}, is the pessimistic one.
+\textbf{(ii) An impulse at the onset moves the onset MOST.} This is the
+reverse of what \eqref{eq:dmcrit} suggests and of what an earlier draft
+of this section claimed. If $\rho$ acts only at $\tau\approx0$ then
+$Q\approx0$ because $\sinh 0 = 0$, so the $\sinh$ row is silent --- but
+$P \approx \int\rho$ is at its largest, and by \eqref{eq:dmfix} the $P$
+term carries nearly the same coefficient. The normalised weight of
+(107) settles it without approximation:
+\[
+  w(0) = \frac{C_2\sinh^2 x}{2\bigl[\tfrac14\sinh 2x - \tfrac12x\bigr]}
+       = 5.16~{\rm s}^{-1}
+  \quad\text{against a mean of } 1.63,
+\]
+and $w$ falls monotonically to $0.31$ at the window end. Sweeping a
+narrow bump across the window and fitting with the deployed estimator
+reproduces $w(s)$ to within $11\%$ over the middle of the range. So the
+Chebyshev pairing in the manuscript is favourable \emph{because} the
+physical channels vanish at the onset and rise, not because late forcing
+is the dangerous kind. Reverse the arrangement --- same window mean
+$\bar\rho$, but falling instead of rising --- and the threshold moves by
+$1.4$ to $1.6\,\bar\rho$, outside the bound. The monotonicity hypothesis
+is load-bearing.
 
 \textbf{(iii) Releasing $C_1$ would destroy the measurement.} Case~A
 says the residual would be zero, so the fit would be free to wander
@@ -363,6 +414,40 @@ reachable set rather than a container. This is (i) read geometrically:
 $|\Delta M_{\rm crit}| \le \bar\rho$ and ``the fit lies in the band''
 are the same inequality. Derived in full, with the second-order term
 kept, in \texttt{docs/vi\_e\_derivation.tex}, (D.13d)--(D.13g).
+
+\textbf{(v) Everything above is one angle.} Remove the constant --- the
+baseline fits it --- and normalise. Over $x = C_2\te = 3.1$ the
+correlation between $\cosh C_2\tau$ and $\sinh C_2\tau$ is $0.99824$:
+they are $3.4^\circ$ apart. That single number carries the section.
+It is why releasing $C_1$ destroys the measurement (the joint problem
+has condition number $1/\sin\theta = 16.9$); why pinning $C_1$ is
+nonetheless cheap in variance; why an amplitude error masquerades as an
+onset shift rather than as a residual; why $w(0)$ is the maximum and not
+zero; and why the residual is a poor witness --- a perturbation along
+$\cosh$ loses $99.8\%$ of itself to the estimator's own directions
+before any of it can reach the residual. The angle widens as the window
+shortens, so a shorter fit window separates the two channels better at
+the cost of signal.
+
+\textbf{(vi) The calibration stage absorbs as well.} The onset sweep
+holds $C_1$ and $C_2$ fixed, so shift and baseline are the only channels
+open to it --- but the per-configuration PNLS fit that \emph{supplies}
+$C_2$ and $K$ has both free, and it is fitted to runs that already
+contain $\rho$. Whatever $\rho$ looks like to a free exponent is taken
+up by $C_2$; whatever it looks like to a free amplitude is taken up by
+$K$; and the onset sweep then treats the result as truth. Measured on
+synthetic runs carrying the physical channels, the fitted $C_2$ comes
+out $1.3$--$1.5\%$ high --- $\rho_\varphi$ is destabilising, so the
+vehicle tips faster than the linear model and a free exponent absorbs
+the difference --- and $K$ comes out $5$ to $12\%$ low. Pinning
+\emph{those} constants and sweeping the onset costs a further $1.1$ to
+$3.0$~mN\,m of threshold, which is the same order as the direct path
+this document is about. Two remarks. The $C_2$ excess here is a small
+part of the $12.3\%$ by which some fitted values exceed their geometric
+ceiling, so it is a contributor and not the explanation --- an
+overstated CAD $J_P$ remains the likelier bulk. And the $C_2$ and $K$
+biases partly cancel in the onset, which is why the cost is $3.0$ rather
+than the $10$~mN\,m a $5\%$ amplitude error alone would give.
 
 \begin{center}\small
 \begin{tabular}{@{}lll@{}}

@@ -109,7 +109,11 @@ def collect():
                 0.5 * (pred[1:] + pred[:-1]) * np.diff(tau))])
             # the two channels, along the trajectory the run actually flew
             g2 = W * ARMS[ad] * np.cos(phi) - W * 0.30 * np.sin(phi)
-            rho = 0.5 * g2 * phi ** 2 + BETA[ad] * md * tau * phi
+            # beta_M < 0 and flips with the pivot edge, so the
+            # signed form is -|beta| Mdot tau |phi| -- see
+            # analysis/two_sided_cancellation.py for the parity.
+            rho = (0.5 * g2 * phi ** 2
+                   - BETA[ad] * md * tau * np.abs(phi))
             e = duhamel(tau, rho, c2, j_p)
             r_th = remove_span(tau, e, c2)
             r_me = om[j:] - pw['omega_pred'][j:]
