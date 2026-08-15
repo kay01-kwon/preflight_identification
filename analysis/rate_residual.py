@@ -66,6 +66,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from critical_value_getter_piecewise import (commanded_ramp_rate,
                                              detect_excitation_window,
                                              extract_piecewise_batch)
+from analysis.pnls_constants import PNLS_CONSTANTS
 from utils.extractor import load_excitation_dataset
 
 # Sec. VI-D box, roll, for re-deriving the VI-E bound alongside.
@@ -123,9 +124,16 @@ def main():
     rows = []
     for d in dirs:
         axis = 'x' if d.name == 'Mx' else 'y'
+        # The REPORTED configuration uses the frozen two-stage constants,
+        # as analysis/nls_comparison.py does.  Letting the batch estimate
+        # its own runs a different calibration: on case_01/Mx that route
+        # hits the top of its search interval at C_2 = 8.000, which is not
+        # what any reported number was produced with.
+        c2_pn, k_pn = PNLS_CONSTANTS[(d.parent.name, d.name)]
         with contextlib.redirect_stdout(io.StringIO()):
             bags = load_excitation_dataset(d)
-            crits, fits = extract_piecewise_batch(bags, axis)
+            crits, fits = extract_piecewise_batch(bags, axis, cosh_c2=c2_pn,
+                                                 ramp_gain=k_pn)
         for crit, pw in zip(crits, fits):
             if pw.get('model') != 'cosh' or 'omega_pred' not in pw:
                 continue
@@ -150,12 +158,14 @@ def main():
             tw = crit.t[i0:i1 + 1]
             c2_fit = float(pw['alpha'])
             tau_end = float(tw[-1] - tw[j])
+            # magnitude: the negative-direction runs integrate negative and
+            # would cancel in any median taken over both.
             phi_end = float(np.trapz(pred[j:] - float(pw['c']), tw[j:]))
             rows.append(dict(
                 case=d.parent.name, axis=d.name, bag=crit.bag_name,
                 rate=commanded_ramp_rate(crit.bag_name) or np.nan,
                 span=span, c2_fit=c2_fit, tau_end=tau_end,
-                x_fit=c2_fit * tau_end, phi_deg=np.rad2deg(phi_end),
+                x_fit=c2_fit * tau_end, phi_deg=abs(np.rad2deg(phi_end)),
                 end_pct=100.0 * abs(float(np.mean(res[-3:]))) / span,
                 rms_pct=100.0 * float(np.sqrt(np.mean(res ** 2))) / span,
                 floor_pct=100.0 * float(np.std(om[:j] - base)) / span))

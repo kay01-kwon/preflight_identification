@@ -324,8 +324,8 @@ cancels. Using $J_PC_2^{2} = \Wz$ the ratio collapses to
 in which the window survives only through $\coth(x/2)$, running from
 $1.106$ to $1.011$ across the sweep --- eight per cent, and in the
 favourable direction. The realised windows are shorter than these rows
-assume and so make that term larger, $1.160$ down to $1.020$, but
-fourteen per cent in place of eight leaves the reading unchanged. What
+assume and so make that term larger, $1.258$ down to $1.038$, but
+twenty-six per cent in place of eight leaves the reading unchanged. What
 remains is the disturbance measured against
 $\dot M/C_2$, the moment the ramp sweeps in one time constant
 $1/C_2 = 0.198$~s of the error dynamics: $238$~mN\,m at the fastest ramp
@@ -345,43 +345,54 @@ gyro specification, not because the budget rests on it.
 \paragraph{What the measured residual does, and why it differs.}
 A reader who puts this table beside the fit residual of Sec.~VIII will
 find two mismatches, and both are informative rather than symptoms of a
-broken bound. The residual is $9.2\%$ of the peak in the median and
+broken bound. The residual is $7.2\%$ of the peak in the median and
 \emph{flat} across the ramp sweep, so it neither falls as the table
 predicts nor stays under the $4.7\%$ row at the fastest ramp.
 
 The first mismatch is the window. The rows above are set at
-$\varphi_{\max} = 10^\circ$, whereas the runs stop at $4.9^\circ$ in the
+$\varphi_{\max} = 10^\circ$, whereas the runs stop at $4.8^\circ$ in the
 median, and they stop for a different reason: the excitation window
 closes on the moment, not on the tilt. Taking $x$ from each run's own
-fit --- $C_2$ its fitted $\alpha$, $\tau_{\rm end}$ the post-onset span
-it covered --- gives $x = 4.60$ falling to $2.60$ across the sweep on
-roll, against the $5.18$ to $2.99$ the tilt limit alone implies.
-Evaluating (110)--(112) at those realised windows, with the tilt each
-one reached, lowers the seven rows to $7.0$, $3.8$, $3.3$, $2.8$, $2.0$,
-$1.7$ and $1.5\%$. Most of that is the excursion: $\rho_{\varphi,\max}$
-is quadratic in it.
+fit --- $C_2$ the configuration's calibrated value, $\tau_{\rm end}$ the
+post-onset span it covered --- gives $x = 3.97$ falling to $2.17$ across
+the sweep on roll, against the $5.18$ to $2.99$ the tilt limit alone
+implies. Evaluating (110)--(112) at those realised windows, with the
+tilt each one reached, lowers the seven rows to $5.1$, $2.9$, $2.4$,
+$2.4$, $1.6$, $1.4$ and $1.1\%$. Most of that is the excursion:
+$\rho_{\varphi,\max}$ is quadratic in it. Against those the measured
+residual runs $5.1$, $7.5$, $6.5$, $7.1$, $3.9$, $6.2$ and $7.5\%$ ---
+level with the bound at the slowest ramp and above it thereafter.
 
-It also settles a coincidence. Inferring the window from the peak rate
-instead, as a first pass did, puts the slowest row at $8.7\%$ against a
-measured $8.8$, which invites the reading that the bound is tight there
-and fails only at speed. It is not: with the window taken from the fit
-the slowest row is $7.0$ against $9.6$, and the measurement exceeds the
-bound at every rate.
+The second is structural, and it is why the two were never the same
+quantity. Eq.~(90) bounds the deviation of the measurement from the
+nominal response at the \emph{true} onset with the \emph{true}
+constants. A fit residual is the deviation from a curve whose onset was
+chosen and whose constants were calibrated. Subtracting,
+\begin{equation}
+  \underbrace{y - \hat\omega(t;\hat t_{\rm c}) - C}_{\text{residual}}
+  = \underbrace{e_\omega}_{\text{(90)}}
+  - \underbrace{\delta t_{\rm c}\,\chi}_{\text{absorbed}}
+  - \underbrace{(C-b)}_{\text{(106)}}
+  - \underbrace{\delta C_1\frac{\partial\omega}{\partial C_1}
+              - \delta C_2\frac{\partial\omega}{\partial C_2}}_{
+      \text{absent from (90) by construction}} ,
+  \tag{114}
+\end{equation}
+and the last pair exists only because the reference curve is calibrated
+rather than true. The excess of the measurement over the table is that
+pair, not a failure of the bound.
 
-The second is that the measured residual is not this channel at all. If
-it were, the runs assigned a larger bound would show a larger residual;
-within each ramp rate the rank correlation is $-0.198$, the wrong sign,
-while against the pre-onset noise floor it is $+0.200$. Nor is the
-absorption of the fit hiding $\rho$: the estimator removes the component
-of the deviation that looks like a shifted onset, by (103), and that is
-the component concentrated \emph{early}, whereas the Chebyshev step
-above rests on a $\rho$ concentrated at the window's end --- which the
-fit cannot absorb. What the residual does track is $\Psi(x) =
-x\coth(x/2)$ across configurations, $+0.379$ at fixed rate against
-$-0.051$ across rates within a configuration: the signature of a
-growth-rate mismatch, since $C_2$ is pinned and
-$\partial\omega/\partial C_2$ carries exactly that factor at the
-endpoint. So (110)--(112)
+It is identifiable, moreover. If the residual were the modelled forcing,
+the runs assigned a larger bound would show a larger residual; within
+each ramp rate the rank correlation is $-0.312$, the wrong sign. Nor is
+the absorption of the fit hiding $\rho$: the estimator removes the
+component of the deviation that looks like a shifted onset, by (103),
+and that is the component concentrated \emph{early}, whereas the
+Chebyshev step above rests on a $\rho$ concentrated at the window's end
+--- which the fit cannot absorb. What the residual does track is the
+pre-onset noise floor, $+0.465$ within a ramp rate, at $2.3$ times its
+level and without scaling with the excursion: a disturbance floor that
+the tip raises but does not create. So (110)--(112)
 bound one channel, and in these experiments that channel sits below the
 floor at every rate --- which is the outcome the section wants, since it
 means the forcing the estimator cannot absorb is not what limits the
@@ -392,7 +403,20 @@ here, is Sec.~VIII-E.
 The displacement of the identified onset caused by the two forcing terms
 the estimator cannot absorb, and nothing else. The baseline error of
 (104), the departure of the applied moment from a linear ramp, and the
-ground-contact geometry all lie outside it. Those are measured rather
+ground-contact geometry all lie outside it. So does one term that is
+not a disturbance at all and is worth stating in closed form, since it
+is the larger of the two at the fast end of the sweep: the onset is an
+integer index, so it cannot be placed better than half a sample and the
+threshold inherits
+\begin{equation}
+  \bigl|\Delta M_{\rm crit}\bigr|_{\rm grid} \le \tfrac12 T_s\dot M ,
+  \tag{115}
+\end{equation}
+which at $T_s = 10$~ms runs from $0.50$~mN\,m at the slowest ramp to
+$6.00$ at the fastest --- $4\%$ and $50\%$ of the $12.04$ above. Being a
+quantisation rather than a forcing it does not average out under (107),
+though it is common-mode across the two tip directions and so cancels
+in the differenced offset. It prefers a slow ramp, as (109) does. Those are measured rather
 than bounded a priori, and are reported with the realised budget in
 Sec.~VIII-E, where the same runs give an actual propagated error some
 fifty times inside (109).
