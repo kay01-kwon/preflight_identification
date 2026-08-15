@@ -183,6 +183,7 @@ def main():
         print(f"  {md:6.2f}{d['x']:7.3f}{1e3*d['rb_sup']:13.2f}"
               f"{1e3*d['rb_true']:14.3f}{o:12.2f}{ot_:10.1f}")
     scaling_law()
+    conservatism()
     return 0
 
 
@@ -213,6 +214,49 @@ def scaling_law():
               f"{x * np.exp(-x):12.5f}{(e / E) / (x * np.exp(-x)):9.4f}")
     print(f"\n  The last column is flat to 7%, so the law is exact and the")
     print(f"  band occupancy of panel (e) is not a coincidence of this rho.")
+
+
+def conservatism():
+    """Split the looseness of (93) into its two independent sources.
+
+    The bound is loose for two reasons and they are worth separating,
+    because only one of them carries the window dependence.
+
+      R cap      (95) is evaluated with the SUPREMA of the reduction
+                 factors, 1/7 and 1/5, rather than R_phi(x) and R_GE(x)
+                 themselves.  That inflates rho_bar.
+      Chebyshev  (93) then replaces rho(s) by that window average
+                 underneath h_omega(tau-s), which is largest exactly
+                 where rho is smallest.
+
+    Measured, the first is a factor 1.5 to 2.1 and barely moves across
+    the ramp range; the second is 3.1 to 14.8 and carries essentially
+    all of the x dependence, tracking the x exp(-x) law.  So the answer
+    to "is the conservatism the reduction factor?" is: about a third of
+    it in the worst case, and none of its rate dependence.
+    """
+    print(f"\n\n  the conservatism of (93), split into its two sources\n")
+    print(f"  {'Mdot':>6}{'x':>7}{'rho_bar':>10}{'rho_bar':>10}{'R cap':>9}"
+          f"{'Chebyshev':>11}{'total':>9}{'x exp(-x)':>11}")
+    print(f"  {'N m/s':>6}{'':7}{'sup':>10}{'true':>10}{'factor':>9}"
+          f"{'factor':>11}{'factor':>9}{'':11}")
+    first = last = None
+    for md in RATES:
+        d = band(md)
+        x = d['x']
+        f_r = d['rb_sup'] / d['rb_true']
+        f_c = d['E_true'][-1] / d['e'][-1]
+        if first is None:
+            first = (f_r, f_c)
+        last = (f_r, f_c)
+        print(f"  {md:6.2f}{x:7.3f}{1e3*d['rb_sup']:10.2f}"
+              f"{1e3*d['rb_true']:10.3f}{f_r:9.2f}{f_c:11.2f}"
+              f"{f_r*f_c:9.2f}{x*np.exp(-x):11.5f}")
+    print(f"\n  across the rate range the R cap moves"
+          f" {first[0]/last[0]:.2f}x while Chebyshev moves"
+          f" {first[1]/last[1]:.2f}x,")
+    print(f"  so the reduction factors set an almost constant offset and")
+    print(f"  the Chebyshev step is what makes the slow ramp retreat.")
 
 
 if __name__ == '__main__':
