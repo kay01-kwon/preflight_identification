@@ -278,10 +278,6 @@ def main():
     return 0
 
 
-if __name__ == '__main__':
-    sys.exit(main())
-
-
 def real_check(rows):
     """The check the bound actually makes, on the real campaign.
 
@@ -350,6 +346,10 @@ def real_check(rows):
     print(f"  pre-onset record carries {d2(np.median(nz)):.3f}, a factor of")
     print(f"  {np.median(hi)/np.median(nz):.0f}.  Before the onset the vehicle")
     print(f"  is carried by every landing gear; after it pivots on one edge.")
+
+
+if __name__ == '__main__':
+    sys.exit(main())
 
 
 if __name__ == '__main__':
