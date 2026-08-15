@@ -77,7 +77,36 @@ def main():
           f"  P/(J_P C1) = {100 * P[-1] / (J_P * C1):.2f}%")
     print("  rho was placed EARLY, so most of it went to the amplitude and"
           "\n  little to the onset -- consequence (ii) of the derivation.")
+    ok.append(short_route())
     return 0 if all(ok) else 1
+
+
+
+
+def short_route():
+    """(D.13a)-(D.13c): the pointwise bound on e_omega, pushed through the
+    projection, gives exactly rho_bar.  E and chi are both proportional to
+    sinh(C2 tau), so the integral cancels and nothing has to be evaluated;
+    this checks that the cancellation is real over a range of constants."""
+    from scipy.integrate import quad
+    print("\n  short route: Mdot <E,|chi|>/||chi||^2 against rho_bar\n")
+    print(f"  {'C2':>7}{'J_P':>8}{'C1':>7}{'tau_end':>9}{'bound':>11}"
+          f"{'rho_bar':>10}{'ratio':>10}")
+    worst = 0.0
+    for c2, j_p, c1 in ((5.299, 0.1813, 0.2635), (5.046, 0.3723, 0.1266),
+                        (4.100, 0.1900, 0.3100), (7.500, 0.0900, 0.4000)):
+        wz, rb = j_p * c2 ** 2, 0.010
+        mdot = c1 * wz
+        for te in (0.30, 0.55, 0.80, 1.05):
+            num = quad(lambda t: (rb * np.sinh(c2 * t) / (j_p * c2))
+                       * c1 * c2 * np.sinh(c2 * t), 0, te)[0]
+            den = quad(lambda t: (c1 * c2 * np.sinh(c2 * t)) ** 2, 0, te)[0]
+            r = mdot * num / den / rb
+            worst = max(worst, abs(r - 1.0))
+            print(f"  {c2:7.3f}{j_p:8.4f}{c1:7.3f}{te:9.2f}"
+                  f"{1e3 * mdot * num / den:11.4f}{1e3 * rb:10.4f}{r:10.6f}")
+    print(f"\n  worst departure from 1: {worst:.2e}")
+    return worst < 1e-9
 
 
 if __name__ == '__main__':
