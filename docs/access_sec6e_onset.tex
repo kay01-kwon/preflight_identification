@@ -195,6 +195,20 @@ reduction factors themselves, not the factors multiplied by a kernel
 gain, because the onset is located by a \emph{normalised} correlation:
 $\int w = 1$ leaves nothing over.
 
+That the two channels rise across the window is what makes the
+Chebyshev step available, and it is also the pessimistic case rather
+than a convenient one. Expanding the kernel of (88) as
+$\cosh C_2(\tau-s) = \cosh C_2\tau\cosh C_2 s
+ - \sinh C_2\tau\sinh C_2 s$, the part of the deviation that displaces
+the onset is weighted by $\sinh C_2s$, which vanishes at $s = 0$. A
+perturbation acting at the onset therefore moves the identified
+threshold not at all --- it changes the amplitude instead, and the
+amplitude is pinned by $C_1 = K\dot M$, so it shows in the residual
+rather than in the answer. Only forcing that acts \emph{late} is
+weighted appreciably, and $\rho_\varphi\propto\varphi^2$ and
+$\rho_{GE}\propto\tau\varphi$ do exactly that. The bound is thus stated
+for the arrangement of $\rho$ least favourable to it.
+
 The constants differ between the two halves of (97) because the two
 questions do. The first asks how far the fitted rate curve is
 displaced, so the kernel integral $\Psi$ multiplies $\bar\rho$ and the

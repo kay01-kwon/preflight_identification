@@ -926,6 +926,64 @@ the right half of (97). Note the direction of the second inequality:
 $\rbar$ is the average, and the right-hand side bounds it --- it is not
 a definition of $\rbar$.
 
+\emph{The same bound in two lines, without Fubini.} Steps 1--6 build the
+weight in order to expose its three properties, and (iii) in particular
+is what licenses Chebyshev. But if only the \emph{value} of the bound is
+wanted, there is a shorter route that uses nothing beyond (90) and the
+projection (D.11), and it is worth recording because it answers the
+obvious question --- whether the pointwise bound on $e_\omega$ can be
+used directly --- with a yes.
+
+Evaluate (90) at each $\tau$ rather than only at the window end. Since
+$\rho$ rises, its running average does too, so $\rbar(\tau)\le\rbar$ and
+\begin{equation}
+  \bigl|e_\omega(\tau)\bigr| \;\le\; E(\tau)
+   \;\triangleq\; \frac{\rbar\,\sinh C_2\tau}{J_PC_2}
+  \qquad\text{for every }\tau\in[0,\te].
+  \tag{D.13a}
+\end{equation}
+The onset shift is the projection (D.11),
+$\delta t_{\rm c} = \langle e_\omega,\chi\rangle/\|\chi\|^{2}$ with
+$\chi = -C_1C_2\sinh C_2\tau$, and $\chi$ is of one sign, so the
+absolute value may be taken inside:
+\begin{equation}
+  \bigl|\delta t_{\rm c}\bigr|
+  \;\le\; \frac{\langle E,|\chi|\rangle}{\|\chi\|^{2}} .
+  \tag{D.13b}
+\end{equation}
+Now the point. \emph{$E$ and $\chi$ are both proportional to
+$\sinh C_2\tau$}, so the integral $\int_0^{\te}\sinh^2 C_2\tau\,d\tau$
+appears in numerator and denominator alike and cancels without ever
+being evaluated:
+\[
+  \frac{\langle E,|\chi|\rangle}{\|\chi\|^{2}}
+  = \frac{\bigl(\rbar C_1/J_P\bigr)\int_0^{\te}\sinh^2 C_2\tau\,d\tau}
+         {C_1^{2}C_2^{2}\int_0^{\te}\sinh^2 C_2\tau\,d\tau}
+  = \frac{\rbar}{J_PC_1C_2^{2}}
+  = \frac{\rbar}{C_1\Wz},
+\]
+using $J_PC_2^{2} = \Wz$ at the last step. Carrying it through
+$\Delta M_{{\rm crit},e} = \dot M\,\delta t_{\rm c}$ and
+$C_1 = \dot M/\Wz$, so that $C_1\Wz = \dot M$,
+\begin{equation}
+  \bigl|\Delta M_{{\rm crit},e}\bigr|
+   \;\le\; \dot M\cdot\frac{\rbar}{C_1\Wz}
+   \;=\; \rbar ,
+  \tag{D.13c}
+\end{equation}
+which is Step 6 again. Checked numerically over a range of
+$(C_2,J_P,C_1,\te)$ the ratio of the two is $1$ to six decimals.
+
+The two routes are the same inequality seen twice: what appears as
+$\int w = 1$ in the long route appears as the cancellation of
+$\int\sinh^2$ in the short one. The long route is still the one to
+keep, because it exhibits $w$ and its monotonicity, and without those
+Chebyshev has nothing to act on --- Step 6 would have no justification
+and the bound would stop at $\rmax$, the $2.70$~mm form. The short route
+is the check, and the answer to a reader who asks why the deviation
+bound cannot simply be inserted into the budget: inserted through the
+projection, it can, and it gives exactly $\rbar$.
+
 \begin{center}\small
 \begin{tabular}{@{}rll@{}}
 \toprule
