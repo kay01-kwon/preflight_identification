@@ -648,6 +648,60 @@ speed; the final identification runs at full resolution with the
 selected pair. Each evaluation is an arithmetic sweep, so no iterative
 optimizer is involved anywhere in the pipeline.
 
+\paragraph{Why rate invariance is the right criterion, and not merely a
+convenient one.}
+The usual justification — that joint residual minimization is degenerate
+along a ridge, so an independent physical fact is needed to break it —
+says why \emph{some} extra criterion is required, not why \emph{this}
+one. The sharper statement is that rate invariance is the matched
+estimator for the error the constants can commit.
+
+Suppose $C_2$ is mis-specified by $\delta C_2$. The predicted curve is
+then wrong by $\partial\omega/\partial C_2 = C_1\tau\sinh C_2\tau$, and
+the onset sweep converts that into a shift by the same projection that
+governs every other perturbation,
+$\delta t_c = \langle\cdot,\chi\rangle/\|\chi\|^2$ with
+$\chi \propto \sinh C_2\tau$. Both carry $\sinh C_2\tau$, so the
+projection reduces to a weighted mean of $\tau$ and the amplitude
+cancels:
+\begin{equation}
+\delta t_c = -\frac{\delta C_2}{C_2}\,\langle\tau\rangle ,
+\qquad
+\langle\tau\rangle
+= \frac{\int_0^{\tau_{\mathrm{end}}}\tau\sinh^2 C_2\tau\,\mathrm{d}\tau}
+       {\int_0^{\tau_{\mathrm{end}}}\sinh^2 C_2\tau\,\mathrm{d}\tau}
+\;\approx\; \tau_{\mathrm{end}} - \frac{1}{2C_2},
+\label{eq:dc2}
+\end{equation}
+the approximation holding to better than $7\%$ over the windows these
+runs span, and to $0.4\%$ at the slowest ramp. Carrying it through $\Delta M_{\mathrm{crit}} = \dot M\,\delta t_c$,
+a growth-rate error costs
+$\dot M\,\tau_{\mathrm{end}} \approx \Delta M_{\mathrm{win}}$ times
+$\delta C_2/C_2$ — that is, it displaces the threshold \emph{in
+proportion to the moment the window spans}, and therefore not at all in
+the same way at two different ramp rates. At $\delta C_2/C_2 = 3\%$ it
+is worth $1.9$~mN\,m at the slowest ramp and $11.8$ at the fastest.
+
+That is the whole argument. A mis-specified growth rate is invisible to
+a per-run residual, which can trade it against the onset, but it cannot
+hide from a comparison \emph{across} ramp rates, because the trade it
+needs is rate-dependent. Minimizing the dispersion of
+$M_{\mathrm{crit}}$ over the sweep is thus, to first order, minimizing
+$|\delta C_2|$ against the one channel $\delta C_2$ contaminates. It
+also fixes what the certificate does and does not show: the low
+dispersion of Table~\ref{tab:cv} is the objective's own value and cannot
+be quoted back as evidence for rate invariance
+(\texttt{analysis/rate\_invariance.py} separates the two).
+
+What survives calibration is the part of
+$\partial\omega/\partial C_2$ that no onset shift can represent, and
+that is what the prediction residual of Sec.~\ref{sec:algorithm} measures:
+$3.0\%$ in the median. Feeding that back through \eqref{eq:dc2}
+predicts a residual rate trend in $M_{\mathrm{crit}}$ of $9.9$~mN\,m
+across the sweep, against a measured $10.3 \pm 7.7$ — consistent, and
+in both readings far below the $57$~mN\,m the offset accuracy of
+Sec.~\ref{sec:static} corresponds to.
+
 \paragraph{What the criterion buys.}
 Table~\ref{tab:cv} reports the quantity \eqref{eq:score} is built from:
 the coefficient of variation of $|M_{\mathrm{crit}}|$ within a tip

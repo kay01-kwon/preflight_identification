@@ -368,10 +368,29 @@ and fails only at speed. It is not: with the window taken from the fit
 the slowest row is $7.0$ against $9.6$, and the measurement exceeds the
 bound at every rate.
 
-The second is that the measured residual is not this channel at all. If
-it were, the runs assigned a larger bound would show a larger residual;
-within each ramp rate the rank correlation is $-0.198$, the wrong sign,
-while against the pre-onset noise floor it is $+0.200$. Nor is the
+The second is structural, and it is why the two were never the same
+quantity. Eq.~(90) bounds the deviation of the measurement from the
+nominal response at the \emph{true} onset with the \emph{true}
+constants. A fit residual is the deviation from a curve whose onset was
+chosen and whose constants were calibrated. Subtracting,
+\begin{equation}
+  \underbrace{y - \hat\omega(t;\hat t_{\rm c}) - C}_{\text{residual}}
+  = \underbrace{e_\omega}_{\text{(90)}}
+  - \underbrace{\delta t_{\rm c}\,\chi}_{\text{absorbed}}
+  - \underbrace{(C-b)}_{\text{(106)}}
+  - \underbrace{\delta C_1\frac{\partial\omega}{\partial C_1}
+              - \delta C_2\frac{\partial\omega}{\partial C_2}}_{
+      \text{absent from (90) by construction}} ,
+  \tag{114}
+\end{equation}
+and the last pair exists only because the reference curve is calibrated
+rather than true. The excess of the measurement over the table is that
+pair, not a failure of the bound.
+
+It is identifiable, moreover. If the residual were the modelled forcing,
+the runs assigned a larger bound would show a larger residual; within
+each ramp rate the rank correlation is $-0.198$, the wrong sign, while
+against the pre-onset noise floor it is $+0.200$. Nor is the
 absorption of the fit hiding $\rho$: the estimator removes the component
 of the deviation that looks like a shifted onset, by (103), and that is
 the component concentrated \emph{early}, whereas the Chebyshev step
