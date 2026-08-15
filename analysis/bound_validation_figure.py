@@ -56,7 +56,7 @@ COL = {'gravity': '#c0392b', 'ge': '#2874a6', 'bilinear': '#8e44ad',
        'ramp': '#e67e22'}
 
 
-def panel_a(ax_rho, ax_w, ax_bar):
+def panel_a(ax_rho, ax_w, ax_bar, F):
     """The chain on one run: rho, the weight, and what they give."""
     case, ad, rate = SHOW
     axis = 'x' if ad == 'Mx' else 'y'
@@ -84,12 +84,12 @@ def panel_a(ax_rho, ax_w, ax_bar):
     W_, arm = 31.59, 0.160
     rho_phi = 0.5 * W_ * arm * phi ** 2          # the gravity remainder
     ax_rho.plot(tau, 1e3 * rho_phi, '-', lw=1.8, color=COL['gravity'])
-    ax_rho.set_xlabel(r'$\tau$ from onset [s]', fontsize=8.5)
-    ax_rho.set_ylabel(r'$\rho_\varphi$ [mN$\cdot$m]', fontsize=8.5)
+    ax_rho.set_xlabel(r'$\tau$ from onset [s]', fontsize=F['lbl'])
+    ax_rho.set_ylabel(r'$\rho_\varphi$ [mN$\cdot$m]', fontsize=F['lbl'])
     ax_rho.set_title(r'1. $\rho_\varphi$ along the measured trajectory,'
-                     '\n     before the span projection', fontsize=9.5)
+                     '\n     before the span projection', fontsize=F['ttl'])
     ax_rho.grid(alpha=0.25, lw=0.4)
-    ax_rho.tick_params(labelsize=7.5)
+    ax_rho.tick_params(labelsize=F['tck'])
 
     # the normalised weight of (107): w(s) ~ int_s^end sinh cosh, int w = 1
     sh = np.sinh(np.clip(c2 * tau, 0, 30))
@@ -99,18 +99,26 @@ def panel_a(ax_rho, ax_w, ax_bar):
     wgt = wgt / np.trapz(wgt, tau)
     ax_w.plot(tau, wgt, '-', lw=1.8, color='#1e8449')
     ax_w.fill_between(tau, 0, wgt, color='#1e8449', alpha=0.15)
-    ax_w.set_xlabel(r'$s$ from onset [s]', fontsize=8.5)
-    ax_w.set_ylabel(r'$w(s)$ [1/s]', fontsize=8.5)
+    ax_w.set_xlabel(r'$s$ from onset [s]', fontsize=F['lbl'])
+    ax_w.set_ylabel(r'$w(s)$ [1/s]', fontsize=F['lbl'])
     ax_w.set_title(r'2. the weight, $\int w = 1$, non-increasing',
-                   fontsize=9.5)
+                   fontsize=F['ttl'])
     ax_w.grid(alpha=0.25, lw=0.4)
-    ax_w.tick_params(labelsize=7.5)
+    ax_w.tick_params(labelsize=F['tck'])
     return float(np.trapz(rho_phi * wgt, tau))
 
 
 def main():
     csvdir = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT
     out = sys.argv[2] if len(sys.argv) > 2 else 'bound_validation.png'
+    # A .pdf target is taken to be the manuscript figure and is laid out
+    # for a two-column IEEE float: 7.16 in wide, type large enough to
+    # survive it, and no suptitle since the caption carries that.
+    pr = str(out).lower().endswith('.pdf')
+    F = dict(fig=(7.16, 4.9), ttl=7.0, lbl=6.5, tck=5.8, leg=5.5, ms=2.4,
+             lw=1.1) if pr else dict(fig=(16, 8.5), ttl=9.5, lbl=8.5,
+                                     tck=7.5, leg=8.0, ms=3.5, lw=1.8)
+    plt.rcParams.update({'font.size': F['lbl'], 'axes.linewidth': 0.6})
     rows = list(csv.DictReader(open(csvdir / 'error_budget_runs.csv')))
     for r in rows:
         r['rate'] = float(r['rate'])
@@ -118,13 +126,13 @@ def main():
         for c in CH:
             r[c] = abs(float(r[f'dM_{c}_mNm']))
 
-    fig = plt.figure(figsize=(16, 8.5))
-    gs = fig.add_gridspec(2, 3, hspace=0.42, wspace=0.30,
-                          height_ratios=[1, 1.25])
+    fig = plt.figure(figsize=F['fig'])
+    gs = fig.add_gridspec(2, 3, hspace=0.55, wspace=0.34,
+                          height_ratios=[1, 1.3])
     ax_rho = fig.add_subplot(gs[0, 0])
     ax_w = fig.add_subplot(gs[0, 1])
     ax_bar = fig.add_subplot(gs[0, 2])
-    got = panel_a(ax_rho, ax_w, ax_bar)
+    got = panel_a(ax_rho, ax_w, ax_bar, F)
 
     # The chain's own answer for this run, taken from the budget CSV so
     # that the span projection -- which panel 1 deliberately shows without
@@ -140,34 +148,34 @@ def main():
     for y, v, c, lab in ((1.2, raw, '0.60', r'$\langle w,\rho\rangle$, no projection'),
                          (0.4, val, COL['gravity'], r'after the projection')):
         ax_bar.plot([1e-3, v], [y, y], '-', lw=9, color=c, solid_capstyle='butt')
-        ax_bar.text(v * 1.25, y, f'{v:.3f}', fontsize=8, va='center')
-        ax_bar.text(1.3e-3, y + 0.30, lab, fontsize=7.5, va='bottom',
+        ax_bar.text(v * 1.25, y, f'{v:.3f}', fontsize=F['leg'], va='center')
+        ax_bar.text(1.3e-3, y + 0.30, lab, fontsize=F['leg'], va='bottom',
                     color='0.25')
     ax_bar.axvline(BOUND_MNM, color='k', lw=2.2)
-    ax_bar.text(BOUND_MNM * 1.1, 1.75, '(109)\n12.04', fontsize=8,
+    ax_bar.text(BOUND_MNM * 1.1, 1.75, '(109)\n12.04', fontsize=F['leg'],
                 va='top')
     ax_bar.set_yticks([])
-    ax_bar.set_xlabel(r'$|\Delta M_{\rm crit}|$ [mN$\cdot$m]', fontsize=8.5)
-    ax_bar.set_title(r'3. what reaches the threshold', fontsize=9.5)
+    ax_bar.set_xlabel(r'$|\Delta M_{\rm crit}|$ [mN$\cdot$m]', fontsize=F['lbl'])
+    ax_bar.set_title(r'3. what reaches the threshold', fontsize=F['ttl'])
     ax_bar.grid(alpha=0.25, which='both', lw=0.4, axis='x')
-    ax_bar.tick_params(labelsize=7.5)
+    ax_bar.tick_params(labelsize=F['tck'])
 
     ax = fig.add_subplot(gs[1, :])
     rates = sorted({r['rate'] for r in rows})
     rng = np.random.default_rng(0)
     for c in CH:
         xs = [r['rate'] * (1 + 0.04 * rng.standard_normal()) for r in rows]
-        ax.plot(xs, [max(r[c], 1e-4) for r in rows], 'o', ms=3.5, alpha=0.45,
+        ax.plot(xs, [max(r[c], 1e-4) for r in rows], 'o', ms=F['ms'], alpha=0.45,
                 color=COL[c], label=c)
     xs = [r['rate'] * (1 + 0.04 * rng.standard_normal()) for r in rows]
-    ax.plot(xs, [max(r['tot'], 1e-4) for r in rows], 'D', ms=5,
+    ax.plot(xs, [max(r['tot'], 1e-4) for r in rows], 'D', ms=F['ms']+1.4,
             mfc='none', mec='k', mew=1.0, label='total')
     ax.axhline(BOUND_MNM, color='k', lw=2.2)
     ax.text(rates[0], BOUND_MNM * 1.15, '(109), roll: 12.04 mN$\\cdot$m',
-            fontsize=9)
+            fontsize=F['leg'])
     ax.axhline(BOUND_PITCH, color='0.45', lw=1.6, ls='--')
-    ax.text(rates[0], BOUND_PITCH * 0.72, 'pitch: 9.69', fontsize=8.5,
-            color='0.35')
+    ax.text(rates[-1], BOUND_PITCH * 0.62, 'pitch: 9.69', fontsize=F['leg'],
+            color='0.35', ha='right')
     med = [np.median([r['tot'] for r in rows if r['rate'] == q])
            for q in rates]
     ax.plot(rates, med, 's-', lw=2.0, ms=7, color='k', label='total, median')
@@ -175,18 +183,20 @@ def main():
     ax.set_yscale('log')
     ax.set_xticks(rates)
     ax.set_xticklabels([f'{q:g}' for q in rates])
-    ax.set_xlabel(r'$\dot M$ [N$\cdot$m/s]', fontsize=9.5)
+    ax.set_xlabel(r'$\dot M$ [N$\cdot$m/s]', fontsize=F['ttl'])
     ax.set_ylabel(r'$|\Delta M_{\rm crit}|$ per run [mN$\cdot$m]',
-                  fontsize=9.5)
-    ax.set_title('every run, every channel, against the bound the section '
-                 'claims', fontsize=10.5)
-    ax.legend(fontsize=8, ncol=5, loc='lower left')
+                  fontsize=F['ttl'])
+    ax.set_title('every run, every channel, against the bound',
+                 fontsize=F['ttl'])
+    ax.legend(fontsize=F['leg'], ncol=5, loc='lower left',
+              handletextpad=0.4, columnspacing=1.0)
     ax.grid(alpha=0.3, which='both', lw=0.4)
-    ax.tick_params(labelsize=8.5)
+    ax.tick_params(labelsize=F['tck'])
 
-    fig.suptitle('(109) validated forwards: perturbation to weight to '
-                 'displacement. The fit residual appears nowhere.',
-                 fontsize=12, y=0.965)
+    if not pr:
+        fig.suptitle('(109) validated forwards: perturbation to weight to '
+                     'displacement. The fit residual appears nowhere.',
+                     fontsize=12, y=0.965)
     fig.savefig(out, dpi=140, bbox_inches='tight')
 
     tot = np.array([r['tot'] for r in rows])
