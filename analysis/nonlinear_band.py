@@ -258,6 +258,40 @@ def main():
     print(f"  a budget item.  The first-order Duhamel the derivation uses"
           f" is exact")
     print(f"  to better than 0.01% away from the crossing.")
+    print(f"\n  what a higher band occupancy does and does not mean\n")
+    print(f"  {'Mdot':>6}{'x':>7}{'occupancy':>11}{'angle(e,sinh)':>15}"
+          f"{'absorbed':>10}{'delta':>9}{'dM_crit':>10}")
+    print(f"  {'N m/s':>6}{'':7}{'% of band':>11}{'deg':>15}{'%':>10}"
+          f"{'ms':>9}{'mN.m':>10}")
+    for md in (0.10, 0.45, 1.20):
+        d = exact(md)
+        tau, e, c2, c1 = d['tau'], d['e'], d['c2'], d['c1']
+        w = np.gradient(tau)
+        w[0] *= 0.5
+        w[-1] *= 0.5
+        ip = lambda a, b: float(np.sum(a * b * w))
+        chi = -c1 * c2 * np.sinh(c2 * tau)
+        A = np.column_stack([chi, np.ones_like(tau)])
+        sq = np.sqrt(w)
+        co, *_ = np.linalg.lstsq(A * sq[:, None], e * sq, rcond=None)
+        fit = A @ co
+        ang = np.rad2deg(np.arccos(abs(ip(e, chi))
+                                   / np.sqrt(ip(e, e) * ip(chi, chi))))
+        print(f"  {md:6.2f}{d['x']:7.3f}{100*e[-1]/d['E_sup'][-1]:11.2f}"
+              f"{ang:15.2f}{100*ip(fit, fit)/ip(e, e):10.2f}"
+              f"{1e3*co[0]:9.3f}{1e3*md*co[0]:10.4f}")
+    print(f"\n  Filling more of the band is a statement about the BOUND, not")
+    print(f"  about the error.  The fast ramp fills more of it and is in fact")
+    print(f"  slightly LESS aligned with the onset direction (31.4 deg against")
+    print(f"  23.0), so a smaller fraction of its deviation is absorbable.")
+    print(f"  But dM_crit = Mdot * delta, and delta falls only 2.3x while Mdot")
+    print(f"  rises 12x, so the rho-channel bias is WORST at the fast ramp:")
+    print(f"  0.35 mN.m at 0.10 against 1.82 at 1.20.")
+    print(f"\n  That does not overturn the preference for fast ramps, because")
+    print(f"  the rho channel is under a tenth of the measured 21 mN.m while")
+    print(f"  the slow ramp carries a -26.7 mN.m onset bias of its own.  The")
+    print(f"  reasons to prefer fast ramps are onset determinacy, the absence")
+    print(f"  of that bias, and the measured repeatability -- not the band.")
     print(f"\n  wrote {out}")
     return 0
 
