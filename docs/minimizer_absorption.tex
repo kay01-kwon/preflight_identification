@@ -1,0 +1,374 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=24mm]{geometry}
+\usepackage{amsmath,amssymb,booktabs}
+\setlength{\parskip}{0.45em}\setlength{\parindent}{0pt}
+\newcommand{\Wz}{W\!z_{CoM}}
+\newcommand{\tc}{t_{\rm c}}
+\newcommand{\te}{\tau_{\rm end}}
+\title{\vspace{-18mm}\textbf{From the nominal cosh to the fitted cosh:\\
+what the minimiser absorbs, step by step}\vspace{-3mm}}
+\date{\small every intermediate carried; nothing skipped}
+\begin{document}\maketitle
+
+The question is: if the true signal is the nominal response plus a
+deviation $e_\omega$, and the minimiser fits a cosh to the sum, what is
+left over? The answer decides what a fit residual can and cannot tell
+us, so it is worth doing slowly. Sections~1--3 set up $e_\omega$,
+Sec.~4 is the one piece of algebra everything turns on, and
+Secs.~5--8 apply it.
+
+\section{The nominal response, from the dynamics}
+
+Over the contact phase the linearised tip-over dynamics are
+\begin{equation}
+  J_P\ddot\varphi = \Wz\,\varphi + \bigl(M(t) - M_{\rm crit}\bigr),
+  \label{eq:dyn}
+\end{equation}
+the sign on $\Wz$ being positive because past the balance point gravity
+\emph{drives} the tip rather than restoring it. Measure time from the
+onset, $\tau = t - \tc$, so that $M(t) - M_{\rm crit} = \dot M\tau$, and
+divide by $J_P$:
+\begin{equation}
+  \ddot\varphi - C_2^{2}\varphi = \frac{\dot M\tau}{J_P},
+  \qquad C_2^{2} \triangleq \frac{\Wz}{J_P}.
+  \label{eq:ode}
+\end{equation}
+
+\textbf{Particular solution.} Try $\varphi_p = \alpha\tau$. Then
+$\ddot\varphi_p = 0$ and \eqref{eq:ode} gives
+$-C_2^2\alpha\tau = \dot M\tau/J_P$, so
+\[
+  \alpha = -\frac{\dot M}{J_PC_2^{2}} = -\frac{\dot M}{\Wz},
+  \qquad\text{i.e.}\qquad
+  \varphi_p = -\frac{\dot M}{\Wz}\,\tau .
+\]
+
+\textbf{Homogeneous solution.} $\ddot\varphi_h = C_2^2\varphi_h$ gives
+$\varphi_h = A\cosh C_2\tau + B\sinh C_2\tau$. So
+\begin{equation}
+  \varphi(\tau) = A\cosh C_2\tau + B\sinh C_2\tau
+                  - \frac{\dot M}{\Wz}\tau .
+\end{equation}
+
+\textbf{Initial conditions.} At the onset the vehicle is at rest at the
+balance point: $\varphi(0) = 0$ and $\dot\varphi(0) = 0$. The first
+gives $A = 0$. Differentiating,
+$\dot\varphi = BC_2\cosh C_2\tau - \dot M/\Wz$, and at $\tau = 0$,
+\[
+  BC_2 - \frac{\dot M}{\Wz} = 0
+  \quad\Longrightarrow\quad
+  B = \frac{\dot M}{\Wz C_2}.
+\]
+
+\textbf{The rate.} Substituting $A$ and $B$ and differentiating once,
+\begin{equation}
+  \boxed{\;
+  \omega_{\rm nom}(\tau) = \dot\varphi
+   = \frac{\dot M}{\Wz}\bigl(\cosh C_2\tau - 1\bigr)
+   = C_1\bigl(\cosh C_2\tau - 1\bigr),
+  \qquad C_1 \triangleq \frac{\dot M}{\Wz} = K\dot M . }
+  \label{eq:nom}
+\end{equation}
+Two things to notice, because both matter later. The amplitude $C_1$ is
+\emph{not free}: it is fixed by the ramp rate and the rig constant $K$.
+And $\omega_{\rm nom}(0) = 0$, so the curve leaves the onset flat.
+
+\section{The deviation, when an unmodelled moment acts}
+
+Let $\rho(\tau)$ be a moment the model does not contain. The true
+tilt obeys \eqref{eq:dyn} with $\rho$ added:
+\[
+  J_P\ddot\varphi = \Wz\varphi + \dot M\tau + \rho(\tau).
+\]
+Write $\varphi = \varphi_{\rm nom} + e_\varphi$ and subtract
+\eqref{eq:ode}. Everything the two have in common cancels, leaving
+\begin{equation}
+  \ddot e_\varphi - C_2^{2}e_\varphi = \frac{\rho(\tau)}{J_P},
+  \qquad e_\varphi(0) = \dot e_\varphi(0) = 0 ,
+  \label{eq:dev}
+\end{equation}
+with zero initial conditions because the nominal solution already
+satisfies them.
+
+\textbf{Impulse response.} For $\ddot y - C_2^2y = \delta(\tau)$ with
+$y(0) = \dot y(0) = 0$ the solution is $h(\tau) = \sinh(C_2\tau)/C_2$:
+it vanishes at $\tau = 0$, its derivative $\cosh C_2\tau$ equals $1$
+there, which is the unit jump the impulse delivers, and it satisfies the
+homogeneous equation away from the origin.
+
+\textbf{Duhamel.} Hence
+\begin{equation}
+  e_\varphi(\tau)
+   = \frac{1}{J_P}\int_0^{\tau}\frac{\sinh C_2(\tau-s)}{C_2}\,\rho(s)\,ds .
+\end{equation}
+Differentiate with respect to $\tau$. The Leibniz rule gives a boundary
+term plus an integral,
+\[
+  \dot e_\varphi
+   = \underbrace{\frac{\sinh C_2(\tau-\tau)}{C_2J_P}\rho(\tau)}_{= \,0}
+   + \frac{1}{J_P}\int_0^{\tau}\cosh C_2(\tau-s)\,\rho(s)\,ds ,
+\]
+and the boundary term vanishes because $\sinh 0 = 0$. So
+\begin{equation}
+  \boxed{\;
+  e_\omega(\tau) = \frac{1}{J_P}\int_0^{\tau}
+                    \cosh\!\bigl(C_2(\tau-s)\bigr)\rho(s)\,ds . }
+  \label{eq:eom}
+\end{equation}
+
+\section{Splitting the kernel}
+
+The addition formula $\cosh(u-v) = \cosh u\cosh v - \sinh u\sinh v$
+applies to the kernel with $u = C_2\tau$ and $v = C_2s$:
+\[
+  \cosh C_2(\tau-s) = \cosh C_2\tau\,\cosh C_2s
+                    - \sinh C_2\tau\,\sinh C_2s .
+\]
+The factors in $\tau$ do not depend on $s$, so they come out of the
+integral:
+\begin{equation}
+  e_\omega(\tau) = \frac{1}{J_P}
+   \Bigl[\cosh C_2\tau\;P(\tau) \;-\; \sinh C_2\tau\;Q(\tau)\Bigr],
+  \label{eq:PQ}
+\end{equation}
+\begin{equation}
+  P(\tau) \triangleq \int_0^{\tau}\!\cosh C_2s\;\rho(s)\,ds,
+  \qquad
+  Q(\tau) \triangleq \int_0^{\tau}\!\sinh C_2s\;\rho(s)\,ds .
+\end{equation}
+This is exact --- no approximation yet. $P$ and $Q$ are the running
+moments of $\rho$ against the two kernels; if $\rho$ has died away by
+some time, they stop growing and become constants from there on.
+
+\section{Two hyperbolics make one}
+
+\textbf{Claim.}
+$\displaystyle a\cosh u + b\sinh u = R\cosh(u+\psi)$ with
+$R = \sqrt{a^2-b^2}$ and $\tanh\psi = b/a$, valid when $|a| > |b|$.
+
+\textbf{Proof.} Look for $R,\psi$ with $a = R\cosh\psi$ and
+$b = R\sinh\psi$. Then
+\[
+  R\cosh(u+\psi)
+   = R\bigl[\cosh u\cosh\psi + \sinh u\sinh\psi\bigr]
+   = (R\cosh\psi)\cosh u + (R\sinh\psi)\sinh u
+   = a\cosh u + b\sinh u ,
+\]
+which is the claim. It remains to check that such $R,\psi$ exist.
+Squaring and subtracting,
+\[
+  a^2 - b^2 = R^2\bigl(\cosh^2\psi - \sinh^2\psi\bigr) = R^2 ,
+\]
+so $R = \sqrt{a^2-b^2}$, real exactly when $|a|>|b|$; and dividing,
+$b/a = \tanh\psi$, which has a unique solution $\psi$ because $\tanh$
+is a bijection from $\mathbb{R}$ to $(-1,1)$ and $|b/a| < 1$. \hfill$\square$
+
+\textbf{Read it as a time shift.} Since $u = C_2\tau$,
+\[
+  R\cosh(C_2\tau + \psi) = R\cosh\Bigl(C_2\bigl(\tau + \psi/C_2\bigr)\Bigr),
+\]
+so adding a $\sinh$ to a $\cosh$ does not produce a new shape at all: it
+produces the \emph{same} $\cosh$, with the amplitude changed from $a$ to
+$R$ and the time origin moved by $-\psi/C_2$.
+
+\section{The measured signal is again a cosh}
+
+Add the nominal \eqref{eq:nom} and the deviation \eqref{eq:PQ}, and
+write $b_0$ for the true pre-onset level:
+\begin{align}
+  y(\tau) - b_0
+  &= \underbrace{C_1\cosh C_2\tau - C_1}_{\text{nominal}}
+   + \underbrace{\frac{P}{J_P}\cosh C_2\tau
+                - \frac{Q}{J_P}\sinh C_2\tau}_{e_\omega}
+   \notag\\[2pt]
+  &= \underbrace{\Bigl(C_1 + \frac{P}{J_P}\Bigr)}_{\textstyle a}
+     \cosh C_2\tau
+   + \underbrace{\Bigl(-\frac{Q}{J_P}\Bigr)}_{\textstyle b}
+     \sinh C_2\tau \;-\; C_1 .
+  \label{eq:sum}
+\end{align}
+Wherever $P$ and $Q$ vary slowly enough to be treated as constants,
+Sec.~4 applies verbatim:
+\begin{equation}
+  \boxed{\;
+  y(\tau) - b_0 = R\cosh\Bigl(C_2\bigl(\tau - \delta\bigr)\Bigr) - C_1,
+  \qquad
+  R = \sqrt{a^2 - b^2},
+  \qquad
+  \delta = -\frac{\psi}{C_2},
+  \qquad \tanh\psi = \frac{b}{a}. }
+  \label{eq:asfit}
+\end{equation}
+\emph{The perturbed signal is exactly a cosh.} Not approximately, not to
+leading order --- exactly, with a different amplitude and a different
+onset.
+
+\section{What the minimiser can absorb}
+
+The estimator fits
+\begin{equation}
+  \hat\omega(\tau) = \hat C_1\Bigl(\cosh\bigl(C_2(\tau-\hat\delta)\bigr)
+                                   - 1\Bigr) + C ,
+  \label{eq:fit}
+\end{equation}
+with $C$ the baseline. Expand the shifted cosh by the addition formula:
+\begin{equation}
+  \hat\omega
+   = \hat C_1\cosh(C_2\hat\delta)\,\cosh C_2\tau
+   - \hat C_1\sinh(C_2\hat\delta)\,\sinh C_2\tau
+   - \hat C_1 + C .
+  \label{eq:fitexp}
+\end{equation}
+Now compare \eqref{eq:fitexp} with the data \eqref{eq:sum}, coefficient
+by coefficient. There are three independent shapes present ---
+$\cosh C_2\tau$, $\sinh C_2\tau$ and the constant $1$ --- so three
+equations:
+\begin{center}\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+shape & data & fit \\
+\midrule
+$\cosh C_2\tau$ & $a = C_1 + P/J_P$ & $\hat C_1\cosh C_2\hat\delta$ \\
+$\sinh C_2\tau$ & $b = -Q/J_P$      & $-\hat C_1\sinh C_2\hat\delta$ \\
+$1$             & $-C_1 + b_0$      & $-\hat C_1 + C$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Case A: amplitude, onset and baseline all free.} Three unknowns
+$(\hat C_1,\hat\delta,C)$, three equations, and they are solvable ---
+take $\hat C_1 = R$, $\hat\delta = \delta$ from \eqref{eq:asfit}, and
+$C = b_0 - C_1 + R$. \emph{The fit is exact and the residual is
+identically zero.} Not small: zero. A fit with both shape parameters
+free cannot see $e_\omega$ at all, because $e_\omega$ has moved the
+signal along the model family rather than off it.
+
+\textbf{Case B: the amplitude pinned, $\hat C_1 = C_1 = K\dot M$.} Now
+there are two unknowns for three equations. The $\sinh$ row fixes the
+onset,
+\begin{equation}
+  \sinh C_2\hat\delta = -\frac{b}{C_1} = \frac{Q}{J_PC_1},
+  \label{eq:deltafix}
+\end{equation}
+and the constant row fixes $C$. The $\cosh$ row is then left over, and
+what it cannot match is the residual:
+\begin{equation}
+  \text{residual coefficient on }\cosh C_2\tau
+   \;=\; a - C_1\cosh C_2\hat\delta
+   \;=\; C_1 + \frac{P}{J_P}
+        - C_1\sqrt{1 + \Bigl(\frac{Q}{J_PC_1}\Bigr)^{2}} ,
+\end{equation}
+using $\cosh = \sqrt{1+\sinh^2}$ with \eqref{eq:deltafix}. For a small
+deviation the square root is $1 + O(Q^2)$ and this collapses to
+\begin{equation}
+  \boxed{\;\text{residual} \;\simeq\;
+  \frac{P(\te)}{J_P}\,\cosh C_2\tau \;+\; O(Q^2) . }
+  \label{eq:resid}
+\end{equation}
+
+So pinning the amplitude is what makes anything observable, and what
+survives is the $\cosh$ half of the deviation --- the $P$ half. The
+$\sinh$ half, the $Q$ half, has gone entirely into the onset.
+
+\section{What went into the onset, and what it costs}
+
+Solve \eqref{eq:deltafix} for small $\hat\delta$, where
+$\sinh C_2\hat\delta \simeq C_2\hat\delta$:
+\begin{equation}
+  \hat\delta \simeq \frac{Q(\te)}{J_PC_1C_2} .
+\end{equation}
+The identified threshold is the moment at the identified onset, and the
+moment ramps at $\dot M$, so a shift $\hat\delta$ costs
+$\Delta M_{\rm crit} = \dot M\hat\delta$. Substituting
+$C_1 = \dot M/\Wz$ and then $\Wz = J_PC_2^{2}$,
+\begin{equation}
+  \Delta M_{\rm crit}
+   = \dot M\cdot\frac{Q}{J_PC_2}\cdot\frac{\Wz}{\dot M}
+   = \frac{Q\,\Wz}{J_PC_2}
+   = \frac{Q\,J_PC_2^{2}}{J_PC_2}
+   = C_2\,Q(\te)
+   = C_2\!\int_0^{\te}\!\sinh(C_2s)\,\rho(s)\,ds .
+  \label{eq:dmcrit}
+\end{equation}
+The ramp rate has cancelled twice over: once because $C_1\propto\dot M$
+and once because $\Delta M_{\rm crit} = \dot M\hat\delta$. What reaches
+the threshold is a property of the rig and of $\rho$, not of how fast
+the run was driven.
+
+The step from $\sinh C_2\hat\delta$ to $C_2\hat\delta$ is the only
+approximation in the section. Keeping the exact root
+$\hat\delta = \operatorname{arcsinh}(z)/C_2$ with
+$z = Q/(J_PC_1)$ and expanding
+$\operatorname{arcsinh}z = z - z^3/6 + \ldots$, the term dropped is
+$\dot Mz^3/(6C_2)$ --- on a representative run
+$9.2\times10^{-6}$~mN\,m against the $1.52$ of the leading term, so it
+never matters here, but it is what a numerical check will find if the
+two forms are compared to machine precision
+(\texttt{analysis/absorption\_check.py}).
+
+\textbf{A caveat on \eqref{eq:dmcrit}.} It was obtained by matching
+coefficients, which is exact only when $P$ and $Q$ have stopped growing
+--- that is, when $\rho$ acts early and then dies. In general the
+estimator does least squares over the whole window rather than matching
+coefficients, and the onset it picks is
+\begin{equation}
+  \hat\delta = \frac{\langle e_\omega,\chi\rangle}{\|\chi\|^{2}},
+  \qquad
+  \chi \triangleq \frac{\partial\hat\omega}{\partial\tc}
+      = -C_1C_2\sinh C_2\tau ,
+\end{equation}
+which is the projection of the deviation onto the one direction the
+onset can move it. The two agree in the early-$\rho$ limit and differ
+otherwise; the manuscript uses the projection form throughout, and it is
+that form which produces the normalised weight $w$ with $\int w = 1$.
+
+\section{Three consequences, and the numbers}
+
+\textbf{(i) The residual and the threshold error are complementary.}
+By construction the least-squares onset makes the residual orthogonal to
+$\chi$. So the residual is everything \emph{orthogonal} to the
+estimator's span, and $\Delta M_{\rm crit}$ is exactly the
+$\chi$-projection the residual has thrown away. Neither carries any
+information about the other, and comparing a fit residual against a
+bound on $\Delta M_{\rm crit}$ tests nothing.
+
+\textbf{(ii) An impulse at the onset does not move the onset.} If
+$\rho$ acts only at $\tau \approx 0$ then $Q = \int\sinh(C_2s)\rho\,ds
+\approx 0$ because $\sinh 0 = 0$, while $P \approx \int\rho$. By
+\eqref{eq:dmcrit} the threshold does not move at all; by
+\eqref{eq:resid} the whole thing shows up as an amplitude error. The
+later $\rho$ acts, the more of it is $\sinh$-weighted and the more it
+displaces the onset --- which is why the manuscript's Chebyshev step,
+which assumes $\rho$ concentrated \emph{late}, is the pessimistic one.
+
+\textbf{(iii) Releasing $C_1$ would destroy the measurement.} Case~A
+says the residual would be zero, so the fit would be free to wander
+along the family. Measured on these runs, releasing amplitude and onset
+together drives the onset to $\pm150$~ms --- the limit imposed on the
+search --- at every ramp rate, with the amplitude moving from $-17$ to
+$+44\%$. At $\dot M = 1.20$~N\,m/s, $150$~ms of onset is $180$~mN\,m of
+threshold, fifteen times the entire a priori budget.
+
+\begin{center}\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+quantity & what it is & measured \\
+\midrule
+$P/(J_PC_1)$ & the $\cosh$ half, \eqref{eq:resid}
+  & $1.7\%$ median, $3.9\%$ at p90 \\
+$C_2Q$ & the $\sinh$ half, \eqref{eq:dmcrit}
+  & $0.049$~mN\,m median, $0.93$ worst \\
+ & against the a priori bound & $12.04$~mN\,m \\
+onset if $C_1$ released & Case~A
+  & $\pm150$~ms, i.e.\ $180$~mN\,m \\
+span projection, one run & what the estimator absorbs
+  & $0.555 \to 0.010$~mN\,m \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Reproduced by \texttt{analysis/amplitude\_channel.py} for the first row,
+\texttt{analysis/error\_budget.py} and
+\texttt{analysis/bound\_validation\_figure.py} for the rest.
+
+\end{document}
