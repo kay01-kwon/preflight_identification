@@ -528,15 +528,59 @@ in time across the two tip directions, so like the constants themselves
 it cancels in $M_{\mathrm{ff}}$; what it bounds is the per-direction
 threshold, not the offset.
 
-That crossing is what Table~\ref{tab:resid} shows against the deviation
-bound. The bound falls fivefold across the sweep while the measurement
-and the grid term stay flat, so the measurement sits inside the bound
-for $\dot M \le 0.65$ and outside it at $0.90$ and $1.20$
-(\texttt{analysis/rate\_budget\_figure.py}). Nothing about that is a
-failure of the bound: it covers the forcing the estimator cannot
-absorb, and by the tests above that channel is below the floor at every
-rate, whereas the residual is carrying a quantization and a noise term
-the bound does not claim.
+A word on what this residual can and cannot be compared with. It is
+tempting to set it against the deviation bound of Sec.~\ref{sec:static},
+and the comparison is not merely loose but ill-posed. The bound is on
+$e_\omega$, the departure from the nominal response at the true onset
+with the true constants; the residual is the departure from a curve
+whose onset was \emph{chosen to minimize that very residual}. Whatever
+part of $e_\omega$ lies along $\chi = \partial\hat\omega/\partial t_c
+\propto \sinh C_2\tau$ is removed by construction, so the residual is
+everything orthogonal to the estimator's span and the reported
+displacement $\Delta M_{\mathrm{crit}}$ is precisely the
+$\chi$-projection the residual discards. The two partition the
+deviation between them and neither carries information about the other.
+Drawn out pointwise the mismatch is plain: the bound's envelope leaves
+the onset like $\tau^7$, since $\rho_\varphi$ is quadratic in a tilt
+itself cubic in time, while the measurement starts at the noise floor,
+so the residual sits outside it over $90\%$ of the window at every rate
+without that saying anything at all
+(\texttt{analysis/envelope\_check.py}).
+
+The bound is therefore checked forwards instead, and Table~\ref{tab:dirs}
+sets out which direction each piece of evidence covers.
+
+\begin{table}[htbp]
+\centering\small
+\caption{What constrains the fit in each direction. The estimator's own
+freedom is the onset and the baseline, so those two directions cannot be
+checked by the residual and are covered separately.}
+\label{tab:dirs}
+\begin{tabular}{@{}llll@{}}
+\toprule
+direction & what it would mean & seen by the residual? & what covers it \\
+\midrule
+$\cosh C_2\tau$ & amplitude, $C_1$ & yes, $C_1$ is pinned
+  & $1.7\%$ median departure \\
+$\tau\sinh C_2\tau$ & growth rate, $C_2$ & yes
+  & rank corr.\ $-0.14$, wrong sign \\
+$\tau^7$ rise & the forcing $\rho$ of (90) & yes, but under the floor
+  & rank corr.\ $-0.31$, wrong sign \\
+$\sinh C_2\tau$ & the onset, hence $\Delta M_{\mathrm{crit}}$ & \emph{no}
+  & forward propagation; \\
+ & & & seven detectors agree \\
+ & & & to $3$--$45$~mN\,m \\
+$1$ & the baseline & \emph{no} & drift measured; ablation \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Propagated forwards — perturbation along the measured trajectory,
+projected off the estimator span, through the Duhamel integral, then
+correlated against the normalized weight — every one of the $140$ runs
+falls inside the a priori bound, by a factor $246$ in the median and
+$13$ at worst (\texttt{analysis/bound\_validation\_figure.py}). The fit
+residual appears nowhere in that chain, which is the point.
 
 \section{Calibration of the effective constants}
 \label{sec:calibration}
@@ -550,13 +594,39 @@ values that absorb the state-linear contributions of the unmodeled
 effects (the local slope of the gravity nonlinearity and the attitude
 gradient of the ground effect). Both are calibrated once per dataset.
 
-Joint residual minimization is not a usable criterion in practice.
-On the fitted window the amplitude and the onset are nearly
-interchangeable under noise: a smaller amplitude with an earlier onset
-and a larger amplitude with a later onset produce post-onset curves
-that differ most near the onset itself, where the response is
-quadratic, $\tfrac12 C_1 C_2^2\tau^2$, and of the order of the gyro
-noise. In the noiseless limit the post-onset shape determines all
+Joint residual minimization is not a usable criterion in practice, and
+the reason is algebraic before it is numerical. A cosh and a sinh of the
+same argument add to a cosh,
+\begin{equation}
+a\cosh C_2\tau + b\sinh C_2\tau
+ = \sqrt{a^2 - b^2}\;\cosh\!\bigl(C_2\tau + \psi\bigr),
+\qquad \tanh\psi = b/a ,
+\label{eq:coshsum}
+\end{equation}
+and the deviation dynamics deliver exactly those two terms: expanding
+the Duhamel integral,
+$e_\omega = \bigl[\cosh C_2\tau\,P(\tau)
+ - \sinh C_2\tau\,Q(\tau)\bigr]/J_P$ with
+$P = \int_0^\tau\!\cosh C_2 s\,\rho\,\mathrm{d}s$ and
+$Q = \int_0^\tau\!\sinh C_2 s\,\rho\,\mathrm{d}s$. Wherever $P$ and $Q$
+vary slowly the perturbed signal is therefore \emph{again exactly a
+cosh}, with the amplitude moved from $C_1$ to $C_1 + P/J_P$ and the
+origin shifted by $\psi/C_2$. A fit with both free would absorb the
+whole deviation and leave no residual at all — not a small one, none —
+so pinning $C_1 = K\dot M$ is what makes anything about the deviation
+observable, and only then a remedy for the ill-conditioning below.
+
+Released, the two are nearly interchangeable under noise: a smaller
+amplitude with an earlier onset and a larger amplitude with a later
+onset produce post-onset curves that differ most near the onset itself,
+where the response is quadratic, $\tfrac12 C_1 C_2^2\tau^2$, and of the
+order of the gyro noise. Measured, the trade is wide: releasing both on
+these runs drives the onset to $\pm150$~ms, the limit imposed on the
+search, at every ramp rate, with the amplitude wandering from $-17$ to
+$+44\%$ (\texttt{analysis/amplitude\_channel.py}). At the fastest ramp
+$150$~ms of onset is $180$~mN\,m of threshold, fifteen times the entire
+a priori budget of Sec.~\ref{sec:static}. Released, the measurement does
+not exist. In the noiseless limit the post-onset shape determines all
 three parameters uniquely — the trade-off is an ill-conditioning
 statement, not a non-identifiability one — but under gyro noise the
 summed residual is nearly flat along this amplitude--onset direction:
@@ -1697,6 +1767,18 @@ gates, caps, calibration, Algorithm~\ref{alg:cosh};
 \item \texttt{analysis/ramp\_quality.py} — gates;
 \item \texttt{analysis/sensitivity.py} — $\pm20\%$ robustness;
 \item \texttt{analysis/cosh\_fidelity.py} — prediction-test residuals;
+\item \texttt{analysis/bound\_validation\_figure.py} —
+Table~\ref{tab:dirs}, the forward check of the bound;
+\item \texttt{analysis/error\_budget.py} — the forward chain
+from the perturbation to millimetres;
+\item \texttt{analysis/amplitude\_channel.py} — the cosh
+direction, and what releasing $C_1$ would cost;
+\item \texttt{analysis/envelope\_check.py},
+\texttt{analysis/residual\_budget.py},
+\texttt{analysis/residual\_profile.py} — why the residual is not
+a check on the bound, and what it is instead;
+\item \texttt{analysis/orthogonal\_noise.py} — the disturbance
+floor measured off the excited axis;
 \item \texttt{analysis/rate\_budget\_figure.py},
 \texttt{analysis/pnls\_fit\_figure.py},
 \texttt{analysis/c2\_ceiling\_figure.py} — the fit and its
