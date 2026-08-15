@@ -181,6 +181,36 @@ window of equal length, split at the same cutoff, and carrying the
 measured in-window content above $5$~Hz down through that ratio raises
 $114$ to $124$ on its own.
 
+\paragraph{Why the gain is not simply re-fitted.} The obvious response is
+to take the amplitude the data prefers and re-pin $K$ on it. It cannot
+be done, and the reason is the degeneracy the calibration stage is built
+around: with the onset swept over the window, a smaller amplitude with an
+earlier onset trades against a larger amplitude with a later one, so the
+residual is flat along a ridge in $(C_2,K)$. Scaling the frozen $K$ by
+$s$ with $C_2$ held and reprocessing all $140$ runs at each $s$ shows the
+ridge directly. The residual has no interior minimum: it falls
+monotonically from $s=1$ to $s\approx0.43$, and eight of the ten
+configurations place their optimum at the low edge of whatever grid is
+offered. A $57\%$ smaller $K$ asserts $Wz_{CoM}$ is $2.3$ times what the
+scale reads. The count inside the cap follows the residual --- $114/140$
+at $s=1$, $139/140$ at $s=0.43$ --- so it is not a criterion for setting
+$K$ either; it is bought by making the gain physically wrong. Stage two
+therefore selects $K$ by the ramp-invariance of $M_{\rm crit}$ instead,
+and that criterion does have an interior optimum, at $s=0.97$ in the
+median with the per-configuration values scattered $0.76$ to $1.21$ on
+fourteen runs each. That is scatter about unity, not a bias away from it.
+
+Reprocessing at the correction it does license changes nothing that is
+reported: the offset moves $0.019$~mm in the median and $0.068$ at worst,
+and the half-sum spread goes $0.522$ to $0.533$~mm (with each
+configuration on its own optimum, $0.022$~mm and $0.522$ to $0.506$~mm).
+The insensitivity is the point. Across the whole ridge --- $K$ scaled by
+a factor of three, $0.40$ to $1.30$ --- the reported offset moves at most
+$0.10$~mm in the median and the spread stays within $0.507$ to
+$0.574$~mm, because the gain is common to both tip directions while
+$\Mdot$ is not and the half-sum removes it. A constant the residual
+cannot pin down at all is one the answer does not depend on.
+
 \subsection{Repeatability, with no model in it}
 
 The campaign supplies a model-free accuracy measurement, because

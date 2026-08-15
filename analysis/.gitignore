@@ -5,3 +5,4 @@
 .ptwise_cache.pkl
 .reconcile_cache.pkl
 .failing_cache.pkl
+.gainfix_cache.pkl
