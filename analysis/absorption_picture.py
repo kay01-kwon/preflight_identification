@@ -345,7 +345,61 @@ def main():
                  'good onset', fontsize=13.5, y=0.965)
     fig.savefig(out, dpi=145)
     print(f"\n  wrote {out}")
+    two_stage()
     return 0
+
+
+def two_stage():
+    """The calibration stage is not innocent either.
+
+    Stage 2 -- the onset sweep -- holds C1 and C2 fixed, so the only
+    absorption available there is shift and baseline.  But stage 1, the
+    per-configuration PNLS fit, has C2 and K FREE, and it is fitted to
+    runs that already contain rho.  Whatever rho looks like to a free
+    exponent is taken up by C2, and whatever it looks like to a free
+    amplitude is taken up by K.  Stage 2 then treats those contaminated
+    constants as truth.
+
+    This measures both halves: how far rho moves the calibration, and
+    what the moved calibration then costs the onset.
+    """
+    print("\n\n  the two stages: what rho does to the CALIBRATION\n")
+    print(f"  {'Mdot':>6}{'C2 fit':>9}{'err %':>8}{'K fit / K':>11}"
+          f"{'err %':>8}{'stage-2 onset':>15}{'as moment':>12}")
+    print(f"  {'N m/s':>6}{'':9}{'':8}{'':11}{'':8}{'ms':>15}{'mN.m':>12}")
+    for md in (0.10, 0.45, 1.20):
+        r = Run(md)
+        y = r.f + r.duhamel(physical(r))
+        k_true = 1.0 / WZ
+        best = (np.inf, C2, k_true, 0.0)
+        for c2 in np.linspace(0.90 * C2, 1.25 * C2, 141):
+            for d in np.linspace(-0.05, 0.05, 81):
+                sh = np.where(r.t < d, 0.0,
+                              md * (np.cosh(np.clip(c2 * (r.t - d), 0, 40))
+                                    - 1.0))
+                A = np.column_stack([sh, np.ones_like(sh)])
+                sw = np.sqrt(r.w)
+                co, *_ = np.linalg.lstsq(A * sw[:, None], y * sw, rcond=None)
+                v = float(np.sum((y - A @ co) ** 2 * r.w))
+                if v < best[0]:
+                    best = (v, c2, float(co[0]), d)
+        _, c2f, kf, _ = best
+        # stage 2: pin the CONTAMINATED constants, sweep the onset only
+        c1f = kf * md
+        sh = lambda d: np.where(r.t < d, 0.0, c1f * (np.cosh(
+            np.clip(c2f * (r.t - d), 0, 40)) - 1.0))
+        bb = (np.inf, 0.0)
+        for d in np.linspace(-0.14, 0.14, 2801):
+            s0 = sh(d)
+            c = float(np.sum((y - s0) * r.w) / r.w.sum())
+            v = float(np.sum((y - s0 - c) ** 2 * r.w))
+            if v < bb[0]:
+                bb = (v, d)
+        print(f"  {md:6.2f}{c2f:9.3f}{100*(c2f/C2-1):+8.2f}"
+              f"{kf/k_true:11.4f}{100*(kf/k_true-1):+8.2f}"
+              f"{1e3*bb[1]:15.2f}{1e3*md*bb[1]:12.3f}")
+    print("\n  C2 rises because rho_phi is destabilising: the vehicle tips")
+    print("  faster than the linear model, and a free exponent takes that up.")
 
 
 if __name__ == '__main__':

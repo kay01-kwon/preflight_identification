@@ -196,18 +196,37 @@ gain, because the onset is located by a \emph{normalised} correlation:
 $\int w = 1$ leaves nothing over.
 
 That the two channels rise across the window is what makes the
-Chebyshev step available, and it is also the pessimistic case rather
-than a convenient one. Expanding the kernel of (88) as
-$\cosh C_2(\tau-s) = \cosh C_2\tau\cosh C_2 s
- - \sinh C_2\tau\sinh C_2 s$, the part of the deviation that displaces
-the onset is weighted by $\sinh C_2s$, which vanishes at $s = 0$. A
-perturbation acting at the onset therefore moves the identified
-threshold not at all --- it changes the amplitude instead, and the
-amplitude is pinned by $C_1 = K\dot M$, so it shows in the residual
-rather than in the answer. Only forcing that acts \emph{late} is
-weighted appreciably, and $\rho_\varphi\propto\varphi^2$ and
-$\rho_{GE}\propto\tau\varphi$ do exactly that. The bound is thus stated
-for the arrangement of $\rho$ least favourable to it.
+Chebyshev step available, and it should be read as a hypothesis that
+happens to hold rather than as a conservatism. The weight is
+\emph{largest at the onset}: $w(0) = C_2\sinh^2\!x\,/\,2\bigl[\tfrac14
+\sinh 2x - \tfrac12 x\bigr]$, which is $5.16$~s$^{-1}$ at
+$\dot M = 1.20$~N\,m/s against a mean of $1.63$, and it falls
+monotonically from there. Forcing that acts early is therefore weighted
+\emph{most}, not least, and it is only because
+$\rho_\varphi\propto\varphi^{2}$ and $\rho_{GE}\propto\tau\varphi$ both
+vanish at the onset and rise afterwards that the pairing runs the
+favourable way. Reversing the arrangement reverses the conclusion:
+holding the window mean fixed at $\bar\rho$ and letting $\rho$
+\emph{fall} across the window instead, the identified threshold moves
+by $1.4$ to $1.6\,\bar\rho$, outside (108). The monotonicity is doing
+real work and is not a technicality.
+
+It is tempting to argue instead that an early perturbation cannot
+displace the onset at all, on the grounds that expanding the kernel of
+(88) as $\cosh C_2(\tau-s) = \cosh C_2\tau\cosh C_2 s - \sinh C_2\tau
+\sinh C_2 s$ leaves the $\sinh$ half weighted by $\sinh C_2s$, which
+vanishes at $s = 0$. That reasoning assigns the $\cosh$ half to the
+amplitude, and the amplitude is pinned, so it is not available to take
+it. What the $\cosh$ half does instead is project onto the onset
+direction, and it projects strongly: over this window $\cosh C_2\tau$
+and $\sinh C_2\tau$ are separated by only $3.4^\circ$ once the constant
+is removed, so $99.8\%$ of an amplitude perturbation lies along the
+directions the estimator can move in. A pure $2\%$ amplitude error,
+with no onset error whatever, displaces the identified threshold by
+$4.3$~mN\,m --- a third of the budget of (108) --- while changing the
+fit residual by $0.024^\circ$/s. Equation (107) already accounts for
+this, being derived from the projection rather than from matching
+coefficients, which is why $w(0)$ comes out as the maximum.
 
 The constants differ between the two halves of (97) because the two
 questions do. The first asks how far the fitted rate curve is
