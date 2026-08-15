@@ -1223,6 +1223,80 @@ $\rbar = 12.04$~mN\,m --- and at $58\%$ the fit saturates the $\pm150$~ms
 search limit. This is a bias, not a bound: it does not average down over
 runs, and no error model on $\rho$ covers it.
 
+\emph{The other two directions.} A reader who counts parameters will
+object that the model has four of them and this appendix has projected
+onto two. The objection is right and the answer is that they belong to
+different stages. Differentiating
+$g = C_1\bigl(\cosh C_2(\tau-\delta)-1\bigr)+c$ at the nominal gives
+four tangent directions,
+\begin{equation}
+\begin{aligned}
+  u &= \partial g/\partial C_1 = \cosh C_2\tau - 1, &\quad
+  \chi &= \partial g/\partial\delta = -C_1C_2\sinh C_2\tau, \\
+  \mathbf{1} &= \partial g/\partial c, &\quad
+  v &= \partial g/\partial C_2 = C_1\tau\sinh C_2\tau ,
+\end{aligned}
+  \tag{D.15a}
+\end{equation}
+and only the last of them leaves $\operatorname{span}\{\cosh,\sinh,1\}$
+--- it carries the factor $\tau$, so it is the resonant direction of
+\S4 and the one the shift identity cannot reach.
+
+The onset sweep holds $C_1$ and $C_2$ fixed, so at that stage $u$ and
+$v$ are not available and the projection onto
+$\operatorname{span}\{\chi,\mathbf{1}\}$ is exactly right. What the two
+frozen directions contribute is not absorption but \emph{bias}: if the
+calibration supplies $C_1(1+\varepsilon_1)$ and $C_2(1+\varepsilon_2)$,
+the deviation the sweep must accommodate is not $e_\omega$ but
+$e_\omega - \varepsilon_1u - \varepsilon_2C_2v$, and the normal equation
+(D.11) picks up two extra terms. Both integrate in closed form. With
+$x = C_2\te$,
+\begin{equation}
+\begin{aligned}
+  \langle u,\chi\rangle &= -C_1^{2}A(x)\big/1, &\quad
+  \langle v,\chi\rangle &= -C_1^{2}D(x)/C_2, \\
+  \|\chi\|^{2} &= C_1^{2}C_2B(x),
+\end{aligned}
+  \tag{D.15b}
+\end{equation}
+\begin{equation}
+\begin{aligned}
+  A(x) &= \tfrac14\cosh 2x - \cosh x + \tfrac34, \qquad
+  B(x) = \tfrac14\sinh 2x - \tfrac12x, \\
+  D(x) &= \tfrac14x\sinh 2x - \tfrac18\cosh 2x + \tfrac18
+          - \tfrac14x^{2},
+\end{aligned}
+  \tag{D.15c}
+\end{equation}
+so that, carrying each through $\Delta M = \dot M\delta$ and
+$C_1\Wz = \dot M$,
+\begin{equation}
+  \Delta M_{{\rm crit},\varepsilon}
+   = \varepsilon_1\,\frac{\dot M}{C_2}\,\frac{A(x)}{B(x)}
+   \;+\; \varepsilon_2\,\frac{\dot M}{C_2}\,\frac{D(x)}{B(x)} .
+  \tag{D.15d}
+\end{equation}
+Both scale with $\dot M/C_2$, the moment swept in one plant time
+constant, and $D/B$ exceeds $A/B$ by a factor $2.4$ to $3.6$ over the
+operating windows: \emph{a misidentified exponent is about three times
+as costly as a misidentified amplitude}. At $x = 3.735$ and
+$\dot M = 0.45$~N\,m/s, (D.15d) gives $0.82$ and $2.90$~mN\,m per $1\%$
+against $1.30$ and $3.72$ measured on the full nonlinear fit --- the
+gap being the linearisation and the pre-onset segment, which the closed
+form does not carry. $A$ and $D$ agree with direct quadrature to
+machine precision.
+
+Two things keep this from entering the reported budget. The
+calibration is per configuration and carries no direction split, so
+$\varepsilon_1$ and $\varepsilon_2$ are common to the two runs and
+(D.15d) is antisymmetric in $\dot M$; measured on the full nonlinear
+tip-over the half-sum rejects $99.77$ to $99.98\%$ of it, leaving
+$0.000$~mm at $\pm10\%$ amplitude and $\pm5\%$ exponent error. And what
+does survive goes to the \emph{weight} of (34), which reads the
+difference rather than the sum, at $0.027\%$ of $W$ per $1\%$ of
+amplitude error and $0.077\%$ per $1\%$ of exponent error. Verified in
+\texttt{analysis/two\_sided\_cancellation.py}.
+
 That is the useful conclusion of this passage, and it is not the one the
 band statement suggests. The band argument is safe but nearly empty; the
 sensitivity that matters sits in the assumption it takes for granted.
