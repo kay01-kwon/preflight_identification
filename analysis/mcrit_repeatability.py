@@ -186,7 +186,98 @@ def main():
     print(f"  reported quantity, measured seven times per configuration")
     print(f"  under conditions that should give identical answers, with no")
     print(f"  model in the comparison.")
+    decompose(rows)
     return 0
+
+
+
+
+
+def decompose(rows):
+    """Is the dominant error in the MOMENT domain or the TIME domain?
+
+    Two questions, and the second only makes sense after the first.
+
+    (1) Are the per-configuration slopes real?  With seven rates spanning
+        0.10 to 1.20 the regressor sum of squares is Sxx = 0.952, so the
+        slope standard error is sigma/sqrt(Sxx) ~= sigma.  A scatter of
+        29 mN.m therefore puts a 1-sigma slope at 0.030 N m per N m/s --
+        the same size as most of the slopes observed.  Reported here with
+        t-statistics so the significant ones can be told from the rest.
+
+    (2) The residual scatter about each line is the dominant term.  Its
+        domain says what it is.  A failure to locate the onset is an
+        error in TIME, so it would appear as a moment error proportional
+        to Mdot: sigma_M ~ Mdot, sigma_t flat.  A genuine run-to-run
+        change in where the vehicle tips -- gear settling, floor
+        friction, repositioning -- is an error in MOMENT, so sigma_M is
+        flat and sigma_t falls as 1/Mdot.  The two are distinguishable
+        with no model at all.
+    """
+    import collections as _c
+    print("\n\n  (1) are the slopes real?  SE ~= sigma/sqrt(Sxx),"
+          " Sxx = 0.952\n")
+    print(f"  {'config':>14}{'dir':>4}{'slope':>10}{'SE':>9}{'t':>7}"
+          f"{'|t|>2':>7}")
+    g = _c.defaultdict(list)
+    for r in rows:
+        g[(r['case'], r['axis'], r['sign'])].append(r)
+    resid = _c.defaultdict(list)
+    nsig = 0
+    for k in sorted(g):
+        v = g[k]
+        md = np.array([r['mdot'] for r in v])
+        mc = np.array([abs(r['mcrit']) for r in v])
+        a, b = np.polyfit(md, mc, 1)
+        e = mc - (a * md + b)
+        s = float(np.std(e, ddof=2))
+        sxx = float(np.sum((md - md.mean()) ** 2))
+        se = s / np.sqrt(sxx)
+        t = a / se if se > 0 else 0.0
+        nsig += abs(t) > 2
+        for r, ei in zip(v, e):
+            resid[r['rate']].append(ei)
+        print(f"  {k[0] + '/' + k[1]:>14}{'+' if k[2] > 0 else '-':>4}"
+              f"{a:10.4f}{se:9.4f}{t:7.2f}{'yes' if abs(t) > 2 else '':>7}")
+    print(f"\n  {nsig}/{len(g)} slopes significant at |t| > 2."
+          f"  The rate-dependent term is mostly NOT resolved;")
+    print(f"  the scatter is what dominates, and (2) says what it is.\n")
+
+    print(f"  (2) the scatter, in both domains\n")
+    print(f"  {'Mdot':>6}{'n':>4}{'sigma_M':>11}{'sigma_t':>11}"
+          f"{'as offset':>12}")
+    print(f"  {'N m/s':>6}{'':4}{'mN.m':>11}{'ms':>11}{'mm':>12}")
+    ms, ts, rt = [], [], []
+    for rate in sorted(resid):
+        e = np.array(resid[rate])
+        sm = float(np.std(e, ddof=1))
+        st = sm / rate
+        ms.append(1e3 * sm)
+        ts.append(1e3 * st)
+        rt.append(rate)
+        print(f"  {rate:6.2f}{len(e):4d}{1e3*sm:11.2f}{1e3*st:11.2f}"
+              f"{1e3*sm/W_MIN:12.4f}")
+    ms, ts, rt = np.array(ms), np.array(ts), np.array(rt)
+    # which one is flat?  compare the spread of each across the rates
+    cv_m = ms.std(ddof=1) / ms.mean()
+    cv_t = ts.std(ddof=1) / ts.mean()
+    sl_m = np.polyfit(rt, ms, 1)[0]
+    sl_t = np.polyfit(rt, ts, 1)[0]
+    print(f"\n  sigma_M across rates: mean {ms.mean():.2f} mN.m,"
+          f" CV {cv_m:.1%}, slope {sl_m:+.2f} per N m/s")
+    print(f"  sigma_t across rates: mean {ts.mean():.2f} ms,"
+          f" CV {cv_t:.1%}, slope {sl_t:+.2f} per N m/s")
+    if cv_m < cv_t:
+        print(f"\n  sigma_M is the flatter of the two, so the dominant error"
+              f" lives in the\n  MOMENT domain: the vehicle does not tip at"
+              f" exactly the same moment twice.\n  That is the rig, not the"
+              f" onset detector -- gear settling, floor friction,\n"
+              f"  repositioning between runs.")
+    else:
+        print(f"\n  sigma_t is the flatter of the two, so the dominant error"
+              f" lives in the\n  TIME domain: it is a failure to locate the"
+              f" onset, and it is the\n  algorithm's to own.")
+    return ms, ts, rt
 
 
 if __name__ == '__main__':
