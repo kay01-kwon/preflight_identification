@@ -4,3 +4,4 @@
 .subsample_cache.pkl
 .ptwise_cache.pkl
 .reconcile_cache.pkl
+.failing_cache.pkl

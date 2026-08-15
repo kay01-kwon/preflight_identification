@@ -122,10 +122,8 @@ times $1/\tau_{\rm end}$, so residual content faster than that cannot be
 the small-angle or ground-effect remainder whatever else it is; charging
 the model for it is not a test of the model. Splitting at $5$~Hz (the
 windows are $53$ samples at $100$~Hz, too short for an IIR filter), the
-low-frequency residual lies inside the cap for $114$ of $140$ runs, the
-$26$ exceptions all at the two fastest rates and by no more than a
-factor $1.16$. Including the high-frequency content the figure is
-$88/140$.
+low-frequency residual lies inside the cap for $114$ of $140$ runs.
+Including the high-frequency content the figure is $88/140$.
 
 The split also identifies what the rest is. Above $5$~Hz the residual
 carries $1.02^\circ$/s while the pre-onset record carries $0.14$, a
@@ -133,6 +131,55 @@ factor of seven: before the onset the vehicle is supported by every
 landing gear and after it pivots on one edge with far less damping, so
 the pre-onset floor understates the in-window disturbance and must not
 be used as $\|n\|$.
+
+\paragraph{The twenty-six that fail.} They are not scattered. Every one
+is at $\Mdot\ge0.65$~N\,m/s ($3$, $9$ and $14$ of $20$ at the three
+fastest rates, none at the four slowest), they come from eight of the
+ten configurations, and the worst misses by $1.80$ with a median
+exceedance of $1.15$ at the fastest rate. A shortfall that respects the
+rate and ignores the configuration is not a bad calibration of one
+vehicle; it is something in the inequality itself, and (VIII.3) has
+exactly one hypothesis that the campaign does not satisfy.
+
+The first equality there requires $\hat g$ to be the minimiser over the
+model family. The deployed estimator's is not: $C_2$ and $K$ are pinned
+once per configuration by the stage-one fit and frozen for every run of
+that configuration, so the per-run fit is a \emph{constrained} minimiser
+and can only leave a larger residual than the free one the bound is
+about. Freeing the amplitude alone, with $C_2$ held at its physical
+value $\sqrt{Wz_{CoM}/J_P}$ and the onset held where the estimator put
+it, brings all $140$ runs inside --- not $114$, and not $139$, but every
+one, at every rate.
+
+The freed amplitude sits $11.3\%$ below the pinned $K\Mdot$ (p10 $22.1\%$,
+p90 $0.1\%$), and that gap accounts for the excess in size and not merely
+in sign: an amplitude error $\Delta C_1$ leaves
+$\Delta C_1(\cosh C_2\tau - 1)$ behind, and band-limiting that shape the
+same way predicts the measured excess to within $0$ to $13\%$ at every
+rate, a median of $3\%$. Only a small part of the $11\%$ is the ramp
+itself rounding off near the allocation cap, which lowers the post-onset
+slope by $1$ to $2.6\%$; the remainder is the stage-one gain, and it is
+the same $5$ to $12.5\%$ contamination that the calibration stage is
+independently shown to inherit from $e_\omega$ in its own fitting data.
+Its residual grows as $\Mdot$ while the cap falls with the window, which
+is why the failures appear only at the fast end.
+
+Two consequences follow, and they point in opposite directions, so both
+are stated. The check as posed is a test of the \emph{deployed} fit, not
+of $\rho$: the model family provably contains a curve inside the cap for
+every run, so the small-angle and ground-effect analysis is not what
+fails. But the pinned gain is a real bias, and correcting it moves the
+per-direction threshold by $7.2$~mN\,m in the median and $24.3$ at the
+fastest ramp, which is $0.81$~mm of equivalent offset. What protects the
+reported answer is the two-sided difference of the next subsection: the
+gain is common to both directions while $\Mdot$ is not, so the shift is
+odd and the half-sum moves by $1.30$~mN\,m, $0.043$~mm --- a factor of
+$5.5$ smaller than per direction and an order of magnitude below the
+$0.327$~mm the campaign repeats to. The in-window disturbance accounts
+for the remaining margin: estimating its low-frequency part from a quiet
+window of equal length, split at the same cutoff, and carrying the
+measured in-window content above $5$~Hz down through that ratio raises
+$114$ to $124$ on its own.
 
 \subsection{Repeatability, with no model in it}
 
