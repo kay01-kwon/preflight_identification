@@ -123,10 +123,10 @@ def tipover(mdot, arm, beta=0.0, ge_odd=True, n=4001):
     return dict(t=t, om=om, phi=phi, te=te, tc=tc, arm=arm, mdot=mdot)
 
 
-def fit(run, mdot, c2=C2, dmax=0.25, nd=5001):
+def fit(run, mdot, c2=C2, k_scale=1.0, dmax=0.25, nd=5001):
     """The deployed estimator: C1 and C2 pinned, onset swept, c closed form."""
     t, y = run['t'], run['om']
-    c1 = mdot / WZ
+    c1 = k_scale * mdot / WZ
     w = np.gradient(t)
     w[0] *= 0.5
     w[-1] *= 0.5
@@ -188,6 +188,105 @@ def phi2_weighted(run):
                              tau[tau >= s]) for s in tau])
     wgt = num / np.trapz(num, tau)
     return float(np.trapz(phi ** 2 * wgt, tau))
+
+
+def ab(x):
+    """A(x)/B(x): how strongly an amplitude error leaks into the onset."""
+    a = 0.25 * np.cosh(2 * x) - np.cosh(x) + 0.75
+    b = 0.25 * np.sinh(2 * x) - 0.5 * x
+    return a / b
+
+
+def miscalibrated(mdot_mag, eps_k=0.0, eps_c2=0.0, a=A_TRUE):
+    """Both directions carrying the SAME calibration error.
+
+    PNLS_CONSTANTS is keyed by (case, axis) with no direction split, so
+    whatever rho does to C2 and K is common to the two runs.  That is the
+    case worth measuring: a common error is exactly what the half-sum is
+    built to reject, and the question is only how much survives.
+    """
+    out = {}
+    for sgn, arm in ((+1.0, LP - a), (-1.0, LP + a)):
+        md = sgn * mdot_mag
+        r = tipover(md, arm, BETA, True)
+        d = fit(r, md, c2=C2 * (1 + eps_c2), k_scale=1 + eps_k, nd=1201)
+        out['+' if sgn > 0 else '-'] = dict(
+            run=r, d=d, m_true=sgn * W * arm,
+            m_hat=sgn * W * arm + md * d)
+    p, m = out['+'], out['-']
+    out['off_hat'] = 0.5 * (p['m_hat'] + m['m_hat'])
+    out['a_hat'] = -out['off_hat'] / W
+    return out
+
+
+def amplitude_budget():
+    """What the amplitude and exponent channels cost the OFFSET."""
+    print("\n\n  the amplitude channel through the half-sum\n")
+    md = 0.45
+    x = C2 * (np.abs(one(md)['+']['run']['te']))
+    print(f"  Mdot = {md} N m/s, x = C2 tau_end = {x:.3f},"
+          f" A/B = {ab(x):.4f}")
+    print(f"  per-direction prediction: eps * (Mdot/C2) * A/B"
+          f" = eps * {1e3*md/C2*ab(x):.1f} mN.m\n")
+    print(f"  {'eps_K':>7}{'bias +':>10}{'bias -':>10}{'half-sum':>11}"
+          f"{'offset err':>12}{'cancelled':>11}")
+    print(f"  {'%':>7}{'mN.m':>10}{'mN.m':>10}{'mN.m':>11}{'um':>12}")
+    base = miscalibrated(md)['a_hat']
+    for e in (-0.10, -0.05, -0.02, 0.02, 0.05, 0.10):
+        o = miscalibrated(md, eps_k=e)
+        bp = 1e3 * (o['+']['m_hat'] - o['+']['m_true'])
+        bm = 1e3 * (o['-']['m_hat'] - o['-']['m_true'])
+        hs = 0.5 * (bp + bm)
+        print(f"  {100*e:7.0f}{bp:10.3f}{bm:10.3f}{hs:11.4f}"
+              f"{1e6*(o['a_hat']-base):12.3f}"
+              f"{1 - abs(hs)/max(abs(bp), abs(bm)):10.3%}")
+
+    print(f"\n  the exponent channel\n")
+    print(f"  {'eps_C2':>7}{'bias +':>10}{'bias -':>10}{'half-sum':>11}"
+          f"{'offset err':>12}{'cancelled':>11}")
+    print(f"  {'%':>7}{'mN.m':>10}{'mN.m':>10}{'mN.m':>11}{'um':>12}")
+    for e in (-0.05, -0.02, 0.02, 0.05):
+        o = miscalibrated(md, eps_c2=e)
+        bp = 1e3 * (o['+']['m_hat'] - o['+']['m_true'])
+        bm = 1e3 * (o['-']['m_hat'] - o['-']['m_true'])
+        hs = 0.5 * (bp + bm)
+        print(f"  {100*e:7.0f}{bp:10.3f}{bm:10.3f}{hs:11.4f}"
+              f"{1e6*(o['a_hat']-base):12.3f}"
+              f"{1 - abs(hs)/max(abs(bp), abs(bm)):10.3%}")
+
+    # The half-sum is immune, but (34a)-(34b) read the weight from the
+    # DIFFERENCE, which takes 2x the per-direction bias, and W then sits
+    # in the denominator of (35a)-(35d).  That is where these channels
+    # actually reach the offset.
+    print(f"\n  what does NOT cancel: (34) reads W from the DIFFERENCE\n")
+    print(f"  W_Mx = f_crit + (M_x,+ - M_x,-)/(l_r + l_l), so the bias adds")
+    print(f"  instead of cancelling:  dW = 2 eps (Mdot/C2)(A/B)/(l_r + l_l)\n")
+    span = 2 * LP                       # l_r + l_l; replace with the measured
+    print(f"  taking l_r + l_l = {span:.3f} m and W = 30.08 N\n")
+    print(f"  {'channel':>10}{'per 1%':>11}{'dW per 1%':>12}{'dW/W':>10}"
+          f"{'at 5%':>10}")
+    print(f"  {'':10}{'mN.m':>11}{'N':>12}{'%':>10}{'%':>10}")
+    for name, kw in (('amplitude', dict(eps_k=0.01)),
+                     ('exponent', dict(eps_c2=0.01))):
+        o = miscalibrated(md, **kw)
+        bp = o['+']['m_hat'] - o['+']['m_true']
+        bm = o['-']['m_hat'] - o['-']['m_true']
+        dw = (bp - bm) / span
+        print(f"  {name:>10}{1e3*bp:11.3f}{dw:12.5f}{100*dw/30.08:10.4f}"
+              f"{500*dw/30.08:10.3f}")
+
+    print(f"\n  the realised case: what rho does to the PNLS calibration")
+    print(f"  (C2 +1.4%, K -5.2%, measured in analysis/absorption_picture.py)\n")
+    print(f"  {'Mdot':>6}{'bias +':>10}{'bias -':>10}{'half-sum':>11}"
+          f"{'offset err':>12}")
+    print(f"  {'N m/s':>6}{'mN.m':>10}{'mN.m':>10}{'mN.m':>11}{'um':>12}")
+    for m0 in (0.10, 0.45, 1.20):
+        b0 = miscalibrated(m0)['a_hat']
+        o = miscalibrated(m0, eps_k=-0.052, eps_c2=0.014)
+        bp = 1e3 * (o['+']['m_hat'] - o['+']['m_true'])
+        bm = 1e3 * (o['-']['m_hat'] - o['-']['m_true'])
+        print(f"  {m0:6.2f}{bp:10.3f}{bm:10.3f}{0.5*(bp+bm):11.4f}"
+              f"{1e6*(o['a_hat']-b0):12.3f}")
 
 
 def main():
@@ -268,6 +367,7 @@ def main():
         a_hat = -off / W
         print(f"  {100*mm:9.0f}%{1e3*a_hat:13.4f}{1e6*(a_hat-A_TRUE):11.2f}"
               f"{100*(a_hat/A_TRUE-1):12.3f}")
+    amplitude_budget()
     return 0
 
 
