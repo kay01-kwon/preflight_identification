@@ -43,3 +43,6 @@ analysis/.ge_dynamics_traces.npz
 
 # cached estimator results for analysis/mff_table.py (regenerable)
 analysis/mff_table.pkl
+
+# cached collection pass for analysis/residual_budget.py (regenerable)
+DataSet/exp/residual_budget_cache.pkl

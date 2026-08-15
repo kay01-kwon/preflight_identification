@@ -78,6 +78,7 @@ from utils import math_tools
 from critical_value_getter_piecewise import (
     extract_piecewise_batch, detect_excitation_window, commanded_ramp_rate,
     estimate_rig_constants, prepare_signals, MOMENT_CAP)
+from analysis.pnls_constants import PNLS_CONSTANTS
 
 # geometry / aero constants, identical to ge_trajectory.py and
 # small_angle_trajectory.py so the components stay comparable
@@ -278,7 +279,11 @@ def main():
         axis = 'x' if d.name == 'Mx' else 'y'
         with contextlib.redirect_stdout(io.StringIO()):
             bags = load_excitation_dataset(d)
-            c2, k_gain = estimate_rig_constants(bags, axis)
+            # The REPORTED configuration uses the frozen two-stage pair, as
+            # analysis/nls_comparison.py does.  Re-estimating here silently
+            # budgets a different calibration from the one the results are
+            # produced with, and on some datasets a markedly different one.
+            c2, k_gain = PNLS_CONSTANTS[(d.parent.name, d.name)]
             crits, _ = extract_piecewise_batch(bags, axis, cosh_c2=c2,
                                                ramp_gain=k_gain)
         wz = 1.0 / k_gain
