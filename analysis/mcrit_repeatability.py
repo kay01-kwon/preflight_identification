@@ -187,6 +187,7 @@ def main():
     print(f"  under conditions that should give identical answers, with no")
     print(f"  model in the comparison.")
     decompose(rows)
+    slow_ramp(rows)
     return 0
 
 
@@ -278,6 +279,78 @@ def decompose(rows):
               f" lives in the\n  TIME domain: it is a failure to locate the"
               f" onset, and it is the\n  algorithm's to own.")
     return ms, ts, rt
+
+
+def slow_ramp(rows):
+    """It is not a slope.  It is the slowest ramp reading low.
+
+    The per-configuration lines of the table above have a slope standard
+    error about equal to their scatter, and looking at the points shows
+    why the two that clear |t| = 2 do so: the Mdot = 0.10 run sits well
+    below the rest and has the most leverage of any point, so it makes a
+    slope on its own.  Removing only the group MEAN -- a fitted line
+    would absorb exactly the effect being tested -- and pooling by rate
+    puts the question directly.
+    """
+    import collections as _c
+    from scipy import stats
+    g = _c.defaultdict(list)
+    for r in rows:
+        g[(r['case'], r['axis'], r['sign'])].append(r)
+    by = _c.defaultdict(list)
+    for v in g.values():
+        mc = np.array([abs(r['mcrit']) for r in v])
+        for r, m in zip(v, mc):
+            by[round(r['rate'], 2)].append(1e3 * (m - mc.mean()))
+
+    print("\n\n  |M_crit| less its own configuration mean, pooled by rate")
+    print("  (the deviations sum to zero by construction, so read the")
+    print("  0.10 row against the rest rather than each row alone)\n")
+    print(f"  {'Mdot':>6}{'n':>4}{'mean':>9}{'SE':>8}{'t':>7}{'below own':>11}")
+    print(f"  {'N m/s':>6}{'':4}{'mN.m':>9}{'mN.m':>8}{'':7}{'mean':>11}")
+    for rate in sorted(by):
+        e = np.array(by[rate])
+        se = e.std(ddof=1) / np.sqrt(len(e))
+        print(f"  {rate:6.2f}{len(e):4d}{e.mean():9.2f}{se:8.2f}"
+              f"{e.mean()/se:7.2f}{(e < 0).mean():10.0%}")
+    slow = np.array(by[0.10])
+    rest = np.concatenate([by[r] for r in by if r > 0.15])
+    t, pv = stats.ttest_ind(slow, rest, equal_var=False)
+    print(f"\n  0.10 alone {slow.mean():+.2f} mN.m against"
+          f" {rest.mean():+.2f} for the rest,"
+          f"  Welch t = {t:.2f}, p = {pv:.4f}")
+    print(f"  As an onset error that is {1e3*abs(slow.mean())/0.10/1e3:.0f} ms"
+          f" at Mdot = 0.10, matching the {225:.0f} ms of sigma_t there.")
+    print(f"  It is NOT rho: the physical channels give 0.3 to 1.8 mN.m,"
+          f" twenty times")
+    print(f"  too small and with the opposite rate trend.  The sign says"
+          f" the onset is")
+    print(f"  found EARLY, which is what a slow rise emerging from noise"
+          f" does to a")
+    print(f"  residual minimiser.")
+
+    # what dropping the slow rates is worth on the reported quantity
+    hs = _c.defaultdict(dict)
+    for r in rows:
+        hs[(r['case'], r['axis'])].setdefault(round(r['rate'], 2),
+                                              {})[r['sign']] = r['mcrit']
+    print(f"\n  what it costs, on the half-sum that becomes the offset\n")
+    print(f"  {'rates kept':>14}{'runs':>7}{'median':>10}{'worst':>10}")
+    print(f"  {'':14}{'':7}{'mm':>10}{'mm':>10}")
+    for name, keep in (('all seven', lambda r: True),
+                       ('>= 0.45', lambda r: r >= 0.45),
+                       ('>= 0.65', lambda r: r >= 0.65)):
+        sd, n = [], 0
+        for k in hs:
+            v = [0.5 * (d[1] + d[-1]) for rt, d in hs[k].items()
+                 if keep(rt) and 1 in d and -1 in d]
+            n += 2 * len(v)
+            if len(v) >= 3:
+                sd.append(np.std(v, ddof=1))
+        print(f"  {name:>14}{n:7d}{1e3*np.median(sd)/W_MIN:10.4f}"
+              f"{1e3*max(sd)/W_MIN:10.4f}")
+    print(f"\n  Restricting to Mdot >= 0.65 takes the median from 0.52 to")
+    print(f"  0.33 mm, which is inside the 0.400 mm bound of (108).")
 
 
 if __name__ == '__main__':
