@@ -30,6 +30,16 @@ k = 1 / 2 / 3, and a mismatch means something is genuinely missing.
 Nothing here uses the residual to explain the residual: every term is
 either a priori or measured on a channel the cosh model never touches.
 
+RETRACTION.  An earlier version concluded that the fast-half shortfall
+was a systematic onset displacement of about 1.25 samples.  It is not.
+That number came from dividing the endpoint residual by omega_dot at
+the same instant, which manufactures an apparent dt out of any flat
+residual, and omega_dot(end) happens to vary little across the sweep,
+so the apparent dt looked reassuringly constant.  Tested directly, the
+residual does not track omega_dot at all: across the window omega_dot
+grows 13 to 28-fold while the residual ratio is 0.7 to 1.1.  What the
+fast half is missing is not identified.
+
 Usage: python analysis/residual_budget.py [out.png]
 """
 import contextlib
@@ -179,13 +189,20 @@ def main():
                       for k in KS))
     print("\n  The slow half tracks the Gaussian expectation at every k, so"
           "\n  (114) accounts for the residual there.  The fast half does not:"
-          "\n  at k=3 it is two orders above expectation, and what is missing"
-          "\n  is a systematic onset displacement.  Quantisation bounds that at"
-          "\n  half a sample and the noise-driven scatter of the argmin, sigma"
-          "\n  sqrt(Ts)/||chi|| by (104), contributes about a tenth of one --"
-          "\n  against the 1.25 samples the endpoint residual implies.  In time"
-          "\n  the shortfall is rate-independent; in moment it is Mdot times it,"
-          "\n  which is why only the fast half fails.")
+          "\n  at k=3 it is two orders above expectation.")
+    print("\n  What is missing is NOT an onset displacement, though an earlier"
+          "\n  reading of this script said so.  That reading came from dividing"
+          "\n  the endpoint residual by omega_dot at the same instant, which"
+          "\n  turns any flat residual into an apparent dt -- and since"
+          "\n  omega_dot(end) varies little across the sweep, the apparent dt"
+          "\n  came out flat too.  It was arithmetic, not a finding.")
+    print("\n  Run analysis/residual_profile.py for what the data does say:"
+          "\n  the residual is flat through the window while the signal grows"
+          "\n  36 to 110-fold, so it tracks neither omega_dot nor the tau^7"
+          "\n  envelope; it rises about twofold with the ramp rate while both"
+          "\n  independent noise measures stay flat; and it is indistinguishable"
+          "\n  from noise at the slow ramps and 2 to 4 times it at the fast."
+          "\n  No mechanism accounts for all three, and none is asserted here.")
 
     # ── figure ───────────────────────────────────────────────────────
     show = {r['rate']: r for r in rows
