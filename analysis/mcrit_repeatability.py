@@ -188,6 +188,7 @@ def main():
     print(f"  model in the comparison.")
     decompose(rows)
     slow_ramp(rows)
+    rate_invariance(rows)
     return 0
 
 
@@ -351,6 +352,85 @@ def slow_ramp(rows):
               f"{1e3*max(sd)/W_MIN:10.4f}")
     print(f"\n  Restricting to Mdot >= 0.65 takes the median from 0.52 to")
     print(f"  0.33 mm, which is inside the 0.400 mm bound of (108).")
+
+
+def rate_invariance(rows):
+    """Why the onset displacement carries no ramp rate, and what follows.
+
+    The displacement is the projection onto the onset direction,
+
+        delta = <e, chi>/||chi||^2,   chi = -C1 C2 sinh(C2 tau),
+        C1    = Mdot/Wz,
+
+    and the threshold error is Mdot times it.  Count the powers of Mdot:
+    one from the outer factor, one from chi in the numerator, two from
+    ||chi||^2 in the denominator.  They cancel identically,
+
+        dM_crit = -Wz <e, sinh(C2 tau)> / (C2 ||sinh(C2 tau)||^2),
+
+    with no Mdot anywhere.  In MOMENT units the displacement is
+    rate-free; in TIME units delta = dM_crit/Mdot goes as 1/Mdot.  That
+    is the "cancelled twice over" of the derivation, stated exactly.
+
+    The only rate dependence left is implicit, through the window: the
+    excitation closes at a fixed tilt, so tau_end and x = C2 tau_end
+    shrink as the ramp speeds up, and ||sinh||^2 = B(x)/C2.
+
+    That makes a prediction sharp enough to test.  If the scatter in the
+    identified M_crit came from a within-run disturbance d projected onto
+    the onset, then for d of fixed RMS and short correlation
+
+        std(dM_crit) ~ (Wz/C2) sigma_d sqrt(Delta) / ||sinh||
+                     ∝ sqrt(C2/B(x)),
+
+    so a SHORTER window -- the fast ramp -- must scatter MORE.  A fully
+    correlated d gives (cosh x - 1)/B(x) ~ 4 exp(-x), the same direction
+    and steeper.  Either way the fast ramp should be the noisy one.
+    """
+    import collections as _c
+    g = _c.defaultdict(list)
+    for r in rows:
+        g[(r['case'], r['axis'], r['sign'])].append(r)
+    by = _c.defaultdict(list)
+    for v in g.values():
+        mc = np.array([abs(r['mcrit']) for r in v])
+        for r, m in zip(v, mc):
+            by[round(r['rate'], 2)].append(1e3 * (m - mc.mean()))
+    cache = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                         '.fitq_cache.pkl')
+    if not os.path.exists(cache):
+        print("\n  [window lengths unavailable; run fit_quality_bound.py]")
+        return
+    with open(cache, 'rb') as fh:
+        fq = pickle.load(fh)
+    xs = _c.defaultdict(list)
+    for r in fq:
+        xs[round(r['rate'], 2)].append(r['x'])
+    X = {k: float(np.median(v)) for k, v in xs.items()}
+    bx = lambda x: 0.25 * np.sinh(2 * x) - 0.5 * x
+
+    print("\n\n  dM_crit = -Wz <e,sinh> / (C2 ||sinh||^2): no Mdot at all.")
+    print("  The residual rate dependence is only through the window x,")
+    print("  and it predicts the FAST ramp to be the noisy one.\n")
+    print(f"  {'Mdot':>6}{'x':>7}{'B(x)':>10}{'predicted':>11}"
+          f"{'measured':>11}{'measured':>11}")
+    print(f"  {'N m/s':>6}{'':7}{'':10}{'rel to 0.10':>11}{'sigma_M':>11}"
+          f"{'rel to 0.10':>11}")
+    ref = np.std(by[0.10], ddof=1)
+    for rate in sorted(by):
+        x, sd = X[rate], float(np.std(by[rate], ddof=1))
+        print(f"  {rate:6.2f}{x:7.3f}{bx(x):10.2f}"
+              f"{np.sqrt(bx(X[0.10]) / bx(x)):11.2f}{sd:11.2f}"
+              f"{sd / ref:11.2f}")
+    pr = np.sqrt(bx(X[0.10]) / bx(X[1.20]))
+    me = float(np.std(by[1.20], ddof=1)) / ref
+    print(f"\n  fast/slow: predicted {pr:.2f}, measured {me:.2f}"
+          f" -- off by {pr/me:.1f}x, opposite direction.")
+    print(f"\n  So the M_crit scatter is NOT a within-run disturbance seen")
+    print(f"  through the onset.  It is a run-to-run change in where the")
+    print(f"  vehicle actually tips, which is why it shares no scaling with")
+    print(f"  the fit residual -- the two are different quantities, and the")
+    print(f"  earlier claim that one disturbance produced both is withdrawn.")
 
 
 if __name__ == '__main__':
