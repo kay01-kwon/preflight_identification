@@ -119,9 +119,46 @@ def main():
     print(f"  the union bound.  The figure's 3 sigma is a per-sample")
     print(f"  statement; a uniform one wants about 3.5.")
 
+    closed_form(rows)
     misspecified(rows)
     verify(rows, k=3.5)
     return 0
+
+
+def closed_form(rows):
+    """P has no matrix inverse left in it once the two columns are named.
+
+        P_ij = 1/N + u~_i u~_j / sum_k u~_k^2,     u~ = u - mean(u),
+
+    the constant channel plus the u channel with the constant removed.
+    Everything the proof uses drops out of it: trace P = 1 + 1 = 2
+    whatever N is, and P_ii is largest where |u~| is, which is the last
+    sample of the window because that is where the cosh has grown.
+    """
+    g = collections.defaultdict(list)
+    for d in rows:
+        tau, c2 = d['tau'], d['c2']
+        n = len(tau)
+        u = np.cosh(np.clip(c2 * tau, 0, 30)) - 1.0
+        A = np.column_stack([u, np.ones_like(u)])
+        P = A @ np.linalg.solve(A.T @ A, A.T)
+        ut = u - u.mean()
+        Pc = 1.0 / n + np.outer(ut, ut) / np.sum(ut ** 2)
+        j = int(np.argmax(np.diag(P)))
+        g[d['rate']].append((float(np.abs(P - Pc).max()), n, 1.0 / n,
+                             float(ut[j] ** 2 / np.sum(ut ** 2)),
+                             float(P[j, j]), j / (n - 1.0)))
+    print(f"\n  --- the closed form of P ---\n")
+    print(f"  {'Mdot':>6}{'max|P-Pc|':>12}{'N':>5}{'1/N':>9}{'u~ term':>10}"
+          f"{'P_ii max':>11}{'at tau/te':>11}")
+    for rt in sorted(g):
+        a = np.array(g[rt])
+        print(f"  {rt:6.2f}{a[:, 0].max():12.1e}{int(np.median(a[:, 1])):5d}"
+              f"{np.median(a[:, 2]):9.4f}{np.median(a[:, 3]):10.4f}"
+              f"{np.median(a[:, 4]):11.4f}{np.median(a[:, 5]):11.3f}")
+    print(f"\n  The two channels sum to trace 2, the worst sample is the")
+    print(f"  last one in every run, and only 1/N of P_ii there is the")
+    print(f"  constant -- the rest is the amplitude direction.")
 
 
 def misspecified(rows, eps=(0.01, 0.02, 0.05, 0.10)):

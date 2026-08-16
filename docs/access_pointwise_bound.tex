@@ -169,6 +169,41 @@ against $1.96$ and $2.58$ for a single sample.
 Everything in (P.6) is computable before a run is flown: $P$ depends
 only on $C_2$ and the sample grid, $E$ only on the geometry box.
 
+$P$ itself is the standard least-squares projector. Minimising
+$\|y-A\theta\|^2$ gives the normal equations
+$A^{\!\top}\!A\hat\theta = A^{\!\top}y$, whose content is
+$A^{\!\top}(y - A\hat\theta) = 0$: the residual is orthogonal to every
+column of $A$, which is to say to everything the model can produce.
+With $A$ of full column rank, $\hat\theta = (A^{\!\top}\!A)^{-1}
+A^{\!\top}y$ and $\hat\omega = A\hat\theta = Py$. For the two columns
+here it collapses to a form with no matrix inverse left in it,
+\begin{equation}
+  P_{ij} \;=\; \frac1N
+   \;+\; \frac{\tilde u_i\,\tilde u_j}{\sum_k \tilde u_k^{\,2}},
+  \qquad
+  \tilde u = u - \bar u ,
+  \tag{P.9}
+\end{equation}
+which is the constant channel plus the $u$ channel with the constant
+removed, and it reproduces the numerically formed $P$ to $10^{-16}$.
+Every property the proof uses is one line from it. $P^2 = P$ and
+$P^{\!\top} = P$ are immediate; $Pv = v$ for $v\in V$ is Lemma~1;
+$\operatorname{Var}[(Pn)_i] = \sigma_n^2(P P^{\!\top})_{ii} =
+\sigma_n^2P_{ii}$ is Lemma~3; and
+\begin{equation*}
+  \operatorname{tr}P
+  = \sum_i\frac1N + \frac{\sum_i\tilde u_i^{\,2}}{\sum_k\tilde u_k^{\,2}}
+  = 1 + 1 = 2 ,
+\end{equation*}
+one unit for each basis direction, whatever $N$ is. Equation (P.9) also
+locates the worst sample: $P_{ii}$ is largest where $|\tilde u_i|$ is,
+which is the last sample of the window, $\tau/\tau_{\rm end} = 1.000$ in
+every one of the $140$ runs. There $P_{ii}$ reaches $0.124$ to $0.164$,
+of which only $1/N = 0.013$ to $0.024$ is the constant --- the rest is
+the amplitude direction, whose $\cosh$ has grown by then. This is why
+$\kappa$ is $0.35$ to $0.40$ rather than the $\sqrt{2/N}\approx0.2$ a
+flat basis would give.
+
 \begin{center}\small
 \begin{tabular}{@{}rrrrrrr@{}}
 \toprule
