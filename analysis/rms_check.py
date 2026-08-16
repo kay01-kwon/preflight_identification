@@ -20,10 +20,11 @@ exists rather than a line in the text.
   fitted curve is smooth on the scale of the window and can produce
   nothing, so what is there is disturbance by construction.
 
-  How tight is it?  The ratio runs 0.15 at the slowest ramp to 0.53 at
-  the fastest, and what moves is the CAP, not the residual.  The
-  minimiser leaves 0.88 to 1.03 deg/s at every rate -- flat across a
-  twelvefold change in Mdot -- while RMS(E) falls from 5.5 to 1.1.  That
+  How tight is it?  The ratio of means runs 0.17 at the slowest ramp to
+  0.53 at the fastest, and what moves is the CAP, not the residual.  The
+  minimiser leaves 0.93 to 1.08 deg/s at every rate -- flat across a
+  twelvefold change in Mdot, and the 95% intervals overlap throughout --
+  while the cap falls from 5.78 to 1.98.  That
   is the x e^-x behaviour of (VIII.1) seen from the residual side: the
   bound is loosest where the window is longest.  The deployed
   residual does rise, 1.2 to 2.3 deg/s, but that is its amplitude error
@@ -42,6 +43,7 @@ import pickle
 import sys
 
 import numpy as np
+from scipy.stats import t as student
 
 import matplotlib
 matplotlib.use('Agg')
@@ -87,34 +89,42 @@ def main():
         rows = measure(pickle.load(fh))
     rates = sorted({d['rate'] for d in rows})
     n = len(rows)
-    med = lambda kk, rt: float(np.median([d[kk] for d in rows
-                                          if d['rate'] == rt]))
+    def stat(kk, rt):
+        """Mean over the runs at that rate, with a 95% t interval."""
+        v = np.array([d[kk] for d in rows if d['rate'] == rt])
+        return v.mean(), student.ppf(0.975, len(v) - 1) * v.std(ddof=1) \
+            / np.sqrt(len(v))
 
     fig, ax = plt.subplots(figsize=(8.6, 5.0))
     fig.subplots_adjust(left=0.095, right=0.985, top=0.86, bottom=0.125)
     i = np.arange(len(rates))
-    e = np.array([med('rms_E', r) for r in rates])
-    nn = np.array([med('rms_n', r) for r in rates])
-    mm = np.array([med('rms_min', r) for r in rates])
+    e = np.array([stat('rms_E', r)[0] for r in rates])
+    nn = np.array([stat('rms_n', r)[0] for r in rates])
+    cap = np.array([stat('cap', r)[0] for r in rates])
+    cap_ci = np.array([stat('cap', r)[1] for r in rates])
+    mm = np.array([stat('rms_min', r)[0] for r in rates])
+    mm_ci = np.array([stat('rms_min', r)[1] for r in rates])
 
     ax.bar(i - 0.20, e, 0.36, color=C_E,
            label=r'$\mathrm{RMS}(E)$, the modelling bound')
     ax.bar(i - 0.20, nn, 0.36, bottom=e, color=C_N,
            label=r'$\mathrm{RMS}(n)$, the in-window disturbance')
+    ax.errorbar(i - 0.20, cap, yerr=cap_ci, fmt='none', ecolor='0.15',
+                elinewidth=1.3, capsize=4, zorder=5)
     ax.bar(i + 0.20, mm, 0.36, color=C_MIN,
            label=r'measured $\mathrm{RMS}(r)$')
+    ax.errorbar(i + 0.20, mm, yerr=mm_ci, fmt='none', ecolor='0.15',
+                elinewidth=1.3, capsize=4, zorder=5)
 
-    rng = np.random.RandomState(0)
-    for k, r in enumerate(rates):
-        v = [d['rms_min'] for d in rows if d['rate'] == r]
-        ax.plot(k + 0.20 + 0.10 * rng.uniform(-1, 1, len(v)), v, '.',
-                color='0.15', ms=3.4, alpha=0.65, zorder=4)
-        ax.text(k + 0.20, max(v) + 0.20, f'{mm[k] / (e[k] + nn[k]):.2f}',
-                ha='center', fontsize=9, color=C_MIN, weight='bold')
+    for k in range(len(rates)):
+        ax.text(k + 0.20, mm[k] + mm_ci[k] + 0.16,
+                f'{mm[k] / cap[k]:.2f}', ha='center', fontsize=9,
+                color=C_MIN, weight='bold')
     ax.text(0.985, 0.545, 'fraction of the bound used',
             transform=ax.transAxes, ha='right', fontsize=9, color=C_MIN)
 
-    ax.plot([], [], '.', color='0.15', ms=6, label='the 20 runs at that rate')
+    ax.errorbar([], [], yerr=[], fmt='none', ecolor='0.15', elinewidth=1.3,
+                capsize=4, label='mean of 20 runs, 95% CI')
     ax.set_xticks(i)
     ax.set_xticklabels([f'{r:.2f}' for r in rates], fontsize=9)
     ax.set_xlabel(r'$\dot M$ [N m/s]', fontsize=10)
@@ -125,15 +135,16 @@ def main():
                  ' the residual does not move', fontsize=12)
     ax.legend(fontsize=9, loc='upper right')
     ax.grid(alpha=0.25, lw=0.4, axis='y')
-    ax.set_ylim(0, max(e + nn) * 1.16)
+    ax.set_ylim(0, max(cap + cap_ci) * 1.16)
     fig.savefig(out, dpi=150)
 
     print(f"\n  wrote {out}\n")
-    print(f"  {'Mdot':>6}{'RMS(E)':>9}{'RMS(n)':>9}{'cap':>8}"
-          f"{'minimiser':>11}{'deployed':>10}{'|dC1| term':>12}"
+    print(f"  means over the 20 runs at each rate, 95% t intervals\n")
+    print(f"  {'Mdot':>6}{'RMS(E)':>9}{'RMS(n)':>9}{'cap':>17}"
+          f"{'minimiser':>18}{'deployed':>10}{'used':>7}"
           f"{'inside, min':>13}{'dep+term':>10}")
-    print(f"  {'N m/s':>6}{'deg/s':>9}{'deg/s':>9}{'deg/s':>8}"
-          f"{'deg/s':>11}{'deg/s':>10}{'deg/s':>12}{'':13}{'':10}")
+    print(f"  {'N m/s':>6}{'deg/s':>9}{'deg/s':>9}{'deg/s':>17}"
+          f"{'deg/s':>18}{'deg/s':>10}{'':7}{'':13}{'':10}")
     tm = td = 0
     for r in rates:
         v = [d for d in rows if d['rate'] == r]
@@ -141,11 +152,12 @@ def main():
         idd = sum(1 for d in v if d['rms_dep'] <= d['cap'] + d['rms_amp'])
         tm += im
         td += idd
-        print(f"  {r:6.2f}{med('rms_E', r):9.3f}{med('rms_n', r):9.3f}"
-              f"{med('rms_E', r) + med('rms_n', r):8.3f}"
-              f"{med('rms_min', r):11.3f}{med('rms_dep', r):10.3f}"
-              f"{med('rms_amp', r):12.3f}{im:10d}/{len(v)}"
-              f"{idd:7d}/{len(v)}")
+        c, cci = stat('cap', r)
+        m, mci = stat('rms_min', r)
+        print(f"  {r:6.2f}{stat('rms_E', r)[0]:9.3f}{stat('rms_n', r)[0]:9.3f}"
+              f"{c:10.3f} +/-{cci:5.3f}{m:11.3f} +/-{mci:5.3f}"
+              f"{stat('rms_dep', r)[0]:10.3f}{m / c:7.2f}"
+              f"{im:10d}/{len(v)}{idd:7d}/{len(v)}")
     print(f"\n  minimiser {tm}/{n} inside, deployed with the amplitude term"
           f" {td}/{n};")
     print(f"  deployed without it"
