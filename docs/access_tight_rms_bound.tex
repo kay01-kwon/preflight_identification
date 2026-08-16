@@ -152,6 +152,44 @@ the columns, the family absorbs $68$ to $91\%$ of the kernel
 ($79.7\%$ in the median across runs) before any property of $\rho$ is
 used.
 
+Two objections deserve explicit answers, because both look fatal and
+neither is.
+
+\emph{First: $P\,\omega_{\rm nom}=\omega_{\rm nom}$ is an identity, not
+an approximation.} The nominal is $C_1 u + C\mathbf 1$ built on the
+\emph{same} pinned $C_2$ that builds $V$ --- both belong to the
+estimator --- so the annihilation in (T.1) is exact by construction.
+The exponent that can genuinely differ is the \emph{true} response's,
+and that discrepancy lives in $e_\omega$ by definition; it is priced in
+Sec.~3 below.
+
+\emph{Second: the absorbed part has constant coefficients only per
+impulse, and that is all the argument needs.} Aggregated, the Duhamel
+integral reads
+\[
+  e_\omega(\tau) \;=\; \cosh(C_2\tau)\,A(\tau)
+                    \;-\;\sinh(C_2\tau)\,B(\tau),
+  \qquad
+  A(\tau)=\tfrac1{J_P}\!\int_0^\tau\!\cosh(C_2 s)\rho(s)\,ds,
+  \quad
+  B(\tau)=\tfrac1{J_P}\!\int_0^\tau\!\sinh(C_2 s)\rho(s)\,ds,
+\]
+and $A$, $B$ vary with $\tau$, so $e_\omega$ is \emph{not} a fixed
+combination of $\cosh$ and $\sinh$ and is certainly not in $V$. But
+the projection is never applied to that aggregated form. It is applied
+per impulse, by linearity: in each column $k_j$ the shift $s_j$ is
+fixed, the coefficients $\cosh(C_2 s_j)$ and $\sinh(C_2 s_j)$ in (T.3)
+are numbers, and the cosh part is annihilated column by column. The
+$\tau$-dependence of $A$ and $B$ is precisely the running upper limit
+--- the truncation indicator $\mathbf 1_{\tau\ge s_j}$ of each column
+--- and that truncation is carried, not discarded: it is the second
+surviving piece in $(I-P)k_j$, evaluated exactly in the numerical
+$\Phi$. Measured on the exact nonlinear $e_\omega$, the projection
+absorbs $61$ to $67\%$ of it in RMS across the rates, and the
+surviving $0.065$--$0.078^\circ$/s correlates $-0.5$ to $-0.65$ with
+$(I-P)\sinh(C_2\tau)$ --- the sinh component and the truncation,
+exactly as the column split predicts.
+
 \section{The model term $\Phi$}
 
 By Duhamel on the deviation dynamics
@@ -182,6 +220,29 @@ $\rms\big((I-P)e_\omega\big)$ is $0.065$--$0.078^\circ$/s across the
 rates --- inside $\Phi$ with a factor $4$ to $5$ to spare, of which
 about $2$ is $\rbar$ against the realised $|\rho|$ and about $2$ is the
 sign coherence the triangle step discards.
+
+\paragraph{If the pinned exponent mis-states the true one.} Let the
+true response carry $C_2^* = (1+\varepsilon_2)C_2$. Whichever nominal
+one chooses to name, the correction is the same vector: with the
+calibrated nominal, the mismatch joins $e_\omega$; with the true-exponent
+nominal, the annihilation fails by $(I-P)(\omega^* - \omega_{\rm nom})$
+--- and since $(I-P)\omega_{\rm nom}=0$, both bookkeepings add
+identically
+\begin{equation}
+  \Phi_{\varepsilon_2}
+  \;=\;|\varepsilon_2|\,
+  \big\|(I-P)\,\big[C_1 C_2\tau\sinh(C_2\tau)\big]\big\|_{\rms}
+  + O(\varepsilon_2^2),
+  \tag{T.4$'$}
+\end{equation}
+the first-order response to a relative exponent error, projected. On
+the campaign grids this is $0.018$--$0.022^\circ$/s per $1\%$ of
+$\varepsilon_2$ --- $5$--$7\%$ of $\Phi$ --- flat across the rates:
+even $\varepsilon_2 = 5\%$ costs about $0.1^\circ$/s against a cap
+margin of $0.6$--$0.9$. Since $C_2$ is itself fitted from the data by
+the stage-one PNLS with the exponent free, $\varepsilon_2$ at the few-percent
+level is what the calibration residuals allow, and the term is carried
+for completeness rather than out of need.
 
 \section{The noise term}
 
