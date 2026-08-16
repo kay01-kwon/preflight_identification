@@ -106,6 +106,7 @@ def collect(root):
                 out[tag] = dict(
                     j=j, mcrit=float(mom[j]), c=float(pw['c']),
                     onset_t=float(pw['onset_t']), tau=tau, r=r,
+                    pred=np.asarray(pw['omega_pred'], float),
                     dt=float(np.median(np.diff(tau))))
             cvp.BASELINE_STAT = 'median'
             if out is None:
@@ -113,6 +114,9 @@ def collect(root):
             q = sig['omega'][:i0]
             rows.append(dict(case=case, axis=ad, rate=rate, c2=c2, k=k,
                              sign=int(np.sign(md)), mdot=abs(md),
+                             t=np.asarray(t, float) - float(t[0]),
+                             om=np.asarray(om, float),
+                             mom=np.asarray(mom, float),
                              sig=float(np.std(q)) if q.size > 50 else 0.0,
                              **out))
         print(f"  {case}/{ad} done ({len(rows)} runs)")
