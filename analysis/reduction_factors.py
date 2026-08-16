@@ -1,32 +1,34 @@
 #!/usr/bin/env python3
-"""Do the reduction factors explain the shape of the residual bound?
+"""Why the bound depends on the ramp rate when the data does not.
 
-The envelope of (93) uses rho_bar <= rho_phi,max/7 + rho_GE,max/5, and
-the two constants are stand-ins for the window averages of the two
-channels.  Since the measured residual is flat across the ramp rates
-while RMS(E) falls sixfold, it is worth asking whether the constants are
-what makes the difference -- whether computing them properly, per rate,
-would flatten the bound.
+The measured residual is flat across a twelvefold change in ramp rate --
+Pearson r = +0.09 against Mdot, p = 0.30 -- while RMS(E) falls 6.3-fold.
+That reads as a disagreement between the data and the theory, and it is
+not one.  Three measurements settle it.
 
-It would not, and the reason is visible before any arithmetic: the true
-reduction factors are themselves nearly flat.  Measured on the exact
-nonlinear tip-over they run 0.094 to 0.124 for the gravity channel and
-0.146 to 0.178 for the ground-effect one, against the 1/7 = 0.143 and
-1/5 = 0.200 in use.  Both nominal values do bound their channel, with
-15 to 52% of margin, but a factor that barely moves cannot produce a
-shape.
+  the deviation the theory is about is ALSO flat.  Integrating the exact
+  nonlinear tip-over, RMS(e_omega) falls 1.43-fold across the rates,
+  0.236 to 0.165 deg/s, against the bound's 6.26.  Theory and data agree
+  on the residual; it is the bound that moves.
 
-So replacing them lowers RMS(E) by 1.3 to 1.7 and leaves the slope
-almost untouched: the bound still falls 4.7-fold across the rates where
-it fell 6.3-fold before, while the true RMS(e_omega) falls only 1.43.
+  the reduction factors are not what moves it.  The true window-average
+  ratios are 0.094-0.124 for gravity and 0.146-0.178 for ground effect,
+  against the 1/7 = 0.143 and 1/5 = 0.200 in use.  Both nominal values
+  bound their channel with 15-52% of margin, so the choice is sound, but
+  a factor that barely moves cannot produce a shape: replacing them
+  lowers RMS(E) by 1.3-1.7x and turns 6.26-fold into 4.7-fold.
 
-The shape is in the propagation, not the reduction.  RMS(E) carries
-sqrt(B(x)/x) with x = C2 tau_end, which grows with the window, and the
-window is longest at the slowest ramp.  The true deviation has no such
-factor: e_omega is the Duhamel integral of a rho set by the tilt
-excursion, and every run covers the same excursion because every window
-ends at the same tilt cap.  What differs is only how fast it is
-traversed.
+  what moves it is the propagation.  RMS(E) = rho_bar K C2 sqrt(B(x)/x)
+  with x = C2 tau_end, and sqrt(B(x)/x) alone falls 6.69-fold across the
+  rate range -- the whole of the 6.26.  rho_bar itself is flat, 9.8 to
+  10.5 mN.m.
+
+So the bound's rate dependence is conservatism, not a prediction about
+the residual, and the conservatism has a closed form.  E/e_omega falls
+34.1 to 7.8, a factor 4.37, against the 4.98 that the x e^-x law of
+(VIII.1) predicts.  Replacing a rising rho by the constant rho_bar under
+a kernel whose dynamic range is e^x costs a factor that grows with the
+window, and the window is longest at the slowest ramp.
 
 Usage: python analysis/reduction_factors.py [out.png]
 """
@@ -41,6 +43,7 @@ import matplotlib.pyplot as plt
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from nonlinear_band import exact, J_P, RPHI, RGE
+from rms_check import measure
 
 RATES = (0.10, 0.20, 0.30, 0.45, 0.65, 0.90, 1.20)
 C_NOM, C_TRUE, C_E, C_PHI, C_GE = '#c0392b', '#148f77', '#2874a6', \
@@ -59,9 +62,11 @@ def collect():
         fg = float(np.trapz(rg, tau) / T / rg.max())
         rb_true = fp * rp.max() + fg * rg.max()
         k = np.sinh(c2 * tau) / (J_P * c2)
+        B = 0.25 * np.sinh(2 * s['x']) - 0.5 * s['x']
         out.append(dict(mdot=m, x=float(s['x']), fp=fp, fg=fg,
                         E_nom=rms(rb * k), E_true=rms(rb_true * k),
-                        e=rms(s['e'])))
+                        e=rms(s['e']), sqB=float(np.sqrt(B / s['x'])),
+                        law=float(np.exp(s['x']) / s['x'])))
     return out
 
 
@@ -70,70 +75,95 @@ def main():
     r = collect()
     d2 = np.rad2deg
     md = [d['mdot'] for d in r]
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                           '.failing_cache.pkl'), 'rb') as fh:
+        import pickle
+        rows = measure(pickle.load(fh))
+    meas = [float(np.mean([q['rms_min'] for q in rows
+                           if abs(q['rate'] - m) < 1e-6])) for m in md]
 
-    fig, (a1, a2) = plt.subplots(1, 2, figsize=(12.6, 4.9))
-    fig.subplots_adjust(left=0.068, right=0.985, top=0.845, bottom=0.135,
-                        wspace=0.26)
+    fig, (a1, a2, a3) = plt.subplots(1, 3, figsize=(15.2, 4.9))
+    fig.subplots_adjust(left=0.056, right=0.99, top=0.825, bottom=0.135,
+                        wspace=0.27)
 
-    # ---- (a) the reduction factors themselves ----------------------
-    a1.axhline(RPHI, color=C_PHI, ls='--', lw=1.6,
-               label=r'nominal $1/7$, gravity')
-    a1.axhline(RGE, color=C_GE, ls='--', lw=1.6,
-               label=r'nominal $1/5$, ground effect')
-    a1.plot(md, [d['fp'] for d in r], 'o-', color=C_PHI, lw=2.2, ms=7,
-            label=r'true $\langle\rho_\varphi\rangle/\rho_{\varphi,\max}$')
-    a1.plot(md, [d['fg'] for d in r], 's-', color=C_GE, lw=2.2, ms=7,
-            label=r'true $\langle\rho_{GE}\rangle/\rho_{GE,\max}$')
-    a1.set_ylim(0, 0.24)
-    a1.set_xlabel(r'$\dot M$ [N m/s]', fontsize=9.5)
-    a1.set_ylabel('window average / maximum', fontsize=9.5)
-    a1.set_title('(a) the reduction factors are flat\n'
-                 'so they cannot produce a shape', fontsize=11)
-    a1.legend(fontsize=8.5, loc='lower right')
-    a1.grid(alpha=0.25, lw=0.4)
-
-    # ---- (b) what that does to the bound ---------------------------
+    # ---- (a) everything normalised: what is flat and what is not ---
     en = np.array([d2(d['E_nom']) for d in r])
-    et = np.array([d2(d['E_true']) for d in r])
     ee = np.array([d2(d['e']) for d in r])
-    a2.plot(md, en, 'o-', color=C_NOM, lw=2.2, ms=7,
-            label=f'$\\mathrm{{RMS}}(E)$, $1/7$ and $1/5$'
-                  f'   ($\\times${en[0]/en[-1]:.1f})')
-    a2.plot(md, et, 's-', color=C_E, lw=2.2, ms=7,
-            label=f'$\\mathrm{{RMS}}(E)$, true factors'
-                  f'   ($\\times${et[0]/et[-1]:.1f})')
-    a2.plot(md, ee, '^-', color=C_TRUE, lw=2.4, ms=8,
-            label=f'true $\\mathrm{{RMS}}(e_\\omega)$'
+    mm = np.array(meas)
+    a1.plot(md, en / en[0], 'o-', color=C_NOM, lw=2.2, ms=7,
+            label=f'bound $\\mathrm{{RMS}}(E)$   ($\\times${en[0]/en[-1]:.1f})')
+    a1.plot(md, ee / ee[0], '^-', color=C_TRUE, lw=2.4, ms=8,
+            label=f'theory $\\mathrm{{RMS}}(e_\\omega)$'
                   f'   ($\\times${ee[0]/ee[-1]:.2f})')
-    a2.set_yscale('log')
-    a2.set_xlabel(r'$\dot M$ [N m/s]', fontsize=9.5)
-    a2.set_ylabel(r'RMS [$^\circ$/s]', fontsize=9.5)
-    a2.set_title('(b) correcting them lowers the bound but not its slope\n'
-                 'only the truth is flat', fontsize=11)
-    a2.set_ylim(0.10, 12.0)
-    a2.legend(fontsize=8.5, loc='upper right')
-    a2.grid(alpha=0.25, lw=0.4, which='both')
+    a1.plot(md, mm / mm[0], 's--', color='0.25', lw=2.0, ms=6.5,
+            label=f'measured residual   ($\\times${mm[0]/mm[-1]:.2f})')
+    a1.axhline(1.0, color='k', lw=0.9, ls=':')
+    a1.set_yscale('log')
+    a1.set_xlabel(r'$\dot M$ [N m/s]', fontsize=9.5)
+    a1.set_ylabel(r'relative to $\dot M = 0.10$', fontsize=9.5)
+    a1.set_title('(a) the data and the theory agree\n'
+                 'it is the bound that moves', fontsize=11)
+    a1.legend(fontsize=8.5, loc='lower left')
+    a1.grid(alpha=0.25, lw=0.4, which='both')
 
-    fig.suptitle('The reduction factors are not what makes the bound fall',
-                 fontsize=13, y=0.955)
+    # ---- (b) it is not the reduction factors -----------------------
+    a2.axhline(RPHI, color=C_PHI, ls='--', lw=1.6,
+               label=r'nominal $1/7$, gravity')
+    a2.axhline(RGE, color=C_GE, ls='--', lw=1.6,
+               label=r'nominal $1/5$, ground effect')
+    a2.plot(md, [d['fp'] for d in r], 'o-', color=C_PHI, lw=2.2, ms=7,
+            label=r'true $\langle\rho_\varphi\rangle/\rho_{\varphi,\max}$')
+    a2.plot(md, [d['fg'] for d in r], 's-', color=C_GE, lw=2.2, ms=7,
+            label=r'true $\langle\rho_{GE}\rangle/\rho_{GE,\max}$')
+    a2.set_ylim(0, 0.24)
+    a2.set_xlabel(r'$\dot M$ [N m/s]', fontsize=9.5)
+    a2.set_ylabel('window average / maximum', fontsize=9.5)
+    a2.set_title('(b) not the reduction factors\n'
+                 'they are flat, and $1/7$, $1/5$ bound them', fontsize=11)
+    a2.legend(fontsize=8.5, loc='lower right')
+    a2.grid(alpha=0.25, lw=0.4)
+
+    # ---- (c) it is the propagation, and it has a closed form -------
+    sq = np.array([d['sqB'] for d in r])
+    law = np.array([d['law'] for d in r])
+    a3.plot(md, sq / sq[0], 'o-', color=C_NOM, lw=2.2, ms=7,
+            label=r'$\sqrt{B(x)/x}$, the propagation')
+    a3.plot(md, (en / ee) / (en / ee)[0], 'd-', color='#7b3294', lw=2.2,
+            ms=7, label=r'measured conservatism $E/e_\omega$')
+    a3.plot(md, law / law[0], ':', color='k', lw=2.0,
+            label=r'$e^{x}/x$, the $xe^{-x}$ law of (VIII.1)')
+    a3.set_yscale('log')
+    a3.set_xlabel(r'$\dot M$ [N m/s]', fontsize=9.5)
+    a3.set_ylabel(r'relative to $\dot M = 0.10$', fontsize=9.5)
+    a3.set_title('(c) it is the propagation\n'
+                 'and the conservatism follows its own law', fontsize=11)
+    a3.legend(fontsize=8.5, loc='lower left')
+    a3.grid(alpha=0.25, lw=0.4, which='both')
+
+    fig.suptitle('The bound falls with the ramp rate; the deviation and the '
+                 'data do not', fontsize=13, y=0.95)
     fig.savefig(out, dpi=150)
 
     print(f"\n  wrote {out}\n")
     print(f"  {'Mdot':>6}{'x':>6}{'factor phi':>12}{'factor GE':>11}"
-          f"{'E, 1/7+1/5':>13}{'E, true':>10}{'true e':>10}")
+          f"{'RMS(E)':>9}{'RMS(e)':>9}{'measured':>10}{'E/e':>7}")
     print(f"  {'N m/s':>6}{'':6}{'(1/7=.143)':>12}{'(1/5=.200)':>11}"
-          f"{'deg/s':>13}{'deg/s':>10}{'deg/s':>10}")
-    for d in r:
+          f"{'deg/s':>9}{'deg/s':>9}{'deg/s':>10}{'':7}")
+    for d, q in zip(r, meas):
         print(f"  {d['mdot']:6.2f}{d['x']:6.2f}{d['fp']:12.4f}{d['fg']:11.4f}"
-              f"{d2(d['E_nom']):13.3f}{d2(d['E_true']):10.3f}"
-              f"{d2(d['e']):10.4f}")
-    print(f"\n  across the rate range: the bound falls"
-          f" {en[0]/en[-1]:.1f}x with the nominal factors and"
-          f" {et[0]/et[-1]:.1f}x with the true ones,")
-    print(f"  while the true deviation falls {ee[0]/ee[-1]:.2f}x."
-          f"  Correcting the factors buys a level")
-    print(f"  ({en[0]/et[0]:.1f}x at the slowest rate,"
-          f" {en[-1]/et[-1]:.1f}x at the fastest), not a slope.")
+              f"{d2(d['E_nom']):9.3f}{d2(d['e']):9.4f}{q:10.3f}"
+              f"{d2(d['E_nom'])/d2(d['e']):7.1f}")
+    print(f"\n  across the rate range")
+    print(f"    bound RMS(E)          falls {en[0]/en[-1]:.2f}x")
+    print(f"    of which sqrt(B(x)/x)       {sq[0]/sq[-1]:.2f}x   <- all of it")
+    print(f"    theory RMS(e_omega)   falls {ee[0]/ee[-1]:.2f}x")
+    print(f"    measured residual     falls {mm[0]/mm[-1]:.2f}x")
+    print(f"    conservatism E/e      falls {(en/ee)[0]/(en/ee)[-1]:.2f}x,"
+          f" against {law[0]/law[-1]:.2f} from the x e^-x law")
+    print(f"\n  So the data and the theory agree that the residual does not")
+    print(f"  depend on the ramp rate.  What depends on it is the bound, and")
+    print(f"  its dependence is the known conservatism of replacing a rising")
+    print(f"  rho by a constant under a kernel of dynamic range e^x.")
     return 0
 
 
