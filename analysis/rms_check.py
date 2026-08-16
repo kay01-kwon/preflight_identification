@@ -86,102 +86,47 @@ def main():
     with open(os.path.join(HERE, '.failing_cache.pkl'), 'rb') as fh:
         rows = measure(pickle.load(fh))
     rates = sorted({d['rate'] for d in rows})
-    cmap = plt.get_cmap('viridis')
-    col = {r: cmap(i / max(len(rates) - 1, 1)) for i, r in enumerate(rates)}
     n = len(rows)
+    med = lambda kk, rt: float(np.median([d[kk] for d in rows
+                                          if d['rate'] == rt]))
 
-    fig = plt.figure(figsize=(15.0, 4.9))
-    gs = fig.add_gridspec(1, 3, wspace=0.26, left=0.052, right=0.99,
-                          top=0.80, bottom=0.135)
-
-    # ---- (a) measured against the cap ------------------------------
-    ax = fig.add_subplot(gs[0, 0])
-    lo, hi = 0.5, 12.0
-    ax.plot([lo, hi], [lo, hi], 'k--', lw=1.4, zorder=1,
-            label='equality: measured $=$ cap')
-    ax.fill_between([lo, hi], [lo, hi], [hi, hi], color='0.92', zorder=0)
-    for d in rows:
-        ax.plot(d['cap'], d['rms_min'], 'o', color=col[d['rate']], ms=4.6,
-                mew=0, alpha=0.85, zorder=3)
-        ax.plot(d['cap'] + d['rms_amp'], d['rms_dep'], '^',
-                color=col[d['rate']], ms=4.6, mew=0, alpha=0.45, zorder=2)
-    ax.plot([], [], 'o', color='0.3', ms=6, label='minimiser: 140/140')
-    ax.plot([], [], '^', color='0.3', ms=6, alpha=0.5,
-            label='deployed $+\\,|\\Delta C_1|$ term: 140/140')
-    ax.set_xscale('log')
-    ax.set_yscale('log')
-    ax.set_xlim(lo, hi)
-    ax.set_ylim(lo, hi)
-    ax.set_xlabel(r'cap $\mathrm{RMS}(E)+\mathrm{RMS}(n)$ [$^\circ$/s]',
-                  fontsize=9)
-    ax.set_ylabel(r'measured $\mathrm{RMS}(r)$ [$^\circ$/s]', fontsize=9)
-    ax.set_title('(a) every run below the line\n'
-                 'grey = the region the bound forbids', fontsize=10.5)
-    ax.legend(fontsize=8, loc='upper left')
-    ax.grid(alpha=0.25, lw=0.4, which='both')
-    sm = plt.cm.ScalarMappable(cmap=cmap,
-                               norm=plt.Normalize(rates[0], rates[-1]))
-    sm.set_array([])
-    cb = fig.colorbar(sm, ax=ax, pad=0.015, fraction=0.046)
-    cb.set_label(r'$\dot M$ [N m/s]', fontsize=8)
-    cb.ax.tick_params(labelsize=7.5)
-
-    # ---- (b) what the cap is made of, per rate ---------------------
-    ax = fig.add_subplot(gs[0, 1])
-    med = lambda kk, rt: np.median([d[kk] for d in rows if d['rate'] == rt])
+    fig, ax = plt.subplots(figsize=(8.6, 5.0))
+    fig.subplots_adjust(left=0.095, right=0.985, top=0.86, bottom=0.125)
     i = np.arange(len(rates))
-    e = [med('rms_E', r) for r in rates]
-    nn = [med('rms_n', r) for r in rates]
-    am = [med('rms_amp', r) for r in rates]
-    ax.bar(i, e, 0.62, color=C_E, label=r'$\mathrm{RMS}(E)$, the model')
-    ax.bar(i, nn, 0.62, bottom=e, color=C_N,
-           label=r'$\mathrm{RMS}(n)$, in-window')
-    ax.bar(i, am, 0.62, bottom=np.array(e) + nn, color=C_AMP, alpha=0.85,
-           label=r'$|\Delta C_1|\,\mathrm{RMS}(u)$, deployed only')
-    ax.plot(i, [med('rms_min', r) for r in rates], 'o-', color=C_MIN,
-            lw=2.0, ms=7, label='measured, minimiser')
-    ax.plot(i, [med('rms_dep', r) for r in rates], 's--', color=C_DEP,
-            lw=2.0, ms=6.5, label='measured, deployed')
-    ax.set_xticks(i)
-    ax.set_xticklabels([f'{r:.2f}' for r in rates], fontsize=8.5)
-    ax.set_xlabel(r'$\dot M$ [N m/s]', fontsize=9)
-    ax.set_ylabel(r'RMS [$^\circ$/s]', fontsize=9)
-    ax.set_title("(b) the cap falls; the minimiser's residual does not\n"
-                 r'$\mathrm{RMS}(E)$ $5.5\to1.1$, measured'
-                 r' $0.88\to1.03^\circ$/s', fontsize=10.5)
-    ax.legend(fontsize=7.4, loc='upper right')
-    ax.grid(alpha=0.25, lw=0.4, axis='y')
+    e = np.array([med('rms_E', r) for r in rates])
+    nn = np.array([med('rms_n', r) for r in rates])
+    mm = np.array([med('rms_min', r) for r in rates])
 
-    # ---- (c) how tight, and what each term buys --------------------
-    ax = fig.add_subplot(gs[0, 2])
+    ax.bar(i - 0.20, e, 0.36, color=C_E,
+           label=r'$\mathrm{RMS}(E)$, the modelling bound')
+    ax.bar(i - 0.20, nn, 0.36, bottom=e, color=C_N,
+           label=r'$\mathrm{RMS}(n)$, the in-window disturbance')
+    ax.bar(i + 0.20, mm, 0.36, color=C_MIN,
+           label=r'measured $\mathrm{RMS}(r)$')
+
     rng = np.random.RandomState(0)
-    series = (('minimiser', lambda d: d['rms_min'] / d['cap'], C_MIN, 'o'),
-              ('deployed, no $\\Delta C_1$ term',
-               lambda d: d['rms_dep'] / d['cap'], C_DEP, 's'),
-              ('deployed, with it',
-               lambda d: d['rms_dep'] / (d['cap'] + d['rms_amp']),
-               C_AMP, '^'))
-    for k, (lab, f, cc, mk) in enumerate(series):
-        x = np.array([d['rate'] for d in rows])
-        x = x * (1.0 + 0.045 * (k - 1) + 0.02 * rng.uniform(-1, 1, len(x)))
-        v = np.array([f(d) for d in rows])
-        ax.plot(x, v, mk, color=cc, ms=4.0, mew=0, alpha=0.55)
-        ax.plot(rates, [np.median([f(d) for d in rows if d['rate'] == r])
-                        for r in rates], '-', color=cc, lw=2.2,
-                label=f"{lab}: {int(sum(1 for d in rows if f(d) <= 1))}/{n}")
-    ax.axhline(1.0, color='k', lw=1.6, ls='--')
-    ax.set_yscale('log')
-    ax.set_xlabel(r'$\dot M$ [N m/s]', fontsize=9)
-    ax.set_ylabel('measured / cap', fontsize=9)
-    ax.set_title('(c) how much of the cap is used\n'
-                 'tightest at the fast end, never reached', fontsize=10.5)
-    ax.legend(fontsize=7.8, loc='lower right')
-    ax.grid(alpha=0.25, lw=0.4, which='both')
+    for k, r in enumerate(rates):
+        v = [d['rms_min'] for d in rows if d['rate'] == r]
+        ax.plot(k + 0.20 + 0.10 * rng.uniform(-1, 1, len(v)), v, '.',
+                color='0.15', ms=3.4, alpha=0.65, zorder=4)
+        ax.text(k + 0.20, max(v) + 0.20, f'{mm[k] / (e[k] + nn[k]):.2f}',
+                ha='center', fontsize=9, color=C_MIN, weight='bold')
+    ax.text(0.985, 0.545, 'fraction of the bound used',
+            transform=ax.transAxes, ha='right', fontsize=9, color=C_MIN)
 
-    fig.suptitle(r'(VIII.3) in RMS: $\mathrm{RMS}(r)\leq\mathrm{RMS}(E)'
-                 r'+\mathrm{RMS}(n)$, on the 140-run campaign',
-                 fontsize=13, y=0.955)
-    fig.savefig(out, dpi=145)
+    ax.plot([], [], '.', color='0.15', ms=6, label='the 20 runs at that rate')
+    ax.set_xticks(i)
+    ax.set_xticklabels([f'{r:.2f}' for r in rates], fontsize=9)
+    ax.set_xlabel(r'$\dot M$ [N m/s]', fontsize=10)
+    ax.set_ylabel(r'RMS [$^\circ$/s]', fontsize=10)
+    ax.set_title(r'$\mathrm{RMS}(r)\leq\mathrm{RMS}(E)+\mathrm{RMS}(n)$'
+                 f' on all {n} runs\n'
+                 'the bound falls fivefold across the rates;'
+                 ' the residual does not move', fontsize=12)
+    ax.legend(fontsize=9, loc='upper right')
+    ax.grid(alpha=0.25, lw=0.4, axis='y')
+    ax.set_ylim(0, max(e + nn) * 1.16)
+    fig.savefig(out, dpi=150)
 
     print(f"\n  wrote {out}\n")
     print(f"  {'Mdot':>6}{'RMS(E)':>9}{'RMS(n)':>9}{'cap':>8}"
