@@ -70,6 +70,36 @@ Both segments enter, and both share the pre-onset level $C$:
   \tag{98}
 \end{equation}
 
+\paragraph{On writing the cost as an integral.} What the estimator
+evaluates is a sum over uniformly spaced samples, and (98) is its
+continuous form. Nothing in what follows depends on the two being
+equal. Every step below --- the normal equations, the orthogonality of
+the residual, Cauchy--Schwarz, and Chebyshev's inequality --- is algebra
+in an inner product space and holds verbatim whether the inner product
+is $\int a\,b\,dt$ or $T_s\sum_i a_ib_i$; the continuous form is chosen
+because it makes the moving endpoint and the exchange of integration
+order in (107) readable, not because the sum is being approximated. The
+one step that looks continuous-only is the Leibniz cancellation, and its
+discrete counterpart is exact for the same reason: advancing the onset
+by one sample transfers that sample from the second segment to the
+first, where it contributes $(y_j - C)^2$ either way, since
+$\hat\omega(\tc;\tc) = 0$ leaves the two segments equal there.
+
+Only the numerical values of window integrals such as
+$\|\chi\|^2$ differ, and by a quadrature error. On the $\sinh^2$
+integrand the trapezoid relative error is $(2C_2T_s)^2/12$, which for
+$C_2\le5.67$~rad/s at $T_s = 10$~ms is below $0.11\%$ --- two orders
+below the smallest term the budget carries.
+
+Three statements elsewhere are \emph{not} available in integral form and
+are kept discrete throughout: the noise variance
+$\operatorname{Var}[(Pn)_i] = \sigma_n^2P_{ii}$, since $\sigma_n$ is a
+per-sample deviation and continuous white noise has no pointwise value;
+the trace and leverage identities $\operatorname{tr}P = 2$ and
+$P_{ii}\le1$, which are statements about a matrix; and the union bound
+over the $N$ samples of the window. The onset-grid term
+$T_s\dot M/\sqrt{12}$ of Sec.~VIII is discrete for the same reason.
+
 Write the recorded rate as the true pre-onset level, the nominal
 response from the true onset, and a deviation:
 \begin{equation}
