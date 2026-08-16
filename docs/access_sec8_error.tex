@@ -7,7 +7,8 @@
 %     python analysis/stage1_gain_fix.py DataSet/exp
 %     python analysis/sec8_figure.py docs/fig_sec8_error.png
 %     python analysis/rms_check.py    docs/fig_rms_check.png
-% (the first two write the caches the last two read).
+%     python analysis/reduction_factors.py docs/fig_reduction.png
+% (the first two write the caches the rest read).
 %
 % The figure keeps its two domains on separate rows: the top row is the
 % check and is in deg/s throughout, the bottom row is the answer and is
@@ -202,6 +203,56 @@ tightening, not the fit deteriorating, and it is the $xe^{-x}$
 conservatism of (VIII.1) seen from the residual side: the guarantee is
 loosest where the window is longest. Even at the fastest ramp it is only
 half used.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{fig_reduction.png}
+\caption{Where the rate dependence of the cap comes from, and why it is
+not a prediction about the residual. \emph{(a)} the bound, the deviation
+it bounds, and the measured residual, each normalised to its value at
+$\Mdot = 0.10$: the last two are flat and the first falls $6.26\times$.
+\emph{(b)} the reduction factors are not the cause --- the true
+window-average-to-maximum ratios move only $0.094\to0.124$ on the
+gravity channel and $0.146\to0.178$ on ground effect, and the nominal
+$1/7$ and $1/5$ bound them throughout. \emph{(c)} the cause is the
+propagation factor $\sqrt{B(x)/x}$, which alone falls $6.69\times$, and
+the realised conservatism $E/e_\omega$ tracks the $xe^{-x}$ law of
+(VIII.1).}
+\label{fig:sec8-reduction}
+\end{figure}
+
+\paragraph{Why the cap moves when nothing else does.} A cap that falls
+fivefold over rates at which the residual does not move invites the
+reading that the theory and the data disagree, and it is worth showing
+that they do not. The quantity the theory is actually about is
+$e_\omega$, the deviation of the true tip-over from the nominal
+response, and integrating the exact nonlinear tip-over gives it directly:
+its RMS falls from $0.236$ to $0.165^\circ$/s across the seven rates, a
+factor $1.43$, against the bound's $6.26$ and the measurement's $0.94$.
+Over the $140$ runs the measured residual is uncorrelated with the ramp
+rate (Pearson $r = +0.09$, $p = 0.31$). Theory and measurement agree that
+the residual is flat; what moves is the bound.
+
+Where it moves is identifiable in one term. With
+$\mathrm{RMS}(E) = \rbar K C_2\sqrt{B(x)/x}$ from (93), the factor
+$\sqrt{B(x)/x}$ falls $6.69\times$ over $x = 5.08$ down to $2.92$ ---
+the whole of the $6.26$ --- while $\rbar$ itself rises only $7\%$,
+$11.13$ to $11.90$~mN\,m. Nor is it the reduction factors: evaluating
+the true window-average-to-maximum ratio of each channel gives
+$0.094$ to $0.124$ for gravity and $0.146$ to $0.178$ for ground effect,
+so the nominal $1/7$ and $1/5$ bound their channels with $15$ to $52\%$
+of margin, and a factor that varies by $1.3\times$ cannot produce a
+sixfold shape. Replacing them lowers the cap by $1.3$ to $1.7\times$ and
+leaves $4.7$ of the $6.26$ standing.
+
+What is left is the Chebyshev step itself, and (VIII.1) already
+predicts it: the realised conservatism $E/e_\omega$ falls from $34.1$ to
+$7.8$, a factor $4.37$, against the $4.98$ the $xe^{-x}$ law gives.
+Replacing a rising $\rho$ by the constant $\rbar$ underneath a kernel of
+dynamic range $e^{x}$ costs a factor that grows with the window, and the
+window is longest at the slowest ramp. The rate dependence of the cap is
+therefore a property of the bound's own slack, not a claim about the
+data, and Fig.~\ref{fig:sec8-reduction} separates the three.
 
 \paragraph{The envelope, sample by sample.} The form above averages, and
 the campaign supports the stronger statement without needing it proved.

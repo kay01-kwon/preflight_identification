@@ -20,8 +20,8 @@ not one.  Three measurements settle it.
 
   what moves it is the propagation.  RMS(E) = rho_bar K C2 sqrt(B(x)/x)
   with x = C2 tau_end, and sqrt(B(x)/x) alone falls 6.69-fold across the
-  rate range -- the whole of the 6.26.  rho_bar itself is flat, 9.8 to
-  10.5 mN.m.
+  rate range -- the whole of the 6.26.  rho_bar itself barely moves,
+  11.13 to 11.90 mN.m, a rise of 7%.
 
 So the bound's rate dependence is conservatism, not a prediction about
 the residual, and the conservatism has a closed form.  E/e_omega falls
