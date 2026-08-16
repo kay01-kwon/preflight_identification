@@ -93,6 +93,24 @@ the parameters that remain it is linear.
 Let $P = A(A^{\!\top}\!A)^{-1}A^{\!\top}$ be the orthogonal projector
 onto $V$, so that the least-squares fit is $\hat\omega = Py$.
 
+The constant $\mathbf 1$ belongs in the span because the fitted curve
+carries an additive pre-onset level: (98) minimises over both segments
+with the same offset $C$, and the post-onset model is
+$\hat\omega(t;t_{\rm c})+C$. That level is \emph{not} gyro bias --- the rate
+comes from the navigation filter, whose delta-angle bias states remove
+sensor bias --- but the residual motion the vehicle still has when the
+excitation begins, measured here at $0.004$ to $0.047^\circ$/s. What
+$V$ may contain is dictated by what the estimator ranges over and not
+chosen for convenience: writing $V = \operatorname{span}\{u\}$ while the
+code also fits a level would make $\hat\omega\ne Py$ and Lemma~1 false.
+
+The second dimension is close to free. Dropping $\mathbf 1$ would take
+$\operatorname{tr}P$ from $2$ to $1$ and the constant of (P.7) from
+$2.07$--$2.15$ down to $2.04$--$2.12$, a gain of $1.2\%$; keeping it
+annihilates the constant channel entirely, and a constant is a
+direction $u$ cannot mimic at all --- $u$ vanishes at the onset, so a
+level $b$ would survive into the residual with a factor of $1.000$.
+
 \paragraph{Lemma 1 (the nominal cancels).} $\omega_{\rm nom}\in V$,
 being $C_1^{*}u$ for the true amplitude, so $P\omega_{\rm nom} =
 \omega_{\rm nom}$ and
@@ -219,19 +237,28 @@ cannot produce --- $\hat\omega$ is smooth on the scale of the window ---
 so whatever is there is disturbance by construction rather than by
 assumption.
 
-\paragraph{A pinned amplitude adds a term.} The deployed estimator
-freezes $C_1 = K\Mdot$ from the calibration stage as well, so
-$\hat\omega \ne Py$ and Lemma~1 no longer removes the nominal
-completely; what survives is $\omega_{\rm nom}-\hat\omega = \Delta
-C_1\,u$, and (P.6) becomes
-\begin{equation*}
-  |r_i| \;\le\; |\Delta C_1|\,u_i + E_i + D_i
-        + k\sigma_n\bigl(1+\sqrt{P_{ii}}\bigr).
-\end{equation*}
-Without that term the deployed residual reaches $1.52$ of the bound;
-with it, and with $|\Delta C_1|/C_1 = 11.3\%$ measured, it is inside.
-This is the same term that puts $26$ runs outside the RMS form
-(VIII.3), seen pointwise.
+\paragraph{The deployed fit is more constrained, and each constraint
+adds a term.} $V$ is the family the bound is about: amplitude and level
+free. The shipped estimator frees neither. It takes $C_1 = K\Mdot$ from
+the calibration stage, and it forms $C$ from the \emph{pre-onset}
+segment rather than minimising over it on the window, so once the onset
+is chosen its post-onset curve has no free parameter at all and
+$\hat\omega\ne Py$. Lemma~1 then removes only part of the nominal and
+two terms survive,
+\begin{equation}
+  |r_i| \;\le\; |\Delta C_1|\,u_i + |C-b|
+        + E_i + D_i + k\sigma_n\bigl(1+\sqrt{P_{ii}}\bigr),
+  \tag{P.6$'$}
+\end{equation}
+the first being the calibration's amplitude error and the second the
+baseline channel already carried through (105)--(106). Their measured
+sizes are very different. The amplitude term is $|\Delta C_1|/C_1 =
+11.3\%$ and it is what puts $26$ runs outside the RMS form (VIII.3);
+without it the deployed residual reaches $1.52$ of the bound. The
+baseline term is $|C-b|\simeq\sigma_{\rm pre}/\sqrt{N_{\rm pre}} =
+0.005$ to $0.029^\circ$/s, which is $0.1$ to $1.8\%$ of $\sup E$
+($8.6\%$ at worst over the $140$ runs). One constraint matters and the
+other does not, and the bound says which.
 
 \subsection{What the calibration is worth: Lemma 1 needs $C_2$ exact}
 \label{sec:c2}
