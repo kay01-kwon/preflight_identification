@@ -157,27 +157,30 @@ tighter, time-varying $E(\tau)$ the same test holds for $98.2\%$ of all
 samples and $98/140$ runs entirely. Nothing in the record leaves the
 band the error analysis predicts.
 
-That is a measurement, and it has a proof. The naive pointwise
-statement $|r|\le|e_\omega| + k\sigma_n$ is false at the onset, where
+That is a measurement, and it has a proof, from the same two
+hypotheses (VIII.3) already uses. The naive pointwise statement
+$|r|\le|e_\omega| + k\sigma_n$ is false at the onset, where
 $E(\tau)\propto\sinh C_2\tau$ vanishes and the residual does not,
-because the fit is selected by the whole window; what the statement
-omits is the displacement of the fit itself. The per-run fit takes
-$(C_2,K)$ from the calibration stage as constants --- it is stage one
-that estimates them, by a free nonlinear fit --- so the curves it may
-choose among form a genuine two-dimensional subspace, the minimiser is
-the orthogonal projector $P$ onto it, and since the nominal lies in
-that subspace it cancels exactly: $r = (I-P)(e_\omega + n)$. Bounding
-the two channels separately gives
+because the fit is selected by the whole window; what it omits is the
+displacement of the fit itself, and that displacement is expressible in
+$e_\omega$ and $n$ alone. Since $\omega_{\rm nom}$ is a member of the
+family and $\hat\omega$ is a global minimiser over it,
+$\|\hat\omega - \omega_{\rm nom}\| \le 2\|e_\omega + n\|$ by the
+triangle inequality, with the factor dropping to one when $C_2$ is a
+constant and the minimiser is therefore the orthogonal projector $P$
+onto the two-dimensional span. The displacement lies in that span,
+where $v = Pv$ gives $|v_i| \le \sqrt{P_{ii}}\|v\|$ exactly, so
 \begin{equation}
-  |r_i| \;\le\; E_i + \sum_j|P_{ij}|E_j
+  |r_i| \;\le\; E_i + \sqrt{P_{ii}}\,\|E\|
         + k\sigma_n\bigl(1+\sqrt{P_{ii}}\bigr),
   \tag{VIII.4}
 \end{equation}
 which holds at every sample of all $140$ runs with a worst ratio of
-$0.763$. The constants do not grow with the record because
-$\operatorname{tr}P = 2$ regardless of $N$: over the seven rates the
-Lebesgue constant runs $1.92$ to $2.10$ and $\max\sqrt{P_{ii}}$ runs
-$0.35$ to $0.40$, giving $\max|r| \le 2.18\sup E + 1.48\,k\sigma_n$.
+$0.611$. The constants do not grow with the record because
+$\operatorname{tr}P = 2$ regardless of $N$: over the seven rates
+$\max_i\sqrt{P_{ii}}$ runs $0.35$ to $0.40$ and the displacement term
+$1.09$ to $1.29$ times $\sup E$, giving
+$\max|r| \lesssim 2.3\sup E + 1.4\,k\sigma_n$.
 Two terms are added to the right-hand side and neither is covered by
 $\rbar$: the deployed fit's pinned amplitude contributes
 $|\Delta C_1|u(\tau)$, which is (VIII.3)'s $26$ runs seen pointwise,
