@@ -135,46 +135,59 @@ def main():
     used = np.array([d['rms_min'] / d['tcap'] for d in rows])
     inside = int(np.sum(used <= 1.0))
 
-    # ---- the bar chart: all 140 runs, theory bound vs minimiser ----
-    fig, ax = plt.subplots(figsize=(15.6, 5.2))
-    fig.subplots_adjust(left=0.045, right=0.995, top=0.865, bottom=0.145)
-    x0 = 0
-    ticks, labels = [], []
-    for rt in rates:
-        v = sorted((d for d in rows if d['rate'] == rt),
-                   key=lambda d: d['rms_min'])
-        xs = np.arange(x0, x0 + len(v))
-        noise = [d['tcap'] - d['phi'] for d in v]
-        ax.bar(xs, noise, 0.95, color=C_CAP,
-               label='theory bound: noise part '
-                     r'$\mathrm{RMS}(n_{\rm hi})\sqrt{1+\kappa_b^2}$'
-                     if x0 == 0 else None)
-        ax.bar(xs, [d['phi'] for d in v], 0.95, bottom=noise, color=C_PHI,
-               label=r'theory bound: model part $\Phi$' if x0 == 0 else None)
-        ax.bar(xs, [d['rms_min'] for d in v], 0.55, color=C_MEAS,
-               label=r'measured minimiser $\mathrm{RMS}(r)$'
-                     if x0 == 0 else None)
-        ticks.append(x0 + len(v) / 2 - 0.5)
-        mu = np.mean([d['rms_min'] / d['tcap'] for d in v])
-        labels.append(f'{rt:.2f}\nused {mu:.2f}')
-        x0 += len(v) + 3
-        if rt != rates[-1]:
-            ax.axvline(x0 - 2, color='0.8', lw=0.8)
-    ax.set_xticks(ticks)
-    ax.set_xticklabels(labels, fontsize=9.5)
-    ax.set_xlabel(r'$\dot M$ [N m/s]   (20 runs per rate, sorted by '
-                  'measured residual)', fontsize=10)
+    # ---- the bar chart: per-rate means with 95% t intervals --------
+    from scipy.stats import t as student
+
+    def stat(vals):
+        v = np.asarray(vals)
+        return v.mean(), student.ppf(0.975, len(v) - 1) * v.std(ddof=1) \
+            / np.sqrt(len(v))
+
+    fig, ax = plt.subplots(figsize=(8.6, 5.0))
+    fig.subplots_adjust(left=0.095, right=0.985, top=0.86, bottom=0.125)
+    i = np.arange(len(rates))
+    grp = [[d for d in rows if d['rate'] == rt] for rt in rates]
+    ph = np.array([stat([d['phi'] for d in v])[0] for v in grp])
+    nz = np.array([stat([d['tcap'] - d['phi'] for d in v])[0] for v in grp])
+    cap = np.array([stat([d['tcap'] for d in v])[0] for v in grp])
+    cap_ci = np.array([stat([d['tcap'] for d in v])[1] for v in grp])
+    mm = np.array([stat([d['rms_min'] for d in v])[0] for v in grp])
+    mm_ci = np.array([stat([d['rms_min'] for d in v])[1] for v in grp])
+
+    ax.bar(i - 0.20, ph, 0.36, color=C_PHI,
+           label=r'$\Phi$, the unabsorbable model error')
+    ax.bar(i - 0.20, nz, 0.36, bottom=ph, color='0.62',
+           label=r'$\mathrm{RMS}(n_{\rm hi})\sqrt{1+\kappa_b^2}$,'
+                 ' the disturbance')
+    ax.errorbar(i - 0.20, cap, yerr=cap_ci, fmt='none', ecolor='0.15',
+                elinewidth=1.3, capsize=4, zorder=5)
+    ax.bar(i + 0.20, mm, 0.36, color=C_MEAS,
+           label=r'measured $\mathrm{RMS}(r)$')
+    ax.errorbar(i + 0.20, mm, yerr=mm_ci, fmt='none', ecolor='0.15',
+                elinewidth=1.3, capsize=4, zorder=5)
+
+    for k in range(len(rates)):
+        lab = f'{mm[k] / cap[k]:.2f}'
+        if k == 0:
+            lab = 'used\n' + lab
+        ax.text(k + 0.20, mm[k] + mm_ci[k] + 0.05, lab, ha='center',
+                va='bottom', fontsize=9, color=C_MEAS, weight='bold')
+
+    ax.errorbar([], [], yerr=[], fmt='none', ecolor='0.15',
+                elinewidth=1.3, capsize=4, label='mean of 20 runs, 95% CI')
+    ax.set_xticks(i)
+    ax.set_xticklabels([f'{r:.2f}' for r in rates], fontsize=9)
+    ax.set_xlabel(r'$\dot M$ [N m/s]', fontsize=10)
     ax.set_ylabel(r'RMS [$^\circ$/s]', fontsize=10)
-    ax.set_xlim(-1.5, x0 - 2.5)
-    ax.set_ylim(0, 1.24 * max(d['tcap'] for d in rows))
     ax.set_title(r'$\mathrm{RMS}(r)\leq\Phi+'
                  r'\mathrm{RMS}(n_{\rm hi})\sqrt{1+\kappa_b^2}$'
-                 f' on all {n} runs, per run\n'
-                 f'the bound is flat, like the residual; mean used '
-                 f'{used.mean():.2f}, worst {used.max():.2f} '
-                 f'(the old cap used 0.17 to 0.53)', fontsize=12)
-    ax.legend(fontsize=9, loc='upper center', ncol=3, framealpha=1.0)
+                 f' on all {n} runs\n'
+                 'the bound is flat, like the residual; used '
+                 f'{mm[0] / cap[0]:.2f} to {mm[-1] / cap[-1]:.2f} '
+                 '(the old cap: 0.17 to 0.53)', fontsize=12)
+    ax.legend(fontsize=9, loc='upper right')
     ax.grid(alpha=0.25, lw=0.4, axis='y')
+    ax.set_ylim(0, max(cap + cap_ci) * 1.30)
     fig.savefig(out, dpi=150)
 
     # ---- the table ------------------------------------------------
