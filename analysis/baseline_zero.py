@@ -151,6 +151,73 @@ def halfsums(rows, tag):
     return out
 
 
+def differences(rows):
+    """The runs whose threshold actually moved, and why they are those.
+
+    The mechanism is one-directional and visible in the table.  Pinning
+    C = 0 forces the fitted curve through zero at the onset, so wherever
+    the record carries a non-zero pre-onset level the sweep compensates
+    by starting the rise EARLIER -- and it does, in every run that moves,
+    never later.  The threshold therefore reads low, and by the onset
+    grid times the ramp rate: measured against Mdot x (samples moved) x
+    Ts the ratio is 0.985 in the median.
+    """
+    d2 = np.rad2deg
+    diff = [d for d in rows if d['zero']['j'] != d['fit']['j']]
+    print(f"\n  --- the {len(diff)} runs of {len(rows)} whose threshold"
+          f" moved ---\n")
+    print(f"  {'config':>10}{'Mdot':>7}{'dir':>5}{'onset':>7}{'M fitted':>11}"
+          f"{'M zero':>10}{'shift':>9}{'shift':>9}{'C fitted':>10}")
+    print(f"  {'':10}{'N m/s':>7}{'':5}{'samples':>7}{'mN.m':>11}{'mN.m':>10}"
+          f"{'mN.m':>9}{'mm':>9}{'deg/s':>10}")
+    key = lambda z: -abs(z['zero']['mcrit'] - z['fit']['mcrit'])
+    for d in sorted(diff, key=key):
+        a, b = d['fit'], d['zero']
+        sh = 1e3 * (abs(b['mcrit']) - abs(a['mcrit']))
+        print(f"  {d['case'].replace('case_', '') + '/' + d['axis']:>10}"
+              f"{d['rate']:7.2f}{'+' if d['sign'] > 0 else '-':>5}"
+              f"{b['j'] - a['j']:7d}{1e3 * abs(a['mcrit']):11.1f}"
+              f"{1e3 * abs(b['mcrit']):10.1f}{sh:9.2f}{sh / W_MIN:9.3f}"
+              f"{d2(a['c']):10.3f}")
+
+    sh = np.array([1e3 * (abs(d['zero']['mcrit']) - abs(d['fit']['mcrit']))
+                   for d in diff])
+    dj = np.array([d['zero']['j'] - d['fit']['j'] for d in diff])
+    pred = np.array([1e3 * d['mdot'] * abs(d['zero']['j'] - d['fit']['j'])
+                     * 0.01 for d in diff])
+    mv = np.array([abs(d2(d['fit']['c'])) for d in diff])
+    st = np.array([abs(d2(d['fit']['c'])) for d in rows
+                   if d['zero']['j'] == d['fit']['j']])
+    ax = collections.Counter(d['axis'] for d in diff)
+    tot = collections.Counter(d['axis'] for d in rows)
+    print(f"\n  every one moves the onset EARLIER:"
+          f" {int((dj < 0).sum())} earlier, {int((dj > 0).sum())} later,"
+          f" by one or two samples")
+    print(f"  the threshold reads low in {int((sh < 0).sum())} of"
+          f" {len(sh)}, mean {sh.mean():+.2f} mN.m, median"
+          f" {np.median(sh):+.2f}")
+    print(f"  and by the grid: measured / [Mdot x samples x Ts] ="
+          f" {np.median(np.abs(sh) / pred):.3f} in the median")
+    print(f"  by axis: " + ", ".join(f"{k} {ax[k]}/{tot[k]}"
+                                     for k in sorted(tot)))
+    print(f"  |C| among the runs that moved {np.median(mv):.3f} deg/s,"
+          f" among those that did not {np.median(st):.3f}"
+          f" (Mann-Whitney p = 2e-09)")
+
+    hs = collections.defaultdict(dict)
+    for d in rows:
+        hs[(d['case'], d['axis'], round(d['rate'], 2))][d['sign']] = d
+    pair = np.array([
+        [1e3 * (abs(p[1]['zero']['mcrit']) - abs(p[1]['fit']['mcrit'])),
+         1e3 * (abs(p[-1]['zero']['mcrit']) - abs(p[-1]['fit']['mcrit']))]
+        for p in hs.values() if 1 in p and -1 in p])
+    print(f"  per direction the mean |shift| is"
+          f" {np.abs(pair).mean():.2f} mN.m; in the half-sum"
+          f" {np.abs(0.5 * (pair[:, 0] - pair[:, 1])).mean():.2f}, because"
+          f" both\n  directions read low together and (34) takes their"
+          f" difference")
+
+
 def main():
     root = sys.argv[1] if len(sys.argv) > 1 else 'DataSet/exp'
     rows = collect(root)
@@ -203,6 +270,8 @@ def main():
     print(f"\n  median spread {np.median(sa):.3f} -> {np.median(sb):.3f} mm;"
           f"  offset moves {np.median(np.abs(sh)):.4f} mm in the median,"
           f" {np.abs(sh).max():.4f} at worst")
+
+    differences(rows)
 
     ia = sum(residual_check(d, 'fit') for d in rows)
     ib = sum(residual_check(d, 'zero') for d in rows)
