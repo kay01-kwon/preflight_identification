@@ -361,13 +361,20 @@ three times the in-window disturbance, every sample of every run lies
 inside: $140/140$ runs, the worst single sample reaching $0.94$ of the
 envelope, which is Fig.~\ref{fig:sec8-error}(a,b). Against the tighter,
 time-varying $E(\tau)$ the same test holds for $98.2\%$ of all samples
-and $98/140$ runs entirely. This is reported as a measurement. A
-pointwise bound can be proved as well, but it needs machinery the
-conclusions here do not --- the fit is free to move, so the naive
-$|r|\le|e_\omega|+k\sigma_n$ fails at the onset where the envelope
-vanishes and the residual does not, and repairing it brings in the
-projector's leverage and a union bound over the window. Nothing below
-rests on it.
+and $98/140$ runs entirely. This is reported as a measurement; the
+proved pointwise statement is Appendix~C's. There, Lemma~2 gives the
+identity $r_\perp = (I-P)(e_\omega + n)$ of (C3) --- the naive
+$|r|\le|e_\omega|+k\sigma_n$ fails at the onset because the fit is free
+to move, and the projector is exactly the repair --- Lemma~3 charges
+the leverage through $D_i = \sum_j|P_{ij}|E_j$, and Lemma~4 the
+projected noise, giving (C6) with the constants $\lambda_E$ and
+$\kappa = \max_i\sqrt{P_{ii}}$. One usage note ties it to this
+campaign: the $\sigma_n$ of (C5)--(C6) must be the \emph{in-window}
+disturbance, for the reason given above --- the pre-onset floor is
+five to six times smaller --- and with that reading the $140/140$
+sample-by-sample result is (C6)'s empirical confirmation. The RMS
+statement (VIII.3) is the same Lemma~2 read in norm; nothing below
+rests on the pointwise form.
 
 \paragraph{The thirty that fail.} The deployed fit is the other column,
 and its shortfall is not scattered. All thirty are at
