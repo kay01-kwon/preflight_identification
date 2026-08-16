@@ -22,6 +22,20 @@
 %     bounds it rather than defining it.
 %   - the measured sizes are NOT here: they belong to the realised
 %     budget, Sec. VIII-E.  Only the a priori gain range is quoted.
+%   - the Chebyshev step is applied to rho_phi and |rho_GE| SEPARATELY,
+%     because rho itself is not monotone: rho_GE ~ tau^4 beats rho_phi ~
+%     tau^6 near the onset and, being restoring, holds rho negative over
+%     the first 13-24% of the window.  Each channel is monotone on its
+%     own, so the split repairs the hypothesis and produces the 1/7 and
+%     1/5 factors rather than importing them.
+%   - a closing paragraph separating two claims that are easily merged:
+%     whether the cosh can FIT (conditional on an onset, (109), proved by
+%     projection and checked at every sample) and whether the onset it
+%     picks is right ((108)).  Neither implies the other, and the onset
+%     is fixed by the FAR end of the window -- chi vanishes at the onset,
+%     and 70-84% of ||chi||^2 sits in the final quarter -- so a small
+%     residual near t_c is not evidence that t_c is right.  The full
+%     derivation of (109) is docs/access_pointwise_bound.tex.
 %
 % Symbols follow the manuscript: t_0 record start, t_c onset, t_c^* its
 % true value, \hat t_c the minimiser, x = C_2 tau_end.
@@ -254,6 +268,49 @@ constants are the reduction factors themselves. The threshold bound is
 the stronger of the two by about a factor of four, which is why it,
 and not the relative rate bound, is what the offset budget inherits. A
 reviewer can evaluate either from numbers already in the paper.
+
+\paragraph{Fit quality and onset accuracy are separate claims.}
+Two things are easily merged here and should not be. One is whether the
+hyperbolic cosine can \emph{fit} the recorded rate; the other is whether
+the onset it selects is the right one. Neither implies the other, and
+they are established by different arguments.
+
+The fitting claim is conditional on an onset and holds at every instant.
+Its parametrisation satisfies the onset conditions identically for
+\emph{any} candidate $\tc$, since $\cosh 0 - 1 = 0$ and $\sinh 0 = 0$
+give $\hat\omega(\tc;\tc) = 0$ and $\dot{\hat\omega}(\tc;\tc) = 0$, so
+no admissible fit can violate the physics at the onset whichever one is
+selected. Given that onset, the two remaining parameters enter linearly,
+the minimiser is the orthogonal projector $P$ onto their span, and the
+nominal --- lying in that span --- cancels from the residual exactly,
+leaving $r = (I-P)(e_\omega+n)$ and
+\begin{equation}
+  |r_i| \;\le\; E_i + \sum_j|P_{ij}|E_j
+        + k\sigma_n\bigl(1+\sqrt{P_{ii}}\bigr),
+  \tag{109}
+\end{equation}
+which every sample of all $140$ runs satisfies, the worst reaching
+$0.763$ of it. That is a statement about fit quality and about nothing
+else.
+
+The accuracy of the onset is (108), and its evidence lies at the other
+end of the window. The sensitivity $\chi$ of (101) vanishes at the
+onset, so the record there is nearly uninformative about the quantity
+being located: with $\|\chi\|^2 = C_1^2C_2\bigl[\tfrac14\sinh2x -
+\tfrac12 x\bigr]$, the final quarter of the window carries $70\%$ of
+that norm at $x = 1.98$ and $84\%$ at $x = 3.65$, while the first
+quarter carries $0.8\%$ and $0.2\%$. The onset is fixed by the far end
+of the rise, not by the neighbourhood of the onset itself, and the
+residual being small near $\tc$ is not evidence that $\tc$ is right.
+
+This is worth stating explicitly because the campaign contains the
+corresponding failure. At $\dot M = 0.10$~N\,m/s the identified threshold
+reads $26.70$~mN\,m low with the sign of an onset found \emph{early},
+which is what a weak rise emerging from noise does to a minimiser
+whose informative samples have not yet arrived. It also points the same
+way as the recommendation on excitation rate: $\|\chi\|$ grows with
+$C_1 = \dot M/\Wz$, so the quantity that locates the onset improves with
+a faster ramp even as the window shortens.
 
 \paragraph{What (108) covers.}
 Only the displacement driven by the forcing the estimator cannot absorb.
