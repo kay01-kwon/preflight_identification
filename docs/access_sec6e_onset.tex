@@ -117,12 +117,20 @@ nominal response from the true onset, and a deviation:
   \hat\tc = \tcs + \delta \tc .
   \tag{99}
 \end{equation}
-Here $b$ is the rate the vehicle actually holds before the excitation,
-zero under the onset conditions. The rate is taken from the navigation
-filter, whose delta-angle bias states remove the gyro bias, so $b$
-represents residual pre-excitation motion rather than sensor bias; $C$
-is its estimate, formed over the pre-onset segment, and $n$ is additive
-gyroscope noise. Note also that $e_\omega$ is anchored at the
+Here $b$ is the rate the vehicle actually holds before the excitation
+and $C$ is its estimate, formed over the pre-onset segment; $n$ is
+additive gyroscope noise. The onset conditions would put $b$ at zero,
+and it is worth saying plainly that they do not: measured over the
+segment the estimator uses, $b$ runs from $0.08^\circ$/s at the slowest
+ramp to $0.71$ at the fastest, scaling with $\dot M$ at $0.66^\circ$/s
+per N\,m/s (correlation $0.58$ over $140$ runs, $p = 6\times10^{-14}$)
+and carrying the sign of the tip-over in $132$ of them. It is not
+sensor bias --- the rate comes from the navigation filter, whose
+delta-angle bias states remove that --- but real motion under a load
+that is already building. Nor is it constant: the last fifth of the
+segment runs about twice the first four fifths. Retaining $C$ is
+therefore not a formality, and Sec.~VIII-E reports what pinning it to
+zero costs. Note also that $e_\omega$ is anchored at the
 \emph{true} onset $\tcs$: once a run is recorded it is a fixed function
 of $t$, and it carries no dependence on the optimisation variable.
 
