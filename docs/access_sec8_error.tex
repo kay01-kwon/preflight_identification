@@ -8,6 +8,7 @@
 %     python analysis/sec8_figure.py docs/fig_sec8_error.png
 %     python analysis/rms_check.py    docs/fig_rms_check.png
 %     python analysis/reduction_factors.py docs/fig_reduction.png
+%     python analysis/optimality_rms.py docs/fig_opt_rms.png
 % (the first two write the caches the rest read).
 %
 % The figure keeps its two domains on separate rows: the top row is the
@@ -253,6 +254,78 @@ dynamic range $e^{x}$ costs a factor that grows with the window, and the
 window is longest at the slowest ramp. The rate dependence of the cap is
 therefore a property of the bound's own slack, not a claim about the
 data, and Fig.~\ref{fig:sec8-reduction} separates the three.
+
+\subsection{The cap brought to the theory values}
+
+The diagnosis above also says how to make (VIII.3) tight: the argument
+was never the loose part, the numbers put into it were. Keeping the
+inequality exactly as stated --- the minimiser cannot be farther from
+the data than the nominal member is, so
+$\mathrm{RMS}(\hat r)\le\mathrm{RMS}(e_\omega)+\mathrm{RMS}(n)$ ---
+each term is now evaluated at the value the analysis says it has,
+rather than at its worst case.
+
+For the model term that means $\mathrm{RMS}(e_\omega)$ itself, computed
+by integrating the exact nonlinear tip-over forward and subtracting the
+nominal --- the same machinery the forward check of
+Sec.~\ref{sec:bound-check} rests on, with no Chebyshev step and no
+reduction factors anywhere: $0.236$ down to $0.165^\circ$/s across the
+rates, in place of the envelope's $4.88$ to $1.12$. For the noise term
+it means the middle of the distribution rather than its edge:
+\begin{equation}
+  \hat n \;=\; \mathrm{RMS}(n_{\rm hi})\,
+  \sqrt{1+\big(s_{\rm med}\,\kappa_q\big)^2},
+  \tag{VIII.4}
+\end{equation}
+each run's own measured content above $5$~Hz, extended to the full band
+by its own quiet-stretch shape ratio $\kappa_q$ times the campaign
+median in-window enhancement $s_{\rm med}=1.60$.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.86\linewidth]{fig_opt_rms.png}
+\caption{(VIII.3) with both terms at their theory values, means over
+the twenty runs per rate with $95\%$ $t$ intervals. The stacked bar is
+$\mathrm{RMS}(e_\omega)^{\rm theory}+\hat n$; the green bar is the
+measured residual; the open diamond is the quadrature prediction
+(VIII.5), which lands within $1$ to $12\%$ of the residual at every
+rate. The used fraction runs $0.76$ to $0.85$, the mean cap covers the
+mean residual at all seven rates, and $126$ of $140$ runs sit inside
+individually --- the exceedances are the $\kappa$ scatter that
+(VIII.4), an estimate, does not envelope.}
+\label{fig:sec8-opt}
+\end{figure}
+
+Evaluated so, the cap runs $1.20$ to $1.30^\circ$/s against the
+measured $0.95$ to $1.08$: a used fraction of $0.76$ to $0.85$,
+covering the mean at every rate and $126$ of $140$ runs individually
+(Fig.~\ref{fig:sec8-opt}). The remaining gap is not slack to hunt
+down; it is the triangle step itself. Expanding
+$\mathrm{RMS}(e_\omega+n)^2 = \mathrm{RMS}(e_\omega)^2
++ 2\langle e_\omega,n\rangle/N + \mathrm{RMS}(n)^2$ and noting the
+cross term averages to zero for a disturbance uncorrelated with the
+deviation, the \emph{prediction} for the residual is the quadrature
+sum
+\begin{equation}
+  \mathrm{RMS}(\hat r) \;\approx\;
+  \sqrt{\mathrm{RMS}(e_\omega)^2 + \hat n^2},
+  \tag{VIII.5}
+\end{equation}
+and measured against the campaign it lands within $1$ to $12\%$ of the
+residual at every rate, the small excess being $\hat n$'s own margin
+and the two degrees of freedom the fit removes. The summed form
+exceeds it by exactly the triangle slack, about $0.19^\circ$/s here.
+
+Two versions of the cap therefore coexist and serve different
+purposes, and neither is redundant. This one is nearly equal to the
+data because both terms sit at the middle of their distributions; the
+price is that it is an evaluation, and $14$ runs exceed it. Replacing
+the theory $e_\omega$ by its projection bound and $s_{\rm med}\kappa_q$
+by the campaign-worst $\kappa_b$ turns it into a per-run
+\emph{guarantee} that holds on all $140$ runs at a used fraction of
+$0.53$ to $0.63$ --- flat, unlike the original cap. One number cannot
+be both; the pair brackets the residual from the middle and from
+above.
 
 \paragraph{The envelope, sample by sample.} The form above averages, and
 the campaign supports the stronger statement without needing it proved.
