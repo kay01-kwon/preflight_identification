@@ -44,7 +44,8 @@ the in-window disturbance. The measured points sit systematically above
 the fitted curve --- that is the pinned gain, discussed below.
 \emph{(b)} the same test on every sample of every run, normalised so the
 envelope is unity: all $140$ runs are entirely inside, the worst single
-sample reaching $0.94$. \emph{(c)} the RMS form (VIII.3). The deployed
+sample reaching $0.94$. This is a measurement; the section bounds the
+residual in RMS, not sample by sample. \emph{(c)} the RMS form (VIII.3). The deployed
 fit, with $C_2$ and $K$ pinned per configuration, leaves $26$ runs
 outside, all at the fast end; the minimiser over the same family, which
 is what the bound is about, leaves none. \emph{(d)} the identified
@@ -123,14 +124,20 @@ on measured grounds, and does not rest on this paragraph.
 
 \subsection{The fit against its cap}
 
-Because the nominal response is itself an admissible member of the
-fitted family, the minimiser cannot do worse than it does, and with the
-sensor noise added by the triangle inequality
+Let $w$ denote the part of the record the fitted family cannot
+represent, so that the best member of the family is at distance $\|w\|$
+from the noise-free record. The minimiser was choosing among those
+members, so it cannot be farther from the data than that one is, and
 \begin{equation}
-  \|\hat r\| = \min_g\|y-g\| \le \|y-f\| \le \|e_\omega\| + \|n\|
-             \le \|E\| + \|n\| .
+  \mathrm{RMS}(\hat r) \;=\; \min_g\mathrm{RMS}(y-g)
+  \;\le\; \mathrm{RMS}(w) + \mathrm{RMS}(n) .
   \tag{VIII.3}
 \end{equation}
+That is the whole argument, and it uses optimality and nothing else.
+The modelling analysis enters only to put a number on the first term:
+the nominal response is one member of the family, so $w$ is no larger
+than the deviation from it, and $\mathrm{RMS}(w) \le
+\mathrm{RMS}(e_\omega) \le \mathrm{RMS}(E)$ by (93).
 The comparison needs the residual split first. $e_\omega$ is a Duhamel
 integral of a smooth $\rho$ and carries essentially nothing above a few
 times $1/\tau_{\rm end}$, so residual content faster than that cannot be
@@ -147,44 +154,20 @@ landing gear and after it pivots on one edge with far less damping, so
 the pre-onset floor understates the in-window disturbance and must not
 be used as $\|n\|$.
 
-\paragraph{The envelope, sample by sample.} The RMS form averages, so it
-is worth stating the pointwise version as well, which is what
-Fig.~\ref{fig:sec8-error}(a,b) shows. Taking the envelope at its
-supremum over the window and widening it by three times the in-window
-disturbance, every sample of every run is inside: $140/140$ runs, with
-the worst single sample reaching $0.94$ of the envelope. Against the
-tighter, time-varying $E(\tau)$ the same test holds for $98.2\%$ of all
-samples and $98/140$ runs entirely. Nothing in the record leaves the
-band the error analysis predicts.
-
-That is a measurement, and it has a proof. The naive pointwise
-statement $|r|\le|e_\omega| + k\sigma_n$ is false at the onset, where
-$E(\tau)\propto\sinh C_2\tau$ vanishes and the residual does not,
-because the fit is selected by the whole window; what the statement
-omits is the displacement of the fit itself. The per-run fit takes
-$(C_2,K)$ from the calibration stage as constants --- it is stage one
-that estimates them, by a free nonlinear fit --- so the curves it may
-choose among form a genuine two-dimensional subspace, the minimiser is
-the orthogonal projector $P$ onto it, and since the nominal lies in
-that subspace it cancels exactly: $r = (I-P)(e_\omega + n)$. Bounding
-the two channels separately gives
-\begin{equation}
-  |r_i| \;\le\; E_i + \sum_j|P_{ij}|E_j
-        + k\sigma_n\bigl(1+\sqrt{P_{ii}}\bigr),
-  \tag{VIII.4}
-\end{equation}
-which holds at every sample of all $140$ runs with a worst ratio of
-$0.763$. The constants do not grow with the record because
-$\operatorname{tr}P = 2$ regardless of $N$: over the seven rates the
-Lebesgue constant runs $1.92$ to $2.10$ and $\max\sqrt{P_{ii}}$ runs
-$0.35$ to $0.40$, giving $\max|r| \le 2.18\sup E + 1.48\,k\sigma_n$.
-Two terms are added to the right-hand side and neither is covered by
-$\rbar$: the deployed fit's pinned amplitude contributes
-$|\Delta C_1|u(\tau)$, which is (VIII.3)'s $26$ runs seen pointwise,
-and a calibration error $C_2 = C_2^{*}(1+\varepsilon_2)$ moves the
-nominal out of the subspace and contributes
-$\|(I-P)\omega_{\rm nom}\|_\infty$, worth $1$ to $4\%$ of $\sup E$ per
-$2\%$ of $\varepsilon_2$. The derivation is given in full separately.
+\paragraph{The envelope, sample by sample.} The form above averages, and
+the campaign supports the stronger statement without needing it proved.
+Taking the envelope at its supremum over the window and widening it by
+three times the in-window disturbance, every sample of every run lies
+inside: $140/140$ runs, the worst single sample reaching $0.94$ of the
+envelope, which is Fig.~\ref{fig:sec8-error}(a,b). Against the tighter,
+time-varying $E(\tau)$ the same test holds for $98.2\%$ of all samples
+and $98/140$ runs entirely. This is reported as a measurement. A
+pointwise bound can be proved as well, but it needs machinery the
+conclusions here do not --- the fit is free to move, so the naive
+$|r|\le|e_\omega|+k\sigma_n$ fails at the onset where the envelope
+vanishes and the residual does not, and repairing it brings in the
+projector's leverage and a union bound over the window. Nothing below
+rests on it.
 
 \paragraph{The twenty-six that fail.} They are not scattered. Every one
 is at $\Mdot\ge0.65$~N\,m/s ($3$, $9$ and $14$ of $20$ at the three
@@ -195,8 +178,7 @@ rate and ignores the configuration is not a bad calibration of one
 vehicle; it is something in the inequality itself, and (VIII.3) has
 exactly one hypothesis that the campaign does not satisfy.
 
-The first equality there requires $\hat g$ to be the minimiser over the
-model family. The deployed estimator's is not: $C_2$ and $K$ are pinned
+(VIII.3) requires $\hat g$ to be the minimiser over the model family. The deployed estimator's is not: $C_2$ and $K$ are pinned
 once per configuration by the stage-one fit and frozen for every run of
 that configuration, so the per-run fit is a \emph{constrained} minimiser
 and can only leave a larger residual than the free one the bound is

@@ -7,3 +7,4 @@
 .failing_cache.pkl
 .gainfix_cache.pkl
 .ridge_summary.pkl
+.baseline_cache.pkl

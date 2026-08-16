@@ -3,32 +3,35 @@
 
 The bound proved in docs/access_pointwise_bound.tex is
 
-    |r_i| <= E_i + D_i + k sigma (1 + sqrt(P_ii)),
-    D_i   = sum_j |P_ij| E_j,
+    |r_i| <= E_i + sqrt(P_ii) ||E|| + k sigma (1 + sqrt(P_ii)),
 
 with P the orthogonal projector onto span{cosh C2 tau - 1, 1} on the
 run's own sample grid.  Everything in it is computable before any data
 is taken: P depends only on C2 and the grid, and E only on the geometry
 box.  This prints them.
 
-Three things are worth reading off the table.
+Four things are worth reading off the tables.
 
   trace P = 2 exactly, at every rate and every window length, because a
   projector's trace is the dimension of its range.  That is the reason
-  the constants below do not grow with the window: a two-dimensional
-  projector cannot move much, however many samples it is given.
+  the constants do not grow with the window: a two-dimensional projector
+  cannot move much, however many samples it is given.
 
-  the Lebesgue constant max_i sum_j |P_ij| sits at 1.92 to 2.10 and
-  barely moves across a twelvefold change in ramp rate.  Using it gives
-  the crude uniform bound (1 + Lambda) sup E.  Carrying the actual shape
-  of E instead of its supremum gives 1 + max_i D_i / sup E, which is
-  2.07 to 2.15 -- about a third smaller.
+  the displacement term sqrt(P_ii) ||E|| comes from optimality --
+  ||g_hat - omega_nom|| <= ||e + n|| for a projector, and |v_i| <=
+  sqrt(P_ii) ||v|| on its range -- and needs only ||e|| <= ||E||.  The
+  box form it replaces, D_i = sum_j |P_ij| E_j, needs the band at every
+  sample.  Both are printed; they agree to about 7%.
 
-  the pointwise form |r| <= |e| + k sigma, without the D term, is FALSE
-  near the onset, and the table shows why: E(tau) vanishes there like
-  sinh(C2 tau) while D(tau) does not vanish at all, so their ratio
-  diverges.  The last two columns give that ratio at the window end and
-  at the first sample.
+  the pointwise form |r| <= |e| + k sigma, without a displacement term,
+  is FALSE near the onset, and the tables show why: E(tau) vanishes
+  there like sinh(C2 tau) while the displacement does not, so their
+  ratio diverges.
+
+  the noise term must not be written sqrt(P_ii) ||n||.  E||Pn||^2 =
+  sigma^2 tr P = 2 sigma^2 whatever N is, so the projector captures two
+  units of noise, not N; using ||n|| = sigma sqrt(N) instead costs a
+  factor of 4.5 at N = 41.
 
 Usage: python analysis/projection_constants.py
 """
@@ -62,6 +65,9 @@ def per_run(d):
         trace=float(np.trace(P)),
         leb=float(np.abs(P).sum(1).max()),          # Lebesgue constant
         lam=float(D.max() / E.max()),               # sharp, carries E's shape
+        nE=float(np.sqrt(np.sum(E ** 2)) / E.max()),   # ||E|| / sup E
+        disp=float((np.sqrt(np.diag(P)) * np.sqrt(np.sum(E ** 2))).max()
+                   / E.max()),                      # the (P.8) displacement
         kap=float(np.sqrt(np.diag(P).max())),
         gam_end=float((E[-1] + D[-1]) / E[-1]),
         gam_first=float((E[1] + D[1]) / E[1]),
@@ -77,18 +83,21 @@ def main():
 
     print(f"\n  P = orthogonal projector onto span{{cosh C2 tau - 1, 1}},"
           f" per run\n")
-    print(f"  {'Mdot':>6}{'N':>5}{'tr P':>7}{'Lebesgue':>10}"
-          f"{'1 + Lambda':>12}{'1 + D/supE':>12}{'kappa':>8}"
-          f"{'1 + kappa':>11}{'realised':>10}")
-    print(f"  {'N m/s':>6}{'':5}{'':7}{'Lambda':>10}{'crude':>12}"
-          f"{'sharp':>12}{'':8}{'':11}{'max|r|/supE':>10}")
+    print(f"  {'Mdot':>6}{'N':>5}{'tr P':>7}{'kappa':>8}"
+          f"{'||E||/supE':>13}{'kappa||E||':>12}{'box form':>11}"
+          f"{'Lebesgue':>11}{'realised':>11}")
+    print(f"  {'N m/s':>6}{'':5}{'':7}{'':8}{'':13}{'over supE':>12}"
+          f"{'D/supE':>11}{'Lambda':>11}{'max|r|/supE':>11}")
     med = lambda v, kk: float(np.median([x[kk] for x in v]))
     for rt in sorted(g):
         v = g[rt]
         print(f"  {rt:6.2f}{int(med(v, 'n')):5d}{med(v, 'trace'):7.3f}"
-              f"{med(v, 'leb'):10.3f}{1 + med(v, 'leb'):12.3f}"
-              f"{1 + med(v, 'lam'):12.3f}{med(v, 'kap'):8.3f}"
-              f"{1 + med(v, 'kap'):11.3f}{med(v, 'real'):10.3f}")
+              f"{med(v, 'kap'):8.3f}{med(v, 'nE'):13.2f}"
+              f"{med(v, 'disp'):12.2f}{med(v, 'lam'):11.2f}"
+              f"{med(v, 'leb'):11.3f}{med(v, 'real'):11.3f}")
+    print(f"\n  kappa||E||/supE is the displacement term of (P.8); D/supE is")
+    print(f"  the box form it replaces.  The first needs only ||e|| <= ||E||,")
+    print(f"  the second needs the band at every sample.")
 
     allv = [x for v in g.values() for x in v]
     lam = 1 + max(x['lam'] for x in allv)
@@ -236,8 +245,9 @@ def verify(rows, k=3.5):
         _, rf = amplitude_best(tau, d['om'], c2)
         _, hi = split(rf, d['dt'])
         s_in = float(np.sqrt(np.mean(hi ** 2)))
-        b_pre = E + D + k * d['sig'] * (1.0 + pii)
-        b_in = E + D + k * s_in * (1.0 + pii)
+        disp = pii * np.sqrt(np.sum(E ** 2))       # (P.8), optimality form
+        b_pre = E + disp + k * d['sig'] * (1.0 + pii)
+        b_in = E + disp + k * s_in * (1.0 + pii)
         g[d['rate']].append((
             float(np.all(np.abs(rf) <= b_pre)),
             float(np.all(np.abs(rf) <= b_in)),
