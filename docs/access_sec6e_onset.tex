@@ -36,6 +36,14 @@
 %     and 70-84% of ||chi||^2 sits in the final quarter -- so a small
 %     residual near t_c is not evidence that t_c is right.  The full
 %     derivation of (109) is docs/access_pointwise_bound.tex.
+%   - (99) now carries omega_nom, the TRUE nominal, rather than the model
+%     function omega_hat.  Writing omega_hat there makes the data model
+%     depend on the estimator's own output, and it silently cancels a
+%     term that is not zero: omega_nom - omega_hat at the same true onset
+%     is the calibration mismatch (99b), measured at 11.3% of amplitude.
+%     It is carried through to a third channel in (104), evaluated in
+%     closed form at (105a), and collected with the rest at (110).
+%     Without it (101)/(103) subtract a curve that was never there.
 %
 % Symbols follow the manuscript: t_0 record start, t_c onset, t_c^* its
 % true value, \hat t_c the minimiser, x = C_2 tau_end.
@@ -52,6 +60,7 @@
 \newcommand{\tc}{t_{\rm c}}
 \newcommand{\tcs}{t_{\rm c}^{*}}
 \newcommand{\tend}{t_{\rm end}}
+\newcommand{\rbar}{\bar\rho}
 \title{\vspace{-16mm}\textbf{Sec.~VI-E, (98)--(108): the onset under a
 perturbation, and the threshold}\vspace{-3mm}}
 \date{\small drop-in main text; the measured sizes live in Sec.~VIII-E}
@@ -100,10 +109,10 @@ $P_{ii}\le1$, which are statements about a matrix; and the union bound
 over the $N$ samples of the window. The onset-grid term
 $T_s\dot M/\sqrt{12}$ of Sec.~VIII is discrete for the same reason.
 
-Write the recorded rate as the true pre-onset level, the nominal
-response from the true onset, and a deviation:
+Write the recorded rate as the true pre-onset level, the \emph{true}
+nominal response from the true onset, and a deviation:
 \begin{equation}
-  y(t) = b + \hat\omega(t;\tcs) + e_\omega(t),
+  y(t) = b + \omega_{\rm nom}(t;\tcs) + e_\omega(t) + n(t),
   \qquad
   \hat\tc = \tcs + \delta \tc .
   \tag{99}
@@ -112,10 +121,31 @@ Here $b$ is the rate the vehicle actually holds before the excitation,
 zero under the onset conditions. The rate is taken from the navigation
 filter, whose delta-angle bias states remove the gyro bias, so $b$
 represents residual pre-excitation motion rather than sensor bias; $C$
-is its estimate, formed over the pre-onset segment. Note also that
-$e_\omega$ is anchored at the \emph{true} onset $\tcs$: once a run is
-recorded it is a fixed function of $t$, and it carries no dependence on
-the optimisation variable.
+is its estimate, formed over the pre-onset segment, and $n$ is additive
+gyroscope noise. Note also that $e_\omega$ is anchored at the
+\emph{true} onset $\tcs$: once a run is recorded it is a fixed function
+of $t$, and it carries no dependence on the optimisation variable.
+
+The distinction between $\omega_{\rm nom}$ and the model function
+$\hat\omega$ is not cosmetic and must be carried, because the two are
+not the same curve. $\omega_{\rm nom} = C_1^{*}\bigl(\cosh C_2^{*}\tau
+- 1\bigr)$ is what the vehicle does; $\hat\omega$ is built from the
+calibrated constants, $C_1 = K\dot M$ and $C_2$ from stage one, and
+those carry error. Evaluated at the same true onset the difference does
+not vanish:
+\begin{equation}
+  \Delta(t) \;\triangleq\;
+  \omega_{\rm nom}(t;\tcs) - \hat\omega(t;\tcs)
+  \;=\; \varepsilon_1 C_1 u(\tau) + O(\varepsilon_2),
+  \tag{99b}
+\end{equation}
+with $u(\tau) = \cosh C_2\tau - 1$, $\varepsilon_1 = C_1^{*}/C_1 - 1$
+and $\varepsilon_2 = C_2^{*}/C_2 - 1$. Setting $\Delta$ to zero --- or,
+equivalently, writing $\hat\omega$ in place of $\omega_{\rm nom}$ in
+(99) --- would make the data model depend on the estimator's own output
+and would silently charge the calibration error to $e_\omega$, which is
+defined as the Duhamel integral of $\rho$ and cannot carry it. It is
+retained below and emerges as a channel of its own.
 
 A first-order expansion of the estimated rate gives
 \begin{equation}
@@ -141,15 +171,16 @@ so the two segments agree there and both terms equal
 $\bigl(y(\tc) - C\bigr)^2$ with opposite signs. Nothing is discarded,
 and the cancellation is exact rather than asymptotic.
 
-Second, substituting (99) and (100), the post-onset residual is
+Second, substituting (99), (99b) and (100), the post-onset residual is
 \begin{equation}
   y(t) - \hat\omega(t;\hat\tc) - C
-  = e_\omega(t) - \delta\tc\,\chi(t) - (C - b),
+  = \Delta(t) + e_\omega(t) + n(t) - \delta\tc\,\chi(t) - (C - b),
   \tag{102}
 \end{equation}
 so $C$ enters only through the baseline \emph{error} $C - b$, not
-through its own size. A large but correctly estimated pre-onset level
-is harmless.
+through its own size --- a large but correctly estimated pre-onset level
+is harmless --- and the calibration mismatch $\Delta$ sits alongside the
+physical deviation rather than inside it.
 
 Differentiating (98) with respect to $\delta\tc$ --- the same operator
 as $\partial/\partial\tc$ by (99), but the variable in which the
@@ -157,13 +188,17 @@ linearised cost is an exact quadratic --- and setting the result to zero
 gives, when the pre-onset fit is unbiased,
 \begin{equation}
   \frac{\partial J}{\partial\,\delta\tc}
-  = -2\int_{\tc}^{\tend}\bigl(e_\omega(t) - \delta\tc\,\chi(t)\bigr)
-    \chi(t)\,dt = 0 ,
+  = -2\int_{\tc}^{\tend}\bigl(\Delta + e_\omega + n
+      - \delta\tc\,\chi - (C-b)\bigr)\chi\,dt = 0 ,
   \tag{103}
 \end{equation}
 which implies
 \begin{equation}
-  \delta\tc = \frac{\langle e_\omega,\chi\rangle}{\|\chi\|^{2}} .
+  \delta\tc
+  = \frac{\langle e_\omega,\chi\rangle}{\|\chi\|^{2}}
+  + \frac{\langle \Delta,\chi\rangle}{\|\chi\|^{2}}
+  + \frac{\langle n,\chi\rangle}{\|\chi\|^{2}}
+  - (C - b)\,\frac{\langle 1,\chi\rangle}{\|\chi\|^{2}} .
   \tag{104}
 \end{equation}
 Here $\langle a,b\rangle$ denotes the $L^2$ inner product over the
@@ -173,15 +208,39 @@ b,b\rangle$. The shift $\delta\tc$ is well defined because the
 maximum-angle event occurs after the onset, $\tau_{\rm end} > 0$, so
 $\sinh C_2\tau$ does not vanish identically and $\|\chi\|^2 > 0$.
 
-\paragraph{The baseline error, retained.}
-Keeping the last term of (102) rather than assuming it away replaces
-(104) by
+Four channels, and they are of different kinds. The first is the
+physical deviation and is what (108) bounds a priori. The second is the
+calibration mismatch of (99b): a \emph{bias}, deterministic once the
+constants are frozen, and outside anything $\rbar$ can say. The third
+is zero in expectation and contributes variance
+$\sigma_n^2/\|\chi\|^2$. The fourth is the baseline error. Only the
+first is a statement about the physics the model omits; the rest are
+statements about what the estimator was given.
+
+\paragraph{The calibration channel.} Substituting (99b) with
+$\Delta = \varepsilon_1C_1u$ and using $\langle u,\chi\rangle =
+-C_1A(x)$, $A(x) = \tfrac14\cosh2x - \cosh x + \tfrac34$, the amplitude
+$C_1$ cancels twice over and
 \begin{equation}
-  \delta\tc = \frac{\langle e_\omega,\chi\rangle}{\|\chi\|^{2}}
-   \;-\; (C - b)\,\frac{\langle 1,\chi\rangle}{\|\chi\|^{2}} ,
-  \tag{105}
+  \Delta M_{{\rm crit},\varepsilon}
+  = -\,\varepsilon_1\,\frac{\dot M}{C_2}\,\frac{A(x)}{B(x)}
+    \;-\; \varepsilon_2\,\frac{\dot M}{C_2}\,\frac{D(x)}{B(x)} ,
+  \quad B(x) = \tfrac14\sinh2x - \tfrac12x,
+  \tag{105a}
 \end{equation}
-and the second term does not vanish: $\chi$ is of one sign, so
+the second term following the same route for the exponent with
+$D(x) = \tfrac14x\sinh2x - \tfrac18\cosh2x + \tfrac18 - \tfrac14x^2$.
+This is the channel that the two-sided difference removes: $\dot M$
+changes sign with the tip direction while $\varepsilon_1,\varepsilon_2$
+do not, being properties of the configuration, so
+$\Delta M_{{\rm crit},\varepsilon}$ is odd and cancels in the half-sum
+$(M_+ + M_-)/2$ that (34) reads. Measured on the campaign, the amplitude
+mismatch is $\varepsilon_1 = 11.3\%$ and displaces the threshold by
+$7.2$~mN\,m per direction ($24.3$ at the fastest ramp) but the reported
+half-sum by $1.30$~mN\,m, a factor of $5.5$ smaller.
+
+\paragraph{The baseline error, retained.}
+The last term of (104) does not vanish either: $\chi$ is of one sign, so
 $\langle1,\chi\rangle = -C_1(\cosh x - 1)$. Evaluating it with
 $\|\chi\|^2 = C_1^2C_2\bigl[\tfrac14\sinh 2x - \tfrac12 x\bigr]$ and
 carrying it through $\Delta M_{\rm crit} = \dot M\,\delta\tc$, the
@@ -201,7 +260,9 @@ $C$ is pinned to zero instead of fitted, are measurements and are
 reported with the realised budget in Sec.~VIII-E.
 
 \paragraph{From the onset shift to the threshold.}
-Substituting the Duhamel integral (88) for $e_\omega$ in (104) and
+What follows treats the \emph{first} term of (104) only; the other
+three have just been accounted for and are added to it, not absorbed by
+it. Substituting the Duhamel integral (88) for $e_\omega$ in (104) and
 exchanging the order of integration --- Fubini, both integrands being
 continuous on a bounded domain, the inner limits changing from
 $s\in[0,\tau]$ to $\tau\in[s,\tau_{\rm end}]$ --- turns the correlation
@@ -343,16 +404,30 @@ $C_1 = \dot M/\Wz$, so the quantity that locates the onset improves with
 a faster ramp even as the window shortens.
 
 \paragraph{What (108) covers.}
-Only the displacement driven by the forcing the estimator cannot absorb.
-Two further contributions sit outside it and are measured rather than
-bounded a priori. The baseline error enters through (106), so that
-$|\Delta M_{\rm crit}| \le \bar\rho + |\Delta M_{{\rm crit},C}|$. And
-the applied moment departs from the linear ramp the model assumes:
-because $\dot M$ is the least-squares slope of the \emph{measured}
-moment over the window, the constant and linear parts of any tracking
-error are removed by the normal equations, but the non-affine remainder
-survives and pairs with the non-affine part of $w$. Both are reported
-with the realised budget in Sec.~VIII-E, alongside the ground-contact
-geometry that dominates all three.
+Only the first term of (104), the displacement driven by the forcing the
+estimator cannot absorb. Collecting the rest,
+\begin{equation}
+  |\Delta M_{\rm crit}| \;\le\;
+  \underbrace{\rbar}_{(108)} +
+  \underbrace{|\Delta M_{{\rm crit},\varepsilon}|}_{(105a)} +
+  \underbrace{|\Delta M_{{\rm crit},C}|}_{(106)} +
+  \;\dot M\,\frac{|\langle n,\chi\rangle|}{\|\chi\|^2},
+  \tag{110}
+\end{equation}
+of which only the first is bounded a priori from the geometry. The
+second and third are properties of the calibration and of the pre-onset
+segment. Their realised sizes are not in the order the bound suggests:
+the $\rbar$ channel is allowed $11.5$~mN\,m but realises $0.3$ to
+$1.3$, the baseline channel realises $0.02$ to $0.18$, and the
+calibration channel realises $7.2$ per direction --- five times the
+other two together, and the only one of the three the two-sided
+half-sum removes, taking it to $1.30$. A fourth contribution sits
+outside (110) altogether: the applied moment departs from the linear
+ramp the model assumes, and because $\dot M$ is the least-squares slope
+of the \emph{measured} moment over the window, the constant and linear
+parts of any tracking error are removed by the normal equations while
+the non-affine remainder survives and pairs with the non-affine part of
+$w$. All of these are reported with the realised budget in
+Sec.~VIII-E, alongside the ground-contact geometry that dominates them.
 
 \end{document}
