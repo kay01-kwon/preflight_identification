@@ -136,11 +136,32 @@ def collect(root, cache):
             # of e_omega, so comparing raw would charge the model for it.
             q = sig['omega'][:i0]
             noise = float(np.std(q)) if q.size > 50 else np.nan
-            rows.append(dict(
+            # Split the residual by frequency.  e_omega is a Duhamel
+            # integral of a smooth rho, so it has essentially no content
+            # above a few times 1/tau_end; anything faster than that
+            # CANNOT be the small-angle or GE remainder, whatever else it
+            # is.  Comparing the whole residual against the rho cap
+            # therefore charges the model for structure it never claimed.
+            dt = float(np.median(np.diff(tau)))
+            lo, hi = np.nan, np.nan
+            if dt > 0 and len(tau) >= 8:
+                # An FFT split rather than an IIR filter: the post-onset
+                # segment is only 20 to 40 samples, far too short for
+                # filtfilt's padding, and zeroing bins is exact on a
+                # finite record anyway.
+                rr = r - r.mean()
+                F = np.fft.rfft(rr)
+                f = np.fft.rfftfreq(len(rr), d=dt)
+                F[f > 5.0] = 0.0
+                rl = np.fft.irfft(F, n=len(rr))
+                lo = float(np.sqrt(np.mean(rl ** 2)))
+                hi = float(np.sqrt(np.mean((rr - rl) ** 2)))
+            rows.append(dict(res_lo=lo, res_hi=hi,
                 case=case, axis=ad, rate=rate, c2=c2, k=k,
                 mdot=abs(md), te=float(tau[-1]), x=float(c2 * tau[-1]),
                 dm_win=abs(md) * float(tau[-1]),
                 res=float(np.sqrt(np.mean(r ** 2))),
+                fs=1.0 / dt, nsamp=int(len(tau)),
                 noise=noise, phi_end=phi_end,
                 peak=float(np.max(np.abs(oc)))))
         print(f"  {case}/{ad} done ({len(rows)} runs)")
@@ -250,10 +271,85 @@ def main():
           f"  RMS cap = rho_bar K C2 sqrt(B(x)/x)")
     for pmv in (None, 5.0, 10.0):
         table(rows, pmv)
+    real_check(rows)
     old_model_cost(sorted({round(np.median([r['x'] for r in rows
                                             if r['rate'] == q]), 2)
                            for q in {r['rate'] for r in rows}}))
     return 0
+
+
+def real_check(rows):
+    """The check the bound actually makes, on the real campaign.
+
+    Two corrections to the earlier pass in this file.  The sensor noise
+    adds by the TRIANGLE inequality, not in quadrature:
+
+        ||r_hat|| = min ||y - g|| <= ||y - f|| = ||e_omega + n||
+                 <= ||e_omega|| + ||n|| <= ||E|| + ||n||,
+
+    and subtracting it in quadrature, as the earlier table did, makes the
+    test harder than the theory does.
+
+    And the residual has to be split before it is compared.  e_omega is a
+    Duhamel integral of a smooth rho, so it carries essentially nothing
+    above a few times 1/tau_end; residual content faster than that cannot
+    be the small-angle or GE remainder whatever else it is, and charging
+    the model for it is not a test of the model.  The split is done by
+    zeroing FFT bins above 5 Hz -- the windows are 53 samples at 100 Hz,
+    far too short for an IIR filter's padding.
+    """
+    import collections as _c
+    d2 = np.rad2deg
+    print(f"\n\n  the real campaign against the bound, {len(rows)} runs")
+    print(f"  {np.median([r['fs'] for r in rows]):.0f} Hz,"
+          f" {int(np.median([r['nsamp'] for r in rows]))} samples per window")
+    print(f"  cap = ||E|| + ||n||, triangle form\n")
+    for name, phi in (('a priori box, phi_max = 10 deg', np.deg2rad(10.0)),
+                      ('realised tilt per run, 5.0-5.7 deg', None)):
+        print(f"  --- {name} ---\n")
+        print(f"  {'Mdot':>6}{'E cap':>9}{'noise':>8}{'cap+n':>8}"
+              f"{'resid':>8}{'<5Hz':>8}{'>5Hz':>8}{'lo/cap':>8}{'inside':>10}")
+        print(f"  {'N m/s':>6}{'deg/s':>9}{'deg/s':>8}{'deg/s':>8}"
+              f"{'deg/s':>8}{'deg/s':>8}{'deg/s':>8}{'':8}{'lo':>10}")
+        g = _c.defaultdict(list)
+        for r in rows:
+            g[r['rate']].append(r)
+        ia = il = 0
+        for rate in sorted(g):
+            v = g[rate]
+            C, N, R, L, H = [], [], [], [], []
+            ilr = 0
+            for r in v:
+                pm = phi if phi is not None else r['phi_end']
+                b, _, _ = rho_bar(r['axis'], pm, r['dm_win'])
+                c = rms_cap(b, r['k'], r['c2'], r['x'])
+                n = 0.0 if np.isnan(r['noise']) else r['noise']
+                C.append(d2(c))
+                N.append(d2(n))
+                R.append(d2(r['res']))
+                L.append(d2(r['res_lo']))
+                H.append(d2(r['res_hi']))
+                ia += r['res'] <= c + n
+                il += r['res_lo'] <= c + n
+                ilr += r['res_lo'] <= c + n
+            cn = np.median(C) + np.median(N)
+            print(f"  {rate:6.2f}{np.median(C):9.4f}{np.median(N):8.4f}"
+                  f"{cn:8.4f}{np.median(R):8.4f}{np.median(L):8.4f}"
+                  f"{np.median(H):8.4f}{np.median(L)/cn:8.2f}"
+                  f"{ilr:7d}/{len(v)}")
+        print(f"\n  inside: whole residual {ia}/{len(rows)},"
+              f"  low-frequency part {il}/{len(rows)}\n")
+    hi = np.array([r['res_hi'] for r in rows if not np.isnan(r['res_hi'])])
+    nz = np.array([r['noise'] for r in rows if not np.isnan(r['noise'])])
+    print(f"  The pre-onset floor is not the in-window floor.  Above 5 Hz")
+    print(f"  the residual carries {d2(np.median(hi)):.3f} deg/s while the")
+    print(f"  pre-onset record carries {d2(np.median(nz)):.3f}, a factor of")
+    print(f"  {np.median(hi)/np.median(nz):.0f}.  Before the onset the vehicle")
+    print(f"  is carried by every landing gear; after it pivots on one edge.")
+
+
+if __name__ == '__main__':
+    sys.exit(main())
 
 
 if __name__ == '__main__':

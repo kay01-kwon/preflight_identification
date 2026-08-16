@@ -1,3 +1,9 @@
 .tilt_cache.pkl
 .fitq_cache.pkl
 .mcrit_cache.pkl
+.subsample_cache.pkl
+.ptwise_cache.pkl
+.reconcile_cache.pkl
+.failing_cache.pkl
+.gainfix_cache.pkl
+.ridge_summary.pkl
