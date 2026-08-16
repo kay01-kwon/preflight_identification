@@ -179,23 +179,39 @@ norm that sits in the denominator, leaving $\Wz/(J_PC_2^{2}) = 1$ by
 (20). And it is non-increasing in $s$, since both the integration range
 and the $\cosh$ factor shrink as $s$ grows.
 
-The first two properties alone would give
-$|\Delta M_{{\rm crit},e}|\le\rho_{\max}$. The third admits Chebyshev's
-inequality a second time --- a forcing that rises against a weight that
-falls, the same pairing as before --- and replaces that maximum by the
-window average already bounded at (95):
+The first two properties alone give
+$|\Delta M_{{\rm crit},e}| \le \langle|\rho|\rangle_w$, the
+$w$-weighted average of $|\rho|$, since $w\ge0$ and $\int w = 1$. The
+third admits Chebyshev's inequality --- a forcing that rises against a
+weight that falls, the same pairing as before --- and replaces that
+average by the one already bounded at (95).
+
+It must be applied to the two channels \emph{separately}, and the reason
+is not cosmetic: $\rho$ itself does not rise. Near the onset
+$\varphi\sim\tau^3$ makes $\rho_\varphi\propto\varphi^2$ of order
+$\tau^6$ while $\rho_{GE}\propto\dot M\tau\varphi$ is of order $\tau^4$,
+so the ground-effect term dominates there; being restoring, it holds
+$\rho$ \emph{negative} over the first $13$ to $24\%$ of the window
+(integrating the exact nonlinear tip-over, Sec.~VIII). Taken on their
+own the two channels are monotone throughout: $\rho_\varphi\ge0$ rises
+because $\varphi$ does, and $|\rho_{GE}| = |\beta_M|\dot M\tau\varphi$
+rises for the same reason. Applying the inequality to each and adding,
 \begin{equation}
-  \bigl|\Delta M_{{\rm crit},e}\bigr| \;\le\; \bar\rho
+  \bigl|\Delta M_{{\rm crit},e}\bigr|
+  \;\le\; \langle\rho_\varphi\rangle_w + \langle|\rho_{GE}|\rangle_w
+  \;\le\; \bar\rho
   \;\le\; \tfrac17\,\rho_{\varphi,\max} + \tfrac15\,\rho_{GE,\max} .
   \tag{108}
 \end{equation}
+The two reduction factors are therefore produced by the step that uses
+them, rather than imported past a hypothesis the sum does not satisfy.
 Note that $\bar\rho$ is the average defined at (95), and the right-hand
-side bounds it rather than defining it. The constants here are the
-reduction factors themselves, not the factors multiplied by a kernel
-gain, because the onset is located by a \emph{normalised} correlation:
-$\int w = 1$ leaves nothing over.
+side bounds it rather than defining it. The constants are the reduction
+factors themselves, not the factors multiplied by a kernel gain, because
+the onset is located by a \emph{normalised} correlation: $\int w = 1$
+leaves nothing over.
 
-That the two channels rise across the window is what makes the
+That each channel rises across the window is what makes the
 Chebyshev step available, and it should be read as a hypothesis that
 happens to hold rather than as a conservatism. The weight is
 \emph{largest at the onset}: $w(0) = C_2\sinh^2\!x\,/\,2\bigl[\tfrac14
