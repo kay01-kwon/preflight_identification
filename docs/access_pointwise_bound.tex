@@ -63,11 +63,19 @@ it costs one term and makes the statement provable.
 \subsection{The residual is exactly a projection}
 \label{sec:thm}
 
-The estimator holds $C_2$ at the value $\sqrt{Wz_{CoM}/J_P}$ fixed by
-the rig and fits the amplitude and the pre-onset level. In those two
-parameters the model is \emph{linear}, so on the sample grid
-$\tau_1,\dots,\tau_N$ of the window the admissible curves form a genuine
-two-dimensional subspace
+The identification runs in two stages and they must not be confused
+here. Stage one estimates $(C_2,K)$ for a configuration by a
+\emph{free} per-run nonlinear least squares followed by a
+per-configuration median, refined on a ramp-invariance criterion; that
+fit is nonlinear and this section says nothing about it. Stage two --- the
+per-run onset fit whose residual Sec.~VIII checks --- takes those two as
+\emph{given constants}. Everything below is a statement about stage two,
+conditional on the calibration it is handed, and Sec.~\ref{sec:c2} pays
+for that conditioning.
+
+With $C_2$ a constant the model is \emph{linear} in the amplitude and
+the pre-onset level, so on the sample grid $\tau_1,\dots,\tau_N$ of the
+window the admissible curves form a genuine two-dimensional subspace
 \begin{equation}
   V = \operatorname{span}\{u,\mathbf 1\}
     = \operatorname{range} A,
@@ -78,8 +86,9 @@ two-dimensional subspace
 with $u_i = \cosh C_2\tau_i - 1$. This is the one structural fact the
 whole argument needs, and it is worth stating explicitly because the
 estimator is elsewhere described as a nonlinear fit: it is nonlinear in
-$C_2$ and in the onset, and linear in everything that is actually being
-minimised over here.
+$C_2$, which stage one estimates and stage two does not touch, and in
+the onset, which is swept rather than minimised over analytically. In
+the parameters that remain it is linear.
 
 Let $P = A(A^{\!\top}\!A)^{-1}A^{\!\top}$ be the orthogonal projector
 onto $V$, so that the least-squares fit is $\hat\omega = Py$.
@@ -224,13 +233,61 @@ with it, and with $|\Delta C_1|/C_1 = 11.3\%$ measured, it is inside.
 This is the same term that puts $26$ runs outside the RMS form
 (VIII.3), seen pointwise.
 
-\paragraph{If $C_2$ is freed.} $V$ is then a two-dimensional manifold
-rather than a subspace and $P$ is no longer a projector. The statement
-survives with a curvature factor: if the manifold has reach $\varrho$
-and $\|e_\omega+n\| < \varrho$, the displacement in (P.5) is multiplied
-by $\bigl(1-\|e_\omega+n\|/\varrho\bigr)^{-1}$. The deployed pipeline
-pins $C_2$, so the linear form applies to it without that correction,
-which is worth saying plainly: the projection argument is exact for the
-estimator as shipped, not an approximation to it.
+\subsection{What the calibration is worth: Lemma 1 needs $C_2$ exact}
+\label{sec:c2}
+
+Lemma~1 removes the nominal because $\omega_{\rm nom}\in V$, and $V$ is
+built from the calibrated $C_2$. If that value is not the true one the
+nominal leaves the subspace and the cancellation is only partial: with
+$C_2 = C_2^{*}(1+\varepsilon_2)$ the residual retains
+$(I-P)\,\omega_{\rm nom}$, and (P.6) gains a fourth term
+\begin{equation}
+  |r_i| \;\le\; \bigl|\bigl[(I-P)\omega_{\rm nom}\bigr]_i\bigr|
+   + |\Delta C_1|u_i + E_i + D_i
+   + k\sigma_n\bigl(1+\sqrt{P_{ii}}\bigr).
+  \tag{P.8}
+\end{equation}
+This is the price of conditioning on stage one, and it is the reason the
+two stages had to be separated at the start. It is small, and almost
+linear in $\varepsilon_2$:
+
+\begin{center}\small
+\begin{tabular}{@{}rrrrr@{}}
+\toprule
+$\Mdot$ & \multicolumn{4}{c}{$\bigl\|(I-P)\omega_{\rm nom}\bigr\|_\infty
+ \,/\,\sup E$}\\
+N\,m/s & $\varepsilon_2 = 1\%$ & $2\%$ & $5\%$ & $10\%$\\
+\midrule
+$0.10$ & $0.005$ & $0.010$ & $0.027$ & $0.059$\\
+$0.45$ & $0.013$ & $0.027$ & $0.071$ & $0.152$\\
+$0.90$ & $0.018$ & $0.036$ & $0.093$ & $0.195$\\
+$1.20$ & $0.020$ & $0.041$ & $0.105$ & $0.221$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+A $2\%$ exponent error costs $1$ to $4\%$ of the envelope and a $5\%$
+error costs $3$ to $11\%$, the fast ramp being the more exposed because
+its window is shorter and the two hyperbolic shapes are less separated
+there. Like the pinned amplitude it enters additively and is not
+covered by $\rbar$, which bounds the physics the model omits and says
+nothing about the constants the model is given.
+
+Note that the empirical check above is unaffected by any of this: it
+compares a \emph{measured} record, which contains whatever exponent the
+rig actually has, against the envelope, so the $140/140$ already
+includes the misspecification. What (P.8) supplies is the proof that
+this had to be so, and a budget line for it.
+
+\paragraph{If $C_2$ is freed, as in stage one.} $V$ is then a
+two-dimensional manifold rather than a subspace and $P$ is no longer a
+projector, so none of the above applies verbatim. The statement survives
+with a curvature factor: if the manifold has reach $\varrho$ and
+$\|e_\omega+n\| < \varrho$, the displacement in (P.5) is multiplied by
+$\bigl(1-\|e_\omega+n\|/\varrho\bigr)^{-1}$. That is the form to use for
+the calibration fit itself. For the per-run fit that Sec.~VIII checks,
+$C_2$ is a constant and the linear form applies exactly, which is worth
+saying plainly: the projection argument is exact for the stage the
+residual test is about, not an approximation to it.
 
 \end{document}

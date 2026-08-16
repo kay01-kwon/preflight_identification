@@ -119,8 +119,53 @@ def main():
     print(f"  the union bound.  The figure's 3 sigma is a per-sample")
     print(f"  statement; a uniform one wants about 3.5.")
 
+    misspecified(rows)
     verify(rows, k=3.5)
     return 0
+
+
+def misspecified(rows, eps=(0.01, 0.02, 0.05, 0.10)):
+    """What Lemma 1 costs when the pinned C2 is not the true one.
+
+    The lemma removes the nominal because it lies in V.  It does so only
+    if C2 is exact, and C2 is not given -- stage one estimates it by a
+    FREE per-run nonlinear fit and takes a per-configuration median, so
+    it carries an error.  With C2 = C2*(1 + eps) the nominal leaves V
+    and the residual keeps ||(I-P) omega_nom||, which has to be added.
+
+    It is small and it scales almost linearly in eps: about 2% of sup E
+    per 1% of exponent error at the fastest ramp, 0.5% at the slowest.
+    """
+    g = collections.defaultdict(list)
+    for d in rows:
+        tau, c2, k = d['tau'], d['c2'], d['k']
+        jp = 1.0 / (k * c2 ** 2)
+        rb, _, _ = rho_bar(d['axis'], PHI_BOX, d['dm_win'])
+        E = rb * np.sinh(np.clip(c2 * tau, 0, 30)) / (jp * c2)
+        A = np.column_stack([np.cosh(np.clip(c2 * tau, 0, 30)) - 1.0,
+                             np.ones_like(tau)])
+        P = A @ np.linalg.solve(A.T @ A, A.T)
+        out = []
+        for e in eps:
+            c2s = c2 * (1.0 + e)
+            c1s = d['md_full'] / (jp * c2s ** 2)     # C1* = Mdot/(J_P C2*^2)
+            f = c1s * (np.cosh(np.clip(c2s * tau, 0, 30)) - 1.0)
+            out.append(float(np.max(np.abs(f - P @ f)) / E.max()))
+        g[d['rate']].append(out)
+
+    print(f"\n  --- Lemma 1 needs C2 to be exact, and stage one only"
+          f" estimates it ---\n")
+    print(f"  ||(I-P) omega_nom||_inf as a fraction of sup E,"
+          f" for C2 -> C2(1+eps)\n")
+    print(f"  {'Mdot':>6}" + ''.join(f"{'eps = ' + str(int(100 * e)) + '%':>12}"
+                                     for e in eps))
+    for rt in sorted(g):
+        a = np.array(g[rt])
+        print(f"  {rt:6.2f}" + ''.join(f"{np.median(a[:, i]):12.3f}"
+                                       for i in range(len(eps))))
+    print(f"\n  So a 2% exponent error costs 1 to 4% of the envelope and a")
+    print(f"  5% error costs 3 to 11%.  It enters the bound additively,")
+    print(f"  like the pinned amplitude, and is not covered by rho_bar.")
 
 
 def verify(rows, k=3.5):
