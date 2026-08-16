@@ -142,6 +142,33 @@ the nominal response is one member of the family, so $w$ is no larger
 than the deviation from it, and $\mathrm{RMS}(w) \le
 \mathrm{RMS}(e_\omega) \le \mathrm{RMS}(E)$ by (93).
 
+\paragraph{Membership is exact, and so is what the fit absorbs.} Two
+hypotheses buried in that sentence deserve to be surfaced, because both
+look vulnerable and neither is. First, ``the nominal is one member''
+is an identity, not an approximation: the per-run fit and the nominal
+are built on the \emph{same} per-configuration $C_2$, so
+$C_1(\cosh C_2\tau-1)+C$ lies in the fitted family by construction.
+The exponent that can genuinely differ is the \emph{true} response's,
+and that discrepancy belongs to $e_\omega$ by definition --- the cap
+already charges for it. Priced explicitly, the projected first-order
+response to a relative exponent error $\varepsilon_2$ costs
+$0.018$--$0.022^\circ$/s per $1\%$, flat across the rates: even
+$\varepsilon_2=5\%$ is an order of magnitude below the margins in the
+table above. Second, when the residual is written as the projection
+$(I-P)(e_\omega+n)$ --- the form the guarantee version below uses ---
+the deviation is \emph{not} claimed to lie in the fitted span. By
+Duhamel, $e_\omega(\tau) = \cosh(C_2\tau)A(\tau) -
+\sinh(C_2\tau)B(\tau)$ with $\tau$-varying weights, which is in no
+two-dimensional family; the projection is instead applied per impulse,
+where the shift is fixed, the split $\cosh(C_2(\tau-s)) =
+\cosh(C_2 s)\cosh(C_2\tau) - \sinh(C_2 s)\sinh(C_2\tau)$ has constant
+coefficients, and the cosh part is annihilated column by column ---
+the running upper limit of $A$ and $B$ is exactly the per-column
+truncation, which the computation carries. Measured on the exact
+nonlinear tip-over, the fit absorbs $61$ to $67\%$ of $e_\omega$ in
+RMS, and what survives correlates $-0.5$ to $-0.65$ with the projected
+$\sinh$, as that split predicts.
+
 The one quantity not given a priori is $\mathrm{RMS}(n)$, and the
 pre-onset record is the wrong place to take it from: before the onset
 the vehicle is supported by every landing gear, after it pivots on one
