@@ -157,6 +157,29 @@ tighter, time-varying $E(\tau)$ the same test holds for $98.2\%$ of all
 samples and $98/140$ runs entirely. Nothing in the record leaves the
 band the error analysis predicts.
 
+That is a measurement, and it has a proof. The naive pointwise
+statement $|r|\le|e_\omega| + k\sigma_n$ is false at the onset, where
+$E(\tau)\propto\sinh C_2\tau$ vanishes and the residual does not,
+because the fit is selected by the whole window; what the statement
+omits is the displacement of the fit itself. With $C_2$ pinned the
+admissible curves form a genuine two-dimensional subspace, the
+minimiser is the orthogonal projector $P$ onto it, and since the
+nominal lies in that subspace it cancels exactly:
+$r = (I-P)(e_\omega + n)$. Bounding the two channels separately gives
+\begin{equation}
+  |r_i| \;\le\; E_i + \sum_j|P_{ij}|E_j
+        + k\sigma_n\bigl(1+\sqrt{P_{ii}}\bigr),
+  \tag{VIII.4}
+\end{equation}
+which holds at every sample of all $140$ runs with a worst ratio of
+$0.763$. The constants do not grow with the record because
+$\operatorname{tr}P = 2$ regardless of $N$: over the seven rates the
+Lebesgue constant runs $1.92$ to $2.10$ and $\max\sqrt{P_{ii}}$ runs
+$0.35$ to $0.40$, giving $\max|r| \le 2.18\sup E + 1.48\,k\sigma_n$.
+The pinned amplitude of the deployed fit adds $|\Delta C_1|u(\tau)$ to
+the right-hand side, which is (VIII.3)'s $26$ runs seen pointwise. The
+derivation is given in full separately.
+
 \paragraph{The twenty-six that fail.} They are not scattered. Every one
 is at $\Mdot\ge0.65$~N\,m/s ($3$, $9$ and $14$ of $20$ at the three
 fastest rates, none at the four slowest), they come from eight of the
