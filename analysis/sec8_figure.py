@@ -70,14 +70,18 @@ def prepare(rows):
         T = float(w.sum())
         rms = lambda v: float(np.sqrt(np.sum(v ** 2 * w) / T))
         lo, hi = split(d['r'], dt)
-        _, ra = amplitude_best(tau, d['om'], c2)
-        lof, _ = split(ra, dt)
+        c1a, ra = amplitude_best(tau, d['om'], c2)
+        _, hif = split(ra, dt)
+        u = np.cosh(np.clip(c2 * tau, 0, 30)) - 1.0
+        cap = rms(E) + rms(hif)          # (VIII.3): full residual, in-window n
+        amp = abs(abs(c1a) - k * d['md_full']) * rms(u)
         d['E'] = E
         d['band'] = float(E.max()) + 3.0 * float(np.sqrt(np.mean(hi ** 2)))
         d['fit'] = d['om'] - d['r']
         d['inside'] = np.abs(d['r']) <= d['band']
-        d['ratio'] = rms(lo) / (rms(E) + d['sig'])
-        d['ratio_f'] = rms(lof) / (rms(E) + d['sig'])
+        d['ratio'] = rms(d['r']) / cap
+        d['ratio_f'] = rms(ra) / cap
+        d['ratio_a'] = rms(d['r']) / (cap + amp)
     return rows
 
 
@@ -156,6 +160,8 @@ def main():
     rng = np.random.RandomState(0)
     for lab, key, cc, mk in (('deployed fit, $C_2$ and $K$ pinned',
                               'ratio', C_B, 'o'),
+                             ('deployed $+\\,|\\Delta C_1|$ term',
+                              'ratio_a', '#e08214', 's'),
                              ('family minimiser, amplitude freed',
                               'ratio_f', C_C, '^')):
         x = np.array([d['rate'] for d in rows])
@@ -167,10 +173,10 @@ def main():
     ax.axhline(1.0, color='k', lw=1.6, ls='--')
     ax.set_yscale('log')
     ax.set_title('(c) the RMS form (VIII.3)\n'
-                 'the bound is about the minimiser, not the pinned fit',
+                 'full residual, in-window noise, no frequency split',
                  fontsize=10.5)
     ax.set_xlabel(r'$\dot M$ [N m/s]', fontsize=9)
-    ax.set_ylabel(r'residual $/\;(\|E\|+\|n\|)$', fontsize=9)
+    ax.set_ylabel(r'$\mathrm{RMS}(r)\,/\,$cap', fontsize=9)
     ax.legend(fontsize=7.8, loc='lower right')
     ax.grid(alpha=0.25, lw=0.4, which='both')
 
@@ -269,8 +275,9 @@ def main():
     print(f"  (b) {full}/{len(rows)} runs entirely inside,"
           f" worst sample {worst:.3f} of the envelope")
     print(f"  (c) deployed {sum(1 for r in rows if r['ratio'] <= 1)}/"
-          f"{len(rows)}, minimiser"
-          f" {sum(1 for r in rows if r['ratio_f'] <= 1)}/{len(rows)}")
+          f"{len(rows)}, with the amplitude term"
+          f" {sum(1 for r in rows if r['ratio_a'] <= 1)}/{len(rows)},"
+          f" minimiser {sum(1 for r in rows if r['ratio_f'] <= 1)}/{len(rows)}")
     print(f"  (e) spread median {np.median(s_all):.3f} mm,"
           f" fast subset {np.median(s_fast):.3f}")
     print(f"  (f) over s = {sc[0]:.2f} to {sc[-1]:.2f} the offset moves"

@@ -6,7 +6,8 @@
 %     python analysis/failing_runs.py    DataSet/exp
 %     python analysis/stage1_gain_fix.py DataSet/exp
 %     python analysis/sec8_figure.py docs/fig_sec8_error.png
-% (the first two write the caches the third reads).
+%     python analysis/rms_check.py    docs/fig_rms_check.png
+% (the first two write the caches the last two read).
 %
 % The figure keeps its two domains on separate rows: the top row is the
 % check and is in deg/s throughout, the bottom row is the answer and is
@@ -46,9 +47,9 @@ the fitted curve --- that is the pinned gain, discussed below.
 envelope is unity: all $140$ runs are entirely inside, the worst single
 sample reaching $0.94$. This is a measurement; the section bounds the
 residual in RMS, not sample by sample. \emph{(c)} the RMS form (VIII.3). The deployed
-fit, with $C_2$ and $K$ pinned per configuration, leaves $26$ runs
-outside, all at the fast end; the minimiser over the same family, which
-is what the bound is about, leaves none. \emph{(d)} the identified
+fit, with $C_2$ and $K$ pinned per configuration, leaves $30$ runs
+outside, all at the fast end; adding the amplitude term it owes, or
+taking the minimiser over the same family, leaves none. \emph{(d)} the identified
 critical moment against the ramp rate for all twenty
 configuration/direction groups, each scaled by its own mean;
 $M_{\rm crit}$ is a static property of the rig, so the ideal is a flat
@@ -138,21 +139,67 @@ The modelling analysis enters only to put a number on the first term:
 the nominal response is one member of the family, so $w$ is no larger
 than the deviation from it, and $\mathrm{RMS}(w) \le
 \mathrm{RMS}(e_\omega) \le \mathrm{RMS}(E)$ by (93).
-The comparison needs the residual split first. $e_\omega$ is a Duhamel
-integral of a smooth $\rho$ and carries essentially nothing above a few
-times $1/\tau_{\rm end}$, so residual content faster than that cannot be
-the small-angle or ground-effect remainder whatever else it is; charging
-the model for it is not a test of the model. Splitting at $5$~Hz (the
-windows are $53$ samples at $100$~Hz, too short for an IIR filter), the
-low-frequency residual lies inside the cap for $114$ of $140$ runs.
-Including the high-frequency content the figure is $88/140$.
 
-The split also identifies what the rest is. Above $5$~Hz the residual
-carries $1.02^\circ$/s while the pre-onset record carries $0.14$, a
-factor of seven: before the onset the vehicle is supported by every
-landing gear and after it pivots on one edge with far less damping, so
-the pre-onset floor understates the in-window disturbance and must not
-be used as $\|n\|$.
+The one quantity not given a priori is $\mathrm{RMS}(n)$, and the
+pre-onset record is the wrong place to take it from: before the onset
+the vehicle is supported by every landing gear, after it pivots on one
+edge with far less damping, and the in-window disturbance is
+$0.71$ to $0.86^\circ$/s against a pre-onset floor of $0.04$ to $0.17$.
+It is measured in the window instead, from the content above $5$~Hz.
+The fitted curve is smooth on the scale of the window --- $e_\omega$ is
+a Duhamel integral of a smooth $\rho$ and carries essentially nothing
+above a few times $1/\tau_{\rm end}$ --- so what is there cannot be the
+model and is disturbance by construction. Note that the split estimates
+the \emph{noise}; the residual itself enters (VIII.3) whole, with no
+frequency separation anywhere in the statement.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{fig_rms_check.png}
+\caption{(VIII.3) on the campaign, full residual against the cap
+$\mathrm{RMS}(E)+\mathrm{RMS}(n)$. \emph{(a)} every run below the
+equality line; the grey region is what the bound forbids and it is
+empty. \emph{(b)} the cap decomposed by ramp rate against both measured
+residuals. What moves is the cap, not the residual: $\mathrm{RMS}(E)$
+falls from $5.46$ to $1.13^\circ$/s while the minimiser leaves
+$0.88$ to $1.03$ at every rate. \emph{(c)} how much of the cap is used,
+and what the amplitude term buys the deployed fit.}
+\label{fig:sec8-rms}
+\end{figure}
+
+Measured that way, over the seven rates:
+
+\begin{center}\small
+\begin{tabular}{@{}rrrrrrrr@{}}
+\toprule
+$\Mdot$ & $\mathrm{RMS}(E)$ & $\mathrm{RMS}(n)$ & cap &
+\multicolumn{2}{c}{measured $\mathrm{RMS}(r)$} &
+\multicolumn{2}{c}{inside}\\
+\cmidrule(lr){5-6}\cmidrule(lr){7-8}
+N\,m/s & $^\circ$/s & $^\circ$/s & $^\circ$/s &
+minimiser & deployed & minimiser & deployed\\
+\midrule
+$0.10$ & $5.456$ & $0.827$ & $6.283$ & $0.938$ & $1.200$ & $20/20$ & $20/20$\\
+$0.20$ & $3.139$ & $0.801$ & $3.940$ & $0.929$ & $1.346$ & $20/20$ & $20/20$\\
+$0.30$ & $2.465$ & $0.812$ & $3.277$ & $0.932$ & $1.456$ & $20/20$ & $20/20$\\
+$0.45$ & $2.005$ & $0.708$ & $2.713$ & $0.876$ & $1.745$ & $20/20$ & $19/20$\\
+$0.65$ & $1.637$ & $0.843$ & $2.480$ & $0.993$ & $1.931$ & $20/20$ & $16/20$\\
+$0.90$ & $1.270$ & $0.743$ & $2.013$ & $1.031$ & $2.287$ & $20/20$ & $9/20$\\
+$1.20$ & $1.132$ & $0.758$ & $1.890$ & $1.006$ & $2.301$ & $20/20$ & $6/20$\\
+\midrule
+ & & & & & & $\mathbf{140/140}$ & $110/140$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The minimiser --- which is what (VIII.3) is about --- is inside on every
+run, and the margin is instructive. Its residual is \emph{flat} across a
+twelvefold change in ramp rate, $0.88$ to $1.03^\circ$/s, while the cap
+falls from $6.28$ to $1.89$. So the ratio's climb from $0.15$ to $0.53$
+is the bound tightening, not the fit deteriorating, and it is the
+$xe^{-x}$ conservatism of (VIII.1) seen from the residual side: the
+guarantee is loosest where the window is longest. Even at the fastest
+ramp it is only half used.
 
 \paragraph{The envelope, sample by sample.} The form above averages, and
 the campaign supports the stronger statement without needing it proved.
@@ -169,14 +216,15 @@ vanishes and the residual does not, and repairing it brings in the
 projector's leverage and a union bound over the window. Nothing below
 rests on it.
 
-\paragraph{The twenty-six that fail.} They are not scattered. Every one
-is at $\Mdot\ge0.65$~N\,m/s ($3$, $9$ and $14$ of $20$ at the three
-fastest rates, none at the four slowest), they come from eight of the
-ten configurations, and the worst misses by $1.80$ with a median
-exceedance of $1.15$ at the fastest rate. A shortfall that respects the
-rate and ignores the configuration is not a bad calibration of one
-vehicle; it is something in the inequality itself, and (VIII.3) has
-exactly one hypothesis that the campaign does not satisfy.
+\paragraph{The thirty that fail.} The deployed fit is the other column,
+and its shortfall is not scattered. All thirty are at
+$\Mdot\ge0.45$~N\,m/s and $29$ of them at $0.65$ or above ($1$, $4$,
+$11$ and $14$ of $20$ at the four fastest rates, none at the three
+slowest); they come from eight of the ten configurations; and the worst
+misses by $2.17$ with a median exceedance of $1.25$. A shortfall that
+respects the rate and ignores the configuration is not a bad calibration
+of one vehicle; it is something in the inequality itself, and (VIII.3)
+has exactly one hypothesis that the campaign does not satisfy.
 
 (VIII.3) requires $\hat g$ to be the minimiser over the model family. The deployed estimator's is not: $C_2$ and $K$ are pinned
 once per configuration by the stage-one fit and frozen for every run of
@@ -184,15 +232,20 @@ that configuration, so the per-run fit is a \emph{constrained} minimiser
 and can only leave a larger residual than the free one the bound is
 about. Freeing the amplitude alone, with $C_2$ held at its physical
 value $\sqrt{Wz_{CoM}/J_P}$ and the onset held where the estimator put
-it, brings all $140$ runs inside --- not $114$, and not $139$, but every
-one, at every rate.
+it, brings all $140$ runs inside --- every one, at every rate. That is
+the minimiser column of the table above.
 
 The freed amplitude sits $11.3\%$ below the pinned $K\Mdot$ (p10 $22.1\%$,
 p90 $0.1\%$), and that gap accounts for the excess in size and not merely
-in sign: an amplitude error $\Delta C_1$ leaves
-$\Delta C_1(\cosh C_2\tau - 1)$ behind, and band-limiting that shape the
-same way predicts the measured excess to within $0$ to $13\%$ at every
-rate, a median of $3\%$. Only a small part of the $11\%$ is the ramp
+in sign. The two fits differ by a member of the span while the free
+residual is orthogonal to it, so the excess is exactly
+$\mathrm{RMS}(r_{\rm dep})^2 - \mathrm{RMS}(r_{\rm min})^2 =
+\|\Delta C_1 u + \Delta c\|^2$; the amplitude term alone,
+$|\Delta C_1|\,\mathrm{RMS}(u)$, accounts for it to within $6.5\%$ in
+the median (p10 $0.74$, p90 $1.29$), the rest being the baseline the
+free fit also adjusts. It is the term plotted in
+Fig.~\ref{fig:sec8-rms}(b), and adding it to the cap puts all $140$ runs
+inside. Only a small part of the $11\%$ is the ramp
 itself rounding off near the allocation cap, which lowers the post-onset
 slope by $1$ to $2.6\%$; the remainder is the stage-one gain, and it is
 the same $5$ to $12.5\%$ contamination that the calibration stage is
