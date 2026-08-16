@@ -166,10 +166,13 @@ displacement of the fit itself, and that displacement is expressible in
 $e_\omega$ and $n$ alone. Since $\omega_{\rm nom}$ is a member of the
 family and $\hat\omega$ is a global minimiser over it,
 $\|\hat\omega - \omega_{\rm nom}\| \le 2\|e_\omega + n\|$ by the
-triangle inequality, with the factor dropping to one when $C_2$ is a
-constant and the minimiser is therefore the orthogonal projector $P$
-onto the two-dimensional span. The displacement lies in that span,
-where $v = Pv$ gives $|v_i| \le \sqrt{P_{ii}}\|v\|$ exactly, so
+triangle inequality. When $C_2$ is a constant the minimiser is the
+orthogonal projector $P$ onto the two-dimensional span --- an identity,
+needing no assumption about where the nominal lies --- so
+$r = (I-P)\omega_{\rm nom} + (I-P)(e_\omega+n)$ exactly, the first term
+vanishing when the calibrated exponent is the true one. The displacement
+lies in the span, where $v = Pv$ gives
+$|v_i| \le \sqrt{P_{ii}}\|v\|$ exactly, so
 \begin{equation}
   |r_i| \;\le\; E_i + \sqrt{P_{ii}}\,\|E\|
         + k\sigma_n\bigl(1+\sqrt{P_{ii}}\bigr),
