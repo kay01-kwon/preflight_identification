@@ -2,10 +2,10 @@
 % The RMS residual bound, written to follow the handwritten derivation
 % line by line.  One operation per step; every substitution displayed.
 %
-% Numbers and the figure come from
-%     python analysis/failing_runs.py      DataSet/exp
-%     python analysis/kernel_free_bound.py docs/fig_kernel_free.png
-% (the first writes the cache the second reads).
+% Numbers and figures come from (see the Reproduction section):
+%     python analysis/failing_runs.py       DataSet/exp
+%     python analysis/kernel_free_bound.py  docs/fig_kernel_free.png
+%     python analysis/design_range_chart.py docs/fig_design_range.png
 % ---------------------------------------------------------------------
 
 \documentclass[10pt]{article}
@@ -419,6 +419,64 @@ threshold by at most the window-averaged remainder --- the same
 $\rbar$ the manuscript already budgets --- and measured it uses
 $0.36$--$1.85$ mN\,m of the $\approx12$ allowed, the sign lowering
 $M_{\rm crit}$ (earlier onset).
+
+\section{The bound over the design box}
+
+Because every constant in (17), (18) and (21) is available before the
+experiment, both results can be swept over the vehicle's design box ---
+mass $3.00$--$3.22$ kg, $l_p = 0.110$--$0.140$ m, CoM offset
+$p_{\rm off} = \pm0.020$ m (arm $= l_p - p_{\rm off}$),
+$z_{CoM} = 0.20$--$0.30$ m, $J_{CoM} = 0.050$ kg\,m$^2$ with $J_P$ by
+the parallel-axis theorem, $600$ combinations at each of the seven
+rates, each with its own tilt-limited window
+($\sinh x - x = \varphi_{\max}Wz_{CoM}C_2/\Mdot$).
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{fig_design_range.png}
+\caption{The design-box sweep. \emph{(a)} the bound on
+$\rms(\de)$, eq.\ (17)$+$(18): $0.33$--$1.11^\circ$/s over box and
+rates, median $0.50$--$0.72$. The band is set by the ratio
+$\mathrm{arm}/z_{CoM}$ --- worst at arm $0.160$ m with
+$z_{CoM} = 0.20$ m, best at arm $0.090$ m with $0.30$ m.
+\emph{(b)} the critical-moment shift $\Mdot|\dtc|$ of (21):
+$5.8$--$11.9$ mN\,m, hugging its ceiling $\rbar$ from below and flat
+in $\Mdot$ by the cancellation. Its worst corner has the
+\emph{opposite} $z$ direction --- $m = 3.22$ kg, arm $0.160$ m,
+$z_{CoM} = 0.30$ m --- because $\rbar$ grows with the window that a
+higher CoM lengthens, while the residual bound worsens with
+$\mathrm{arm}/z_{CoM}$.}
+\label{fig:design}
+\end{figure}
+
+Two readings (Fig.~\ref{fig:design}). The residual bound stays within
+$0.33$--$1.11^\circ$/s everywhere in the box --- below the measured
+disturbance floor of $\approx1^\circ$/s at almost every corner --- so
+the fit-quality gate can be set from the noise figure alone for any
+vehicle in this class. And the identification error from the absorbed
+onset shift never exceeds $11.9$ mN\,m anywhere in the box, at any
+rate: the $\rbar$ budget of the manuscript holds with the same
+flatness in $\Mdot$ that the campaign shows.
+
+\section*{Reproduction}
+
+All numbers and figures in this document come from three scripts, run
+from the repository root:
+\begin{verbatim}
+python analysis/failing_runs.py       DataSet/exp   # writes the cache
+python analysis/kernel_free_bound.py  docs/fig_kernel_free.png
+python analysis/design_range_chart.py docs/fig_design_range.png
+\end{verbatim}
+\texttt{kernel\_free\_bound.py} evaluates (16)--(20) per run against
+the campaign cache and draws Fig.~\ref{fig:check}
+(\texttt{M2()}, \texttt{M1()} implement (17a)--(17b);
+\texttt{model\_term()} implements (16)--(18)).
+\texttt{design\_range\_chart.py} sweeps the design box of
+Sec.~9 with the same closed forms and draws
+Fig.~\ref{fig:design}; its box limits are constants at the top of the
+file. Neither script solves an ODE or builds a kernel matrix ---
+elementary functions and one scalar root-find (the window equation)
+per combination.
 
 \section*{Remarks}
 
