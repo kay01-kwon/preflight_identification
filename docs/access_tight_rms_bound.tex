@@ -478,10 +478,13 @@ of ``the fit absorbs the growing part.''
 remainders that build $\rbar$:
 \[
   \sup|\dot\rho| \;\le\;
-  W l_{\rm arm}\,\varphi_{\max}\,\omega_{\max}
-  \;+\; Wz_{CoM}\,\tfrac{\varphi_{\max}^2}{2}\,\omega_{\max}
-  \;+\; |\beta_M|\big(\Mdot\,\varphi_{\max}
-        + \Delta M_{\rm win}\,\omega_{\max}\big),
+  \underbrace{\big(W l_{\rm arm}\,\varphi_{\max}
+  + Wz_{CoM}\,\tfrac{\varphi_{\max}^2}{2}\big)\,\omega_{\max}}_{
+  \dot\rho_2\ \text{(decays like } e^{2C_2(s-\tau_{\rm end})})}
+  \;+\;
+  \underbrace{|\beta_M|\big(\Mdot\,\varphi_{\max}
+        + \Delta M_{\rm win}\,\omega_{\max}\big)}_{
+  \dot\rho_1\ \text{(decays like } e^{C_2(s-\tau_{\rm end})})},
 \]
 with $\omega_{\max} = K\Mdot\sinh x$ the nominal peak rate. Everything
 here is known \emph{before the experiment}: $W$ and $z_{CoM}$ from the
@@ -490,30 +493,78 @@ the design box, $\beta_M$ from the ground-effect model, $\Mdot$ and the
 window from the protocol. With a gyro noise figure for the second term,
 the whole cap is computable before a single run is flown.
 
+\emph{Step 4: shape the comparison, still in closed form.} (T.12)
+prices the forcing at its supremum across the whole window, but
+$\dot\rho$ is a product of responses that each grow like
+$e^{C_2 s}$: the arm and gravity channels decay backwards from the
+window end like $e^{2C_2(s-\tau_{\rm end})}$, the ground-effect
+channels like $e^{C_2(s-\tau_{\rm end})}$ (measured on the exact
+solution, the worst violation of these shapes is $2.6\%$; a safety
+factor $1.05$ is carried on $\dot\rho_2$). Solving the same Dirichlet
+problem with these shaped forcings --- elementary functions only ---
+gives
+\begin{equation}
+  \big|\delta e_\omega\big|
+  \;\le\; \frac{M_2(x)\,\dot\rho_2 + M_1(x)\,\dot\rho_1}{Wz_{CoM}},
+  \qquad
+  M_2(x)\to\tfrac1{12},\quad M_1(x)\to\tfrac1{2e},
+  \tag{T.13}
+\end{equation}
+where $M_2$ is the peak of
+$\tfrac13\big[e^{2u} - \sinh(u{+}x)/\sinh x
+- e^{-2x}\sinh(-u)/\sinh x\big]$ over $u\in[-x,0]$ and $M_1$ that of
+$\tfrac12\big[(u{+}x)e^{u} - x\sinh(u{+}x)/\sinh x\big]$ (the
+$e^{C_2 s}$ forcing is resonant with the operator, whence the $1/2e$).
+Replacing $(1-\operatorname{sech}\tfrac x2)\approx1$ by
+$M_2\approx1/12$ is worth a factor of eight, and it is the
+maximum-principle analogue of the reduction factors $1/7$ and $1/5$:
+the forcing is largest exactly where the Dirichlet kernel, pinned at
+the boundary, is smallest.
+
+\emph{Step 5: the pre-onset segment the shifted witness leaves behind.}
+The witness is, by the shift identity, a branch whose onset sits at
+$\delta t_c = \operatorname{artanh}(\beta/C_1)/C_2$; on the piecewise
+model the segment between the two onsets has the fit on its baseline
+while the true branch has begun to rise, and that mismatch must be
+charged. It is second order in $\beta$, and $\beta$ has the a priori
+bound $\beta \le \rbar/(J_PC_2)$ (the envelope at the window end over
+$\sinh x$), so
+\begin{equation}
+  \Delta_{\rm pre}
+  \;=\;\sqrt{\tfrac{\delta t_c}{\tau_{\rm end}}}\;
+  C_1\big(\cosh(C_2\,\delta t_c)-1\big),
+  \tag{T.14}
+\end{equation}
+which is $0.08^\circ$/s at the slowest ramp and under $0.01$ above
+$\Mdot=0.30$ --- carried, not neglected.
+
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.86\linewidth]{fig_kernel_free.png}
-\caption{The kernel-free cap (T.12) against the campaign, means over
-twenty runs per rate with $95\%$ $t$ intervals. The model term is
-$3.6$--$3.9^\circ$/s and \emph{flat} --- over the same rate range
-$\rms(E)$ falls $4.9$ to $1.1$ --- because (T.12) contains no
-exponential; the construction, not the data, carries the flatness. All
-$140$ runs are inside at a mean used fraction of $0.21$.}
+\caption{The shaped kernel-free cap, (T.13) $+$ (T.14) $+\hat n$,
+against the campaign; means over twenty runs per rate with $95\%$ $t$
+intervals. The model term is $0.56$--$0.93^\circ$/s --- eight times
+below the constant-forcing version (T.12) and at the level of the
+projected $\Phi$ --- with no kernel computed and every constant
+available before the experiment. All $140$ runs are inside at a used
+fraction of $0.52$--$0.61$.}
 \label{fig:kernel-free}
 \end{figure}
 
-On the campaign the model term is $3.6$--$3.9^\circ$/s, flat, and the
-cap holds on all $140$ runs at a used fraction of $0.19$--$0.22$
-(Fig.~\ref{fig:kernel-free}). On the exact nonlinear solution the
-witness remainder itself measures $0.16$--$0.17^\circ$/s, also flat ---
-the bound's factor of $\sim$$9$ over it is $\sup|\dot\rho|$ against its
-window average plus the comparison function evaluated at its maximum.
-Against the ladder of Sec.~5's figure this route lands between
-$\rms(E)$ and $\Phi$ in tightness while requiring strictly less
-computation than either, and it is the only tightened route whose
-constants are all available pre-experiment. Its place is therefore the
-\emph{protocol design} role: predicting, before the campaign, the
-residual level against which the fit-quality gate should be set.
+On the campaign the model term (T.13)$+$(T.14) is
+$0.56$--$0.93^\circ$/s and the cap holds on all $140$ runs at a used
+fraction of $0.52$--$0.61$, per-run worst $0.83$
+(Fig.~\ref{fig:kernel-free}) --- the same level as the $\kappa_b$
+guarantee of (T.6), reached without computing a kernel column or a
+projector entry. On the exact nonlinear solution the witness remainder
+itself measures $0.16$--$0.17^\circ$/s, flat; the remaining factor
+$\sim$$3$ is the design box $\varphi_{\max}=10^\circ$ against the
+$4.8^\circ$ the runs actually reach, which is the price of stating the
+bound before the experiment. Its place is therefore the \emph{protocol
+design} role: predicting, before the campaign, the residual level
+against which the fit-quality gate should be set --- and the flatness
+of the measured residual is a property this construction predicts,
+since nothing in (T.13) grows with the window.
 
 \section{Provenance of every constant}
 
