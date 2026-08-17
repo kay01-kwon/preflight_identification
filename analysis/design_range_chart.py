@@ -146,6 +146,12 @@ def main():
     a2.plot(RATES, lo(ceil), '--', color=C_CEIL, lw=1.6)
     a2.plot(RATES, hi(ceil), '--', color=C_CEIL, lw=1.6,
             label=r'ceiling $\bar\rho$ (box min/max)')
+    a2.text(RATES[-1], hi(dmc)[-1] - 0.55,
+            'box max: $m$ 3.22 kg, arm 0.160 m, $z$ 0.30 m', ha='right',
+            va='top', fontsize=8.5, color=C_B)
+    a2.text(RATES[0], lo(dmc)[0] - 0.45,
+            'box min: $m$ 3.00 kg, arm 0.090 m, $z$ 0.20 m', ha='left',
+            va='top', fontsize=8.5, color=C_B)
     a2.set_xscale('log')
     a2.set_xticks(RATES)
     a2.set_xticklabels([f'{r:.2f}' for r in RATES], fontsize=9)
