@@ -38,8 +38,11 @@ rho_dot route, and rho is never differentiated.
 The operator v'' - C2^2 v obeys a maximum principle.  Against constant
 forcing that gives |delta_e| <= (1-sech(x/2)) sup|rho_dot|/Wz; shaping
 the comparison to rho_dot's actual decay -- e^{2C2(s-T)} on the arm and
-gravity channels, e^{C2(s-T)} on ground effect, worst shape violation
-2.6% covered by a 1.05 safety factor -- tightens it eightfold:
+gravity channels, e^{C2(s-T)} on ground effect; for the NOMINAL
+trajectory these decays are proved exactly (doc, Step 5': the ratios
+(cosh a - 1)e^{-a} = (1-e^{-a})^2/2 and (sinh a - a)e^{-a} are
+nondecreasing), and the 1.05 factor covers only the nominal-to-true
+transfer, measured worst 2.6% -- tightens it eightfold:
 
     |delta_e| <= (M2(x) rho2_dot + M1(x) rho1_dot) / Wz,
     M2 -> 1/12,   M1 -> 1/(2e)   (resonant channel),
