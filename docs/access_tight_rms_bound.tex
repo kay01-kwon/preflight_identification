@@ -109,6 +109,12 @@ n_{\rm hi} & the part of $\hat r$ above $f_c = 5$~Hz; attributable to
 s_{\rm med},\ \kappa_b & median in-window enhancement
   $s_{\rm med} = \operatorname{med}(\kappa_{\rm imp}/\kappa_q)$;
   campaign constant $\kappa_b = s_{\rm med}\,\max_{\rm runs}\kappa_q$\\
+\beta,\ \delta e_\omega & witness coefficient and remainder of Sec.~7:
+  $\delta e_\omega = e_\omega - \beta\sinh(C_2\tau)$ with $\beta$
+  chosen so the remainder vanishes at both window ends\\
+\dot\rho,\ \omega_{\max},\ l_{\rm arm} & time derivative of the
+  deviation forcing; nominal peak rate $K\Mdot\sinh x$; restoring-arm
+  length of the pivot geometry\\
 \rms(v) & $\sqrt{\tfrac1N\sum_i v_i^2}$ for sampled $v$ (uniform grid;
   trapezoidal end weights where integrals are quoted)\\
 \bottomrule
@@ -411,6 +417,103 @@ evaluation, and $14$ runs exceed it. The $\kappa_b$/$\Phi$ version of
 (T.6) is the \emph{guarantee} --- it envelopes and holds on all $140$
 --- at the price of the worst-case factor. One number cannot be both;
 the pair brackets the residual from the middle and from above.
+
+\section{A kernel-free bound: witness and maximum principle}
+
+Every tightened route so far computes the kernel columns and the
+projector. This section derives a bound that computes \emph{neither} ---
+closed-form constants only --- yet stays flat across the rates, and is
+evaluable before the experiment.
+
+\emph{Step 1: a witness.} The minimiser beats every member of the
+family, so it suffices to exhibit one member and measure the distance
+to it. Take
+\begin{equation}
+  \hat h \;=\; \omega_{\rm nom} + \beta\sinh(C_2\tau),
+  \qquad
+  \beta \;=\; \frac{e_\omega(\tau_{\rm end})}{\sinh(C_2\tau_{\rm end})},
+  \tag{T.10}
+\end{equation}
+admissible by the shift identity of Sec.~2 ($\beta/C_1\approx0.04$ on
+the campaign; $\sinh$ is the first-order onset-shift direction, so this
+witness is ``the nominal with its onset nudged''). The value of $\beta$
+is never computed --- the argmin inequality needs only that such a
+member exists. The remainder
+$\delta e_\omega = e_\omega - \beta\sinh(C_2\tau)$ then vanishes at
+\emph{both} window ends: at $\tau=0$ because $e_\omega$ and $\sinh$
+both start at zero, at $\tau_{\rm end}$ by the choice of $\beta$.
+
+\emph{Step 2: the remainder solves a two-point boundary-value problem.}
+Differentiating the deviation dynamics once,
+$\ddot e_\omega - C_2^2 e_\omega = \dot\rho/J_P$, and $\sinh$ is a
+homogeneous solution, so
+\begin{equation}
+  \ddot{\delta e}_\omega - C_2^2\,\delta e_\omega
+  \;=\; \dot\rho/J_P,
+  \qquad
+  \delta e_\omega(0) = \delta e_\omega(\tau_{\rm end}) = 0 .
+  \tag{T.11}
+\end{equation}
+
+\emph{Step 3: maximum principle.} The operator
+$v\mapsto\ddot v - C_2^2 v$ admits a maximum principle, so comparison
+with the constant-forcing solution
+$v_1 = \big(1-\cosh(C_2(\tau-\tfrac{\tau_{\rm end}}2))/
+\cosh(\tfrac{x}2)\big)/C_2^2$ gives, with the identity
+$J_PC_2^2 = Wz_{CoM}$,
+\begin{equation}
+  \big|\delta e_\omega(\tau)\big|
+  \;\le\; \Big(1-\operatorname{sech}\tfrac{x}{2}\Big)\,
+  \frac{\sup|\dot\rho|}{Wz_{CoM}}
+  \;<\; \frac{\sup|\dot\rho|}{Wz_{CoM}} .
+  \tag{T.12}
+\end{equation}
+No exponential appears. The causal envelope $E$ carries $\sinh(C_2\tau)$
+because an initial-value problem lets the unstable mode grow; pinning
+\emph{both} ends removes that mode, and the pinning is exactly what the
+family's onset freedom provides. This is the differential-equation form
+of ``the fit absorbs the growing part.''
+
+\emph{The forcing rate, channel by channel.} Differentiating the same
+remainders that build $\rbar$:
+\[
+  \sup|\dot\rho| \;\le\;
+  W l_{\rm arm}\,\varphi_{\max}\,\omega_{\max}
+  \;+\; Wz_{CoM}\,\tfrac{\varphi_{\max}^2}{2}\,\omega_{\max}
+  \;+\; |\beta_M|\big(\Mdot\,\varphi_{\max}
+        + \Delta M_{\rm win}\,\omega_{\max}\big),
+\]
+with $\omega_{\max} = K\Mdot\sinh x$ the nominal peak rate. Everything
+here is known \emph{before the experiment}: $W$ and $z_{CoM}$ from the
+scale, $J_P$ from CAD, $l_{\rm arm}$ from geometry, $\varphi_{\max}$
+the design box, $\beta_M$ from the ground-effect model, $\Mdot$ and the
+window from the protocol. With a gyro noise figure for the second term,
+the whole cap is computable before a single run is flown.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.86\linewidth]{fig_kernel_free.png}
+\caption{The kernel-free cap (T.12) against the campaign, means over
+twenty runs per rate with $95\%$ $t$ intervals. The model term is
+$3.6$--$3.9^\circ$/s and \emph{flat} --- over the same rate range
+$\rms(E)$ falls $4.9$ to $1.1$ --- because (T.12) contains no
+exponential; the construction, not the data, carries the flatness. All
+$140$ runs are inside at a mean used fraction of $0.21$.}
+\label{fig:kernel-free}
+\end{figure}
+
+On the campaign the model term is $3.6$--$3.9^\circ$/s, flat, and the
+cap holds on all $140$ runs at a used fraction of $0.19$--$0.22$
+(Fig.~\ref{fig:kernel-free}). On the exact nonlinear solution the
+witness remainder itself measures $0.16$--$0.17^\circ$/s, also flat ---
+the bound's factor of $\sim$$9$ over it is $\sup|\dot\rho|$ against its
+window average plus the comparison function evaluated at its maximum.
+Against the ladder of Sec.~5's figure this route lands between
+$\rms(E)$ and $\Phi$ in tightness while requiring strictly less
+computation than either, and it is the only tightened route whose
+constants are all available pre-experiment. Its place is therefore the
+\emph{protocol design} role: predicting, before the campaign, the
+residual level against which the fit-quality gate should be set.
 
 \section{Provenance of every constant}
 
