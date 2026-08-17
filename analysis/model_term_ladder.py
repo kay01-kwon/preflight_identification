@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
 """What the model term costs, route by route, against the same data.
 
-The residual bound is always cap = (model term) + (noise term).  Five
+The residual bound is always cap = (model term) + (noise term).  Six
 routes evaluate the model term, each needing more of the analysis than
 the last, and the noise term is held fixed at the calibrated estimate
 n_hat so that only the model term is being compared:
 
-  sup E      the pointwise envelope at its supremum.  Needs rho_bar,
-             C2, J_P and nothing else -- the manuscript's (C6) route.
+  (1+lam_E)supE  the manuscript's (C6).  It DOES apply the projector,
+             but after the absolute value: Lemma 3's D_i = sum_j |P_ij|
+             E_j is a positive-weighted sum, so projecting can only add.
+             Measured, lambda_E = 1.07 to 1.15, so the step INFLATES the
+             model term by 2.1x rather than absorbing anything.
+  sup E      the pointwise envelope at its supremum, no projector.
+             Needs rho_bar, C2, J_P and nothing else.
   RMS(E)     the same envelope in RMS, sqrt(B(x)/x) instead of sinh x.
   Phi        the envelope with the projection pushed inside the Duhamel
              superposition: the family absorbs the cosh part of every
@@ -16,9 +21,16 @@ n_hat so that only the model term is being compared:
              family {dC1, d(dt_c), dC2, dC}.
   RMS(e)     the deviation itself, from the exact nonlinear tip-over.
 
-At the slowest ramp the model term falls 13.4 -> 4.88 -> 0.40 -> 0.28
--> 0.24 deg/s along that ladder, a factor 57 end to end, and the used
-fraction of the bound rises 0.07 -> 0.17 -> 0.67 -> 0.73 -> 0.76.
+At the slowest ramp the model term falls 27.7 -> 13.4 -> 4.88 -> 0.40
+-> 0.28 -> 0.24 deg/s along that ladder, a factor 117 end to end, and
+the used fraction rises 0.03 -> 0.07 -> 0.17 -> 0.67 -> 0.73 -> 0.76.
+
+The first two entries are the point of the figure: the same projector,
+applied on either side of the absolute value, differs by a factor 20 to
+69.  Absorption needs the projector to meet the SIGNED kernel, where
+cosh(C2(tau-s)) = cosh(C2 s)cosh(C2 tau) - sinh(C2 s)sinh(C2 tau) and
+the first term is annihilated exactly; once |.| has been taken that
+minus sign is gone and nothing can cancel.
 
 Coverage is the cost, and it is stated rather than hidden: with the
 ESTIMATED noise term n_hat the two envelope routes cover 140/140, Phi
@@ -53,10 +65,11 @@ from tight_rms_bound import enrich
 from nonlinear_band import exact
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ROUTES = [('$\\sup E$', '#c6dbef'), ('$\\mathrm{RMS}(E)$', '#9ecae1'),
+ROUTES = [('$(1{+}\\lambda_E)\\sup E$  (C6)', '#e08214'),
+          ('$\\sup E$', '#c6dbef'), ('$\\mathrm{RMS}(E)$', '#9ecae1'),
           ('$\\Phi$', '#4292c6'), ('$\\Phi_4$', '#1a5276'),
           ('$\\mathrm{RMS}(e_\\omega)$', '#08306b')]
-KEYS = ['supE', 'rms_E', 'phi', 'phi4', 'eth']
+KEYS = ['c6', 'supE', 'rms_E', 'phi', 'phi4', 'eth']
 C_MEAS, C_CRIT = '#148f77', '#c0392b'
 
 
@@ -102,8 +115,16 @@ def build():
         tau, c2, k = d['tau'], d['c2'], d['k']
         jp = 1.0 / (k * c2 ** 2)
         rb, _, _ = rho_bar(d['axis'], PHI_BOX, d['dm_win'])
-        d['supE'] = float(np.rad2deg(
-            rb * np.sinh(np.clip(c2 * tau[-1], 0, 30)) / (jp * c2)))
+        E = rb * np.sinh(np.clip(c2 * tau, 0, 30)) / (jp * c2)
+        d['supE'] = float(np.rad2deg(E.max()))
+        # (C6): the projector applied to the ENVELOPE, after the absolute
+        # value -- Lemma 3's D_i = sum_j |P_ij| E_j, a positive-weighted
+        # sum, so it can only add.  lambda_E = max D / max E.
+        ut = np.cosh(np.clip(c2 * tau, 0, 30)) - 1.0
+        ut = ut - ut.mean()
+        Pm = 1.0 / len(tau) + np.outer(ut, ut) / float(ut @ ut)
+        d['lamE'] = float((np.abs(Pm) @ E).max() / E.max())
+        d['c6'] = d['supE'] * (1.0 + d['lamE'])
         d['phi4'] = tangent_phi(tau, c2, jp, rb, 4)
         d['eth'] = eth[d['rate']]
         kq = d['kq'] if d['kq'] is not None else kqm
@@ -125,7 +146,8 @@ def main():
 
     # ---- (a) the model term itself, and the criterion band ---------
     for (lab, col), kk in zip(ROUTES, KEYS):
-        a1.plot(i, [mean(v, kk) for v in grp], 'o-', color=col, lw=2.2,
+        mk = 'D-' if kk == 'c6' else 'o-'
+        a1.plot(i, [mean(v, kk) for v in grp], mk, color=col, lw=2.2,
                 ms=7, mec='0.3', mew=0.5, label=lab)
     a1.plot(i, [mean(v, 'rms_min') for v in grp], 's--', color=C_MEAS,
             lw=2.0, ms=7, label=r'measured $\mathrm{RMS}(r)$')
@@ -136,31 +158,31 @@ def main():
     a1.set_xticklabels([f'{r:.2f}' for r in rates], fontsize=9)
     a1.set_xlabel(r'$\dot M$ [N m/s]', fontsize=10)
     a1.set_ylabel(r'model term of the cap [$^\circ$/s]', fontsize=10)
-    a1.set_title('(a) the model term, five routes\n'
+    a1.set_title('(a) the model term, six routes\n'
                  'only the projected routes clear the criterion',
                  fontsize=11.5)
-    a1.set_ylim(0.09, 32.0)
-    a1.legend(fontsize=8.6, loc='lower left', ncol=2, framealpha=0.95)
+    a1.set_ylim(0.09, 78.0)
+    a1.legend(fontsize=8.2, loc='lower left', ncol=2, framealpha=0.95)
     a1.grid(alpha=0.25, lw=0.4, which='both')
 
     # ---- (b) what that buys: the used fraction --------------------
-    w = 0.16
+    w = 0.14
     for j, ((lab, col), kk) in enumerate(zip(ROUTES, KEYS)):
         u = [mean(v, 'rms_min') / (mean(v, kk) + mean(v, 'nh'))
              for v in grp]
         ins = sum(1 for d in rows if d['rms_min'] <= d[kk] + d['nh'])
-        a2.bar(i + (j - 2) * w, u, w, color=col, ec='0.35', lw=0.5,
-               label=f'{lab}  ({ins})')
+        a2.bar(i + (j - 2.5) * w, u, w, color=col, ec='0.35', lw=0.5,
+               label=f'{lab.split("  ")[0]}  ({ins})')
     a2.axhline(1.0, color='k', lw=1.0, ls=':')
     a2.set_xticks(i)
     a2.set_xticklabels([f'{r:.2f}' for r in rates], fontsize=9)
-    a2.set_ylim(0, 1.14)
+    a2.set_ylim(0, 1.34)
     a2.set_xlabel(r'$\dot M$ [N m/s]', fontsize=10)
     a2.set_ylabel('fraction of the bound used', fontsize=10)
     a2.set_title('(b) what each route buys, and what it costs\n'
                  'in brackets: runs of $140$ still covered, with $\\hat n$',
                  fontsize=11.5)
-    a2.legend(fontsize=8.4, loc='upper left', ncol=5, columnspacing=0.7,
+    a2.legend(fontsize=8.4, loc='upper left', ncol=3, columnspacing=0.7,
               handlelength=1.2, framealpha=0.95)
     a2.grid(alpha=0.25, lw=0.4, axis='y')
 
