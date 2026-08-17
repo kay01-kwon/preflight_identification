@@ -243,21 +243,63 @@ forcing is largest exactly where the pinned response is smallest.
 
 \section{The pre-onset segment}
 
-Because $\dtc < 0$, the witness branch is already rising on the
-segment of length $|\dtc|$ \emph{before} the true onset, where the
-record is at its baseline. The residual sum runs over that segment
-too, and its contribution is the branch itself, integrated exactly:
+\emph{Where the segment comes from.} By (9), $\dtc < 0$: the witness
+branch starts $|\dtc|$ \emph{before} the true onset. On the segment
+$\tau\in[\dtc,\,0]$ --- length $|\dtc|$ --- the record is still at its
+baseline, but the branch has already been running for
+$u = \tau - \dtc \in [0, |\dtc|]$ since its own onset, so the mismatch
+there is the branch itself:
+\begin{equation}
+  \text{mismatch}(u) \;=\; C_1\big(\cosh(C_2u)-1\big),
+  \qquad u \in [0,\,|\dtc|] .
+  \tag{18a}
+\end{equation}
+The residual sum runs over this segment too, so the witness's cost in
+(10) gains its square. Normalising by the main window length
+$\tau_{\rm end}$ (conservative: the extended window is longer, so
+dividing by the shorter $\tau_{\rm end}$ can only enlarge the term),
+\begin{equation}
+  \Delta_{\rm pre}^2 \;=\; \frac{1}{\tau_{\rm end}}
+  \int_0^{|\dtc|}\big[C_1\big(\cosh(C_2u)-1\big)\big]^2\,du .
+  \tag{18b}
+\end{equation}
+The segment's \emph{noise} adds no separate term: $\hat n$ is an RMS
+density, unchanged by a slightly longer window.
+
+\emph{The integral is elementary.} Expand the square with
+$\cosh^2 a = \tfrac12(1+\cosh 2a)$:
+\begin{equation}
+  \big(\cosh a - 1\big)^2
+  = \cosh^2 a - 2\cosh a + 1
+  = \tfrac32 + \tfrac12\cosh(2a) - 2\cosh a ,
+  \tag{18c}
+\end{equation}
+and integrate term by term with $a = C_2u$
+($\tfrac32 \to \tfrac{3u}2$;\ \
+$\tfrac12\cosh(2C_2u) \to \sinh(2C_2u)/(4C_2)$;\ \
+$-2\cosh(C_2u) \to -2\sinh(C_2u)/C_2$):
 \begin{equation}
   \Delta_{\rm pre}^2 \;=\; \frac{C_1^2}{\tau_{\rm end}}
   \left[\frac{3u}{2} + \frac{\sinh(2C_2u)}{4C_2}
-  - \frac{2\sinh(C_2u)}{C_2}\right]_{0}^{|\dtc|} ,
+  - \frac{2\sinh(C_2u)}{C_2}\right]_{0}^{|\dtc|} .
   \tag{18}
 \end{equation}
-with the a priori $|\dtc|$ from (9) and
-$e_\omega(\tau_{\rm end}) \le E(\tau_{\rm end})$. Numerically
+
+\emph{Check, and why the term is small.} Expanding the bracket in
+powers of $u$, the $u$ and $u^3$ orders cancel identically and the
+first surviving order is
+\begin{equation*}
+  \int_0^{|\dtc|}\big(\cosh(C_2u)-1\big)^2 du
+  \;\approx\; \frac{C_2^4\,|\dtc|^5}{20} ,
+\end{equation*}
+fifth order in the shift, because the branch leaves the baseline only
+quadratically ($\cosh - 1 \approx C_2^2u^2/2$, squared $\to u^4$).
+Bounding instead by (segment sup)$\times$(length) would give
+$|\dtc|^5/4$ --- the exact integral is a factor $\sqrt5\approx2.2$
+tighter. Evaluated with the a priori $|\dtc|$ from (9) and
+$e_\omega(\tau_{\rm end}) \le E(\tau_{\rm end})$:
 $\Delta_{\rm pre} = 0.025^\circ$/s at $\Mdot = 0.10$ and under
-$0.005$ above $0.30$ N\,m/s. The segment's noise is covered by the
-noise term (an RMS density, unchanged by a longer window).
+$0.005$ above $0.30$ N\,m/s.
 
 \section{The noise term}
 
