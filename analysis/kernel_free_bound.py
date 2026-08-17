@@ -119,13 +119,19 @@ def model_term(d, rb):
                           + wz * PHI_BOX ** 2 / 2.0) * om
     rd1 = abs(BETA_M) * (d['md_full'] * PHI_BOX + d['dm_win'] * om)
     de = (rd2 * M2(x) + rd1 * M1(x)) / wz
-    # pre-onset: the witness's onset shift dt leaves [0, dt] on the
-    # baseline while the branch rises; second order in beta
+    # pre-onset: between the two onsets the fit sits on its baseline
+    # while the branch rises (either sign of the shift -- the segment
+    # is |dt| long on one side or the other).  Integrated EXACTLY over
+    # the shifted segment, still closed form:
+    #   (1/T) int_0^dt [C1(cosh(C2 u)-1)]^2 du
+    #   = (C1^2/T) [ 3u/2 + sinh(2 C2 u)/(4 C2) - 2 sinh(C2 u)/C2 ]_0^dt
     c1 = k * d['md_full']
     jp = 1.0 / (k * c2 ** 2)
     beta = rb / (jp * c2)
     dt = np.arctanh(min(beta / c1, 0.99)) / c2
-    dpre = np.sqrt(dt / T) * c1 * (np.cosh(min(c2 * dt, 30.0)) - 1.0)
+    a = min(c2 * dt, 30.0)
+    I = 1.5 * dt + np.sinh(2 * a) / (4 * c2) - 2 * np.sinh(a) / c2
+    dpre = c1 * np.sqrt(max(I, 0.0) / T)
     return float(np.rad2deg(de)), float(np.rad2deg(dpre))
 
 

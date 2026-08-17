@@ -524,19 +524,29 @@ the boundary, is smallest.
 \emph{Step 5: the pre-onset segment the shifted witness leaves behind.}
 The witness is, by the shift identity, a branch whose onset sits at
 $\delta t_c = \operatorname{artanh}(\beta/C_1)/C_2$; on the piecewise
-model the segment between the two onsets has the fit on its baseline
-while the true branch has begun to rise, and that mismatch must be
-charged. It is second order in $\beta$, and $\beta$ has the a priori
-bound $\beta \le \rbar/(J_PC_2)$ (the envelope at the window end over
-$\sinh x$), so
+model the segment between the two onsets --- $|\delta t_c|$ long, on
+one side of the true onset or the other depending on the sign --- has
+the fit on its baseline while a branch rises, and the residual sum
+runs over it too. The mismatch there is the branch itself,
+$C_1(\cosh(C_2 u)-1)$ for $u\in[0,\delta t_c]$, and its contribution
+is integrated \emph{exactly} over the shifted segment, in closed form:
 \begin{equation}
-  \Delta_{\rm pre}
-  \;=\;\sqrt{\tfrac{\delta t_c}{\tau_{\rm end}}}\;
-  C_1\big(\cosh(C_2\,\delta t_c)-1\big),
+  \Delta_{\rm pre}^2
+  \;=\;\frac{C_1^2}{\tau_{\rm end}}
+  \left[\tfrac{3u}{2}
+  + \frac{\sinh(2C_2u)}{4C_2}
+  - \frac{2\sinh(C_2u)}{C_2}\right]_{0}^{\delta t_c},
   \tag{T.14}
 \end{equation}
-which is $0.08^\circ$/s at the slowest ramp and under $0.01$ above
-$\Mdot=0.30$ --- carried, not neglected.
+second order in $\beta$ through
+$\delta t_c$, with the a priori $\beta \le \rbar/(J_PC_2)$ (the
+envelope at the window end over $\sinh x$). This evaluates to
+$0.036^\circ$/s at the slowest ramp and under $0.005$ above
+$\Mdot=0.30$ --- a factor $2.3$ below the sup-times-length form it
+replaces, because the branch rises from zero across the segment rather
+than sitting at its endpoint value. The segment's disturbance is
+already covered by the noise term, whose RMS density is unchanged by
+extending the window.
 
 \begin{figure}[t]
 \centering
