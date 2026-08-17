@@ -345,6 +345,27 @@ with $s_{\rm med} = 1.60$ the campaign-median in-window enhancement
 and $\kappa_q$ the run's own quiet ratio (campaign median $0.37$ where
 no quiet stretch exists).
 
+\emph{The cutoff is not delicate, and $k\sigma$ is what (19) already
+is.} Structurally (19) reads $k\cdot\sigma$ with
+$\sigma = \rms(n_{\rm hi})$ --- measured \emph{in the window}, in a
+band the model cannot contaminate --- and
+$k = \sqrt{1+(s_{\rm med}\kappa_q)^2} \approx 1.6$--$1.9$. The split
+frequency only defines that band, and any choice works that sits well
+above the model's spectral content $C_2/2\pi = 0.6$--$0.9$ Hz and
+leaves spectral bins on both sides ($f_c \gtrsim 2/(NT_s) \approx 3$
+Hz for the shortest windows): recomputing the entire check at
+$f_c = 2$, $3$ and $5$ Hz gives identical results ($140/140$ inside,
+mean used $0.57$--$0.58$), and only past $8$ Hz does the shrinking
+high band make the estimate noisy ($133/140$ at $8$, $129/140$ at
+$10$). The invariance is expected: $\hat n$ estimates the total
+$\rms(n)$, which does not depend on where the record is split. What
+does \emph{not} work is the simpler $k\sigma$ with $\sigma$ from the
+pre-onset segment: the in-window disturbance is contact-borne ---
+pivoting on one gear edge, not gyro noise --- and runs $2$ to $50$
+times the pre-onset floor with no usable floor at all on $25$ of the
+$140$ runs, so the one campaign constant that covers the spread,
+$k = 49$, collapses the used fraction from $0.58$ to $0.16$.
+
 \section{The check on all 140 runs}
 
 \begin{equation}
