@@ -46,7 +46,7 @@ gravity channels, e^{C2(s-T)} on ground effect, worst shape violation
 
 still elementary functions only.  The witness's onset shift also leaves
 a pre-onset segment on the baseline while the branch rises; that enters
-at second order in beta <= rho_bar/(J_P C2) as Delta_pre (T.14), 0.08
+at second order in beta <= rho_bar/(J_P C2) as Delta_pre, 0.025
 deg/s at the slowest ramp and <0.01 above Mdot = 0.30.
 
 No exponential anywhere: pinning both ends removes the unstable
@@ -143,7 +143,7 @@ def model_term(d, rb):
     c1 = k * d['md_full']
     jp = 1.0 / (k * c2 ** 2)
     beta = rb / (jp * c2)
-    dt = np.arctanh(min(beta / c1, 0.99)) / c2
+    dt = np.arcsinh(beta / c1) / c2
     a = min(c2 * dt, 30.0)
     I = 1.5 * dt + np.sinh(2 * a) / (4 * c2) - 2 * np.sinh(a) / c2
     dpre = c1 * np.sqrt(max(I, 0.0) / T)
