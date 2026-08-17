@@ -224,22 +224,48 @@ and the window from the protocol.
 $\dot\rho$.} The forcing is not constant: it peaks at the window end
 and decays backwards as marked in (16) (worst measured violation of
 these shapes $2.6\%$; a $1.05$ factor is carried on $\dot\rho_2$).
-Solving (14) with the decaying $\bar f$ instead of the constant one
---- same two-line comparison, same elementary functions --- replaces
-the factor $1$ of (15) by
+So solve (14) once for each shape at unit peak --- the same two-line
+comparison applies, and the solutions are still elementary. In the
+scaled variable $u = C_2(\tau - \tau_{\rm end}) \in [-x, 0]$, for the
+forcing $e^{2C_2(\tau-\tau_{\rm end})} = e^{2u}$:
 \begin{equation}
-  M_2(x)\to\tfrac1{12}
-  \quad\text{and}\quad
-  M_1(x)\to\tfrac1{2e}\ \text{(resonant channel)},
+  w_2(\tau) \;=\; \frac{\dot\rho_2}{J_PC_2^2}\cdot\frac13
+  \left[\frac{\sinh(u+x)}{\sinh x}
+  + e^{-2x}\,\frac{\sinh(-u)}{\sinh x} - e^{2u}\right],
   \qquad
+  M_2(x) \;\triangleq\; \max_{u\in[-x,0]}\frac13\big[\,\cdots\big] ,
+  \tag{17a}
+\end{equation}
+and for the forcing $e^{C_2(\tau-\tau_{\rm end})} = e^{u}$, which is
+\emph{resonant} --- it decays at the operator's own rate, so the
+particular solution carries a factor of $u$:
+\begin{equation}
+  w_1(\tau) \;=\; \frac{\dot\rho_1}{J_PC_2^2}
+  \left[\frac{x}{2}\,\frac{\sinh(u+x)}{\sinh x}
+  - \frac{(u+x)\,e^{u}}{2}\right],
+  \qquad
+  M_1(x) \;\triangleq\; \max_{u\in[-x,0]}\big[\,\cdots\big] .
+  \tag{17b}
+\end{equation}
+Both are verified by substitution: the exponential is the particular
+solution ($e^{2u}$ with coefficient $1/(2^2-1) = 1/3$; $e^{u}$
+resonant), the $\sinh$ terms are homogeneous, and both brackets vanish
+at $u = -x$ and $u = 0$ --- the two boundary zeros of (14). Their
+maxima barely depend on $x$ and tend to simple constants,
+\begin{equation}
+  M_2(x)\to\tfrac1{12},
+  \qquad
+  M_1(x)\to\tfrac1{2e},
+  \qquad\text{so}\qquad
   |\de| \;\le\; \frac{M_2\dot\rho_2 + M_1\dot\rho_1}{Wz_{CoM}} .
   \tag{17}
 \end{equation}
-($M_2$, $M_1$ are the maxima of the explicit solutions of (14) for
-unit-peak $e^{2C_2(s-\tau_{\rm end})}$ and $e^{C_2(s-\tau_{\rm end})}$
-forcings; the script evaluates them exactly.) The interpretation is
-the same as the manuscript's reduction factors $1/7$ and $1/5$: the
-forcing is largest exactly where the pinned response is smallest.
+(Over the campaign range $x = 1.9$--$3.7$: $M_2 = 0.074$--$0.083$,
+$M_1 = 0.141$--$0.181$; the script evaluates (17a)--(17b) exactly.)
+The interpretation is the same as the manuscript's reduction factors
+$1/7$ and $1/5$: the forcing is largest exactly where the pinned
+response is smallest --- at the window end the boundary zero sits
+right under the peak of the load.
 
 \section{The pre-onset segment}
 
