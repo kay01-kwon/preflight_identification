@@ -521,6 +521,47 @@ maximum-principle analogue of the reduction factors $1/7$ and $1/5$:
 the forcing is largest exactly where the Dirichlet kernel, pinned at
 the boundary, is smallest.
 
+\emph{Step 4$'$: the same bound from the integral representation alone,
+with no differential equation.} The route through (T.11)--(T.12) can be
+bypassed entirely. Substituting the manuscript's Duhamel representation
+(89) into the witness remainder --- once for $e_\omega(\tau)$ and once
+for the $e_\omega(\tau_{\rm end})$ inside $\beta$ --- gives the exact
+kernel form
+\begin{equation}
+  \delta e_\omega(\tau)
+  \;=\;\frac{1}{J_P}\int_0^{\tau_{\rm end}}\! K(\tau,s)\,\rho(s)\,ds,
+  \tag{T.15}
+\end{equation}
+and the hyperbolic addition identities collapse the kernel to
+\begin{equation}
+  K(\tau,s) \;=\;
+  \begin{cases}
+    \dfrac{\sinh\!\big(C_2(\tau_{\rm end}-\tau)\big)\cosh(C_2 s)}
+          {\sinh(C_2\tau_{\rm end})}, & s\le\tau,\\[2ex]
+    -\dfrac{\sinh(C_2\tau)\cosh\!\big(C_2(\tau_{\rm end}-s)\big)}
+          {\sinh(C_2\tau_{\rm end})}, & s>\tau.
+  \end{cases}
+  \tag{T.16}
+\end{equation}
+The exponential cancellation is now \emph{algebraic and visible}:
+$e^{C_2(\tau_{\rm end}-\tau)}e^{C_2 s}/e^{C_2\tau_{\rm end}}
+= e^{-C_2(\tau-s)}$, so $\max|K| = 1$ exactly (verified to grid
+accuracy), while the causal kernel $h_\omega$ of (89) grows like
+$\sinh$. That replacement --- a growing kernel exchanged for a bounded
+one at the cost of one family direction --- is the entire mechanism of
+absorption, seen at the kernel level. The two derivations are the same
+mathematics: $K = -\partial_s G$ for the Dirichlet Green's function of
+(T.11), and integrating that representation by parts (the boundary
+terms vanish because $G$ is pinned at both ends) turns the
+$\dot\rho$-form into the $\rho$-form. Evaluating (T.15) with the shaped
+$|\rho|\le\rho_{2,\max}e^{2C_2(s-\tau_{\rm end})}$ gives
+$0.43$--$0.46^\circ$/s across the rates against the realised
+$0.28$--$0.32$ --- the level of (T.13), slightly tighter and flatter,
+with no differentiated forcing anywhere. For the manuscript this
+presentation may be the more economical: it needs only (89), the same
+object Appendix~A already builds on, plus the shape information, and
+$\dot\rho$ never appears.
+
 \emph{Step 5: the pre-onset segment the shifted witness leaves behind.}
 The witness is, by the shift identity, a branch whose onset sits at
 $\delta t_c = \operatorname{artanh}(\beta/C_1)/C_2$; on the piecewise

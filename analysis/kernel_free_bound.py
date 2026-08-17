@@ -20,6 +20,21 @@ differentiated once:
     delta_e'' - C2^2 delta_e = rho_dot / J_P,
     delta_e(0) = delta_e(tau_end) = 0.
 
+An equivalent derivation needs no differential equation at all:
+substituting the Duhamel representation (89) into the remainder (both
+for e(tau) and for the e(T) inside beta) gives
+delta_e = (1/J_P) int K(tau,s) rho(s) ds with
+
+    K =  sinh(C2(T-tau)) cosh(C2 s) / sinh(C2 T)    for s <= tau,
+    K = -sinh(C2 tau) cosh(C2(T-s)) / sinh(C2 T)    for s >  tau,
+
+where the hyperbolic identities cancel the exponential inside the
+kernel: max|K| = 1 exactly (K = -dG/ds of the Dirichlet Green's
+function; integration by parts connects the two forms, the boundary
+terms vanishing because G is pinned).  Shaped, this evaluates to
+0.43-0.46 deg/s against the realised 0.28-0.32 -- same level as the
+rho_dot route, and rho is never differentiated.
+
 The operator v'' - C2^2 v obeys a maximum principle.  Against constant
 forcing that gives |delta_e| <= (1-sech(x/2)) sup|rho_dot|/Wz; shaping
 the comparison to rho_dot's actual decay -- e^{2C2(s-T)} on the arm and
