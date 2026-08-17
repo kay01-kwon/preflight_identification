@@ -119,20 +119,23 @@ def main():
     a1.plot(RATES, md_(rms), 'o-', color=C_A, lw=2.2, ms=6)
     a1.plot(RATES, lo(rms), '-', color=C_A, lw=0.9, alpha=0.55)
     a1.plot(RATES, hi(rms), '-', color=C_A, lw=0.9, alpha=0.55)
-    a1.text(RATES[-1], hi(rms)[-1] + 0.02, 'box max', ha='right',
+    a1.text(RATES[-1], hi(rms)[-1] + 0.02,
+            'box max: arm 0.160 m, $z$ 0.20 m', ha='right',
             fontsize=8.5, color=C_A)
-    a1.text(RATES[-1], lo(rms)[-1] - 0.05, 'box min', ha='right',
+    a1.text(RATES[-1], lo(rms)[-1] - 0.06,
+            'box min: arm 0.090 m, $z$ 0.30 m', ha='right',
             fontsize=8.5, color=C_A)
     a1.set_xscale('log')
     a1.set_xticks(RATES)
     a1.set_xticklabels([f'{r:.2f}' for r in RATES], fontsize=9)
     a1.minorticks_off()
     a1.set_xlabel(r'$\dot M$ [N m/s]', fontsize=10)
-    a1.set_ylabel(r'RMS model bound [$^\circ$/s]', fontsize=10)
+    a1.set_ylabel(r'bound on $\mathrm{RMS}(\delta e_\omega)$ [$^\circ$/s]',
+                  fontsize=10)
     a1.set_ylim(0, hi(rms).max() * 1.18)
-    a1.set_title('(a) pre-experiment model term of the residual cap\n'
-                 '(17)$+$(18) over the design box; median line',
-                 fontsize=11)
+    a1.set_title(r'(a) bound on $\mathrm{RMS}(\delta e_\omega)$, the model'
+                 ' term of (20)\n(17)$+$(18) over the design box;'
+                 ' the cap adds $\hat n$ on top', fontsize=11)
     a1.grid(alpha=0.22, lw=0.4)
 
     a2.fill_between(RATES, lo(dmc), hi(dmc), color=C_B, alpha=0.18, lw=0)
