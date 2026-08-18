@@ -242,6 +242,14 @@ $0.5$--$0.9^\circ$/s from pre-experiment constants, and located ---
 zero at both ends, sagging mid-window --- so the imperfection of the
 time-shift description is quantified in size, ceiling and shape.
 
+The same statement has a clean linear-algebra reading: the model
+family is a four-parameter manifold in the $N$-dimensional sample
+space, the true record carries a component transverse to it that no
+choice of parameters can reach, and $\de$ is exactly that transverse
+coordinate --- introduced so that the description becomes an identity
+rather than an approximation. The Appendix makes this picture precise
+and connects it to the manuscript's projector formalism.
+
 \section{How big is $\de$: two boundary zeros and one comparison}
 
 \emph{Step 1 --- $\de$ vanishes at both ends.} At $\tau = 0$:
@@ -666,5 +674,97 @@ $e_\omega$ by definition and its unabsorbed part costs
 $0.018$--$0.022^\circ$/s per $1\%$ of $\varepsilon_2$ --- $5$--$7\%$
 of the model term, and the calibration residuals limit
 $\varepsilon_2$ to a few percent.
+
+\section*{Appendix: the linear-algebra picture}
+
+Collect the $N$ samples of a signal into a vector in $\mathbb R^N$.
+The model family (2) is then a subset of that space,
+\begin{equation}
+  \mathcal M \;=\;
+  \Big\{\, a\big(\cosh(c(\tau_i - d)) - 1\big) + b
+  \;:\; a, c > 0,\ d, b \in \mathbb R \,\Big\}
+  \;\subset\; \mathbb R^N ,
+  \tag{A.1}
+\end{equation}
+a four-parameter curved manifold. Its tangent space at the nominal is
+spanned by the four derivative directions
+\begin{equation}
+  T \;=\; \operatorname{span}\big\{\,
+  \underbrace{\cosh(C_2\tau)-1}_{\partial/\partial C_1},\;
+  \underbrace{\sinh(C_2\tau)}_{\partial/\partial\dtc},\;
+  \underbrace{\tau\sinh(C_2\tau)}_{\partial/\partial C_2},\;
+  \underbrace{\mathbf 1}_{\partial/\partial C}
+  \,\big\},
+  \tag{A.2}
+\end{equation}
+so the family can move in at most four of the $N$ dimensions around
+any of its points.
+
+\emph{Why exact representation fails.} ``The true curve is a shifted
+nominal'' asserts membership: $y_{\rm struct}\in\mathcal M$. Two
+obstructions, matching the two in the Sec.~4 remark. Dimension: a
+four-dimensional manifold is a measure-zero sliver of $\mathbb R^N$;
+a vector off it stays off it. Dynamics, sharper: every element of
+$\mathcal M$ samples a homogeneous solution of
+$\ddot v = c^2 v$, while $y_{\rm struct}$ samples the forced equation
+(12); by the argument under (13), membership would force
+$\dot\rho\equiv0$. So $y_{\rm struct}$ has a component
+\emph{transverse} to $\mathcal M$ that no parameter choice reaches.
+
+\emph{What introducing $\de$ does.} It changes the assertion from
+membership to a coordinate statement:
+\begin{equation}
+  y_{\rm struct} \;=\; m \;+\; \de,
+  \qquad m \in \mathcal M ,
+  \tag{A.3}
+\end{equation}
+exact for \emph{every} choice of $m$ --- the freedom is in where to
+put the remainder, not whether there is one. Two canonical choices
+divide the labour:
+
+\begin{center}\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+choice of $m$ & property of $\de$ & what it buys\\
+\midrule
+orthogonal projection (LS) & $\de \perp T$, minimal norm &
+  the smallest remainder, no pointwise structure\\
+end-matched witness, (9) & $\de = 0$ at both window ends &
+  the Dirichlet problem (13)--(14), hence (17)\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The witness pays a factor $1.8$--$2.0$ in norm over the orthogonal
+choice and buys, in exchange, the two boundary zeros that make the
+maximum principle --- and with it the entire a priori bound ---
+available. Provability is purchased with norm.
+
+\emph{The projector sub-case, and the manuscript's Appendix C.} With
+$C_2$ pinned and the onset held, the family linearises to the subspace
+$\mathcal V = \operatorname{span}\{u, \mathbf 1\}$,
+$u_i = \cosh(C_2\tau_i)-1$, and the orthogonal choice becomes an
+explicit matrix: with $A = [\,u\ \ \mathbf 1\,]$,
+\begin{equation}
+  P = A(A^{\!\top}\!A)^{-1}A^{\!\top},
+  \qquad
+  P_{ij} = \frac1N + \frac{\tilde u_i\tilde u_j}{\sum_k \tilde u_k^2},
+  \qquad
+  r_\perp = (I-P)(e_\omega + n),
+  \tag{A.4}
+\end{equation}
+($\tilde u = u - \bar u$) --- the manuscript's Lemma~2, eq.~(C3). The
+$\de$ of this document is the same object one level up: the remainder
+transverse to the full nonlinear family rather than to its pinned
+linearisation.
+
+\emph{How much of $e_\omega$ lies along the family.} Measured on the
+exact tip-over, the fraction of $e_\omega$ (in RMS) absorbed by
+successively larger reachable sets: $61$--$67\%$ by
+$\operatorname{span}\{u,\mathbf 1\}$, $70$--$71\%$ adding the onset
+direction $\sinh$, $92.5\%$ by the full four-parameter family --- the
+last flat across all rates. The transverse component --- the $7.5\%$
+no parameters reach, $0.012$--$0.018^\circ$/s --- is the irreducible
+core of $\de$, and (17) is its a priori ceiling.
 
 \end{document}
