@@ -59,8 +59,13 @@ does, since sinh IS the first-order onset-shift direction.
 The forcing rate is bounded channel by channel, all a priori:
 
     sup|rho_dot| <= W l_arm phi_max om_max            (pivot arm)
-                  + Wz (phi_max^2 / 2) om_max         (gravity remainder)
                   + |beta_M| (Mdot phi_max + dM_win om_max)   (ground effect)
+
+The gravity-height term Wz (cos phi - 1) omega is NOT added: it enters
+d(rho_grav)/dphi with the opposite sign to the arm term and
+W a sin(phi) >= Wz (1 - cos(phi)) iff a >= z tan(phi/2), held with
+3.4x margin over the design box -- the same sign cancellation rho_bar
+(91) uses, and what (85) at phi* = 0 expresses (G''(0) = W a).
 
 with om_max = K Mdot sinh(x) the nominal peak rate.  Everything on the
 right is known before the experiment: W and z_CoM from the scale, J_P
@@ -68,9 +73,9 @@ from CAD, l_arm from geometry, phi_max the design box, beta_M from the
 GE model, Mdot and the window from the protocol.  Add a gyro noise
 figure and the whole cap is computable before a single run is flown.
 
-On the campaign: the model term is 0.56-0.93 deg/s -- the level of the
+On the campaign: the model term is 0.48-0.87 deg/s -- the level of the
 projected Phi, with no kernel computed -- the cap holds on 140/140 runs
-at used 0.52-0.61 (per-run worst 0.83), and the realised witness
+at used 0.54-0.64 (per-run worst 0.86), and the realised witness
 remainder on the exact nonlinear solution is 0.16-0.17 deg/s, flat.
 The remaining factor ~3 is the 10-degree design box against the 4.8
 degrees the runs actually reach: the price of a pre-experiment bound.
@@ -133,8 +138,12 @@ def model_term(d, rb):
     x = c2 * T
     wz = 1.0 / k
     om = k * d['md_full'] * np.sinh(min(x, 30.0))
-    rd2 = SHAPE_SAFETY * (W * ARMS[d['axis']] * PHI_BOX
-                          + wz * PHI_BOX ** 2 / 2.0) * om
+    # gravity-height term dropped by SIGN, not size: d(rho_grav)/dphi =
+    # W a sin(phi) + Wz (cos(phi) - 1), the second term negative, and
+    # W a sin(phi) >= Wz (1 - cos(phi))  iff  a >= z tan(phi/2) -- held
+    # with 3.4x margin over the whole design box.  Same cancellation
+    # rho_bar (91) already uses; phi* = 0 in the manuscript's (85).
+    rd2 = SHAPE_SAFETY * (W * ARMS[d['axis']] * PHI_BOX) * om
     rd1 = abs(BETA_M) * (d['md_full'] * PHI_BOX + d['dm_win'] * om)
     de = (rd2 * M2(x) + rd1 * M1(x)) / wz
     # pre-onset: between the two onsets the fit sits on its baseline

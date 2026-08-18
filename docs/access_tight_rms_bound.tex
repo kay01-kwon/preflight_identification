@@ -431,12 +431,24 @@ $\dtc$ --- pin that mode down. This is what ``the fit absorbs the
 growing part'' means as an equation.
 
 \emph{Step 5 --- the forcing rate, from the same channels as
-$\rbar$.} Differentiating each remainder and bounding on the
-$10^\circ$ box, with $\omega_{\max} = K\Mdot\sinh x$:
+$\rbar$.} Differentiating the gravity remainder (84) in time gives
+$\dot\rho_{\rm grav} = \big[W l_{\rm arm}\sin\varphi
++ Wz_{CoM}(\cos\varphi - 1)\big]\,\omega$, and the two bracket terms
+have \emph{opposite signs}: the height term is negative and cancels
+against the arm term instead of adding to it. The bracket stays
+inside $[0,\ W l_{\rm arm}\sin\varphi]$ as long as
+$l_{\rm arm} \ge z_{CoM}\tan(\varphi/2)$ --- held with a factor
+$3.4$ over the whole design box ($0.090$ m against at most
+$0.30\tan 5^\circ = 0.026$ m) --- so $Wz_{CoM}$ drops from the bound
+\emph{by sign, not by approximation}. This is the same cancellation
+$\rbar$ (91) already uses ($Wz_{CoM}(\sin\varphi-\varphi) \le 0$
+there), and it is exactly what the manuscript's (85) says at
+$\varphi^\ast = 0$: $G''(0) = W(l_p + p_{\rm off})$, the
+$Wz_{CoM}\sin\varphi^\ast$ term vanishing. Bounding on the $10^\circ$
+box, with $\omega_{\max} = K\Mdot\sinh x$:
 \begin{equation}
   \sup|\dot\rho| \;\le\;
-  \underbrace{\big(W l_{\rm arm}\varphi_{\max}
-    + Wz_{CoM}\tfrac{\varphi_{\max}^2}{2}\big)\,
+  \underbrace{W l_{\rm arm}\varphi_{\max}\,
   \omega_{\max}}_{\dot\rho_2,\ \text{decays like } e^{2C_2(s-\tau_{\rm end})}}
   \;+\;
   \underbrace{|\beta_M|\big(\Mdot\varphi_{\max}
@@ -474,10 +486,11 @@ decay exactly. Arm channel:
   \;\le\; \varphi(\tau_{\rm end})\,\omega(\tau_{\rm end})\,
   e^{2C_2(s-\tau_{\rm end})} .
 \]
-Gravity channel: $(1-\cos\varphi)\,\omega \le \tfrac12\varphi^2\omega$
-carries \emph{three} such factors and decays as
-$e^{3C_2(s-\tau_{\rm end})}$ --- faster than the $e^{2C_2}$ charged
-for it. Ground effect: $\Mdot\varphi$ carries one factor
+(The height term, had it been kept, is
+$(1-\cos\varphi)\,\omega \le \tfrac12\varphi^2\omega$ --- \emph{three}
+such factors, decaying as $e^{3C_2(s-\tau_{\rm end})}$; it is absent
+from (16) by the sign cancellation of Step 5, so nothing needs
+charging.) Ground effect: $\Mdot\varphi$ carries one factor
 ($e^{C_2}$ class), and $\Delta M(s)\,\omega = \Mdot s\,\omega$
 carries $s/\tau_{\rm end}\le1$ (also nondecreasing) times one, so it
 too is $e^{C_2}$ class. For the \emph{nominal} trajectory the lemma
@@ -548,10 +561,10 @@ grid precision), so (17) may be quoted $x$-free,
 with no $M$ curves, no window length, and no $C_2$ beyond what sits
 inside $\dot\rho_{1,2}$ --- exactly as (85) trades the exact
 remainder for $\tfrac12 G''(0)\varphi^2$. Rerun on the $140$ runs,
-the constant version costs at most $16\%$ on the worst run ($0.2$--$7\%$
+the constant version costs at most $15\%$ on the worst run ($0.2$--$7\%$
 in the per-rate mean, largest at the fastest ramps where $x$ is
 smallest), keeps $140/140$ coverage, and the worst-run used fraction
-rises only to $0.84$. Note where the simplification is \emph{not}
+rises only to $0.86$. Note where the simplification is \emph{not}
 available: the channel amplitudes $\dot\rho_{1,2}$ are already the
 $\varphi^\ast = 0$ worst-case Taylor coefficients of (85) --- nothing
 further to drop there --- and the time \emph{shape} behind $M_2, M_1$
@@ -702,7 +715,7 @@ $k = 49$, collapses the used fraction from $0.58$ to $0.16$.
 runs at each rate, $95\%$ $t$ intervals. Purple is the model term of
 (17)$+$(18), grey the noise estimate (19), green the measured
 residual. All $140$ runs are inside; the used fraction is
-$0.52$--$0.63$ and the cap is flat, like the residual.}
+$0.54$--$0.64$ and the cap is flat, like the residual.}
 \label{fig:check}
 \end{figure}
 
@@ -714,19 +727,19 @@ measured & used\\
 N\,m/s & $^\circ$/s & $^\circ$/s & $^\circ$/s & $^\circ$/s &
 $^\circ$/s & \\
 \midrule
-$0.10$ & $0.512$ & $0.036$ & $1.064$ & $1.58$ & $0.987$ & $0.63$\\
-$0.20$ & $0.544$ & $0.011$ & $1.050$ & $1.59$ & $0.964$ & $0.60$\\
-$0.30$ & $0.599$ & $0.006$ & $1.059$ & $1.66$ & $1.014$ & $0.61$\\
-$0.45$ & $0.698$ & $0.004$ & $0.993$ & $1.69$ & $0.947$ & $0.56$\\
-$0.65$ & $0.764$ & $0.002$ & $1.080$ & $1.84$ & $1.084$ & $0.59$\\
-$0.90$ & $0.819$ & $0.001$ & $1.020$ & $1.84$ & $1.023$ & $0.56$\\
-$1.20$ & $0.932$ & $0.001$ & $1.073$ & $2.00$ & $1.052$ & $0.52$\\
+$0.10$ & $0.476$ & $0.036$ & $1.064$ & $1.54$ & $0.987$ & $0.64$\\
+$0.20$ & $0.505$ & $0.011$ & $1.050$ & $1.56$ & $0.964$ & $0.62$\\
+$0.30$ & $0.556$ & $0.006$ & $1.059$ & $1.62$ & $1.014$ & $0.63$\\
+$0.45$ & $0.647$ & $0.004$ & $0.993$ & $1.64$ & $0.947$ & $0.58$\\
+$0.65$ & $0.709$ & $0.002$ & $1.080$ & $1.79$ & $1.084$ & $0.61$\\
+$0.90$ & $0.760$ & $0.001$ & $1.020$ & $1.78$ & $1.023$ & $0.57$\\
+$1.20$ & $0.866$ & $0.001$ & $1.073$ & $1.94$ & $1.052$ & $0.54$\\
 \bottomrule
 \end{tabular}
 \end{center}
 
-Inside on $140/140$ runs; per-run used fraction p10 $0.44$, median
-$0.59$, worst $0.84$. On the exact nonlinear solution the realised
+Inside on $140/140$ runs; per-run used fraction p10 $0.45$, median
+$0.61$, worst $0.86$. On the exact nonlinear solution the realised
 $\de$ is $0.16$--$0.17^\circ$/s; the remaining factor $\sim$$3$ of
 (17) over it is the $10^\circ$ design box against the $4.8^\circ$
 the runs actually reach --- the price of stating the bound before
@@ -782,8 +795,8 @@ rates, each with its own tilt-limited window
 \centering
 \includegraphics[width=\linewidth]{fig_design_range.png}
 \caption{The design-box sweep. \emph{(a)} the bound on
-$\rms(\de)$, eq.\ (17)$+$(18): $0.33$--$1.11^\circ$/s over box and
-rates, median $0.50$--$0.72$. The band is set by the ratio
+$\rms(\de)$, eq.\ (17)$+$(18): $0.26$--$1.00^\circ$/s over box and
+rates, median $0.43$--$0.62$. The band is set by the ratio
 $\mathrm{arm}/z_{CoM}$ --- worst at arm $0.160$ m with
 $z_{CoM} = 0.20$ m, best at arm $0.090$ m with $0.30$ m.
 \emph{(b)} the critical-moment shift $\Mdot|\dtc|$ of (21):
@@ -799,7 +812,7 @@ $\mathrm{arm}/z_{CoM}$.}
 \end{figure}
 
 Two readings (Fig.~\ref{fig:design}). The residual bound stays within
-$0.33$--$1.11^\circ$/s everywhere in the box --- below the measured
+$0.26$--$1.00^\circ$/s everywhere in the box --- below the measured
 disturbance floor of $\approx1^\circ$/s at almost every corner --- so
 the fit-quality gate can be set from the noise figure alone for any
 vehicle in this class. And the identification error from the absorbed
@@ -852,7 +865,7 @@ pre-experiment cap replaces $\hat n$ with a bench noise figure.
 \emph{(c) Exponent mismatch.} If the true exponent differs from the
 pinned $C_2$ by a relative $\varepsilon_2$, the mismatch joins
 $e_\omega$ by definition and its unabsorbed part costs
-$0.018$--$0.022^\circ$/s per $1\%$ of $\varepsilon_2$ --- $5$--$7\%$
+$0.018$--$0.022^\circ$/s per $1\%$ of $\varepsilon_2$ --- $5$--$8\%$
 of the model term, and the calibration residuals limit
 $\varepsilon_2$ to a few percent.
 

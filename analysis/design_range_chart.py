@@ -71,7 +71,10 @@ def combo(m, lp, poff, z, md):
     T = x / c2
     dmw = md * T
     om = md * np.sinh(x) / wz
-    rd2 = SAFETY * (W * arm * PHI + wz * PHI * PHI / 2.0) * om
+    # Wz term dropped by sign: d(rho_grav)/dphi = W a sin(phi)
+    # + Wz (cos(phi) - 1) with the second term negative, and
+    # a >= z tan(phi/2) everywhere in the box (min 0.090 vs max 0.026).
+    rd2 = SAFETY * (W * arm * PHI) * om
     rd1 = BETA_M * (md * PHI + dmw * om)
     model = (M2(x) * rd2 + M1(x) * rd1) / wz
     rb = (1.0 / 7.0) * 0.5 * W * arm * PHI * PHI \
