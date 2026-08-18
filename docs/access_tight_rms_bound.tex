@@ -116,7 +116,11 @@ matching the $\cosh$ and $\sinh$ coefficients
 \end{equation}
 a branch with amplitude $R$, onset $\dtc$, and a baseline offset
 $R-C_1$ --- three numbers, all inside the family's freedoms in (2)
-(the offset is absorbed by $C$). On the campaign
+(the offset is absorbed by $C$: the witness's baseline slot carries
+$b + (R-C_1)$, not $b$ alone, and the ``$\approx$'' of (3) is exactly
+this second-order constant; what it costs, and on which segment it
+lands, is settled in the remark closing the pre-onset section). On
+the campaign
 $\beta/C_1 \le 0.023$, so the amplitude and baseline adjustments are
 second order ($|R/C_1-1| \le 0.03\%$); the shift carries the
 first-order content. The remainder is
@@ -580,6 +584,34 @@ errs on the high side.) Evaluated with the a priori $|\dtc|$ from (9)
 and $e_\omega(\tau_{\rm end}) \le E(\tau_{\rm end})$:
 $\Delta_{\rm pre} = 0.036^\circ$/s at $\Mdot = 0.10$, $0.011$ at
 $0.20$, and below $0.006$ beyond.
+
+\emph{The baseline constant $R-C_1$ --- both bookkeepings.} One
+witness must serve every sample the minimiser's cost touches, and its
+baseline slot holds a single number, so the constant $R-C_1$ of (7)
+must land somewhere. There are two consistent choices. \emph{(a)}
+Take (3) literally, $C = b$: the flat pre-onset samples then cost
+nothing beyond noise, (18a) holds as written (amplitude $R \le C_1$),
+and the post-onset residual gains the constant,
+$r = \de + n + (C_1 - R)$. \emph{(b)} Take $C = b + (R - C_1)$: the
+post-onset identity is exactly (5), $r = \de + n$, and the constant
+moves to the flat stretch, where the length fraction of that stretch
+in the window dilutes it further. Either way the price is the same
+number,
+\begin{equation*}
+  C_1 - R \;=\; C_1\Big(1 - \sqrt{1 - (\beta/C_1)^2}\Big)
+  \;\le\; \tfrac12\,C_1\,(\beta/C_1)^2 ,
+\end{equation*}
+second order in $\beta/C_1$. Realised ($\beta/C_1 \le 0.023$) it is
+below $0.004^\circ$/s on every run --- two orders under $\hat n$ and
+below even $\Delta_{\rm pre}$ --- which is why (10) and (20) carry it
+silently; the pre-onset median cannot even distinguish $b$ from
+$b + (R-C_1)$ at that size. At the a priori envelope ceiling it is
+not invisible: $u = 0.59$ at the slowest ramp gives
+$C_1(1-\sqrt{1-u^2}) \approx 0.2^\circ$/s, about a fifth of the model
+term there. Adding it to the cap only loosens the bound, so the
+$140/140$ check is unaffected either way, and the measured
+$\beta/C_1$, thirty times below the envelope, confirms the silent
+treatment a posteriori.
 
 \section{The noise term}
 
