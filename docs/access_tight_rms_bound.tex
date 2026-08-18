@@ -571,8 +571,13 @@ $\dot\rho$.} The forcing is not constant: it peaks at the window end
 and decays backwards as marked in (16) and proved in Step 5$'$.
 So solve (14) once for each shape at unit peak --- the same two-line
 comparison applies, and the solutions are still elementary. In the
-scaled variable $u = C_2(\tau - \tau_{\rm end}) \in [-\xe, 0]$, for the
-forcing $e^{2C_2(\tau-\tau_{\rm end})} = e^{2u}$:
+scaled variable $u = C_2(\tau - \tau_{\rm end}) \in [-\xe, 0]$ ---
+a \emph{translation}, not a reflection: $du/d\tau = +C_2 > 0$, so
+$u$ runs forward with $\tau$ and only the origin has moved to the
+window end (a reflection would be $C_2(\tau_{\rm end}-\tau)$; the
+``backward'' of Step 5$'$ is how the envelope is \emph{described},
+not the orientation of the coordinate) --- for the forcing
+$e^{2C_2(\tau-\tau_{\rm end})} = e^{2u}$:
 \begin{equation}
   w_2(\tau) \;=\; \frac{\dot\rho_2}{J_PC_2^2}\cdot\frac13
   \left[\frac{\sinh(u+\xe)}{\sinh \xe}
@@ -592,6 +597,22 @@ particular solution carries a factor of $u$:
   M_1(\xe) \;\triangleq\; \max_{u\in[-\xe,0]}\big[\,\cdots\big] .
   \tag{17b}
 \end{equation}
+No time reversal hides in (17a): substituting $u = C_2\tau - \xe$
+back gives, in original time,
+\begin{equation*}
+  w_2(\tau) = \frac{\dot\rho_2}{J_PC_2^2}\cdot\frac13
+  \left[\frac{\sinh(C_2\tau)}{\sinh\xe}
+  + e^{-2\xe}\,\frac{\sinh(C_2(\tau_{\rm end}-\tau))}{\sinh\xe}
+  - e^{2C_2(\tau-\tau_{\rm end})}\right],
+\end{equation*}
+which vanishes at $\tau = 0$ ($0 + e^{-2\xe} - e^{-2\xe}$) and at
+$\tau = \tau_{\rm end}$ ($1 + 0 - 1$), with the forcing term growing
+forward in $\tau$ to its peak at the end --- exactly the orientation
+of the physical window. (Backward time $v = \tau_{\rm end}-\tau$
+would give the mirror parametrisation $w(\tau_{\rm end}-v)$ with
+forcing $e^{-2C_2v}$ --- the same function, described from the other
+end.)
+
 \emph{Where the two forms come from --- construction, not guess.} In
 the scaled variable the comparison problem reads $w'' - w =
 -\kappa\,g(u)$, $w(-\xe) = w(0) = 0$, with $\kappa =
