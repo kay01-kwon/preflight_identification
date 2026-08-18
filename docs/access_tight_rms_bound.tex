@@ -530,11 +530,26 @@ particular solution carries a factor of $u$:
   M_1(x) \;\triangleq\; \max_{u\in[-x,0]}\big[\,\cdots\big] .
   \tag{17b}
 \end{equation}
-Both are verified by substitution: the exponential is the particular
-solution ($e^{2u}$ with coefficient $1/(2^2-1) = 1/3$; $e^{u}$
-resonant), the $\sinh$ terms are homogeneous, and both brackets vanish
-at $u = -x$ and $u = 0$ --- the two boundary zeros of (14). Their
-maxima barely depend on $x$ and tend to simple constants,
+\emph{Where the two forms come from --- construction, not guess.} In
+the scaled variable the comparison problem reads $w'' - w =
+-\kappa\,g(u)$, $w(-x) = w(0) = 0$, with $\kappa =
+\dot\rho_i/(J_PC_2^2)$, one shape $g$ at a time. Three moves each.
+\emph{Particular solution:} for $g = e^{2u}$ try $Ae^{2u}$:
+$(2^2 - 1)A = -\kappa$, so $A = -\kappa/3$ --- the $1/3$ is the
+distance to resonance. For $g = e^{u}$ the same try fails,
+$(1^2 - 1)A = 0$: the forcing decays at the operator's own rate, so
+carry a factor $u$, $w_p = -(\kappa/2)\,u e^{u}$, since
+$(ue^u)'' - ue^u = 2e^u$ --- this extra $u$ is why $M_1 > M_2$.
+\emph{Homogeneous corrections in the endpoint basis:} $\sinh(u+x)$
+vanishes at $u = -x$ and $\sinh(-u)$ vanishes at $u = 0$, so each
+boundary condition sets one coefficient without disturbing the other:
+$u = 0$ gives $a\sinh x = \kappa/3$, $u = -x$ gives $b\sinh x =
+(\kappa/3)e^{-2x}$ --- that is (17a); for $e^{u}$, collecting the two
+$u$-terms into $-(u+x)e^{u}/2$ makes the zero at $u = -x$ visible ---
+that is (17b). \emph{Verification by substitution:} the $\sinh$'s are
+annihilated by the operator, the exponentials return the forcing, and
+both brackets vanish at both ends --- the two boundary zeros of (14).
+Their maxima barely depend on $x$ and tend to simple constants,
 \begin{equation}
   M_2(x)\to\tfrac1{12},
   \qquad
@@ -543,8 +558,15 @@ maxima barely depend on $x$ and tend to simple constants,
   |\de| \;\le\; \frac{M_2\dot\rho_2 + M_1\dot\rho_1}{Wz_{CoM}} .
   \tag{17}
 \end{equation}
-(Over the campaign range $x = 1.9$--$3.7$: $M_2 = 0.074$--$0.083$,
-$M_1 = 0.141$--$0.181$; the script evaluates (17a)--(17b) exactly.)
+The limits are one-line maximisations: as $x \to \infty$,
+$\sinh(u+x)/\sinh x \to e^{u}$ and the $e^{-2x}$ term dies, so the
+bracket of (17a) tends to $(e^{u} - e^{2u})/3 = (v - v^2)/3$ with
+$v = e^{u} \in (0,1]$, maximised at $v = \tfrac12$ to $1/12$
+($\ln 2$ e-foldings before the window end); the bracket of (17b)
+tends to $-(u/2)e^{u}$, maximised at $u = -1$ to $1/(2e)$ (one
+e-folding before the end). (Over the campaign range
+$x = 1.9$--$3.7$: $M_2 = 0.074$--$0.083$, $M_1 = 0.141$--$0.181$;
+the script evaluates (17a)--(17b) exactly.)
 The interpretation is the same as the manuscript's reduction factors
 $1/7$ and $1/5$: the forcing is largest exactly where the pinned
 response is smallest --- at the window end the boundary zero sits
