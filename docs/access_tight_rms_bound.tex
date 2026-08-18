@@ -40,9 +40,9 @@ e_\omega(\tau) & true rate minus the nominal &
   b,\ n & gyro bias; disturbance\\
 C & fitted baseline (pre-onset median) &
   r_i & residual $y_i - \hat\omega_i$\\
-\dtc,\ \beta & onset shift of the witness; its sinh &
+\dtc,\ \beta & onset shift of the witness branch; its &
   \de & what the shift cannot absorb\\
- & \ coefficient, $\beta = -C_1\sinh(C_2\dtc)$ & & \\
+ & \ sinh coefficient, $\tanh(C_2\dtc) = -\beta/C_1$ & & \\
 \rho(s) & deviation forcing (small-angle $+$ GE) &
   \rbar & window average bound on $\rho$, eq.\ (91)\\
 \dot\rho & its time derivative &
@@ -83,31 +83,43 @@ Subtracting (2) from (1) with (3),
   \;-\; C_1^*\big(\cosh(C_2^*(\tau_i-\dtc^*))-1\big) \;+\; n_i .
   \tag{4}
 \end{equation}
-The question is how much of the braced part a shifted cosh can match.
-Write the true structural part as a shifted branch plus a remainder ---
-this \emph{defines} $\de$:
+The question is how much of the braced part a member of the family
+can match. Add and subtract one $\sinh$ term --- this \emph{defines}
+$\de$, and the equality holds at every $\tau$, both window ends
+included:
 \begin{equation}
   C_1\big(\cosh(C_2\tau)-1\big) + e_\omega(\tau)
-  \;=\; C_1\big(\cosh(C_2(\tau-\dtc))-1\big) + \de(\tau).
+  \;=\;
+  \underbrace{C_1\big(\cosh(C_2\tau)-1\big)
+   + \beta\sinh(C_2\tau)}_{\hat h(\tau),\ \text{the witness}}
+  \;+\;\de(\tau).
   \tag{5}
 \end{equation}
-Expanding the shifted branch with the addition identity,
+The witness is a member of the family in disguise. With the addition
+identity
 \begin{equation}
   \cosh\big(C_2(\tau-\dtc)\big)
   = \cosh(C_2\dtc)\cosh(C_2\tau) - \sinh(C_2\dtc)\sinh(C_2\tau),
   \tag{6}
 \end{equation}
-and substituting (6) into (5), the remainder is explicitly
+matching the $\cosh$ and $\sinh$ coefficients
+[$R\cosh(C_2\dtc) = C_1$, $-R\sinh(C_2\dtc) = \beta$] gives,
+\emph{exactly},
 \begin{equation}
-  \de(\tau) \;=\; e_\omega(\tau)
-  \;-\;\underbrace{\big[-C_1\sinh(C_2\dtc)\big]}_{\textstyle\beta}
-  \sinh(C_2\tau)
-  \;-\;\underbrace{C_1\big(\cosh(C_2\dtc)-1\big)}_{O(\dtc^2),\
-  \text{folded into } C_1^*}\cosh(C_2\tau).
+  \hat h(\tau)
+  = R\big(\cosh(C_2(\tau-\dtc))-1\big) + (R-C_1),
+  \qquad
+  R = \sqrt{C_1^2-\beta^2},
+  \quad
+  \tanh(C_2\dtc) = -\beta/C_1 ,
   \tag{7}
 \end{equation}
-So to first order the shift contributes a $\sinh(C_2\tau)$ term with
-coefficient $\beta = -C_1\sinh(C_2\dtc)$, and
+a branch with amplitude $R$, onset $\dtc$, and a baseline offset
+$R-C_1$ --- three numbers, all inside the family's freedoms in (2)
+(the offset is absorbed by $C$). On the campaign
+$\beta/C_1 \le 0.023$, so the amplitude and baseline adjustments are
+second order ($|R/C_1-1| \le 0.03\%$); the shift carries the
+first-order content. The remainder is
 \begin{equation}
   \de(\tau) \;=\; e_\omega(\tau) - \beta\sinh(C_2\tau).
   \tag{8}
@@ -122,15 +134,15 @@ $\de(\tau_{\rm end}) = 0$ in (8),
   \beta \;=\; \frac{e_\omega(\tau_{\rm end})}{\sinh(C_2\tau_{\rm end})},
   \qquad
   \dtc \;=\; -\frac{1}{C_2}\,
-  \operatorname{arsinh}\!\Big(\frac{\beta}{C_1}\Big)
+  \operatorname{artanh}\!\Big(\frac{\beta}{C_1}\Big)
   \;\approx\; -\frac{e_\omega(\tau_{\rm end})}
   {C_1C_2\sinh(C_2\tau_{\rm end})} .
   \tag{9}
 \end{equation}
 Since $e_\omega > 0$ (the true curve rises faster than the nominal),
 $\dtc < 0$: the branch starts \emph{earlier} than the true onset. On
-the campaign $\beta/C_1 = 0.010$--$0.023$, so the $O(\dtc^2)$ term in
-(7) is below $0.03\%$ of the amplitude.
+the campaign $\beta/C_1 = 0.010$--$0.023$, i.e.\ $|\dtc| = 2$--$4$
+ms.
 
 Then, because the minimiser in (2) is at least as good as this one
 particular shifted branch,
@@ -474,10 +486,11 @@ fifth order in the shift, because the branch leaves the baseline only
 quadratically ($\cosh - 1 \approx C_2^2u^2/2$, squared $\to u^4$).
 Bounding instead by (segment sup)$\times$(length) would give
 $|\dtc|^5/4$ --- the exact integral is a factor $\sqrt5\approx2.2$
-tighter. Evaluated with the a priori $|\dtc|$ from (9) and
-$e_\omega(\tau_{\rm end}) \le E(\tau_{\rm end})$:
-$\Delta_{\rm pre} = 0.025^\circ$/s at $\Mdot = 0.10$ and under
-$0.005$ above $0.30$ N\,m/s.
+tighter. (The branch amplitude is $R \le C_1$; using $C_1$ in (18)
+errs on the high side.) Evaluated with the a priori $|\dtc|$ from (9)
+and $e_\omega(\tau_{\rm end}) \le E(\tau_{\rm end})$:
+$\Delta_{\rm pre} = 0.036^\circ$/s at $\Mdot = 0.10$, $0.011$ at
+$0.20$, and below $0.006$ beyond.
 
 \section{The noise term}
 
@@ -542,8 +555,8 @@ measured & used\\
 N\,m/s & $^\circ$/s & $^\circ$/s & $^\circ$/s & $^\circ$/s &
 $^\circ$/s & \\
 \midrule
-$0.10$ & $0.501$ & $0.025$ & $1.064$ & $1.56$ & $0.987$ & $0.63$\\
-$0.20$ & $0.543$ & $0.010$ & $1.050$ & $1.59$ & $0.964$ & $0.60$\\
+$0.10$ & $0.512$ & $0.036$ & $1.064$ & $1.58$ & $0.987$ & $0.63$\\
+$0.20$ & $0.544$ & $0.011$ & $1.050$ & $1.59$ & $0.964$ & $0.60$\\
 $0.30$ & $0.599$ & $0.006$ & $1.059$ & $1.66$ & $1.014$ & $0.61$\\
 $0.45$ & $0.698$ & $0.004$ & $0.993$ & $1.69$ & $0.947$ & $0.56$\\
 $0.65$ & $0.764$ & $0.002$ & $1.080$ & $1.84$ & $1.084$ & $0.59$\\
@@ -587,7 +600,12 @@ using $\Mdot/C_1 = Wz_{CoM}$ and $E(\tau_{\rm end}) =
 threshold by at most the window-averaged remainder --- the same
 $\rbar$ the manuscript already budgets --- and measured it uses
 $0.36$--$1.85$ mN\,m of the $\approx12$ allowed, the sign lowering
-$M_{\rm crit}$ (earlier onset).
+$M_{\rm crit}$ (earlier onset). (The chain's middle step is the
+first-order $|\dtc|$; exactly,
+$|\dtc| = \operatorname{artanh}(\beta/C_1)/C_2$, so the ceiling
+acquires a factor $\operatorname{artanh}(u)/u$ with $u = \beta/C_1$:
+$1.0002$ on the campaign ($u \le 0.023$), up to $1.13$ at the
+design-box corner of Sec.~9 where $u$ reaches $0.66$.)
 
 \section{The bound over the design box}
 
@@ -609,7 +627,9 @@ rates, median $0.50$--$0.72$. The band is set by the ratio
 $\mathrm{arm}/z_{CoM}$ --- worst at arm $0.160$ m with
 $z_{CoM} = 0.20$ m, best at arm $0.090$ m with $0.30$ m.
 \emph{(b)} the critical-moment shift $\Mdot|\dtc|$ of (21):
-$5.8$--$11.9$ mN\,m, hugging its ceiling $\rbar$ from below and flat
+$6.0$--$12.5$ mN\,m, tracking its ceiling $\rbar$ and exceeding it
+by at most $12\%$ at the slow-ramp corner --- the
+$\operatorname{artanh}(u)/u$ factor of the exact shift --- while flat
 in $\Mdot$ by the cancellation. Its worst corner has the
 \emph{opposite} $z$ direction --- $m = 3.22$ kg, arm $0.160$ m,
 $z_{CoM} = 0.30$ m --- because $\rbar$ grows with the window that a
@@ -623,9 +643,10 @@ $0.33$--$1.11^\circ$/s everywhere in the box --- below the measured
 disturbance floor of $\approx1^\circ$/s at almost every corner --- so
 the fit-quality gate can be set from the noise figure alone for any
 vehicle in this class. And the identification error from the absorbed
-onset shift never exceeds $11.9$ mN\,m anywhere in the box, at any
-rate: the $\rbar$ budget of the manuscript holds with the same
-flatness in $\Mdot$ that the campaign shows.
+onset shift never exceeds $12.5$ mN\,m anywhere in the box, at any
+rate --- within $12\%$ of the $\rbar$ budget at the worst corner and
+inside it everywhere else --- with the same flatness in $\Mdot$ that
+the campaign shows.
 
 \section*{Reproduction}
 

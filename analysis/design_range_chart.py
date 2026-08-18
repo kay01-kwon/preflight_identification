@@ -78,7 +78,7 @@ def combo(m, lp, poff, z, md):
         + (1.0 / 5.0) * BETA_M * dmw * PHI
     c1 = md / wz
     beta = rb / (jp * c2)
-    dt = np.arcsinh(beta / c1) / c2
+    dt = np.arctanh(min(beta / c1, 0.99)) / c2
     a = c2 * dt
     I = 1.5 * dt + np.sinh(2 * a) / (4 * c2) - 2 * np.sinh(a) / c2
     dpre = c1 * np.sqrt(max(I, 0.0) / T)
@@ -160,8 +160,8 @@ def main():
     a2.set_ylabel(r'$|\Delta M_{\rm crit}|$ [mN m]', fontsize=10)
     a2.set_ylim(0, hi(ceil).max() * 1.18)
     a2.set_title('(b) critical-moment shift from the absorbed onset '
-                 'shift\nagainst its ceiling $\\bar\\rho$; flat in '
-                 '$\\dot M$ by the cancellation of (21)', fontsize=11)
+                 'shift\nvs its ceiling $\\bar\\rho$; exact artanh form '
+                 'exceeds it $\\leq$12% at the slow corner', fontsize=11)
     a2.legend(fontsize=9, loc='center right')
     a2.grid(alpha=0.22, lw=0.4)
 
