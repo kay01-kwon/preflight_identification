@@ -537,6 +537,31 @@ $1/7$ and $1/5$: the forcing is largest exactly where the pinned
 response is smallest --- at the window end the boundary zero sits
 right under the peak of the load.
 
+\emph{A one-line version, in the spirit of (85).} The limits are
+also \emph{ceilings}: $M_2(x)$ and $M_1(x)$ approach $1/12$ and
+$1/(2e)$ from below (verified numerically over $x \in [0.05, 12]$ to
+grid precision), so (17) may be quoted $x$-free,
+\begin{equation*}
+  |\de| \;\le\;
+  \frac{\dot\rho_2/12 \;+\; \dot\rho_1/(2e)}{Wz_{CoM}} ,
+\end{equation*}
+with no $M$ curves, no window length, and no $C_2$ beyond what sits
+inside $\dot\rho_{1,2}$ --- exactly as (85) trades the exact
+remainder for $\tfrac12 G''(0)\varphi^2$. Rerun on the $140$ runs,
+the constant version costs at most $16\%$ on the worst run ($0.2$--$7\%$
+in the per-rate mean, largest at the fastest ramps where $x$ is
+smallest), keeps $140/140$ coverage, and the worst-run used fraction
+rises only to $0.84$. Note where the simplification is \emph{not}
+available: the channel amplitudes $\dot\rho_{1,2}$ are already the
+$\varphi^\ast = 0$ worst-case Taylor coefficients of (85) --- nothing
+further to drop there --- and the time \emph{shape} behind $M_2, M_1$
+(the forcing concentrated at the window end as $e^{2C_2(s-\tau_{\rm
+end})}$) cannot be dropped at all: against a constant-in-time forcing
+the comparison factor is $1 - \mathrm{sech}(x/2) = 0.4$--$0.9$, a
+factor $5$--$10$ above $1/12$, which is the loose bound this document
+exists to escape. The Taylor step simplifies the \emph{amplitude};
+the tightness lives in the \emph{shape}.
+
 \section{The pre-onset segment}
 
 \emph{Where the segment comes from.} By (9), $\dtc < 0$: the witness
