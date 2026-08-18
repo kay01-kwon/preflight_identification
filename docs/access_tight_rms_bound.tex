@@ -198,7 +198,14 @@ corner would have $u = 1.81$. So (9a) doubles as an analytical
 \emph{lower} rate limit for the protocol,
 $\Mdot > \rbar C_2 \approx 0.06$ N\,m/s --- about half the slowest
 campaign rate --- complementing the allocator-saturation \emph{upper}
-limit on $\Mdot$.
+limit on $\Mdot$. In practice the logic runs forward, and this is the
+intended reading: the guarantee fails \emph{only} there, and since
+$\rbar$ and $C_2$ need nothing but the coarse design-box ranges known
+before any experiment, one computes the box-worst
+$\rbar C_2 = 0.054$ N\,m/s in closed form first and then schedules
+the ramp rates above that floor with margin --- the campaign's
+$\Mdot \ge 0.10$ N\,m/s is a factor $\approx 2$ above it, giving
+$u \le 0.66$ everywhere in the box.
 
 Then, because the minimiser in (2) is at least as good as this one
 particular shifted branch,
