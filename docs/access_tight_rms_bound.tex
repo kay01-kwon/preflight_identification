@@ -461,9 +461,38 @@ the scale, $J_P$ from CAD, $l_{\rm arm}$ from geometry,
 $\varphi_{\max}$ the design box, $\beta_M$ from the GE model, $\Mdot$
 and the window from the protocol.
 
+\emph{What ``decays like'' means --- the bridge from (16) to (16a).}
+Nothing in the window decreases with time: $\varphi$ and $\omega$
+both grow. The decay is the same fact read \emph{backwards from the
+window end} --- the claim under each brace of (16) is
+\begin{equation*}
+  |\dot\rho_{\rm channel}(s)| \;\le\;
+  |\dot\rho_{\rm channel}(\tau_{\rm end})|\;
+  e^{kC_2(s-\tau_{\rm end})},
+  \qquad s \le \tau_{\rm end},\ \ k \in \{2, 1\},
+\end{equation*}
+where the exponential factor is $< 1$ because $s - \tau_{\rm end} <
+0$: at earlier times the forcing sits below its end value by at least
+that factor. This is the form the comparison problem of Step 6
+consumes --- a peak at the end with a known fall-off behind it.
+Divide both sides by $e^{kC_2 s}$ and the claim becomes
+$|\dot\rho(s)|/e^{kC_2 s} \le |\dot\rho(\tau_{\rm end})|/
+e^{kC_2\tau_{\rm end}}$ --- i.e.\ \emph{the ratio
+$|\dot\rho(s)|/e^{kC_2 s}$ is nondecreasing in $s$}. That is why
+(16a) is a statement about ratios. And because each channel is a
+\emph{product} of trajectory factors,
+$\dot\rho/e^{kC_2 s}$ factors as a product of single-factor ratios
+($\varphi\omega/e^{2C_2 s} = [\varphi e^{-C_2 s}][\omega e^{-C_2
+s}]$), a product of nonnegative nondecreasing functions is
+nondecreasing, and the exponent $k$ in (16) is literally a
+\emph{count of trajectory factors}: two in $\varphi\,\omega$
+($k = 2$), one in each ground-effect term ($k = 1$).
+
 \emph{Step 5$'$ --- the decays marked in (16) are theorems, not
-observations.} Along the nominal trajectory, write $a = C_2 s$. The
-two ratios that control every channel are nondecreasing in $s$, and
+observations.} Along the nominal trajectory, write $a = C_2 s$. By
+the bridge above, it suffices that each factor's $e^{C_2 s}$-ratio is
+nondecreasing; the first ratio of (16a) certifies the factor
+$\omega e^{-C_2 s}$, the second certifies $\varphi e^{-C_2 s}$, and
 both facts are one line each:
 \begin{equation}
   \frac{\omega_{\rm nom}(s)}{C_1\,e^{C_2 s}}
