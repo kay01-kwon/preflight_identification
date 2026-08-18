@@ -207,6 +207,32 @@ the ramp rates above that floor with margin --- the campaign's
 $\Mdot \ge 0.10$ N\,m/s is a factor $\approx 2$ above it, giving
 $u \le 0.66$ everywhere in the box.
 
+\emph{Could the family be composed so the problem never arises?}
+Partly, and where it splits is instructive. Replace the shifted-cosh
+family (2) by its linear span, fitting
+$\hat\omega = A(\cosh C_2\tau - 1) + B\sinh C_2\tau + C$: the witness
+$\omega_{\rm nom} + \beta\sinh(C_2\tau)$ is then a member for
+\emph{every} $\beta$ (take $A = C_1$, $B = \beta$, $C = b$), so the
+argmin step (10) holds unconditionally and admissibility disappears
+from the residual cap altogether. The added column is no stranger:
+$\sinh$ is exactly the tangent direction of the time shift
+($\partial_{\dtc}$ of the branch at $\dtc = 0$ is $-C_1C_2\sinh$,
+Appendix~A.2), so this is the linearised version of the same
+estimator. The cost is one more degree of freedom in the noise term
+(minor) and a near-collinear pair of columns --- $\cosh-1$ and
+$\sinh$ agree to $O(e^{-2x})$ at the window end --- so the residual
+stays clean while the individual coefficients $A, B$ get noisy: the
+ridge of Sec.~4, resurfacing as conditioning. What \emph{cannot} be
+designed away is the readout. Converting $(A,B)$ back into an onset
+time needs $R = \sqrt{A^2 - B^2}$ real, i.e.\ $|B| < A$ --- the very
+same condition, now appearing where it belongs. $u < 1$ is not an
+artifact of the cosh parametrisation; it is the statement that the
+data actually describes a delayed cosh onset rather than a sinh-type
+curve, and no reparametrisation makes data interpretable that is not.
+The practical split: the linear family buys an \emph{unconditional}
+residual cap, and $u < 1$ then governs only whether the fitted curve
+has a physical onset to read off.
+
 Then, because the minimiser in (2) is at least as good as this one
 particular shifted branch,
 \begin{equation}
