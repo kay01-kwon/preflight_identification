@@ -13,6 +13,7 @@
 \usepackage{amsmath,amssymb,booktabs,graphicx,array}
 \setlength{\parskip}{0.35em}\setlength{\parindent}{0pt}
 \newcommand{\Mdot}{\dot M}
+\newcommand{\xe}{x_{\mathrm{end}}}
 \newcommand{\rbar}{\bar\rho}
 \newcommand{\rms}{\mathrm{RMS}}
 \newcommand{\dtc}{\delta t_c}
@@ -29,7 +30,7 @@ section}
 \begin{tabular}{@{}>{$}l<{$}l@{\qquad}>{$}l<{$}l@{}}
 \toprule
 \tau,\ \tau_{\rm end} & time since onset; window end &
-  x & $= C_2\tau_{\rm end}$, dimensionless window\\
+  \xe  & $= C_2\tau_{\rm end}$, dimensionless window\\
 y_i & measured rate at $\tau_i$ &
   N & number of samples in the window\\
 C_1, C_2 & nominal amplitude $K\Mdot$ and exponent &
@@ -47,7 +48,7 @@ C & fitted baseline (pre-onset median) &
   \rbar & window average bound on $\rho$, eq.\ (91)\\
 \dot\rho & its time derivative &
   \varphi_{\max} & $10^\circ$ design box\\
-\omega_{\max} & nominal peak rate $K\Mdot\sinh x$ &
+\omega_{\max} & nominal peak rate $K\Mdot\sinh \xe$ &
   l_{\rm arm},\ \beta_M & pivot arm; GE coefficient\\
 \Delta M_{\rm win} & in-window moment excursion &
   E(\tau) & envelope $\rbar\sinh(C_2\tau)/(J_PC_2)$, eq.\ (90)\\
@@ -179,7 +180,7 @@ of the instability than the window-averaged remainder}. (An
 \emph{e-folding} is the natural unit of an exponential process: the
 interval over which $e^{C_2\tau}$ grows by a factor $e$, i.e.\
 $1/C_2 \approx 0.2$ s here --- the base-$e$ analogue of a half-life.
-$x = C_2\tau_{\rm end}$ counts how many such units the window spans;
+$\xe  = C_2\tau_{\rm end}$ counts how many such units the window spans;
 this document measures time in $1/C_2$ throughout, because in that
 unit the same formulas give the same numbers for every vehicle and
 ramp rate.) A protocol
@@ -244,7 +245,7 @@ $\sinh$ is exactly the tangent direction of the time shift
 Appendix~A.2), so this is the linearised version of the same
 estimator. The cost is one more degree of freedom in the noise term
 (minor) and a near-collinear pair of columns --- $\cosh-1$ and
-$\sinh$ agree to $O(e^{-2x})$ at the window end --- so the residual
+$\sinh$ agree to $O(e^{-2\xe})$ at the window end --- so the residual
 stays clean while the individual coefficients $A, B$ get noisy: the
 ridge of Sec.~4, resurfacing as conditioning. What \emph{cannot} be
 designed away is the readout. Converting $(A,B)$ back into an onset
@@ -423,14 +424,14 @@ $\bar f = \sup|\dot\rho|$, substitution verifies
 \begin{equation}
   w(\tau) \;=\; \frac{\sup|\dot\rho|}{J_PC_2^2}
   \left(1 - \frac{\cosh\!\big(C_2(\tau - \tfrac{\tau_{\rm end}}2)\big)}
-  {\cosh(x/2)}\right)
+  {\cosh(\xe/2)}\right)
   \;\le\; \frac{\sup|\dot\rho|}{Wz_{CoM}} .
   \tag{15}
 \end{equation}
-(Here $x = C_2\tau_{\rm end}$: at $\tau = 0$ and $\tau = \tau_{\rm end}$
-the numerator equals $\cosh(x/2)$, so the bracket vanishes at both ends;
+(Here $\xe  = C_2\tau_{\rm end}$: at $\tau = 0$ and $\tau = \tau_{\rm end}$
+the numerator equals $\cosh(\xe/2)$, so the bracket vanishes at both ends;
 it peaks at mid-window, where the bound is
-$(1-\operatorname{sech}(x/2))\sup|\dot\rho|/Wz_{CoM}$.)
+$(1-\operatorname{sech}(\xe/2))\sup|\dot\rho|/Wz_{CoM}$.)
 \textbf{No exponential appears.} The envelope (90) grows like
 $\sinh(C_2\tau)$ because nothing stops the unstable mode of (12);
 here the two boundary zeros of (11) --- one free, one bought with
@@ -452,7 +453,7 @@ $\rbar$ (91) already uses ($Wz_{CoM}(\sin\varphi-\varphi) \le 0$
 there), and it is exactly what the manuscript's (85) says at
 $\varphi^\ast = 0$: $G''(0) = W(l_p + p_{\rm off})$, the
 $Wz_{CoM}\sin\varphi^\ast$ term vanishing. Bounding on the $10^\circ$
-box, with $\omega_{\max} = K\Mdot\sinh x$:
+box, with $\omega_{\max} = K\Mdot\sinh \xe$:
 \begin{equation}
   \sup|\dot\rho| \;\le\;
   \underbrace{W l_{\rm arm}\varphi_{\max}\,
@@ -508,17 +509,17 @@ envelope to encode the fall-off \emph{behind} the peak --- exactly
 what the backward rate is, and exactly what a constant
 (sup-only) envelope discards at a cost of $8$--$12\times$. Third,
 only the end-anchored coordinate $u = C_2(s - \tau_{\rm end}) \in
-[-x, 0]$ makes the comparison problem forget the window length: as
-$x \to \infty$ the end neighbourhood is fixed and only the onset
-recedes, which is why the $x$-free constants $1/12$ and $1/(2e)$
+[-\xe, 0]$ makes the comparison problem forget the window length: as
+$\xe  \to \infty$ the end neighbourhood is fixed and only the onset
+recedes, which is why the $\xe$-free constants $1/12$ and $1/(2e)$
 exist at all; in an onset-anchored coordinate the peak would move
-with $x$ and no such constants would emerge. Last, the instability
+with $\xe$ and no such constants would emerge. Last, the instability
 has one clock, $1/C_2$, and everything that matters happens in the
 last few e-foldings before $\tau_{\rm end}$: \emph{measured from the
 end, all windows look alike}. That statement is the coordinate
 version of the rate-flatness of the residual --- the ramp rate only
-moves the onset distance $x$, and the end neighbourhood forgets
-$x$.
+moves the onset distance $\xe$, and the end neighbourhood forgets
+$\xe$.
 
 \emph{Step 5$'$ --- the decays marked in (16) are theorems, not
 observations.} Along the nominal trajectory, write $a = C_2 s$. By
@@ -535,7 +536,7 @@ both facts are one line each:
   = e^{-a}\big(a - 1 + e^{-a}\big) \;\ge\; 0,
   \tag{16a}
 \end{equation}
-the first read off directly, the second because $e^{-x}\ge 1-x$; the
+the first read off directly, the second because $e^{-t}\ge 1-t$; the
 bracket in the second is $\varphi_{\rm nom}\,C_2 e^{-C_2 s}/C_1$, so
 $\varphi_{\rm nom}e^{-C_2 s}$ is nondecreasing too. Now every channel
 of $\dot\rho$ is a product of positive factors whose
@@ -570,14 +571,14 @@ $\dot\rho$.} The forcing is not constant: it peaks at the window end
 and decays backwards as marked in (16) and proved in Step 5$'$.
 So solve (14) once for each shape at unit peak --- the same two-line
 comparison applies, and the solutions are still elementary. In the
-scaled variable $u = C_2(\tau - \tau_{\rm end}) \in [-x, 0]$, for the
+scaled variable $u = C_2(\tau - \tau_{\rm end}) \in [-\xe, 0]$, for the
 forcing $e^{2C_2(\tau-\tau_{\rm end})} = e^{2u}$:
 \begin{equation}
   w_2(\tau) \;=\; \frac{\dot\rho_2}{J_PC_2^2}\cdot\frac13
-  \left[\frac{\sinh(u+x)}{\sinh x}
-  + e^{-2x}\,\frac{\sinh(-u)}{\sinh x} - e^{2u}\right],
+  \left[\frac{\sinh(u+\xe)}{\sinh \xe}
+  + e^{-2\xe}\,\frac{\sinh(-u)}{\sinh \xe} - e^{2u}\right],
   \qquad
-  M_2(x) \;\triangleq\; \max_{u\in[-x,0]}\frac13\big[\,\cdots\big] ,
+  M_2(\xe) \;\triangleq\; \max_{u\in[-\xe,0]}\frac13\big[\,\cdots\big] ,
   \tag{17a}
 \end{equation}
 and for the forcing $e^{C_2(\tau-\tau_{\rm end})} = e^{u}$, which is
@@ -585,15 +586,15 @@ and for the forcing $e^{C_2(\tau-\tau_{\rm end})} = e^{u}$, which is
 particular solution carries a factor of $u$:
 \begin{equation}
   w_1(\tau) \;=\; \frac{\dot\rho_1}{J_PC_2^2}
-  \left[\frac{x}{2}\,\frac{\sinh(u+x)}{\sinh x}
-  - \frac{(u+x)\,e^{u}}{2}\right],
+  \left[\frac{\xe}{2}\,\frac{\sinh(u+\xe)}{\sinh \xe}
+  - \frac{(u+\xe)\,e^{u}}{2}\right],
   \qquad
-  M_1(x) \;\triangleq\; \max_{u\in[-x,0]}\big[\,\cdots\big] .
+  M_1(\xe) \;\triangleq\; \max_{u\in[-\xe,0]}\big[\,\cdots\big] .
   \tag{17b}
 \end{equation}
 \emph{Where the two forms come from --- construction, not guess.} In
 the scaled variable the comparison problem reads $w'' - w =
--\kappa\,g(u)$, $w(-x) = w(0) = 0$, with $\kappa =
+-\kappa\,g(u)$, $w(-\xe) = w(0) = 0$, with $\kappa =
 \dot\rho_i/(J_PC_2^2)$, one shape $g$ at a time. Three moves each.
 \emph{Particular solution:} for $g = e^{2u}$ try $Ae^{2u}$:
 $(2^2 - 1)A = -\kappa$, so $A = -\kappa/3$ --- the $1/3$ is the
@@ -601,32 +602,32 @@ distance to resonance. For $g = e^{u}$ the same try fails,
 $(1^2 - 1)A = 0$: the forcing decays at the operator's own rate, so
 carry a factor $u$, $w_p = -(\kappa/2)\,u e^{u}$, since
 $(ue^u)'' - ue^u = 2e^u$ --- this extra $u$ is why $M_1 > M_2$.
-\emph{Homogeneous corrections in the endpoint basis:} $\sinh(u+x)$
-vanishes at $u = -x$ and $\sinh(-u)$ vanishes at $u = 0$, so each
+\emph{Homogeneous corrections in the endpoint basis:} $\sinh(u+\xe)$
+vanishes at $u = -\xe$ and $\sinh(-u)$ vanishes at $u = 0$, so each
 boundary condition sets one coefficient without disturbing the other:
-$u = 0$ gives $a\sinh x = \kappa/3$, $u = -x$ gives $b\sinh x =
-(\kappa/3)e^{-2x}$ --- that is (17a); for $e^{u}$, collecting the two
-$u$-terms into $-(u+x)e^{u}/2$ makes the zero at $u = -x$ visible ---
+$u = 0$ gives $a\sinh \xe  = \kappa/3$, $u = -\xe$ gives $b\sinh \xe  =
+(\kappa/3)e^{-2\xe}$ --- that is (17a); for $e^{u}$, collecting the two
+$u$-terms into $-(u+\xe)e^{u}/2$ makes the zero at $u = -\xe$ visible ---
 that is (17b). \emph{Verification by substitution:} the $\sinh$'s are
 annihilated by the operator, the exponentials return the forcing, and
 both brackets vanish at both ends --- the two boundary zeros of (14).
-Their maxima barely depend on $x$ and tend to simple constants,
+Their maxima barely depend on $\xe$ and tend to simple constants,
 \begin{equation}
-  M_2(x)\to\tfrac1{12},
+  M_2(\xe)\to\tfrac1{12},
   \qquad
-  M_1(x)\to\tfrac1{2e},
+  M_1(\xe)\to\tfrac1{2e},
   \qquad\text{so}\qquad
   |\de| \;\le\; \frac{M_2\dot\rho_2 + M_1\dot\rho_1}{Wz_{CoM}} .
   \tag{17}
 \end{equation}
-The limits are one-line maximisations: as $x \to \infty$,
-$\sinh(u+x)/\sinh x \to e^{u}$ and the $e^{-2x}$ term dies, so the
+The limits are one-line maximisations: as $\xe  \to \infty$,
+$\sinh(u+\xe)/\sinh \xe  \to e^{u}$ and the $e^{-2\xe}$ term dies, so the
 bracket of (17a) tends to $(e^{u} - e^{2u})/3 = (v - v^2)/3$ with
 $v = e^{u} \in (0,1]$, maximised at $v = \tfrac12$ to $1/12$
 ($\ln 2$ e-foldings before the window end); the bracket of (17b)
 tends to $-(u/2)e^{u}$, maximised at $u = -1$ to $1/(2e)$ (one
 e-folding before the end). (Over the campaign range
-$x = 1.9$--$3.7$: $M_2 = 0.074$--$0.083$, $M_1 = 0.141$--$0.181$;
+$\xe  = 1.9$--$3.7$: $M_2 = 0.074$--$0.083$, $M_1 = 0.141$--$0.181$;
 the script evaluates (17a)--(17b) exactly.)
 The interpretation is the same as the manuscript's reduction factors
 $1/7$ and $1/5$: the forcing is largest exactly where the pinned
@@ -634,9 +635,9 @@ response is smallest --- at the window end the boundary zero sits
 right under the peak of the load.
 
 \emph{A one-line version, in the spirit of (85).} The limits are
-also \emph{ceilings}: $M_2(x)$ and $M_1(x)$ approach $1/12$ and
-$1/(2e)$ from below (verified numerically over $x \in [0.05, 12]$ to
-grid precision), so (17) may be quoted $x$-free,
+also \emph{ceilings}: $M_2(\xe)$ and $M_1(\xe)$ approach $1/12$ and
+$1/(2e)$ from below (verified numerically over $\xe  \in [0.05, 12]$ to
+grid precision), so (17) may be quoted $\xe$-free,
 \begin{equation*}
   |\de| \;\le\;
   \frac{\dot\rho_2/12 \;+\; \dot\rho_1/(2e)}{Wz_{CoM}} ,
@@ -645,7 +646,7 @@ with no $M$ curves, no window length, and no $C_2$ beyond what sits
 inside $\dot\rho_{1,2}$ --- exactly as (85) trades the exact
 remainder for $\tfrac12 G''(0)\varphi^2$. Rerun on the $140$ runs,
 the constant version costs at most $15\%$ on the worst run ($0.2$--$7\%$
-in the per-rate mean, largest at the fastest ramps where $x$ is
+in the per-rate mean, largest at the fastest ramps where $\xe$ is
 smallest), keeps $140/140$ coverage, and the worst-run used fraction
 rises only to $0.86$. Note where the simplification is \emph{not}
 available: the channel amplitudes $\dot\rho_{1,2}$ are already the
@@ -653,7 +654,7 @@ $\varphi^\ast = 0$ worst-case Taylor coefficients of (85) --- nothing
 further to drop there --- and the time \emph{shape} behind $M_2, M_1$
 (the forcing concentrated at the window end as $e^{2C_2(s-\tau_{\rm
 end})}$) cannot be dropped at all: against a constant-in-time forcing
-the comparison factor is $1 - \mathrm{sech}(x/2) = 0.4$--$0.9$, a
+the comparison factor is $1 - \mathrm{sech}(\xe/2) = 0.4$--$0.9$, a
 factor $5$--$10$ above $1/12$, which is the loose bound this document
 exists to escape. The Taylor step simplifies the \emph{amplitude};
 the tightness lives in the \emph{shape}.
@@ -836,7 +837,7 @@ move --- so the theory \emph{predicts} a rate-flat residual, and the
 data agrees: the measured $\rms(r)$ stays at $0.95$--$1.08^\circ$/s
 across a twelvefold change in $\Mdot$ (correlation with $\Mdot$:
 $r = +0.09$, $p = 0.31$). The envelope (90), which grows like
-$\sinh x$, bounds $e_\omega$ --- not the residual --- and comparing
+$\sinh \xe$, bounds $e_\omega$ --- not the residual --- and comparing
 the residual against it is what made the old cap look loose.
 
 \emph{How far the shift moves the critical moment.} The absorbed shift
@@ -844,14 +845,14 @@ is (9), and the moment error it causes cancels $\Mdot$ exactly:
 \begin{equation}
   \big|\Delta M_{\rm crit}\big| \;=\; \Mdot\,|\dtc|
   \;\approx\; \Mdot\cdot
-  \frac{e_\omega(\tau_{\rm end})}{C_1C_2\sinh x}
-  \;=\; \frac{Wz_{CoM}\,e_\omega(\tau_{\rm end})}{C_2\sinh x}
-  \;\le\; \frac{Wz_{CoM}\,E(\tau_{\rm end})}{C_2\sinh x}
+  \frac{e_\omega(\tau_{\rm end})}{C_1C_2\sinh \xe}
+  \;=\; \frac{Wz_{CoM}\,e_\omega(\tau_{\rm end})}{C_2\sinh \xe}
+  \;\le\; \frac{Wz_{CoM}\,E(\tau_{\rm end})}{C_2\sinh \xe}
   \;=\; \rbar ,
   \tag{21}
 \end{equation}
 using $\Mdot/C_1 = Wz_{CoM}$ and $E(\tau_{\rm end}) =
-\rbar\sinh x/(J_PC_2)$. So the shift can displace the identified
+\rbar\sinh \xe/(J_PC_2)$. So the shift can displace the identified
 threshold by at most the window-averaged remainder --- the same
 $\rbar$ the manuscript already budgets --- and measured it uses
 $0.36$--$1.85$ mN\,m of the $\approx12$ allowed, the sign lowering
@@ -872,7 +873,7 @@ $p_{\rm off} = \pm0.020$ m (arm $= l_p - p_{\rm off}$),
 $z_{CoM} = 0.20$--$0.30$ m, $J_{CoM} = 0.050$ kg\,m$^2$ with $J_P$ by
 the parallel-axis theorem, $600$ combinations at each of the seven
 rates, each with its own tilt-limited window
-($\sinh x - x = \varphi_{\max}Wz_{CoM}C_2/\Mdot$).
+($\sinh \xe- \xe  = \varphi_{\max}Wz_{CoM}C_2/\Mdot$).
 
 \begin{figure}[t]
 \centering
