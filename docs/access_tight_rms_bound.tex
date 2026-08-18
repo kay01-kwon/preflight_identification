@@ -84,9 +84,22 @@ Subtracting (2) from (1) with (3),
   \tag{4}
 \end{equation}
 The question is how much of the braced part a member of the family
-can match. Add and subtract one $\sinh$ term --- this \emph{defines}
-$\de$, and the equality holds at every $\tau$, both window ends
-included:
+can match. Why a $\sinh$ term, of all shapes? Two facts meet. First,
+$e_\omega$ \emph{grows} like $\sinh$: its envelope (90) is
+$E(\tau) \propto \sinh(C_2\tau)$, because the deviation rides the
+instability's own growing mode --- so peeling off a $\sinh$ multiple
+targets the dominant part of the error. Second, $\sinh$ is exactly
+what the family can absorb: it is the tangent direction of the onset
+shift, $\partial_{\dtc}\,C_1(\cosh(C_2(\tau-\dtc))-1)\big|_{0} =
+-C_1C_2\sinh(C_2\tau)$, so adding $\beta\sinh$ lands inside the
+family (made exact in (6)--(7)). Had the envelope been, say,
+$\tau^2$-shaped, subtracting $\beta\tau^2$ would target the error
+just as well and help not at all --- the family could not represent
+it. The coincidence of the two --- the error's dominant shape
+\emph{is} the direction the fit can absorb --- is the entire reason
+the measured residuals sit flat. Add and subtract that one $\sinh$
+term --- this \emph{defines} $\de$, and the equality holds at every
+$\tau$, both window ends included:
 \begin{equation}
   C_1\big(\cosh(C_2\tau)-1\big) + e_\omega(\tau)
   \;=\;
