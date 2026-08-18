@@ -144,6 +144,30 @@ $\dtc < 0$: the branch starts \emph{earlier} than the true onset. On
 the campaign $\beta/C_1 = 0.010$--$0.023$, i.e.\ $|\dtc| = 2$--$4$
 ms.
 
+\emph{Admissibility --- why $|\beta| < C_1$ is guaranteed.} (7)
+needs $R$ real, i.e.\ $|\beta| < C_1$; otherwise the witness is not
+a cosh branch at all. This is provable, not assumed: the envelope (90)
+gives $|e_\omega(\tau_{\rm end})| \le
+\rbar\sinh(C_2\tau_{\rm end})/(J_PC_2)$, so
+$|\beta| \le \rbar/(J_PC_2)$, and dividing by $C_1 = \Mdot/Wz_{CoM}$
+with the identity $J_PC_2^2 = Wz_{CoM}$,
+\begin{equation}
+  \frac{|\beta|}{C_1} \;\le\; \frac{\rbar\,C_2}{\Mdot}
+  \;\triangleq\; u .
+  \tag{9a}
+\end{equation}
+So $|\beta| < C_1$ holds whenever $\rbar < \Mdot/C_2$ ---
+\emph{the ramp must sweep more moment in one e-folding time $1/C_2$
+of the instability than the window-averaged remainder}. A protocol
+that violated this would have its excitation comparable to the model
+error it is meant to dominate, so any meaningful design satisfies it
+with room: $u \le 0.59$ at the campaign's slowest ramp, $\le 0.66$
+at the worst design-box corner of Sec.~9, and the realised
+$\beta/C_1 = 0.010$--$0.023$ sits thirty times below the ceiling.
+The same $u$ is the argument of the $\operatorname{artanh}(u)/u$
+factor in (21): one dimensionless number controls both the witness's
+admissibility and the exactness of the shift ceiling.
+
 Then, because the minimiser in (2) is at least as good as this one
 particular shifted branch,
 \begin{equation}
@@ -604,8 +628,9 @@ $M_{\rm crit}$ (earlier onset). (The chain's middle step is the
 first-order $|\dtc|$; exactly,
 $|\dtc| = \operatorname{artanh}(\beta/C_1)/C_2$, so the ceiling
 acquires a factor $\operatorname{artanh}(u)/u$ with $u = \beta/C_1$:
-$1.0002$ on the campaign ($u \le 0.023$), up to $1.13$ at the
-design-box corner of Sec.~9 where $u$ reaches $0.66$.)
+$1.0002$ on the campaign (realised $u \le 0.023$), up to $1.13$ at
+the design-box corner of Sec.~9 where the a priori $u$ of (9a)
+reaches $0.66$.)
 
 \section{The bound over the design box}
 
