@@ -144,6 +144,76 @@ particular shifted branch,
 \end{equation}
 Everything now rests on one question: \textbf{how big is $\de$?}
 
+\section{In exactly what sense the true curve is a time-shifted
+nominal}
+
+The ansatz of (5) deserves a precise statement, because ``the true
+model is the nominal, time-shifted'' is true in one sense, exactly, and
+false in another, and the gap between the two \emph{is} $\de$.
+
+\emph{The local (osculating) sense --- exact at every instant.}
+Splitting the manuscript's Duhamel kernel (89) with the addition
+identity gives the deviation two running coefficients,
+\begin{equation}
+  e_\omega(\tau) = A(\tau)\cosh(C_2\tau) - B(\tau)\sinh(C_2\tau),
+  \quad
+  A = \frac1{J_P}\!\int_0^\tau\!\cosh(C_2 s)\rho\,ds,
+  \quad
+  B = \frac1{J_P}\!\int_0^\tau\!\sinh(C_2 s)\rho\,ds,
+  \tag{10a}
+\end{equation}
+so the true structural curve is
+$(C_1{+}A)\cosh(C_2\tau) - B\sinh(C_2\tau) - C_1$. Freezing the
+coefficients at an instant $\tau$ and applying the shift identity (6)
+backwards, the curve agrees there --- in value \emph{and} slope ---
+with exactly one branch, the \emph{osculating branch}, whose
+parameters are
+\begin{equation}
+  R(\tau) = \sqrt{\big(C_1{+}A(\tau)\big)^2 - B(\tau)^2},
+  \qquad
+  \tanh\!\big(C_2\,\delta t_{\rm loc}(\tau)\big)
+  = \frac{B(\tau)}{C_1 + A(\tau)} .
+  \tag{10b}
+\end{equation}
+At the onset $A = B = 0$, so $R = C_1$ and $\delta t_{\rm loc} = 0$:
+\textbf{the true curve starts as the nominal, exactly.} As the window
+progresses the osculating parameters drift monotonically (measured on
+the exact tip-over: $\delta t_{\rm loc} = 0$ at the onset, still only
+$2.5$/$0.4$/$0.1$ ms at mid-window for $\Mdot = 0.10$/$0.45$/$1.20$,
+then $546$/$239$/$85$ ms at the window end, with
+$R(\tau_{\rm end})/C_1 = 13.0$/$3.1$/$1.5$). The late blow-up is
+structural: $e_\omega$'s tail grows like $e^{2C_2\tau}$, faster than
+any branch, so the branch that hugs it must run away in amplitude and
+shift together --- and those two parameters are ridge-degenerate,
+wildly different $(R, \delta t)$ pairs drawing nearly the same curve
+over the window. This is the same degeneracy that makes
+$(C_1^*, C_2^*, \dtc^*)$ unidentifiable from the residual.
+
+\emph{The window ($L^2$) sense --- the estimator's sense.} No single
+branch can follow the drifting profile (10b); a fit must pick one
+point of it. The least-squares stationarity
+$\langle r, \sinh\rangle = 0$ weights the choice by $\sinh^2(C_2\tau)$,
+which concentrates $63\%$ of its mass in the last e-folding
+$1/(2C_2) \approx 90$--$140$ ms of the window ($86\%$ in the last
+two), so the fitted single shift is essentially the end-matching one
+of (9) --- and it is \emph{small}: $\beta/C_1 = 1.0$--$2.3\%$, i.e.\
+$|\dtc| = 2$--$4$ ms on the campaign. In this sense the true curve
+\emph{is} a slightly-shifted nominal: one branch, shifted by
+milliseconds, matches it over the whole window up to exactly $\de$ ---
+which vanishes at both ends and sags mid-window where the drifting
+profile is farthest from its end value. That sag is what (11)--(17)
+bound.
+
+One sign remark connects the two senses. The osculating description
+carries a \emph{larger} amplitude with a \emph{later} onset
+($\delta t_{\rm loc} > 0$); the witness of (9) carries the nominal
+amplitude with an \emph{earlier} onset ($\dtc < 0$). Along the ridge
+these describe nearly the same curve --- larger-and-later
+$\approx$ same-and-earlier --- and the deployed estimator, whose
+amplitude is pinned to $K\Mdot$, realises the earlier-onset
+representative: the sign observed on the campaign, and the sign whose
+$M_{\rm crit}$ cost (21) charges.
+
 \section{How big is $\de$: two boundary zeros and one comparison}
 
 \emph{Step 1 --- $\de$ vanishes at both ends.} At $\tau = 0$:
