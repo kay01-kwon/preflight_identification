@@ -586,11 +586,32 @@ too is $e^{C_2}$ class. For the \emph{nominal} trajectory the lemma
 is therefore exact, with no safety factor.
 
 \emph{Nominal to true.} The true trajectory multiplies each factor by
-$1 + O(e/\omega_{\rm nom})$. Measured on the exact nonlinear tip-over
-across the seven rates, the worst excess of a true ratio over its
-nominal bound is $2.6\%$, at the slowest ramp near the window end;
-the $1.05$ carried on $\dot\rho_2$ in (16) is that transfer
-allowance, held with double margin. The safety factor thus covers only
+$1 + \varepsilon(s)$ with $\varepsilon = e_\omega/\omega_{\rm nom}$
+(and its integral analogue on the $\varphi$ factor). Two facts keep
+this cheap. First, a \emph{constant} multiplier cancels in a ratio
+test --- numerator and anchor scale together --- so the envelope is
+harmed only by the \emph{variation} of $\varepsilon$ across the
+window, not its size. Second, $\varepsilon$ has an a priori ceiling
+in the same dimensionless number as (9a): dividing the envelope (90)
+by $\omega_{\rm nom}$,
+\begin{equation*}
+  \varepsilon(\tau) \;=\; \frac{e_\omega}{\omega_{\rm nom}}
+  \;\le\; \frac{\rbar\sinh(C_2\tau)/(J_PC_2)}
+  {C_1\big(\cosh(C_2\tau)-1\big)}
+  \;=\; u\,\coth\!\Big(\frac{C_2\tau}{2}\Big),
+\end{equation*}
+$u = \rbar C_2/\Mdot$ appearing for the third time. At the window end
+$\coth(\xe/2) = 1.05$--$1.4$, and inserting the \emph{realised}
+$\beta/C_1 = 0.010$--$0.023$ in place of the envelope gives
+$\varepsilon(\tau_{\rm end}) = (\beta/C_1)\coth(\xe/2) =
+1.4$--$2.4\%$. Measured on the exact nonlinear tip-over across the
+seven rates, the worst excess of a true ratio over its nominal bound
+is $2.6\%$, at the slowest ramp near the window end --- the formula's
+prediction, not a coincidence --- and the $1.05$ carried on
+$\dot\rho_2$ in (16) covers it with double margin. (A fully
+pre-experiment allowance is $1 + u\coth(\xe/2)$; tight at fast ramps,
+loose at the slowest where the envelope $u \le 0.59$ overstates the
+realised $\beta/C_1$ thirty-fold.) The safety factor thus covers only
 the nominal-to-true step --- the shape itself is proved.
 
 \emph{Step 6 (optional tightening, factor $8$) --- use the decay of
