@@ -919,6 +919,40 @@ orthogonal, so their RMS values add in quadrature:
 $\rms(n)^2 = \rms(n_{\rm hi})^2\big(1 + (s_{\rm med}\kappa_q)^2\big)$
 --- which is (19).
 
+\emph{Implementation, and the picture
+(Fig.~\ref{fig:spectrum}).} The split is a brick-wall FFT partition:
+remove the mean, zero the bins above $f_c$, invert --- so the two
+bands are \emph{exactly} orthogonal and the quadrature sum above is
+Parseval-clean. $\kappa_q$ applies the same partition to a quiet
+stretch \emph{of the same length as the window}, taken from the same
+record before the excitation; $s_{\rm med}$ is the campaign median of
+$\kappa_{\rm imp}/\kappa_q$, where $\kappa_{\rm imp} =
+\sqrt{\rms(r)^2 - \rms(n_{\rm hi})^2}/\rms(n_{\rm hi})$ is the
+low/high ratio the window itself implies. Fig.~\ref{fig:spectrum}(a)
+draws the construction on one run: the fitted branch tracks the
+record up to a few hertz and then plunges --- above the split it can
+produce nothing, so there the residual coincides with the record and
+is disturbance by construction; the quiet stretch sits below it with
+its own shape. Fig.~\ref{fig:spectrum}(b) shows the $113$ pairs
+$(\kappa_q, \kappa_{\rm imp})$ behind $s_{\rm med}$.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{fig_noise_spectrum.png}
+\caption{The spectral construction of (19). \emph{(a)} One run's
+amplitude spectra: the fitted branch (the model) collapses above a
+few hertz, so past the $5$ Hz split the residual coincides with the
+record --- pure disturbance, the anchor $n_{\rm hi}$; a quiet stretch
+of the same length gives the shape ratio $\kappa_q$. Spectra are
+Hann-tapered and zero-padded \emph{for display only} --- the numbers
+in (19) use the raw bins of the residual, where the branch has been
+subtracted and edge leakage cancels. \emph{(b)} The in-window implied
+ratio against the quiet ratio over the $113$ runs with a usable quiet
+stretch; the in-window disturbance is redder, by the campaign-median
+factor $s_{\rm med} = 1.60$.}
+\label{fig:spectrum}
+\end{figure}
+
 \emph{The cutoff is not delicate, and $k\sigma$ is what (19) already
 is.} Structurally (19) reads $k\cdot\sigma$ with
 $\sigma = \rms(n_{\rm hi})$ --- measured \emph{in the window}, in a
@@ -1071,6 +1105,7 @@ from the repository root:
 python analysis/failing_runs.py       DataSet/exp   # writes the cache
 python analysis/kernel_free_bound.py  docs/fig_kernel_free.png
 python analysis/design_range_chart.py docs/fig_design_range.png
+python analysis/noise_spectrum_figure.py docs/fig_noise_spectrum.png
 \end{verbatim}
 \texttt{kernel\_free\_bound.py} evaluates (16)--(20) per run against
 the campaign cache and draws Fig.~\ref{fig:check}
