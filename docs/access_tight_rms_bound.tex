@@ -979,8 +979,11 @@ band the model cannot contaminate --- and
 $k = \sqrt{1+(s_{\rm med}\kappa_q)^2} \approx 1.6$--$1.9$. The split
 frequency only defines that band, and any choice works that sits well
 above the model's spectral content $C_2/2\pi = 0.6$--$0.9$ Hz and
-leaves spectral bins on both sides ($f_c \gtrsim 2/(NT_s) \approx 3$
-Hz for the shortest windows): recomputing the entire check at
+leaves spectral bins on both sides (a \emph{bin} is one discrete
+frequency of the window's FFT, $f_k = k/T$, spaced $1/T \approx
+1.4$--$2.5$ Hz apart here --- the shortest windows have only two or
+three below $5$ Hz, hence $f_c \gtrsim 2/(NT_s) \approx 3$
+Hz): recomputing the entire check at
 $f_c = 2$, $3$ and $5$ Hz gives identical results ($140/140$ inside,
 mean used $0.57$--$0.58$), and only past $8$ Hz does the shrinking
 high band make the estimate noisy ($133/140$ at $8$, $129/140$ at
