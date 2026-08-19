@@ -691,6 +691,15 @@ distance to resonance. For $g = e^{u}$ the same try fails,
 $(1^2 - 1)A = 0$: the forcing decays at the operator's own rate, so
 carry a factor $u$, $w_p = -(\kappa/2)\,u e^{u}$, since
 $(ue^u)'' - ue^u = 2e^u$ --- this extra $u$ is why $M_1 > M_2$.
+(Where the $u$ comes from: the non-resonant recipe gives
+$e^{\lambda u}/(\lambda^2 - 1)$, which blows up as $\lambda \to 1$;
+subtracting the homogeneous $e^{u}$ first,
+$(e^{\lambda u} - e^{u})/(\lambda - 1) \cdot 1/(\lambda + 1) \to
+\partial_\lambda e^{\lambda u}\big|_{\lambda=1}\cdot\tfrac12 =
+\tfrac12\,u e^{u}$ --- the $u$ is the derivative left behind when two
+merging exponentials collide, and the $\tfrac12$ is
+$1/(\lambda+1)$ at $\lambda = 1$: the secular term of a resonantly
+driven system, in hyperbolic dress.)
 \emph{Homogeneous corrections in the endpoint basis:} $\sinh(u+\xe)$
 vanishes at $u = -\xe$ and $\sinh(-u)$ vanishes at $u = 0$, so each
 boundary condition sets one coefficient without disturbing the other.
