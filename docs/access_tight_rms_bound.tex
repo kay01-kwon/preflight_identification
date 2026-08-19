@@ -930,7 +930,19 @@ $\rms(n)^2 = \rms(n_{\rm hi})^2\big(1 + (s_{\rm med}\kappa_q)^2\big)$
 (Fig.~\ref{fig:spectrum}).} The split is a brick-wall FFT partition:
 remove the mean, zero the bins above $f_c$, invert --- so the two
 bands are \emph{exactly} orthogonal and the quadrature sum above is
-Parseval-clean. $\kappa_q$ applies the same partition to a quiet
+Parseval-clean. (Orthogonal in the plain vector sense:
+$\sum_i r_{{\rm lo},i}\,r_{{\rm hi},i} = 0$. The $N$ samples are a
+vector in $\mathbb R^N$, the FFT rewrites it in an orthogonal basis
+of sinusoids --- one basis direction per bin --- and the brick wall
+hands each direction \emph{wholly} to one band, so the two parts are
+built from disjoint coordinates and their dot product vanishes term
+by term; then $\|r\|^2 = \|r_{\rm lo}\|^2 + \|r_{\rm hi}\|^2$ with no
+cross term. Checked on all $140$ runs: the normalised inner product
+and the Pythagoras error are $6\times10^{-16}$, machine precision. A
+gradual filter would share the transition-band bins between the two
+parts: the same data under a Butterworth-like mask gives an inner
+product cosine of $0.47$ and a $19\%$ Pythagoras error --- the brick
+wall is what buys the equals sign.) $\kappa_q$ applies the same partition to a quiet
 stretch \emph{of the same length as the window}, taken from the same
 record before the excitation; $s_{\rm med}$ is the campaign median of
 $\kappa_{\rm imp}/\kappa_q$, where $\kappa_{\rm imp}$ is the low/high
