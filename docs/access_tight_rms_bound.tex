@@ -933,9 +933,23 @@ bands are \emph{exactly} orthogonal and the quadrature sum above is
 Parseval-clean. $\kappa_q$ applies the same partition to a quiet
 stretch \emph{of the same length as the window}, taken from the same
 record before the excitation; $s_{\rm med}$ is the campaign median of
-$\kappa_{\rm imp}/\kappa_q$, where $\kappa_{\rm imp} =
-\sqrt{\rms(r)^2 - \rms(n_{\rm hi})^2}/\rms(n_{\rm hi})$ is the
-low/high ratio the window itself implies. Two clarifications that
+$\kappa_{\rm imp}/\kappa_q$, where $\kappa_{\rm imp}$ is the low/high
+ratio the window itself implies --- and its definition is nothing but
+Pythagoras inverted. The partition is orthogonal, so
+$\rms(r)^2 = \rms(r_{\rm lo})^2 + \rms(r_{\rm hi})^2$ exactly; both
+$\rms(r)$ and $\rms(r_{\rm hi}) = \rms(n_{\rm hi})$ are already in
+hand, so no second measurement is needed:
+\begin{equation*}
+  \kappa_{\rm imp}
+  \;=\; \frac{\rms(r_{\rm lo})}{\rms(r_{\rm hi})}
+  \;=\; \frac{\sqrt{\rms(r)^2 - \rms(n_{\rm hi})^2}}
+             {\rms(n_{\rm hi})} .
+\end{equation*}
+One honest caveat, in the safe direction: $r_{\rm lo}$ contains the
+unabsorbed model remainder $\de$ as well as low-band disturbance, so
+$\kappa_{\rm imp}$ --- and with it $s_{\rm med}$ --- errs high: the
+enhancement conservatively charges any model leftover to the noise
+term's low band too, and the cap can only grow for it. Two clarifications that
 head off natural objections. \emph{No circularity:} $n_{\rm hi}$ is
 computed from the minimiser residual --- the same residual the cap
 bounds --- but above the split the fit can neither add nor remove
@@ -948,27 +962,37 @@ deliberately, since the in-window contact-borne disturbance runs $2$
 to $50$ times the quiet floor; amplitude from the window, shape from
 quiet, and $s_{\rm med}$ to correct the shape for the window.
 Fig.~\ref{fig:spectrum}(a)
-draws the construction on one run: the fitted branch tracks the
-record up to a few hertz and then plunges --- above the split it can
-produce nothing, so there the residual coincides with the record and
-is disturbance by construction; the quiet stretch sits below it with
-its own shape. Fig.~\ref{fig:spectrum}(b) shows the $113$ pairs
+shows the raw material itself --- the discrete FFT bins of one run's
+residual and quiet stretch, $\Delta f = 1/T$ apart, split at $f_c$
+with no taper and no padding: these bins are the exact objects the
+numbers of (19) sum over. Fig.~\ref{fig:spectrum}(b) draws the same
+run's smoothed spectra: the fitted branch tracks the record up to a
+few hertz and then plunges --- above the split it can produce
+nothing, so there the residual coincides with the record and is
+disturbance by construction; the quiet stretch sits below it with its
+own shape. Fig.~\ref{fig:spectrum}(c) shows the $113$ pairs
 $(\kappa_q, \kappa_{\rm imp})$ behind $s_{\rm med}$.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{fig_noise_spectrum.png}
-\caption{The spectral construction of (19). \emph{(a)} One run's
-amplitude spectra: the fitted branch (the model) collapses above a
-few hertz, so past the $5$ Hz split the residual coincides with the
-record --- pure disturbance, the anchor $n_{\rm hi}$; a quiet stretch
-of the same length gives the shape ratio $\kappa_q$. Spectra are
-Hann-tapered and zero-padded \emph{for display only} --- the numbers
-in (19) use the raw bins of the residual, where the branch has been
-subtracted and edge leakage cancels. \emph{(b)} The in-window implied
-ratio against the quiet ratio over the $113$ runs with a usable quiet
-stretch; the in-window disturbance is redder, by the campaign-median
-factor $s_{\rm med} = 1.60$.}
+\caption{The spectral construction of (19). \emph{(a)} The raw FFT
+bins of one run's residual and quiet stretch --- one bar per discrete
+frequency $f_k = k/T$, spacing $\Delta f = 1/T$, split at $f_c$ with
+no taper or padding: exactly the objects the numbers of (19) sum
+over, low band (dark) versus the anchor $n_{\rm hi}$ (light).
+\emph{(b)} The same run's smoothed amplitude spectra: the fitted
+branch (the model) collapses above a few hertz, so past the $5$ Hz
+split the residual coincides with the record --- pure disturbance;
+the quiet stretch of the same length gives the shape ratio
+$\kappa_q$. These display spectra are Hann-tapered and zero-padded
+\emph{for display only} --- the numbers in (19) use the raw bins of
+panel (a), where the branch has been subtracted and edge leakage
+cancels. \emph{(c)} The in-window implied ratio $\kappa_{\rm imp}$
+(Pythagoras inverted on the window's own residual) against the quiet
+ratio $\kappa_q$ over the $113$ runs with a usable quiet stretch; the
+in-window disturbance is redder, by the campaign-median factor
+$s_{\rm med} = 1.60$.}
 \label{fig:spectrum}
 \end{figure}
 

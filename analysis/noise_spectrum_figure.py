@@ -68,9 +68,36 @@ def main():
     q = np.asarray(d['quiet'], float)
     fm = d['c2'] / (2.0 * np.pi)
 
-    fig, (a1, a2) = plt.subplots(1, 2, figsize=(12.6, 4.7))
-    fig.subplots_adjust(left=0.06, right=0.99, top=0.86, bottom=0.13,
-                        wspace=0.24)
+    fig, (a0, a1, a2) = plt.subplots(1, 3, figsize=(16.6, 4.7))
+    fig.subplots_adjust(left=0.045, right=0.99, top=0.85, bottom=0.13,
+                        wspace=0.26)
+
+    # ---- (a) the raw FFT bins themselves: what (19) actually uses ----
+    vv = np.rad2deg(rf - rf.mean())
+    qq = np.rad2deg(q - q.mean())
+    fb = np.fft.rfftfreq(len(vv), d=d['dt'])
+    ab = np.abs(np.fft.rfft(vv)) * 2.0 / len(vv)
+    aq2 = np.abs(np.fft.rfft(qq)) * 2.0 / len(qq)
+    df = fb[1] - fb[0]
+    lo = fb <= FC
+    a0.bar(fb[lo & (fb > 0)] - 0.18 * df, ab[lo & (fb > 0)], 0.32 * df,
+           color=C_R, label='residual bins, low band')
+    a0.bar(fb[~lo] - 0.18 * df, ab[~lo], 0.32 * df, color='#e8a09a',
+           label=r'residual bins, high band ($n_{\rm hi}$)')
+    a0.bar(fb[1:] + 0.18 * df, aq2[1:], 0.32 * df, color=C_Q, alpha=0.75,
+           label='quiet-stretch bins')
+    a0.axvline(FC, color='k', lw=1.2, ls='-.')
+    a0.set_yscale('log')
+    a0.set_xlim(0, min(30.0, fb.max()))
+    a0.text(FC + 0.4, ab.max() * 0.75, r'$f_c$', fontsize=9)
+    nlo = int(((fb > 0) & lo).sum())
+    a0.set_title(f'(a) the raw FFT bins of the same run\n'
+                 f'$\Delta f = 1/T = {df:.2f}$ Hz; {nlo} bins below '
+                 f'$f_c$; no taper, no padding', fontsize=10.5)
+    a0.set_xlabel('frequency [Hz]', fontsize=10)
+    a0.set_ylabel(r'bin amplitude [$^\circ$/s]', fontsize=10)
+    a0.legend(fontsize=8, loc='upper right')
+    a0.grid(alpha=0.2, lw=0.4, axis='y')
 
     om = np.asarray(d['om'], float)
     fy, ay = aspec(om, d['dt'])
@@ -93,7 +120,7 @@ def main():
             r'$n_{\rm hi}$: model-free band', ha='center', fontsize=9)
     a1.set_xlabel('frequency [Hz]', fontsize=10)
     a1.set_ylabel(r'amplitude spectrum [$^\circ$/s]', fontsize=10)
-    a1.set_title(f'(a) one run ({d["rate"]:.2f} N m/s, {d["axis"]}): '
+    a1.set_title(f'(b) one run ({d["rate"]:.2f} N m/s, {d["axis"]}): '
                  'where everything lives\nbrick-wall FFT split at '
                  f'{FC:.0f} Hz; model content at $C_2/2\\pi$ = '
                  f'{fm:.2f} Hz', fontsize=10.5)
@@ -110,9 +137,9 @@ def main():
     a2.set_xlabel(r'quiet shape ratio $\kappa_q$', fontsize=10)
     a2.set_ylabel(r'in-window implied ratio $\kappa_{\rm imp}$',
                   fontsize=10)
-    a2.set_title('(b) the two constants of (19), measured\n'
-                 f'{len(kq)} runs with a usable quiet stretch; '
-                 'in-window disturbance is redder', fontsize=10.5)
+    a2.set_title('(c) the two constants of (19), measured\n'
+                 f'{len(kq)} runs with a quiet stretch; '
+                 'in-window is redder', fontsize=10.5)
     a2.legend(fontsize=9, loc='upper left')
     a2.grid(alpha=0.2, lw=0.4)
 
