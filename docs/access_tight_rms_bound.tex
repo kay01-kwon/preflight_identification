@@ -413,9 +413,18 @@ with forcing $-\bar f$:
 \end{equation}
 Claim: $|\de(\tau)| \le w(\tau)$. Proof in two lines: the difference
 $u = w - \de$ satisfies $\ddot u - C_2^2 u = -(\bar f + \dot\rho)/J_P
-\le 0$ with $u = 0$ at both ends. If $u$ had a negative interior
-minimum, there $\ddot u \ge 0$ and $-C_2^2u > 0$, so
-$\ddot u - C_2^2u > 0$ --- a contradiction. Hence $u \ge 0$, i.e.\
+\le 0$ with $u = 0$ at both ends --- note the $\le 0$ belongs to this
+\emph{combination}, at every $\tau$, because $\bar f \ge |\dot\rho|$
+makes $\bar f + \dot\rho \ge 0$. If $u$ had a negative interior
+minimum, there $\ddot u \ge 0$ (the valley bottom bends upward:
+$\dot u = 0$ there, and $u(\tau^\ast{+}h) = u(\tau^\ast) +
+\tfrac12\ddot u(\tau^\ast)h^2 + o(h^2) \ge u(\tau^\ast)$ for both
+signs of $h$ forces $\ddot u \ge 0$) and $-C_2^2u > 0$ (strictly,
+because $u < 0$ there --- a minimum value $\ge 0$ would give
+$-C_2^2u \le 0$ and no contradiction), so
+$\ddot u - C_2^2u > 0$ --- contradicting the $\le 0$ that holds
+everywhere. Hence no negative interior minimum exists; with $u = 0$
+at both ends and $u$ continuous, $u \ge 0$, i.e.\
 $\de \le w$; the same argument with $u = w + \de$ gives $\de \ge -w$.
 $\square$
 
