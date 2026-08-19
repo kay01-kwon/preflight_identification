@@ -724,8 +724,29 @@ bracket of (17a) tends to $(e^{u} - e^{2u})/3 = (v - v^2)/3$ with
 $v = e^{u} \in (0,1]$, maximised at $v = \tfrac12$ to $1/12$
 ($\ln 2$ e-foldings before the window end); the bracket of (17b)
 tends to $-(u/2)e^{u}$, maximised at $u = -1$ to $1/(2e)$ (one
-e-folding before the end). (Over the campaign range
-$\xe  = 1.9$--$3.7$: $M_2 = 0.074$--$0.083$, $M_1 = 0.141$--$0.181$;
+e-folding before the end). The limits are moreover \emph{proven
+ceilings} for every finite $\xe$, in two lines. The addition theorem,
+divided through, gives the exact identity
+$\sinh(u+\xe)/\sinh\xe = e^{u} + e^{-\xe}\sinh(u)/\sinh\xe$;
+inserting it splits each finite-$\xe$ bracket into its limit form
+plus a correction,
+\begin{equation*}
+  B_2(u;\xe) = \big(e^{u} - e^{2u}\big)
+  + \frac{\sinh u}{\sinh\xe}\big(e^{-\xe} - e^{-2\xe}\big),
+  \qquad
+  B_1(u;\xe) = -\frac{u}{2}\,e^{u}
+  + \frac{\xe\,e^{-\xe}}{2\sinh\xe}\,\sinh u ,
+\end{equation*}
+and on $u \in [-\xe, 0]$ the correction is $\le 0$ in both cases ---
+a positive coefficient times $\sinh u \le 0$. Each bracket is
+nonnegative (the Dirichlet response to a nonnegative forcing, by
+(14) itself), so its maximum sits below the limit's maximum:
+$M_2(\xe) \le 1/12$ and $M_1(\xe) \le 1/(2e)$ for every window. The
+correction term is precisely the homogeneous piece that enforces the
+onset pin at $u = -\xe$, which the infinite-window problem lacks ---
+an extra pin on a positive response can only pull it down: a shorter
+window gives the forcing less room. (Over the campaign range
+$\xe = 1.9$--$3.7$: $M_2 = 0.074$--$0.083$, $M_1 = 0.141$--$0.181$;
 the script evaluates (17a)--(17b) exactly.)
 The interpretation is the same as the manuscript's reduction factors
 $1/7$ and $1/5$: the forcing is largest exactly where the pinned
@@ -733,9 +754,10 @@ response is smallest --- at the window end the boundary zero sits
 right under the peak of the load.
 
 \emph{A one-line version, in the spirit of (85).} The limits are
-also \emph{ceilings}: $M_2(\xe)$ and $M_1(\xe)$ approach $1/12$ and
-$1/(2e)$ from below (verified numerically over $\xe  \in [0.05, 12]$ to
-grid precision), so (17) may be quoted $\xe$-free,
+also \emph{ceilings}: $M_2(\xe) \le 1/12$ and $M_1(\xe) \le 1/(2e)$
+for every finite window --- proved after (17) by the exact bracket
+split, whose correction term is negative on the whole interval --- so
+(17) may be quoted $\xe$-free,
 \begin{equation*}
   |\de| \;\le\;
   \frac{\dot\rho_2/12 \;+\; \dot\rho_1/(2e)}{Wz_{CoM}} ,
