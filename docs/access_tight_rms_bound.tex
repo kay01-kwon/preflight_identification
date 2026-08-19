@@ -899,6 +899,26 @@ with $s_{\rm med} = 1.60$ the campaign-median in-window enhancement
 and $\kappa_q$ the run's own quiet ratio (campaign median $0.37$ where
 no quiet stretch exists).
 
+\emph{Reading (19) piece by piece.} The cap needs the \emph{total}
+in-window disturbance $\rms(n)$, and no part of the record hands it
+over directly: below $\sim$$1$ Hz the residual is model-contaminated,
+and the pre-onset floor underestimates the contact-borne in-window
+disturbance (next paragraph). So (19) assembles it in three steps.
+\emph{Anchor:} above $5$ Hz the branch has no spectral content, so
+the high-passed residual $n_{\rm hi}$ is pure disturbance, measured
+in the window itself --- $\rms(n_{\rm hi})$ is the one number taken
+from the run on trust. \emph{Shape:} the disturbance's
+low-band-to-high-band ratio is measured where no model exists at all,
+on quiet stretches of the same record --- that is $\kappa_q$.
+\emph{Enhancement:} the in-window disturbance is redder than
+quiet-time noise (gear-edge pivoting pumps the low band), so the
+quiet ratio is scaled by the campaign-median in-window enhancement
+$s_{\rm med} = 1.60$, making the estimated in-window low/high ratio
+$s_{\rm med}\kappa_q$. The two bands are disjoint in frequency, hence
+orthogonal, so their RMS values add in quadrature:
+$\rms(n)^2 = \rms(n_{\rm hi})^2\big(1 + (s_{\rm med}\kappa_q)^2\big)$
+--- which is (19).
+
 \emph{The cutoff is not delicate, and $k\sigma$ is what (19) already
 is.} Structurally (19) reads $k\cdot\sigma$ with
 $\sigma = \rms(n_{\rm hi})$ --- measured \emph{in the window}, in a
