@@ -1027,7 +1027,13 @@ $1.20$ & $0.866$ & $0.001$ & $1.073$ & $1.94$ & $1.052$ & $0.54$\\
 \end{center}
 
 Inside on $140/140$ runs; per-run used fraction p10 $0.45$, median
-$0.61$, worst $0.86$. On the exact nonlinear solution the realised
+$0.61$, worst $0.86$. (What ``measured'' is, precisely: the onset is
+placed by the paper's PNLS estimator, and the residual is then the
+least-squares refit of amplitude and baseline on that window with
+$C_2$ pinned to the calibrated value. The full minimiser --- onset
+and exponent free, the family the proof actually covers --- fits at
+least as well, so its residual is $\le$ the number in the table:
+coverage is claimed against the harder residual.) On the exact nonlinear solution the realised
 $\de$ is $0.16$--$0.17^\circ$/s; the remaining factor $\sim$$3$ of
 (17) over it is the $10^\circ$ design box against the $4.8^\circ$
 the runs actually reach --- the price of stating the bound before
