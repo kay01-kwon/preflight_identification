@@ -907,7 +907,14 @@ disturbance (next paragraph). So (19) assembles it in three steps.
 \emph{Anchor:} above $5$ Hz the branch has no spectral content, so
 the high-passed residual $n_{\rm hi}$ is pure disturbance, measured
 in the window itself --- $\rms(n_{\rm hi})$ is the one number taken
-from the run on trust. \emph{Shape:} the disturbance's
+from the run on trust. Note what is \emph{not} needed here: a
+ground-truth curve. The separation is by frequency, not by
+subtracting a truth --- every rigid-body term in the record
+($\omega_{\rm nom}$, $e_\omega$, $b$) is band-limited below a few
+hertz because the dynamics run at $C_2/2\pi < 1$ Hz, so in the high
+band $r_{\rm hi} = y_{\rm hi} - \hat\omega_{\rm hi} = n_{\rm hi}$
+identically: nothing else has a component left there. $n_{\rm hi}$ is
+\emph{defined} by the band, not reconstructed from a reference. \emph{Shape:} the disturbance's
 low-band-to-high-band ratio is measured where no model exists at all,
 on quiet stretches of the same record --- that is $\kappa_q$.
 \emph{Enhancement:} the in-window disturbance is redder than
