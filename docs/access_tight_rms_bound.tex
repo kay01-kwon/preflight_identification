@@ -693,7 +693,16 @@ carry a factor $u$, $w_p = -(\kappa/2)\,u e^{u}$, since
 $(ue^u)'' - ue^u = 2e^u$ --- this extra $u$ is why $M_1 > M_2$.
 \emph{Homogeneous corrections in the endpoint basis:} $\sinh(u+\xe)$
 vanishes at $u = -\xe$ and $\sinh(-u)$ vanishes at $u = 0$, so each
-boundary condition sets one coefficient without disturbing the other:
+boundary condition sets one coefficient without disturbing the other.
+(Both are legitimate homogeneous solutions --- the operator has
+constant coefficients, so translating a solution gives a solution,
+and $\sinh(u+\xe) = \cosh\xe\sinh u + \sinh\xe\cosh u$ is just a
+combination of the familiar pair; the two are independent since the
+coefficient determinant is $\sinh\xe \ne 0$. Solving in the
+$\{\sinh u, \cosh u\}$ basis instead gives a coupled $2\times2$
+system and the same answer with more algebra --- the endpoint basis
+is the choice that makes the boundary conditions decouple, the same
+pattern that builds Green's functions.) Then:
 $u = 0$ gives $a\sinh \xe  = \kappa/3$, $u = -\xe$ gives $b\sinh \xe  =
 (\kappa/3)e^{-2\xe}$ --- that is (17a); for $e^{u}$, collecting the two
 $u$-terms into $-(u+\xe)e^{u}/2$ makes the zero at $u = -\xe$ visible ---
