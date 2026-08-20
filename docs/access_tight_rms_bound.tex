@@ -48,7 +48,7 @@ C & fitted baseline (pre-onset median) &
   \rbar & window average bound on $\rho$, eq.\ (91)\\
 \dot\rho & its time derivative &
   \varphi_{\max} & $5^\circ$ excitation tilt cap\\
-\omega_{\max} & nominal end rate $K\Mdot(\cosh\xe - 1)$ &
+\omega_{\max} & end-rate anchor, eq.\ (16) block &
   l_{\rm arm},\ \beta_M & pivot arm; GE coefficient\\
 \Delta M_{\rm win} & in-window moment excursion &
   E(\tau) & envelope $\rbar\sinh(C_2\tau)/(J_PC_2)$, eq.\ (90)\\
@@ -475,12 +475,21 @@ $\rbar$ (91) already uses ($Wz_{CoM}(\sin\varphi-\varphi) \le 0$
 there), and it is exactly what the manuscript's (85) says at
 $\varphi^\ast = 0$: $G''(0) = W(l_p + p_{\rm off})$, the
 $Wz_{CoM}\sin\varphi^\ast$ term vanishing. Bounding on the
-$5^\circ$ box, with $\omega_{\max} = K\Mdot(\cosh\xe - 1)$ --- the nominal
-\emph{end} rate itself, its small excess against the true end rate
-covered by the same $1.05$. (An earlier draft used $K\Mdot\sinh\xe$
-here, an overbound by $\coth(\xe/2)$: $5\%$ at the slowest ramp but
-$34\%$ at the fastest, which manufactured part of the model term's
-growth with $\Mdot$.) Then:
+$5^\circ$ box, with the \emph{true} end-rate anchor, a priori:
+\begin{equation*}
+  \omega_{\max} \;=\; K\Mdot(\cosh\xe - 1)
+  \;+\; \frac{\rbar\sinh\xe}{J_PC_2}
+  \;\ge\; \omega_{\rm nom}(\tau_{\rm end}) + e_\omega(\tau_{\rm end})
+\end{equation*}
+by the envelope (90) --- the nominal end rate alone would undercount
+the true rate by $\varepsilon(\tau_{\rm end})$, so the envelope of
+$e_\omega$ is added outright; the correction is
+$1 + u\coth(\xe/2)$, i.e.\ $+13\%$ at the slowest ramp and $+1.5\%$
+at the fastest with the $5^\circ$ box, and every term is a
+pre-experiment constant. (History: a first draft used
+$K\Mdot\sinh\xe$, an overbound by $\coth(\xe/2)$; a second used the
+nominal end rate alone, leaving its excess to the $1.05$ --- which
+now covers only the interior shape transfer.) Then:
 \begin{equation}
   \sup|\dot\rho| \;\le\;
   \underbrace{W l_{\rm arm}\varphi_{\max}\,
@@ -522,7 +531,7 @@ term no longer subsidises the noise estimate --- with the old
 $10^\circ$ box its slack was absorbing the estimation error of
 $\hat n$ on the tail runs; that duty now sits explicitly with the
 envelope (19b), and the model term's own slack over the realised
-$\de$ drops to $1.3$--$2.0\times$.
+$\de$ drops to $1.4$--$2.0\times$.
 
 \emph{What ``decays like'' means --- the bridge from (16) to (16a).}
 Nothing in the window decreases with time: $\varphi$ and $\omega$
@@ -648,7 +657,11 @@ prediction, not a coincidence --- and the $1.05$ carried on
 $\dot\rho_2$ in (16) covers it with double margin. (A fully
 pre-experiment allowance is $1 + u\coth(\xe/2)$ --- at most $1.17$ at
 the slowest ramp, $1.02$ at the fastest, the envelope $u \le 0.16$
-overstating the realised $\beta/C_1$ about seven-fold.) One apparent irony resolves
+overstating the realised $\beta/C_1$ about seven-fold. The
+\emph{end-point amplitude} no longer needs any allowance at all:
+since the anchor correction, (16) charges
+$\omega_{\rm nom}(\tau_{\rm end}) + E(\tau_{\rm end})$ outright, so
+the $1.05$ covers only the interior variation.) One apparent irony resolves
 itself: $u\coth(C_2\tau/2)$ diverges as $\tau \to 0$, seemingly where
 $e_\omega$ is smallest. The divergence belongs to the envelope, not
 the physics: the true $\varepsilon$ \emph{vanishes} at onset like
@@ -1143,8 +1156,8 @@ $\int u^2e^{2u}/4\,du = 1/16$). Evaluated exactly on the campaign
 $1.43\times$ at the fastest ramp to $1.69\times$ at the slowest
 (where $\xe$ is largest) --- but with the envelope (19b) now
 dominating the cap, the total barely moves: mean used
-$0.43$--$0.46$ against $0.45$--$0.49$, coverage $140/140$ either
-way, worst run $0.68$ against $0.73$. With each term guarding its
+$0.43$--$0.46$ against $0.45$--$0.48$, coverage $140/140$ either
+way, worst run $0.68$ against $0.72$. With each term guarding its
 own object, the norm choice inside the sub-dominant model term is a
 matter of taste; the sup form is kept for its simpler statement.
 
@@ -1167,18 +1180,18 @@ measured & used\\
 N\,m/s & $^\circ$/s & $^\circ$/s & $^\circ$/s & $^\circ$/s &
 $^\circ$/s & \\
 \midrule
-$0.10$ & $0.211$ & $0.001$ & $2.065$ & $2.28$ & $0.987$ & $0.43$\\
-$0.20$ & $0.227$ & $0.000$ & $1.989$ & $2.22$ & $0.964$ & $0.43$\\
-$0.30$ & $0.246$ & $0.000$ & $2.101$ & $2.35$ & $1.014$ & $0.43$\\
-$0.45$ & $0.280$ & $0.000$ & $1.900$ & $2.18$ & $0.947$ & $0.43$\\
-$0.65$ & $0.295$ & $0.000$ & $2.085$ & $2.38$ & $1.084$ & $0.46$\\
-$0.90$ & $0.303$ & $0.000$ & $1.952$ & $2.25$ & $1.023$ & $0.45$\\
-$1.20$ & $0.334$ & $0.000$ & $1.986$ & $2.32$ & $1.052$ & $0.45$\\
+$0.10$ & $0.238$ & $0.001$ & $2.065$ & $2.30$ & $0.987$ & $0.43$\\
+$0.20$ & $0.243$ & $0.000$ & $1.989$ & $2.23$ & $0.964$ & $0.43$\\
+$0.30$ & $0.257$ & $0.000$ & $2.101$ & $2.36$ & $1.014$ & $0.43$\\
+$0.45$ & $0.289$ & $0.000$ & $1.900$ & $2.19$ & $0.947$ & $0.43$\\
+$0.65$ & $0.302$ & $0.000$ & $2.085$ & $2.39$ & $1.084$ & $0.45$\\
+$0.90$ & $0.308$ & $0.000$ & $1.952$ & $2.26$ & $1.023$ & $0.45$\\
+$1.20$ & $0.339$ & $0.000$ & $1.986$ & $2.33$ & $1.052$ & $0.45$\\
 \bottomrule
 \end{tabular}
 \end{center}
 
-Inside on $140/140$ runs; per-run used fraction p10 $0.39$, median
+Inside on $140/140$ runs; per-run used fraction p10 $0.38$, median
 $0.43$, worst $0.68$. (That the $\hat n_b$ column exceeds the
 measured residual is by construction, twice over: $\hat n_b$ is the
 \emph{envelope} (19b), a bound on the disturbance rather than its
@@ -1217,9 +1230,9 @@ and exponent free, the family the proof actually covers --- fits at
 least as well, so its residual is $\le$ the number in the table:
 coverage is claimed against the harder residual.) On the exact nonlinear solution the realised
 $\de$ is $0.16$--$0.17^\circ$/s; the model term sits only
-$1.3\times$--$2.0\times$ above it --- with the box at the excitation
-cap, most of the old slack is gone, and what remains is the
-product-of-sups and the shape transfer.
+$1.4\times$--$2.0\times$ above it --- with the box at the excitation
+cap and the anchor at the true rate, most of the old slack is gone,
+and what remains is the product-of-sups and the shape transfer.
 
 \section{The two answers this gives}
 
@@ -1232,17 +1245,15 @@ $\approx 1^\circ$/s disturbance floor, so the theory's observable
 prediction is $\rms(r) \approx \hat n$, flat --- and the data agrees:
 $\rms(r) = 0.95$--$1.08^\circ$/s across a twelvefold change in
 $\Mdot$ (correlation $r = +0.09$, $p = 0.31$). The \emph{model term}
-of (20), by contrast, grows $\times1.6$ across the sweep, from one
-identifiable factor: the nominal end rate $\omega_{\max} =
-K\Mdot(\cosh\xe - 1)$ genuinely grows $\times1.6$ (faster ramps
-tip faster through the same tilt), and the bound charges the box tilt
-$\varphi_{\max}$ \emph{at} that end rate --- a product of sups.
-(Before the anchor correction of Step 5 the growth was $\times1.8$;
-the $\sinh$ overbound was manufacturing the difference.) The true
+of (20), by contrast, grows $\times1.4$ across the sweep, from one
+identifiable factor: the true end rate genuinely grows (faster ramps
+tip faster through the same tilt --- the nominal part alone grows
+$\times1.6$), and the bound charges the box tilt $\varphi_{\max}$
+\emph{at} that end rate --- a product of sups. The true
 trajectory never realises both extremes together and its remainder
-stays flat, so the bound's slack widens, from $\times1.3$ at the
+stays flat, so the bound's slack widens, from $\times1.4$ at the
 slowest ramp to $\times2.0$ at the fastest --- while the used
-fraction of the cap stays flat at $0.43$--$0.46$, the envelope noise
+fraction of the cap stays flat at $0.43$--$0.45$, the envelope noise
 term dominating. This is not a wrong
 rate law in the theory; it is the honest price of a product-of-sups
 over correlated quantities, and it is paid where the cap can afford
@@ -1263,11 +1274,11 @@ Green-kernel route of Remark (a), $|\de| \le
 (1/J_P)\int|K|\rho_{\rm env}$ --- and evaluated per run
 (\texttt{analysis/k\_route\_trend.py}) it inherits exactly that
 flatness: $0.29$--$0.32^\circ$/s across the sweep at the $5^\circ$ box, a
-trend of $\times1.08$ against the deployed route's $\times1.6$. The
+trend of $\times1.08$ against the deployed route's $\times1.4$. The
 two routes now cross \emph{inside} the sweep: the $\rho$-anchored
 form starts winning on runs at the fastest ramps, and the per-run
 minimum of the two --- valid, since each is a valid bound --- runs
-$0.21$--$0.28$ with trend $\times1.35$, $140/140$, worst used
+$0.23$--$0.28$ with trend $\times1.24$, $140/140$, worst used
 $0.68$. The reviewer-facing statement: the full bound is
 $\min(\text{$\dot\rho$-anchored},\ \text{$\rho$-anchored})$; its
 growing arm happens to be the binding one on this sweep, and the flat

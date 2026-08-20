@@ -70,15 +70,16 @@ def combo(m, lp, poff, z, md):
     x = brentq(lambda q: np.sinh(q) - q - rhs, 0.05, 25.0)
     T = x / c2
     dmw = md * T
-    om = md * (np.cosh(x) - 1.0) / wz   # nominal end rate
     # Wz term dropped by sign: d(rho_grav)/dphi = W a sin(phi)
     # + Wz (cos(phi) - 1) with the second term negative, and
     # a >= z tan(phi/2) everywhere in the box (min 0.090 vs max 0.026).
+    rb = (1.0 / 7.0) * 0.5 * W * arm * PHI * PHI \
+        + (1.0 / 5.0) * BETA_M * dmw * PHI
+    # true end-rate anchor: nominal end rate plus the envelope of e_w
+    om = md * (np.cosh(x) - 1.0) / wz + rb * np.sinh(x) / (jp * c2)
     rd2 = SAFETY * (W * arm * PHI) * om
     rd1 = BETA_M * (md * PHI + dmw * om)
     model = (M2(x) * rd2 + M1(x) * rd1) / wz
-    rb = (1.0 / 7.0) * 0.5 * W * arm * PHI * PHI \
-        + (1.0 / 5.0) * BETA_M * dmw * PHI
     c1 = md / wz
     beta = rb / (jp * c2)
     dt = np.arctanh(min(beta / c1, 0.99)) / c2

@@ -67,19 +67,20 @@ W a sin(phi) >= Wz (1 - cos(phi)) iff a >= z tan(phi/2), held with
 3.4x margin over the design box -- the same sign cancellation rho_bar
 (91) uses, and what (85) at phi* = 0 expresses (G''(0) = W a).
 
-with om_max = K Mdot (cosh(x) - 1) the nominal END rate
-(an earlier draft used sinh x, an overbound by coth(x/2):
-5% at the slowest ramp, 34% at the fastest).  Everything on the
+with om_max = K Mdot (cosh(x) - 1) + rho_bar sinh(x)/(J_P C2), the
+TRUE end-rate anchor: nominal end rate plus the envelope (90) of
+e_omega, so the anchor needs no allowance and the 1.05 covers only
+the interior shape transfer.  Everything on the
 right is known before the experiment: W and z_CoM from the scale, J_P
 from CAD, l_arm from geometry, phi_max the design box, beta_M from the
 GE model, Mdot and the window from the protocol.  Add a gyro noise
 figure and the whole cap is computable before a single run is flown.
 
-On the campaign: the model term is 0.21-0.33 deg/s -- the level of the
+On the campaign: the model term is 0.24-0.34 deg/s -- the level of the
 projected Phi, with no kernel computed -- the cap holds on 140/140 runs
 at used 0.43-0.46 (per-run worst 0.68), and the realised witness
 remainder on the exact nonlinear solution is 0.16-0.17 deg/s, flat.
-The model term sits 1.3-2.0x above the realised value: with the
+The model term sits 1.4-2.0x above the realised value: with the
 box at the 5-degree excitation cap, most of the old slack is gone;
 the cap's slack lives in the noise ENVELOPE (kappa_b), by design.
 
@@ -140,10 +141,15 @@ def model_term(d, rb):
     T = tau[-1]
     x = c2 * T
     wz = 1.0 / k
-    # nominal END rate, the true anchor of the shape lemma: an
-    # earlier draft used sinh x here, an overbound by coth(x/2)
-    # (5% slow ramp, 34% fast).
-    om = k * d['md_full'] * (np.cosh(min(x, 30.0)) - 1.0)
+    # TRUE end-rate anchor, a priori: nominal end rate plus the
+    # envelope (90) of e_omega -- omega_true(T) <= omega_nom(T) + E(T),
+    # all pre-experiment constants.  (An earlier draft used the nominal
+    # alone, leaving its excess to the 1.05; before that, sinh x, an
+    # overbound by coth(x/2).)  The 1.05 now covers only the interior
+    # shape transfer (measured worst 2.6%).
+    jp0 = 1.0 / (k * c2 ** 2)
+    om = k * d['md_full'] * (np.cosh(min(x, 30.0)) - 1.0) \
+        + rb * np.sinh(min(x, 30.0)) / (jp0 * c2)
     # gravity-height term dropped by SIGN, not size: d(rho_grav)/dphi =
     # W a sin(phi) + Wz (cos(phi) - 1), the second term negative, and
     # W a sin(phi) >= Wz (1 - cos(phi))  iff  a >= z tan(phi/2) -- held
