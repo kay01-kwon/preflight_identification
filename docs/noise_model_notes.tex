@@ -45,13 +45,16 @@ what the campaign checks show (Sec.~8). A glossary is at the end.
 
 \subsection{A record is a vector}
 
-The window contains $N$ samples $r_1, \dots, r_N$ taken every $T_s$
+The window contains $N$ samples $v_1, \dots, v_N$ taken every $T_s$
 seconds (here $T_s \approx 5$ ms, $N \approx 80$--$300$, window
-length $T = NT_s \approx 0.4$--$0.7$ s). Treat them as one vector
-$r \in \mathbb{R}^N$. Its size is measured by the root mean square,
+length $T = NT_s \approx 0.4$--$0.7$ s). Throughout this section $v$
+stands for \emph{any} such record --- the raw gyro rate $y$, a
+residual, a quiet stretch; the machinery is the same for all of
+them. Treat the samples as one vector
+$v \in \mathbb{R}^N$. Its size is measured by the root mean square,
 \begin{equation}
-  \rms(r) \;=\; \sqrt{\tfrac1N \textstyle\sum_i r_i^2}
-  \;=\; \frac{\|r\|}{\sqrt N},
+  \rms(v) \;=\; \sqrt{\tfrac1N \textstyle\sum_i v_i^2}
+  \;=\; \frac{\|v\|}{\sqrt N},
   \tag{N1}
 \end{equation}
 which is just the vector's Euclidean length, normalised so it does
@@ -94,13 +97,13 @@ perpendicular directions in $\mathbb{R}^N$, exactly like rotated
 coordinate axes --- the squared length of the vector is the sum of
 squared coordinates in either basis:
 \begin{equation}
-  \textstyle\sum_i r_i^2 \;=\; \text{(sum of squared bin contents)}.
+  \textstyle\sum_i v_i^2 \;=\; \text{(sum of squared bin contents)}.
   \tag{N3}
 \end{equation}
 This is Parseval's identity, and it is nothing deeper than
 Pythagoras: energy is counted once per perpendicular direction,
 whether the directions are ``samples'' or ``frequencies''. Its
-practical meaning: $\rms(r)^2$ can be split \emph{exactly} across
+practical meaning: $\rms(v)^2$ can be split \emph{exactly} across
 groups of bins.
 
 \subsection{Bands, and the brick-wall split}
@@ -110,11 +113,11 @@ A \emph{band} is a set of bins --- ``below $5$ Hz'' (the low band),
 cutoff $f_c$ is the crudest possible filter and, for our purpose, the
 best one: transform the record, hand every bin \emph{wholly} to one
 side of $f_c$, transform each side back. This produces two time
-records $r = r_{\rm lo} + r_{\rm hi}$ that are built from
+records $v = v_{\rm lo} + v_{\rm hi}$ that are built from
 \emph{disjoint} sets of basis directions, hence exactly orthogonal
-($\sum_i r_{{\rm lo},i}\,r_{{\rm hi},i} = 0$), hence
+($\sum_i v_{{\rm lo},i}\,v_{{\rm hi},i} = 0$), hence
 \begin{equation}
-  \rms(r)^2 \;=\; \rms(r_{\rm lo})^2 + \rms(r_{\rm hi})^2
+  \rms(v)^2 \;=\; \rms(v_{\rm lo})^2 + \rms(v_{\rm hi})^2
   \qquad\text{with no cross term, no approximation.}
   \tag{N4}
 \end{equation}
@@ -168,10 +171,10 @@ standard cures, and the model uses both in different places:
 \subsection{Quadrature addition, and the shape ratio}
 
 Rearranging (N4): if the low/high ratio
-$\kappa = \rms(r_{\rm lo})/\rms(r_{\rm hi})$ is known, the total
+$\kappa = \rms(v_{\rm lo})/\rms(v_{\rm hi})$ is known, the total
 follows from the high band alone,
 \begin{equation}
-  \rms(r) \;=\; \rms(r_{\rm hi})\sqrt{1 + \kappa^2}.
+  \rms(v) \;=\; \rms(v_{\rm hi})\sqrt{1 + \kappa^2}.
   \tag{N5}
 \end{equation}
 Orthogonal parts add like perpendicular legs of a triangle
@@ -200,10 +203,19 @@ $s_{\rm med} = 1.60$.}
 
 \section{The anchor: the high band of the residual}
 
-The \emph{minimiser residual} $r = y - \hat\omega$ (record minus
-fitted branch) has had the trend subtracted, so its high band is
-leakage-free; and above $5$ Hz the subtracted branch changed nothing,
-since the model has nothing there. Hence
+From here on the symbols are specific: $y$ is the raw gyro
+angular-rate record in the window (what the sensor logged),
+$\hat\omega$ the fitted cosh branch, and $r$ the \emph{minimiser
+residual}
+\begin{equation*}
+  r \;=\; y - \hat\omega
+  \qquad\text{(record minus fitted branch)}
+\end{equation*}
+--- so $r$ is \emph{not} the sensor data itself but what remains of
+it after the model's best explanation is removed: unabsorbed model
+error plus disturbance. The residual has had the trend subtracted, so
+its high band is leakage-free; and above $5$ Hz the subtracted branch
+changed nothing, since the model has nothing there. Hence
 \begin{equation}
   n_{\rm hi} \;\equiv\; r_{\rm hi} \;=\; y_{\rm hi},
   \qquad \rms(n_{\rm hi}) \;=\; \text{the in-window disturbance
@@ -402,6 +414,9 @@ exactly as the theory predicts.
 \begin{center}\small
 \begin{tabular}{@{}lp{0.78\linewidth}@{}}
 \toprule
+$y$, $\hat\omega$, $r$, $n$ & the raw gyro rate record in the window;
+      the fitted cosh branch; the residual $r = y - \hat\omega$;
+      the disturbance ($v$ in Sec.~2 is any record)\\
 bin & one frequency $f_k = k/T$ of the DFT grid; the record's
       content at that frequency\\
 $\Delta f$ & bin spacing $= 1/T$; longer window $\Rightarrow$ finer
