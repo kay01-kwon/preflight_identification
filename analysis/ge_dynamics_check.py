@@ -90,6 +90,32 @@ theorem), which are independently measured rather than fitted:
    error in z_CoM +-2.8, against a signal of -2.  So neither the
    differentiation nor the noise is the limit.
 
+   CONFIRMED FROM THE OTHER SIDE: denoising harder makes it WORSE.
+   Re-running the batch with the Savitzky-Golay window widened toward
+   the band-limit rule of the noise model (docs/noise_model_notes.tex,
+   w ~ 2/(f_c T_s) = 41 samples at f_c = 5 Hz and T_s = 9.9 ms):
+
+       w [samples]      9        21        41        61
+       slope [mN.m/deg]   -47.7     -65.3    -114.2   (-137.6 single)
+       cancellation        67%       55%       21%
+       |omega_dot| max    2.23      1.93      1.49      1.13  rad/s^2
+
+   A filter that only removed noise would converge, not diverge.  The
+   peak omega_dot falls 49% by w = 61, so the smoother is eating the
+   SIGNAL: omega_dot ~ sinh(C2 tau) with 1/C2 = 163 ms, and a 41- or
+   61-sample window spans 2.5-3.7 e-foldings, which a local cubic
+   cannot follow.  Suppressing the growth of J_P omega_dot is exactly
+   suppressing the term that must cancel -W z_CoM sin phi, so the
+   residual slope inflates.  The noise model's window rule does not
+   transfer here because the FILTER PLAYS THE OPPOSITE ROLE: there the
+   smooth curve is discarded and only the residue above f_c is kept,
+   so over-smoothing errs safe; here the smooth curve IS the
+   measurement.  w = 9 (89 ms = 0.54 e-folding) stays in the regime
+   where the local cubic is a good approximation.
+
+       PYTHONPATH=<stubs> python analysis/ge_dynamics_check.py \
+           --all --z-com 0.261 --savgol {9,21,41}
+
    Read simply, the residual falls linearly with tilt, which is a
    restoring stiffness of 2.5 N.m/rad -- 31% of W z_CoM, and opposite in
    sign.  But over the fit window phi, omega and omega_dot all grow
