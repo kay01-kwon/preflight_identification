@@ -5,8 +5,10 @@ the differentiator can be trusted?
 The regime-mixing argument fixes the trim, not taste: within one
 half-width of the excitation window's end the Savitzky-Golay support
 reaches past the moment cap, where the command stops ramping, so those
-samples mix two regimes and are excluded.  At the 5 Hz-rule window
-(41 samples, order 2) that is the last 20 samples (~0.20 s).
+samples mix two regimes and are excluded.  At the deployed
+differentiator (9 samples, order 2, the default here) that is the
+last 4 samples; GE_W=41 selects the 5 Hz-rule window, whose exclusion
+is 20 samples.
 
 Over the span that remains, the comparison against the parameter-free
 image-superposition (rotor-interference) model is made on the LEVEL:
@@ -14,15 +16,24 @@ the per-run mean difference
 
     d = mean( dM_GE^dyn - dM_GE^model )        [trimmed span]
 
-The SLOPE (attitude dependence) is deliberately not claimed: trimming
-spends the excursion (median tilt left ~1.6 deg), so the attitude
-range needed to resolve the model's -2.5..-0.1 mN.m/deg is no longer
-in the data -- the level is what the trusted span can test.
+Campaign result at the deployed differentiator: median d = +25 mN.m
+(IQR -44..+90, RMS 105) of a 159 mN.m model level, |d| < 100 on
+96/140 runs, 4.75 deg median tilt left.  The wider 41-sample window
+does worse (median +77, RMS 128, 1.6 deg left): its parabola clips
+more of the sinh growth and its exclusion spends more of the
+excursion.  The SLOPE (attitude dependence) is deliberately not
+claimed at either setting -- the range needed to resolve the model's
+-2.5..-0.1 mN.m/deg is not available in the trusted span.
+
+Panel (a) aggregates the campaign by tilt -- median, IQR and 10-90%
+bands over all trusted-span samples in 0.25 deg bins (>= 150 samples
+per bin) -- rather than drawing 140 individual traces.
 
 Constants: J_CoM = 0.051 kg m^2 (CAD Table 5), J_P by the parallel
 axis, z_CoM = 0.261 m.
 
-Usage: PYTHONPATH=<stubs> python analysis/ge_trusted_span.py [out.png]
+Usage: PYTHONPATH=<stubs> [GE_W=9] [GE_K=4]
+       python analysis/ge_trusted_span.py [out.png]
 """
 import contextlib
 import io
