@@ -47,7 +47,7 @@ C & fitted baseline (pre-onset median) &
 \rho(s) & deviation forcing (small-angle $+$ GE) &
   \rbar & window average bound on $\rho$, eq.\ (91)\\
 \dot\rho & its time derivative &
-  \varphi_{\max} & $10^\circ$ design box\\
+  \varphi_{\max} & $5^\circ$ excitation tilt cap\\
 \omega_{\max} & nominal end rate $K\Mdot(\cosh\xe - 1)$ &
   l_{\rm arm},\ \beta_M & pivot arm; GE coefficient\\
 \Delta M_{\rm win} & in-window moment excursion &
@@ -186,9 +186,14 @@ unit the same formulas give the same numbers for every vehicle and
 ramp rate.) A protocol
 that violated this would have its excitation comparable to the model
 error it is meant to dominate, so any meaningful design satisfies it
-with room: $u \le 0.59$ at the campaign's slowest ramp, $\le 0.66$
-at the worst design-box corner of Sec.~9, and the realised
-$\beta/C_1 = 0.010$--$0.023$ sits thirty times below the ceiling.
+with room: $u \le 0.16$ at the campaign's slowest ramp, $\le 0.14$
+at the worst design-box corner of Sec.~9. The deviation itself sits
+well inside: on the exact nonlinear solution
+$e_\omega(\tau_{\rm end}) \le 0.29\,E(\tau_{\rm end})$ at every rate.
+(The \emph{fitted} $\beta/C_1 = 0.010$--$0.023$ carries noise-driven
+scatter on top of the $e_\omega$ part, so it is not the quantity the
+envelope governs run by run --- but either number is two orders below
+the admissibility limit $1$.)
 The same $u$ is the argument of the $\operatorname{artanh}(u)/u$
 factor in (21): one dimensionless number controls both the witness's
 admissibility and the exactness of the shift ceiling.
@@ -213,24 +218,23 @@ ratio, so the required $\beta$ ceiling is the same at every matching
 point. (iii) Physically, $\Mdot < \rbar C_2$ says the moment swept in
 one e-folding of the instability no longer dominates the model
 remainder --- the identification concept itself, not just its
-certificate, is degrading; the campaign's slowest ramp already runs at
-$u = 0.59$, close to that boundary. Numerically, $u = 1$ is reached at
-$\Mdot = \rbar C_2 = 0.059$ N\,m/s for the campaign vehicle and at
-$\Mdot = 0.054$ N\,m/s at the worst design-box corner of Sec.~9
-($m = 3.22$ kg, $l_p = 0.140$ m, $p_{\rm off} = -0.020$ m,
-$z_{CoM} = 0.20$ m); a hypothetical $\Mdot = 0.03$ N\,m/s ramp at that
-corner would have $u = 1.81$. So (9a) doubles as an analytical
+certificate, is degrading; the campaign's slowest ramp runs at
+$u \le 0.16$, comfortably inside. Numerically, $u = 1$ is reached at
+$\Mdot = \rbar C_2 \approx 0.016$ N\,m/s for the campaign vehicle and
+at $\Mdot = 0.015$ N\,m/s at the worst design-box corner of Sec.~9
+($m = 3.22$ kg, arm $0.160$ m); a hypothetical $\Mdot = 0.01$ N\,m/s
+ramp would have $u \approx 1.5$. So (9a) doubles as an analytical
 \emph{lower} rate limit for the protocol,
-$\Mdot > \rbar C_2 \approx 0.06$ N\,m/s --- about half the slowest
-campaign rate --- complementing the allocator-saturation \emph{upper}
-limit on $\Mdot$. In practice the logic runs forward, and this is the
+$\Mdot > \rbar C_2 \approx 0.015$ N\,m/s --- a factor $\sim$$7$ below
+the slowest campaign rate --- complementing the allocator-saturation
+\emph{upper} limit on $\Mdot$. In practice the logic runs forward, and this is the
 intended reading: the guarantee fails \emph{only} there, and since
 $\rbar$ and $C_2$ need nothing but the coarse design-box ranges known
 before any experiment, one computes the box-worst
-$\rbar C_2 = 0.054$ N\,m/s in closed form first and then schedules
+$\rbar C_2 = 0.015$ N\,m/s in closed form first and then schedules
 the ramp rates above that floor with margin --- the campaign's
-$\Mdot \ge 0.10$ N\,m/s is a factor $\approx 2$ above it, giving
-$u \le 0.66$ everywhere in the box.
+$\Mdot \ge 0.10$ N\,m/s is a factor $\approx 6.6$ above it, giving
+$u \le 0.14$ everywhere in the box.
 
 \emph{Could the family be composed so the problem never arises?}
 Partly, and where it splits is instructive. Replace the shifted-cosh
@@ -470,8 +474,8 @@ $0.30\tan 5^\circ = 0.026$ m) --- so $Wz_{CoM}$ drops from the bound
 $\rbar$ (91) already uses ($Wz_{CoM}(\sin\varphi-\varphi) \le 0$
 there), and it is exactly what the manuscript's (85) says at
 $\varphi^\ast = 0$: $G''(0) = W(l_p + p_{\rm off})$, the
-$Wz_{CoM}\sin\varphi^\ast$ term vanishing. Bounding on the $10^\circ$
-box, with $\omega_{\max} = K\Mdot(\cosh\xe - 1)$ --- the nominal
+$Wz_{CoM}\sin\varphi^\ast$ term vanishing. Bounding on the
+$5^\circ$ box, with $\omega_{\max} = K\Mdot(\cosh\xe - 1)$ --- the nominal
 \emph{end} rate itself, its small excess against the true end rate
 covered by the same $1.05$. (An earlier draft used $K\Mdot\sinh\xe$
 here, an overbound by $\coth(\xe/2)$: $5\%$ at the slowest ramp but
@@ -492,7 +496,7 @@ the scale, $J_P$ from CAD, $l_{\rm arm}$ from geometry,
 $\varphi_{\max}$ the design box, $\beta_M$ from the GE model, $\Mdot$
 and the window from the protocol.
 
-\emph{Where $\varphi_{\max}$ enters, and why $10^\circ$.}
+\emph{Where $\varphi_{\max}$ enters, and why $5^\circ$.}
 $\varphi_{\max}$ is not a measurement --- it is the tilt box the
 protocol guarantees, and it enters the theory at exactly three
 points: the channel amplitudes above (every trigonometric remainder
@@ -503,18 +507,22 @@ window of the design sweep
 ($\sinh\xe - \xe = \varphi_{\max}Wz_{CoM}C_2/\Mdot$; the campaign
 check uses the measured windows instead); and everything downstream
 of $\rbar \propto \varphi_{\max}^2$ --- $u$, $\dtc$,
-$\Delta_{\rm pre}$, the ceiling of (21). The value: the excitation
-design caps the \emph{commanded} excursion at $5^\circ$, but the
-windows are truncated by moment, not angle, so the realised tilt
-exceeds it --- up to $\approx 4.8^\circ$ inside the fit windows and
-up to $9.4^\circ$ over the whole contact phase --- and the box is set
-at $10^\circ$ to cover the entire phase with margin. Every
-appearance is monotone in $\varphi$, so the box only over-covers;
-it is also the dominant remaining conservatism: against the
-in-window $4.8^\circ$ it costs $\times 2.1$ on $\dot\rho_2$
-(linear) and $\times 4.3$ on $\rbar$ (quadratic) --- most of the
-factor $\sim$$3$ between the bound and the realised $\de$ lives
-here, the stated price of a pre-experiment bound.
+$\Delta_{\rm pre}$, the ceiling of (21). The value: the box is the excitation design's own commanded cap,
+$\varphi_{\max} = 5^\circ$. This is enough because every integral in
+the bound stops at $\tau_{\rm end}$: the channels, $\rbar$, and
+$\Delta_{\rm pre}$ live on the fit window alone, where the realised
+tilt stays at or below $\approx 4.8^\circ$ --- the $9.4^\circ$
+excursion of the whole contact phase happens \emph{beyond} the window
+end and never enters. (The envelope check on the exact nonlinear
+solution confirms the margin: $e_\omega(\tau_{\rm end}) \le
+0.29\,E(\tau_{\rm end})$ at every rate with the $5^\circ$ $\rbar$.)
+Every appearance is monotone in $\varphi$, so the box only
+over-covers. One consequence is structural: at this box the model
+term no longer subsidises the noise estimate --- with the old
+$10^\circ$ box its slack was absorbing the estimation error of
+$\hat n$ on the tail runs; that duty now sits explicitly with the
+envelope (19b), and the model term's own slack over the realised
+$\de$ drops to $1.3$--$2.0\times$.
 
 \emph{What ``decays like'' means --- the bridge from (16) to (16a).}
 Nothing in the window decreases with time: $\varphi$ and $\omega$
@@ -638,9 +646,9 @@ seven rates, the worst excess of a true ratio over its nominal bound
 is $2.6\%$, at the slowest ramp near the window end --- the formula's
 prediction, not a coincidence --- and the $1.05$ carried on
 $\dot\rho_2$ in (16) covers it with double margin. (A fully
-pre-experiment allowance is $1 + u\coth(\xe/2)$; tight at fast ramps,
-loose at the slowest where the envelope $u \le 0.59$ overstates the
-realised $\beta/C_1$ thirty-fold.) One apparent irony resolves
+pre-experiment allowance is $1 + u\coth(\xe/2)$ --- at most $1.17$ at
+the slowest ramp, $1.02$ at the fastest, the envelope $u \le 0.16$
+overstating the realised $\beta/C_1$ about seven-fold.) One apparent irony resolves
 itself: $u\coth(C_2\tau/2)$ diverges as $\tau \to 0$, seemingly where
 $e_\omega$ is smallest. The divergence belongs to the envelope, not
 the physics: the true $\varepsilon$ \emph{vanishes} at onset like
@@ -812,10 +820,10 @@ split, whose correction term is negative on the whole interval --- so
 with no $M$ curves, no window length, and no $C_2$ beyond what sits
 inside $\dot\rho_{1,2}$ --- exactly as (85) trades the exact
 remainder for $\tfrac12 G''(0)\varphi^2$. Rerun on the $140$ runs,
-the constant version costs at most $12\%$ on the worst run ($0.1$--$6\%$
-in the per-rate mean, largest at the fastest ramps where $\xe$ is
-smallest), keeps $140/140$ coverage, and the worst-run used fraction
-rises only to $0.87$. Note where the simplification is \emph{not}
+the constant version costs at most $5\%$ on the worst run
+($0.1$--$2\%$ in the per-rate mean, largest at the fastest ramps
+where $\xe$ is smallest), keeps $140/140$ coverage, and the worst-run
+used fraction rises only to $0.67$. Note where the simplification is \emph{not}
 available: the channel amplitudes $\dot\rho_{1,2}$ are already the
 $\varphi^\ast = 0$ worst-case Taylor coefficients of (85) --- nothing
 further to drop there --- and the time \emph{shape} behind $M_2, M_1$
@@ -884,8 +892,10 @@ $|\dtc|^5/4$ --- the exact integral is a factor $\sqrt5\approx2.2$
 tighter. (The branch amplitude is $R \le C_1$; using $C_1$ in (18)
 errs on the high side.) Evaluated with the a priori $|\dtc|$ from (9)
 and $e_\omega(\tau_{\rm end}) \le E(\tau_{\rm end})$:
-$\Delta_{\rm pre} = 0.036^\circ$/s at $\Mdot = 0.10$, $0.011$ at
-$0.20$, and below $0.006$ beyond.
+$\Delta_{\rm pre} = 0.001^\circ$/s at $\Mdot = 0.10$ and below
+$0.001$ beyond --- with the $5^\circ$ box the a priori shift is
+$23$--$28$ ms at the slowest ramp and the fifth-order integral makes
+the term vanish.
 
 \emph{The baseline constant $R-C_1$ --- both bookkeepings.} One
 witness must serve every sample the minimiser's cost touches, and its
@@ -907,13 +917,11 @@ second order in $\beta/C_1$. Realised ($\beta/C_1 \le 0.023$) it is
 below $0.004^\circ$/s on every run --- two orders under $\hat n$ and
 below even $\Delta_{\rm pre}$ --- which is why (10) and (20) carry it
 silently; the pre-onset median cannot even distinguish $b$ from
-$b + (R-C_1)$ at that size. At the a priori envelope ceiling it is
-not invisible: $u = 0.59$ at the slowest ramp gives
-$C_1(1-\sqrt{1-u^2}) \approx 0.2^\circ$/s, about a fifth of the model
-term there. Adding it to the cap only loosens the bound, so the
-$140/140$ check is unaffected either way, and the measured
-$\beta/C_1$, thirty times below the envelope, confirms the silent
-treatment a posteriori.
+$b + (R-C_1)$ at that size. Even at the a priori envelope ceiling it
+stays invisible: $u \le 0.16$ gives
+$C_1(1-\sqrt{1-u^2}) \le 0.014^\circ$/s at the slowest ramp ---
+below $\Delta_{\rm pre}$'s old level --- so the silent treatment
+needs no a posteriori excuse.
 
 \section{The noise term}
 
@@ -954,6 +962,28 @@ $s_{\rm med}\kappa_q$. The two bands are disjoint in frequency, hence
 orthogonal, so their RMS values add in quadrature:
 $\rms(n)^2 = \rms(n_{\rm hi})^2\big(1 + (s_{\rm med}\kappa_q)^2\big)$
 --- which is (19).
+
+\emph{The envelope form that the cap uses.} (19) is an
+\emph{estimate} --- $s_{\rm med}$ is a campaign median, so on roughly
+half the runs the true disturbance exceeds $\hat n$. An estimate is
+the right tool for interpretation (Sec.~7) but not for a guarantee,
+so the cap (20) carries the envelope form instead:
+\begin{equation}
+  \hat n_b \;=\; \rms(n_{\rm hi})
+  \sqrt{1 + (s_{\rm med}\,\kappa_b)^2},
+  \qquad \kappa_b = \max_{\rm runs}\kappa_q = 1.31 ,
+  \tag{19b}
+\end{equation}
+the campaign \emph{maximum} quiet shape ratio in place of the run's
+own. The product $s_{\rm med}\kappa_b = 2.09$ exceeds every measured
+in-window ratio ($\max\kappa_{\rm imp} = 1.69$, a $24\%$ margin), so
+$\hat n_b$ upper-bounds every run's disturbance rather than splitting
+them at the median; the multiplier is
+$\sqrt{1 + 2.09^2} = 2.32$ on $\rms(n_{\rm hi})$. This is what frees
+the model term from double duty: with (19) in the cap, the model
+term's slack was absorbing the noise-estimation error of the tail
+runs; with (19b) each term guards exactly its own object --- the
+model term $\de$, the noise envelope the disturbance.
 
 \emph{Implementation, and the picture
 (Fig.~\ref{fig:spectrum}).} The split is a brick-wall FFT partition:
@@ -1067,15 +1097,16 @@ $k = 49$, collapses the used fraction from $0.58$ to $0.16$.
   \boxed{\;\rms(r) \;\le\;
   \underbrace{\frac{M_2\dot\rho_2 + M_1\dot\rho_1}{Wz_{CoM}}
   + \Delta_{\rm pre}}_{\text{model, before the experiment}}
-  \;+\; \hat n \;}
+  \;+\; \hat n_b \;}
   \tag{20}
 \end{equation}
 The three terms have three different statuses, worth naming. The
 first is a \emph{sup} bound standing in for an RMS: (17) caps
 $|\de(\tau)|$ at every point, and $\rms(\de) \le \sup|\de|$ always
 --- a conservative substitution, not an approximation. The second is
-an RMS \emph{by definition}, (18b). The third estimates
-$\rms(n)$, (19). They combine by the triangle inequality of the
+an RMS \emph{by definition}, (18b). The third upper-bounds
+$\rms(n)$ by the envelope (19b) --- the estimate (19) serves the
+interpretation, the envelope serves the guarantee. They combine by the triangle inequality of the
 $L^2$ norm, $\rms(A+B) \le \rms(A) + \rms(B)$; the first two live on
 disjoint segments and are therefore orthogonal, so quadrature
 ($\sqrt{\text{model}^2 + \Delta_{\rm pre}^2}$) would be admissible
@@ -1096,49 +1127,45 @@ $\int_{-\infty}^{0} B_{2,\infty}^2\,du = 1/108$ and
 $\int u^2e^{2u}/4\,du = 1/16$). Evaluated exactly on the campaign
 (\texttt{analysis/rms\_w\_variant.py}): the model term tightens by
 $1.43\times$ at the fastest ramp to $1.69\times$ at the slowest
-(where $\xe$ is largest), and the per-rate mean used fraction rises
-from $0.61$--$0.65$ to $0.70$--$0.75$ --- but coverage drops to
-$138/140$: the two worst runs exceed the RMS-form cap by up to
-$4\%$. That is the finding, and it is a strong one: with the
-$\cosh - 1$ anchor in place, the RMS form has crossed from bound to
-estimate --- it sits \emph{at} the data, not above it. The deployed
-sup form keeps $140/140$ with worst-run used $0.90$, and the variant
-certifies that the margin it carries is essentially the minimum a
-valid bound can have on this campaign: the slack is chosen, not
-unaccounted.
+(where $\xe$ is largest) --- but with the envelope (19b) now
+dominating the cap, the total barely moves: mean used
+$0.43$--$0.46$ against $0.45$--$0.49$, coverage $140/140$ either
+way, worst run $0.68$ against $0.73$. With each term guarding its
+own object, the norm choice inside the sub-dominant model term is a
+matter of taste; the sup form is kept for its simpler statement.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.86\linewidth]{fig_kernel_free.png}
 \caption{Equation (20) against the campaign: means over the twenty
 runs at each rate, $95\%$ $t$ intervals. Purple is the model term of
-(17)$+$(18), grey the noise estimate (19), green the measured
+(17)$+$(18), grey the noise envelope (19b), green the measured
 residual. All $140$ runs are inside; the used fraction is
-$0.61$--$0.65$ and the cap is flat, like the residual.}
+$0.43$--$0.46$ and the cap is flat, like the residual.}
 \label{fig:check}
 \end{figure}
 
 \begin{center}\small
 \begin{tabular}{@{}rrrrrrr@{}}
 \toprule
-$\Mdot$ & model (17)+(18) & of it (18) & $\hat n$ & cap (20) &
+$\Mdot$ & model (17)+(18) & of it (18) & $\hat n_b$ & cap (20) &
 measured & used\\
 N\,m/s & $^\circ$/s & $^\circ$/s & $^\circ$/s & $^\circ$/s &
 $^\circ$/s & \\
 \midrule
-$0.10$ & $0.453$ & $0.036$ & $1.064$ & $1.52$ & $0.987$ & $0.65$\\
-$0.20$ & $0.460$ & $0.011$ & $1.050$ & $1.51$ & $0.964$ & $0.64$\\
-$0.30$ & $0.490$ & $0.006$ & $1.059$ & $1.55$ & $1.014$ & $0.65$\\
-$0.45$ & $0.552$ & $0.004$ & $0.993$ & $1.54$ & $0.947$ & $0.61$\\
-$0.65$ & $0.578$ & $0.002$ & $1.080$ & $1.66$ & $1.084$ & $0.65$\\
-$0.90$ & $0.589$ & $0.001$ & $1.020$ & $1.61$ & $1.023$ & $0.64$\\
-$1.20$ & $0.645$ & $0.001$ & $1.073$ & $1.72$ & $1.052$ & $0.61$\\
+$0.10$ & $0.211$ & $0.001$ & $2.065$ & $2.28$ & $0.987$ & $0.43$\\
+$0.20$ & $0.227$ & $0.000$ & $1.989$ & $2.22$ & $0.964$ & $0.43$\\
+$0.30$ & $0.246$ & $0.000$ & $2.101$ & $2.35$ & $1.014$ & $0.43$\\
+$0.45$ & $0.280$ & $0.000$ & $1.900$ & $2.18$ & $0.947$ & $0.43$\\
+$0.65$ & $0.295$ & $0.000$ & $2.085$ & $2.38$ & $1.084$ & $0.46$\\
+$0.90$ & $0.303$ & $0.000$ & $1.952$ & $2.25$ & $1.023$ & $0.45$\\
+$1.20$ & $0.334$ & $0.000$ & $1.986$ & $2.32$ & $1.052$ & $0.45$\\
 \bottomrule
 \end{tabular}
 \end{center}
 
-Inside on $140/140$ runs; per-run used fraction p10 $0.49$, median
-$0.65$, worst $0.90$.
+Inside on $140/140$ runs; per-run used fraction p10 $0.39$, median
+$0.43$, worst $0.68$.
 
 \emph{The table's most striking feature --- measured $\approx$
 $\hat n$ --- and what it does and does not prove.} The measured
@@ -1156,9 +1183,10 @@ is calibrated to its own residual. What is \emph{not} by
 construction, and is the actual evidence: the spread stays narrow
 (the calibration pins the median, not the IQR), the ratio is flat in
 $\Mdot$, and the upper tail --- runs up to $1.76\,\hat n$ --- is
-covered by the model term, which is that term's empirical job: it
-guards the tail, not the middle. The $140/140$ coverage therefore
-does not rest on the calibration.
+covered by the noise envelope (19b), whose $s_{\rm med}\kappa_b =
+2.09$ sits above every measured ratio, with the model term adding the
+guaranteed $\de$ headroom on top. The $140/140$ coverage therefore
+rests on the envelope and the model term, not on the calibration.
 
 (What ``measured'' is, precisely: the onset is
 placed by the paper's PNLS estimator, and the residual is then the
@@ -1167,10 +1195,10 @@ $C_2$ pinned to the calibrated value. The full minimiser --- onset
 and exponent free, the family the proof actually covers --- fits at
 least as well, so its residual is $\le$ the number in the table:
 coverage is claimed against the harder residual.) On the exact nonlinear solution the realised
-$\de$ is $0.16$--$0.17^\circ$/s; the remaining factor $\sim$$3$ of
-(17) over it is the $10^\circ$ design box against the $4.8^\circ$
-the runs actually reach --- the price of stating the bound before
-flying.
+$\de$ is $0.16$--$0.17^\circ$/s; the model term sits only
+$1.3\times$--$2.0\times$ above it --- with the box at the excitation
+cap, most of the old slack is gone, and what remains is the
+product-of-sups and the shape transfer.
 
 \section{The two answers this gives}
 
@@ -1183,7 +1211,7 @@ $\approx 1^\circ$/s disturbance floor, so the theory's observable
 prediction is $\rms(r) \approx \hat n$, flat --- and the data agrees:
 $\rms(r) = 0.95$--$1.08^\circ$/s across a twelvefold change in
 $\Mdot$ (correlation $r = +0.09$, $p = 0.31$). The \emph{model term}
-of (20), by contrast, grows $\times1.4$ across the sweep, from one
+of (20), by contrast, grows $\times1.6$ across the sweep, from one
 identifiable factor: the nominal end rate $\omega_{\max} =
 K\Mdot(\cosh\xe - 1)$ genuinely grows $\times1.6$ (faster ramps
 tip faster through the same tilt), and the bound charges the box tilt
@@ -1191,9 +1219,10 @@ $\varphi_{\max}$ \emph{at} that end rate --- a product of sups.
 (Before the anchor correction of Step 5 the growth was $\times1.8$;
 the $\sinh$ overbound was manufacturing the difference.) The true
 trajectory never realises both extremes together and its remainder
-stays flat, so the bound's slack widens, from $\times2.7$ at the
-slowest ramp to $\times3.8$ at the fastest --- while the used
-fraction of the cap is now nearly flat, $0.65$ to $0.61$. This is not a wrong
+stays flat, so the bound's slack widens, from $\times1.3$ at the
+slowest ramp to $\times2.0$ at the fastest --- while the used
+fraction of the cap stays flat at $0.43$--$0.46$, the envelope noise
+term dominating. This is not a wrong
 rate law in the theory; it is the honest price of a product-of-sups
 over correlated quantities, and it is paid where the cap can afford
 it --- the model term stays sub-noise at every rate, so its growth
@@ -1212,12 +1241,13 @@ A bound anchored on $\rho(\tau_{\rm end})$ exists --- the
 Green-kernel route of Remark (a), $|\de| \le
 (1/J_P)\int|K|\rho_{\rm env}$ --- and evaluated per run
 (\texttt{analysis/k\_route\_trend.py}) it inherits exactly that
-flatness: $1.16$--$1.19^\circ$/s across the sweep, a trend of
-$\times1.03$ against the deployed route's $\times1.5$. On this
-campaign it is looser everywhere (the crossover sits well beyond the
-sweep), and since both routes are valid bounds their per-run minimum
-is valid too --- $140/140$, worst used $0.90$, indistinguishable from
-the deployed form here. The reviewer-facing statement: the full bound is
+flatness: $0.29$--$0.32^\circ$/s across the sweep at the $5^\circ$ box, a
+trend of $\times1.08$ against the deployed route's $\times1.6$. The
+two routes now cross \emph{inside} the sweep: the $\rho$-anchored
+form starts winning on runs at the fastest ramps, and the per-run
+minimum of the two --- valid, since each is a valid bound --- runs
+$0.21$--$0.28$ with trend $\times1.35$, $140/140$, worst used
+$0.68$. The reviewer-facing statement: the full bound is
 $\min(\text{$\dot\rho$-anchored},\ \text{$\rho$-anchored})$; its
 growing arm happens to be the binding one on this sweep, and the flat
 arm --- matching the data's trend --- takes over beyond it. The
@@ -1237,15 +1267,18 @@ is (9), and the moment error it causes cancels $\Mdot$ exactly:
 using $\Mdot/C_1 = Wz_{CoM}$ and $E(\tau_{\rm end}) =
 \rbar\sinh \xe/(J_PC_2)$. So the shift can displace the identified
 threshold by at most the window-averaged remainder --- the same
-$\rbar$ the manuscript already budgets --- and measured it uses
-$0.36$--$1.85$ mN\,m of the $\approx12$ allowed, the sign lowering
-$M_{\rm crit}$ (earlier onset). (The chain's middle step is the
-first-order $|\dtc|$; exactly,
-$|\dtc| = \operatorname{artanh}(\beta/C_1)/C_2$, so the ceiling
-acquires a factor $\operatorname{artanh}(u)/u$ with $u = \beta/C_1$:
-$1.0002$ on the campaign (realised $u \le 0.023$), up to $1.13$ at
-the design-box corner of Sec.~9 where the a priori $u$ of (9a)
-reaches $0.66$.)
+$\rbar$ the manuscript already budgets. At the $5^\circ$ box the
+per-run ceiling is $1.8$--$3.3$ mN\,m; the $e_\omega$-driven part of
+the shift is guaranteed $\le \rbar$ and realised $\le 0.29\,\rbar$
+(the exact-solution envelope ratio), the sign lowering $M_{\rm crit}$
+(earlier onset). The measured onset scatter, $\Mdot|\dtc| =
+0.36$--$1.85$ mN\,m from the fits, additionally contains noise-driven
+jitter --- comparable to the ceiling in size but governed by the noise
+term, not by (21). (The chain's middle step is the first-order
+$|\dtc|$; exactly, $|\dtc| = \operatorname{artanh}(\beta/C_1)/C_2$,
+so the ceiling acquires a factor $\operatorname{artanh}(u)/u$:
+$\le 1.009$ on the campaign envelope, $\le 1.007$ over the design
+box --- negligible at the $5^\circ$ box.)
 
 \section{The bound over the design box}
 
@@ -1262,14 +1295,14 @@ rates, each with its own tilt-limited window
 \centering
 \includegraphics[width=\linewidth]{fig_design_range.png}
 \caption{The design-box sweep. \emph{(a)} the bound on
-$\rms(\de)$, eq.\ (17)$+$(18): $0.25$--$0.87^\circ$/s over box and
-rates, median $0.42$--$0.55$. The band is set by the ratio
+$\rms(\de)$, eq.\ (17)$+$(18): $0.07$--$0.25^\circ$/s over box and
+rates, median $0.11$--$0.16$. The band is set by the ratio
 $\mathrm{arm}/z_{CoM}$ --- worst at arm $0.160$ m with
 $z_{CoM} = 0.20$ m, best at arm $0.090$ m with $0.30$ m.
 \emph{(b)} the critical-moment shift $\Mdot|\dtc|$ of (21):
-$6.0$--$12.5$ mN\,m, tracking its ceiling $\rbar$ and exceeding it
-by at most $12\%$ at the slow-ramp corner --- the
-$\operatorname{artanh}(u)/u$ factor of the exact shift --- while flat
+$1.5$--$3.1$ mN\,m, hugging its ceiling $\rbar$ --- the
+$\operatorname{artanh}(u)/u$ excess of the exact shift is below
+$0.7\%$ everywhere at the $5^\circ$ box --- and flat
 in $\Mdot$ by the cancellation. Its worst corner has the
 \emph{opposite} $z$ direction --- $m = 3.22$ kg, arm $0.160$ m,
 $z_{CoM} = 0.30$ m --- because $\rbar$ grows with the window that a
@@ -1279,13 +1312,13 @@ $\mathrm{arm}/z_{CoM}$.}
 \end{figure}
 
 Two readings (Fig.~\ref{fig:design}). The residual bound stays within
-$0.25$--$0.87^\circ$/s everywhere in the box --- below the measured
-disturbance floor of $\approx1^\circ$/s at almost every corner --- so
+$0.07$--$0.25^\circ$/s everywhere in the box --- an order of magnitude below the measured disturbance floor of
+$\approx1^\circ$/s at every corner --- so
 the fit-quality gate can be set from the noise figure alone for any
 vehicle in this class. And the identification error from the absorbed
-onset shift never exceeds $12.5$ mN\,m anywhere in the box, at any
-rate --- within $12\%$ of the $\rbar$ budget at the worst corner and
-inside it everywhere else --- with the same flatness in $\Mdot$ that
+onset shift never exceeds $3.1$ mN\,m anywhere in the box, at any
+rate --- inside its $\rbar$ budget everywhere, the exact-shift excess
+below $0.7\%$ --- with the same flatness in $\Mdot$ that
 the campaign shows.
 
 \section*{Reproduction}
@@ -1333,7 +1366,7 @@ pre-experiment cap replaces $\hat n$ with a bench noise figure.
 \emph{(c) Exponent mismatch.} If the true exponent differs from the
 pinned $C_2$ by a relative $\varepsilon_2$, the mismatch joins
 $e_\omega$ by definition and its unabsorbed part costs
-$0.018$--$0.022^\circ$/s per $1\%$ of $\varepsilon_2$ --- $3$--$5\%$
+$0.018$--$0.022^\circ$/s per $1\%$ of $\varepsilon_2$ --- $7$--$10\%$
 of the model term, and the calibration residuals limit
 $\varepsilon_2$ to a few percent.
 

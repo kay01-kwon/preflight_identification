@@ -75,12 +75,13 @@ from CAD, l_arm from geometry, phi_max the design box, beta_M from the
 GE model, Mdot and the window from the protocol.  Add a gyro noise
 figure and the whole cap is computable before a single run is flown.
 
-On the campaign: the model term is 0.45-0.65 deg/s -- the level of the
+On the campaign: the model term is 0.21-0.33 deg/s -- the level of the
 projected Phi, with no kernel computed -- the cap holds on 140/140 runs
-at used 0.61-0.65 (per-run worst 0.90), and the realised witness
+at used 0.43-0.46 (per-run worst 0.68), and the realised witness
 remainder on the exact nonlinear solution is 0.16-0.17 deg/s, flat.
-The remaining factor ~3 is the 10-degree design box against the 4.8
-degrees the runs actually reach: the price of a pre-experiment bound.
+The model term sits 1.3-2.0x above the realised value: with the
+box at the 5-degree excitation cap, most of the old slack is gone;
+the cap's slack lives in the noise ENVELOPE (kappa_b), by design.
 
 Usage: python analysis/kernel_free_bound.py [out.png]
 """
@@ -177,8 +178,14 @@ def main():
         rb, _, _ = rho_bar(d['axis'], PHI_BOX, d['dm_win'])
         d['de'], d['dpre'] = model_term(d, rb)
         d['de'] += d['dpre']
-        kq = d['kq'] if d['kq'] is not None else kqm
-        d['nh'] = d['rms_n'] * np.sqrt(1.0 + (s_med * kq) ** 2)
+        # envelope noise term: kappa_b = the campaign MAX quiet shape
+        # ratio (not the run's own) -- s_med * kappa_b = 2.09 exceeds
+        # every measured in-window ratio (max kappa_imp 1.69), so n_b
+        # is an upper bound on every run's disturbance, not a
+        # median-calibrated estimate.  With the 5-degree box the model
+        # term guards delta_e alone; the noise envelope guards the
+        # disturbance tail.  No double duty.
+        d['nh'] = d['rms_n'] * np.sqrt(1.0 + (s_med * kqmax) ** 2)
         d['kcap'] = d['de'] + d['nh']
     rates = sorted({d['rate'] for d in rows})
     grp = [[d for d in rows if d['rate'] == rt] for rt in rates]

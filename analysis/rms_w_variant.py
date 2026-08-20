@@ -36,7 +36,6 @@ def B1(u, x):
 HERE = '/home/user/preflight_identification/analysis'
 with open(os.path.join(HERE, '.failing_cache.pkl'), 'rb') as fh:
     rows, kqmax, s_med, kb = enrich(measure(pickle.load(fh)))
-kqm = float(np.median([d['kq'] for d in rows if d['kq'] is not None]))
 
 for d in rows:
     rb, _, _ = rho_bar(d['axis'], PHI_BOX, d['dm_win'])
@@ -49,8 +48,7 @@ for d in rows:
     u = np.linspace(-x, 0.0, 4001)
     wtot = (rd2 * B2(u, x) + rd1 * B1(u, x)) / wz
     de_rms = float(np.rad2deg(np.sqrt(np.mean(wtot ** 2))))
-    kq = d['kq'] if d['kq'] is not None else kqm
-    nh = d['rms_n'] * np.sqrt(1.0 + (s_med * kq) ** 2)
+    nh = d['rms_n'] * np.sqrt(1.0 + (s_med * kqmax) ** 2)
     d['cap_sup'] = de_sup + dpre + nh
     d['cap_rms'] = de_rms + dpre + nh
     d['ms'], d['mr'] = de_sup, de_rms

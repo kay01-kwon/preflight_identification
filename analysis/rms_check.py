@@ -54,7 +54,7 @@ from fit_quality_bound import rho_bar
 from failing_runs import split, amplitude_best
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-PHI_BOX = np.deg2rad(10.0)
+PHI_BOX = np.deg2rad(5.0)
 C_MIN, C_DEP, C_AMP, C_E, C_N = '#148f77', '#c0392b', '#e08214', '#2874a6', '0.55'
 
 

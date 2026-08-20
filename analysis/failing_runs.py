@@ -80,7 +80,7 @@ CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                      '.failing_cache.pkl')
 FC = 5.0
 W_MIN = 30.08
-PHI_BOX = np.deg2rad(10.0)
+PHI_BOX = np.deg2rad(5.0)
 
 
 def split(v, dt, fc=FC):

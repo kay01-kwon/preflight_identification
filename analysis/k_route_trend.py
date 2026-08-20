@@ -27,7 +27,6 @@ from kernel_free_bound import SHAPE_SAFETY, model_term
 HERE = '/home/user/preflight_identification/analysis'
 with open(os.path.join(HERE, '.failing_cache.pkl'), 'rb') as fh:
     rows, kqmax, s_med, kb = enrich(measure(pickle.load(fh)))
-kqm = float(np.median([d['kq'] for d in rows if d['kq'] is not None]))
 
 def k_route(d):
     """rho-LEVEL shaped bound: sup_tau (1/J_P) int |K(tau,s)| env(s) ds,
@@ -56,8 +55,7 @@ for d in rows:
     d['mA'] = de_sup                       # rho_dot route (sup form)
     d['mK'] = k_route(d)                   # rho-level K route
     d['mmin'] = min(d['mA'], d['mK'])
-    kq = d['kq'] if d['kq'] is not None else kqm
-    nh = d['rms_n'] * np.sqrt(1.0 + (s_med * kq) ** 2)
+    nh = d['rms_n'] * np.sqrt(1.0 + (s_med * kqmax) ** 2)
     d['cap_min'] = d['mmin'] + dpre + nh
 
 rates = sorted({d['rate'] for d in rows})

@@ -9,7 +9,7 @@ Box (from the design spec):
     z_CoM       0.20  - 0.30   m
     J_CoM       0.050          kg m^2  (fixed)
     Mdot        the seven protocol rates
-Held fixed: phi_max = 10 deg (design tilt box), beta_M = -0.03446 (GE
+Held fixed: phi_max = 5 deg (the excitation tilt cap), beta_M = -0.03446 (GE
 model), shape safety 1.05.  The window of each combination is the
 tilt-limited one: x solves sinh(x) - x = phi_max Wz C2 / Mdot.
 
@@ -36,7 +36,7 @@ import matplotlib.pyplot as plt
 G = 9.81
 J_COM = 0.050
 BETA_M = 0.03446
-PHI = np.deg2rad(10.0)
+PHI = np.deg2rad(5.0)
 SAFETY = 1.05
 RATES = np.array([0.10, 0.20, 0.30, 0.45, 0.65, 0.90, 1.20])
 MASS = np.linspace(3.000, 3.220, 5)
@@ -163,8 +163,8 @@ def main():
     a2.set_ylabel(r'$|\Delta M_{\rm crit}|$ [mN m]', fontsize=10)
     a2.set_ylim(0, hi(ceil).max() * 1.18)
     a2.set_title('(b) critical-moment shift from the absorbed onset '
-                 'shift\nvs its ceiling $\\bar\\rho$; exact artanh form '
-                 'exceeds it $\\leq$12% at the slow corner', fontsize=11)
+                 'shift\nvs its ceiling $\\bar\\rho$; exact artanh '
+                 'excess below 0.7% everywhere', fontsize=11)
     a2.legend(fontsize=9, loc='center right')
     a2.grid(alpha=0.22, lw=0.4)
 
