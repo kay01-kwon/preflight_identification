@@ -196,9 +196,9 @@ $e_\omega(\tau_{\rm end}) \le 0.29\,E(\tau_{\rm end})$ at every rate.
 scatter on top of the $e_\omega$ part, so it is not the quantity the
 envelope governs run by run --- but either number is two orders below
 the admissibility limit $1$.)
-The same $u$ is the argument of the $\operatorname{artanh}(u)/u$
-factor in (21): one dimensionless number controls both the witness's
-admissibility and the exactness of the shift ceiling.
+The same $u$ is the argument of the artanh in (21)'s ceiling: one
+dimensionless number controls both the witness's admissibility and
+how far the shift ceiling sits above its small-$u$ limit $\rbar$.
 
 \emph{What if $u \ge 1$ --- ramps slower than $\rbar C_2$.} Three
 things, in decreasing order of certainty. (i) Only the \emph{a priori}
@@ -1368,28 +1368,33 @@ growth is which arm binds, not a wrong law.
 is (9), and the moment error it causes cancels $\Mdot$ exactly:
 \begin{equation}
   \big|\Delta M_{\rm crit}\big| \;=\; \Mdot\,|\dtc|
-  \;\approx\; \Mdot\cdot
-  \frac{e_\omega(\tau_{\rm end})}{C_1C_2\sinh \xe}
-  \;=\; \frac{Wz_{CoM}\,e_\omega(\tau_{\rm end})}{C_2\sinh \xe}
-  \;\le\; \frac{Wz_{CoM}\,E(\tau_{\rm end})}{C_2\sinh \xe}
-  \;=\; \rbar ,
+  \;=\; \frac{\Mdot}{C_2}\,
+  \operatorname{artanh}\!\Big(
+  \frac{e_\omega(\tau_{\rm end})}{C_1\sinh \xe}\Big)
+  \;\le\; \frac{\Mdot}{C_2}\,
+  \operatorname{artanh}\!\Big(\frac{\rbar\,C_2}{\Mdot}\Big),
   \tag{21}
 \end{equation}
-using $\Mdot/C_1 = Wz_{CoM}$ and $E(\tau_{\rm end}) =
-\rbar\sinh \xe/(J_PC_2)$. So the shift can displace the identified
-threshold by at most the window-averaged remainder --- the same
-$\rbar$ the manuscript already budgets. At the $5^\circ$ box the
+exact at every step --- no first-order approximation of the artanh:
+the first equality is (9) as written, and the inequality is
+monotonicity of artanh after bounding $e_\omega(\tau_{\rm end}) \le
+E(\tau_{\rm end}) = \rbar\sinh \xe/(J_PC_2)$, which turns the
+argument into $E(\tau_{\rm end})/(C_1\sinh\xe) = \rbar C_2/\Mdot = u$
+(using $\Mdot/C_1 = Wz_{CoM}$ and $J_PC_2^2 = Wz_{CoM}$). The ceiling
+carries $\rbar$ \emph{inside} the artanh; since
+$\operatorname{artanh}(u) = u + u^3/3 + \cdots$, its small-$u$ limit
+is exactly $\rbar$, and at the $5^\circ$ box it sits within $0.9\%$
+above $\rbar$ on the campaign ($0.7\%$ over the design box) --- so
+$\rbar$, the window-averaged remainder the manuscript already
+budgets, remains the mnemonic, while the stated guarantee
+approximates nothing. At the $5^\circ$ box the
 per-run ceiling is $1.8$--$3.3$ mN\,m; the $e_\omega$-driven part of
-the shift is guaranteed $\le \rbar$ and realised $\le 0.29\,\rbar$
+the shift is realised $\le 0.29$ of it
 (the exact-solution envelope ratio), the sign lowering $M_{\rm crit}$
 (earlier onset). The measured onset scatter, $\Mdot|\dtc| =
 0.36$--$1.85$ mN\,m from the fits, additionally contains noise-driven
 jitter --- comparable to the ceiling in size but governed by the noise
-term, not by (21). (The chain's middle step is the first-order
-$|\dtc|$; exactly, $|\dtc| = \operatorname{artanh}(\beta/C_1)/C_2$,
-so the ceiling acquires a factor $\operatorname{artanh}(u)/u$:
-$\le 1.009$ on the campaign envelope, $\le 1.007$ over the design
-box --- negligible at the $5^\circ$ box.)
+term, not by (21).
 
 \section{The bound over the design box}
 
@@ -1410,10 +1415,10 @@ $\rms(\de)$, eq.\ (17)$+$(18): $0.07$--$0.25^\circ$/s over box and
 rates, median $0.11$--$0.16$. The band is set by the ratio
 $\mathrm{arm}/z_{CoM}$ --- worst at arm $0.160$ m with
 $z_{CoM} = 0.20$ m, best at arm $0.090$ m with $0.30$ m.
-\emph{(b)} the critical-moment shift $\Mdot|\dtc|$ of (21):
-$1.5$--$3.1$ mN\,m, hugging its ceiling $\rbar$ --- the
-$\operatorname{artanh}(u)/u$ excess of the exact shift is below
-$0.7\%$ everywhere at the $5^\circ$ box --- and flat
+\emph{(b)} the critical-moment shift ceiling of (21),
+$(\Mdot/C_2)\operatorname{artanh}(\rbar C_2/\Mdot)$ --- artanh
+exact, $\rbar$ inside: $1.5$--$3.1$ mN\,m, within $0.7\%$ of its
+small-$u$ limit $\rbar$ everywhere at the $5^\circ$ box --- and flat
 in $\Mdot$ by the cancellation. Its worst corner has the
 \emph{opposite} $z$ direction --- $m = 3.22$ kg, arm $0.160$ m,
 $z_{CoM} = 0.30$ m --- because $\rbar$ grows with the window that a
@@ -1427,10 +1432,10 @@ $0.07$--$0.25^\circ$/s everywhere in the box --- an order of magnitude below the
 $\approx1^\circ$/s at every corner --- so
 the fit-quality gate can be set from the noise figure alone for any
 vehicle in this class. And the identification error from the absorbed
-onset shift never exceeds $3.1$ mN\,m anywhere in the box, at any
-rate --- inside its $\rbar$ budget everywhere, the exact-shift excess
-below $0.7\%$ --- with the same flatness in $\Mdot$ that
-the campaign shows.
+onset shift never exceeds $3.2$ mN\,m anywhere in the box, at any
+rate --- the ceiling exact, $\rbar$ inside the artanh, within
+$0.7\%$ of $\rbar$ everywhere --- with the same flatness in $\Mdot$
+that the campaign shows.
 
 \section*{Reproduction}
 
