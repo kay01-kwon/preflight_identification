@@ -985,6 +985,20 @@ term's slack was absorbing the noise-estimation error of the tail
 runs; with (19b) each term guards exactly its own object --- the
 model term $\de$, the noise envelope the disturbance.
 
+\emph{Why the pooled maximum and not a pooled mean$+3\sigma$.} The
+natural statistical alternative pools the $140$ in-window ratios and
+replaces $\kappa_b$ by their mean$+3\sigma$: it would tighten the
+multiplier from $2.32$ to $1.88$ (worst-run used $0.80$ instead of
+$0.68$, still $140/140$). It is not used because the data refuses the
+Gaussian tail the $3\sigma$ logic assumes: the pooled
+$\kappa_{\rm imp}$ distribution reaches its maximum at
+$3.3\sigma$ above its mean, so mean$+3\sigma = 1.59$ sits \emph{below}
+the observed maximum $1.69$ --- the statistical noise term alone
+would leave the worst run to the model term, quietly reintroducing
+the double duty (19b) exists to remove. The pooled \emph{maximum} is
+itself a campaign statistic, needs no distributional assumption, and
+keeps the guarantee unconditional over everything observed.
+
 \emph{Implementation, and the picture
 (Fig.~\ref{fig:spectrum}).} The split is a brick-wall FFT partition:
 remove the mean, zero the bins above $f_c$, invert --- so the two
