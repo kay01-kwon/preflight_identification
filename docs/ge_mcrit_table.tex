@@ -1,0 +1,58 @@
+% ---------------------------------------------------------------------
+% Ground-effect readjustment of the critical moment at onset -- the
+% table that replaces the (trivially affine) graph.
+%
+% Model: static balance at onset with the interference-model channel
+% gains of Table 3 evaluated at phi* = 0 (both channels alpha = 0.0430;
+% the beta slopes act only in-window, on the dynamic channel):
+%
+%     M (1 + eta_M alpha) + eta_f alpha f l_p  =  M_crit  (ideal)
+%     =>  M'_crit = (M_crit - a) / (1 + b),
+%         a = eta_f alpha f l_p,   b = eta_M alpha,
+%
+% with f = 0.7 W = 3.066 x 9.81 x 0.7 = 21.05 N.  Numbers from
+% analysis (scratch ge_table_calc): a_roll = 0.127 N m (l_p = 0.140 m),
+% a_pitch = 0.100 N m (l_p = 0.110 m), +/-0.018 N m for the +/-20 mm
+% CoM-offset margin on the arm; 1 + b = 1.0430.
+% ---------------------------------------------------------------------
+
+\begin{table}[!t]
+\caption{Ground-effect readjustment of the critical moment at onset:
+$M'_{\rm crit} = (M_{\rm crit} - \eta_f\alpha f l_p)/(1+\eta_M\alpha)$
+with $\alpha = 0.0430$ (Table~3 at $\varphi^\ast = 0$) and
+$f = 0.7\,W = 21.05$~N. The bracket is the $\pm 20$~mm CoM-offset
+margin on the pivot arm.}
+\label{tab:ge_mcrit}
+\centering
+\begin{tabular}{@{}llcccc@{}}
+\toprule
+Axis & $l_p$ [m] & $a$ [N\,m] & $M_{\rm crit}$ [N\,m] &
+$M'_{\rm crit}$ [N\,m] & shift\\
+\midrule
+Roll  & $0.140$ & $0.127$ & $0.7$ & $0.550\ [0.532,\,0.567]$ & $-21.5\%$\\
+      &         &         & $2.1$ & $1.892\ [1.875,\,1.909]$ & $-9.9\%$\\
+\addlinespace[2pt]
+Pitch & $0.110$ & $0.100$ & $0.4$ & $0.288\ [0.271,\,0.305]$ & $-28.0\%$\\
+      &         &         & $1.7$ & $1.534\ [1.517,\,1.552]$ & $-9.7\%$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% Suggested accompanying sentence:
+%
+%   Just before onset the rotors hold $f = 0.7\,W$, and the
+%   ground-effect interference contributes a moment in the tipping
+%   direction through both channels of Table~3, $\Delta M_{\rm GE} =
+%   \eta_f\alpha f l_p + \eta_M\alpha M$ at $\varphi^\ast = 0$; onset
+%   therefore occurs at the readjusted moment $M'_{\rm crit} =
+%   (M_{\rm crit} - \eta_f\alpha f l_p)/(1 + \eta_M\alpha)$, an affine
+%   map of the ideal value (Table~\ref{tab:ge_mcrit}).  Because the
+%   thrust channel enters as a constant, the relative reduction grows
+%   toward small critical moments -- from $-9.9\%$ ($-9.7\%$) at the
+%   top of the roll (pitch) range to $-21.5\%$ ($-28.0\%$) at the
+%   bottom.  The $\beta$ slopes of Table~3 do not enter here: they
+%   describe the gain's decline with tilt inside the window and are
+%   already carried by the dynamic ground-effect channel.  (Folding
+%   the $1.5^\circ$ pad tilt through the steepest $\beta$ changes the
+%   gain by $6\%$ of itself -- a $0.3$\,\%-point effect on the shift,
+%   negligible.)
