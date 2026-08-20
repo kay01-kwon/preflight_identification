@@ -74,9 +74,10 @@ def main():
               f"{np.sqrt(np.mean(d**2)):>7.0f}"
               f"{int(np.sum(np.abs(d)<100)):>6d}/{len(d)}")
 
-    fig, axs = plt.subplots(1, 2, figsize=(12.4, 4.9))
-    fig.subplots_adjust(left=0.065, right=0.99, top=0.79, bottom=0.115,
-                        wspace=0.24)
+    fig, axs2 = plt.subplots(2, 2, figsize=(12.4, 9.4))
+    fig.subplots_adjust(left=0.065, right=0.99, top=0.885, bottom=0.065,
+                        wspace=0.24, hspace=0.33)
+    axs = axs2[0]
     for ax, lab, ttl in [(axs[0], 'roll  (Mx)', '(a) roll (Mx): pivot on a gear line'),
                          (axs[1], 'pitch (My)', '(b) pitch (My): the other contact geometry')]:
         PH, GD, GM, d = packs[lab]
@@ -99,9 +100,36 @@ def main():
                      fontsize=11)
         ax.legend(fontsize=8.5, loc='upper left')
         ax.grid(alpha=0.22, lw=0.4)
+    # ---- bottom row: per-axis histograms of the per-run mean diff ----
+    hbins = np.linspace(-400, 400, 33)
+    for ax, axn, lab, ttl in [
+            (axs2[1][0], 'Mx', 'roll  (Mx)', '(c) roll: per-run mean difference'),
+            (axs2[1][1], 'My', 'pitch (My)', '(d) pitch: per-run mean difference')]:
+        _, _, _, d_all = packs[lab]
+        dp = packs[f'{axn} pos'][3]
+        dn = packs[f'{axn} neg'][3]
+        ax.hist(np.clip(dp, hbins[0], hbins[-1]), bins=hbins,
+                color='#1a5276', alpha=0.75,
+                label=f'pos tip (median {np.median(dp):+.0f})')
+        ax.hist(np.clip(dn, hbins[0], hbins[-1]), bins=hbins,
+                color='#c0392b', alpha=0.55,
+                label=f'neg tip (median {np.median(dn):+.0f})')
+        ax.axvline(0, color='#e08214', lw=2.0, label='model')
+        ax.axvline(float(np.median(d_all)), color='k', lw=1.2, ls='--',
+                   label=f'axis median {np.median(d_all):+.0f}')
+        ax.set_xlabel(r'per-run mean of $\Delta M_{GE}^{dyn} - '
+                      r'\Delta M_{GE}^{model}$ [mN$\cdot$m]', fontsize=10)
+        ax.set_ylabel('runs', fontsize=10)
+        ax.set_title(f'{ttl}\n'
+                     f'RMS {np.sqrt(np.mean(d_all**2)):.0f} mN$\\cdot$m, '
+                     f'$|d|{{<}}100$: {int(np.sum(np.abs(d_all)<100))}'
+                     f'/{len(d_all)}', fontsize=11)
+        ax.legend(fontsize=8.5, loc='upper left')
+        ax.grid(alpha=0.22, lw=0.4, axis='y')
+
     fig.suptitle('Trusted-span GE level test split by axis '
                  f'($w={W_SG}$, order 2, trim {K_TRIM}, relative attitude)',
-                 fontsize=12, y=0.965)
+                 fontsize=12, y=0.975)
     fig.savefig(out, dpi=150)
     print(f"\n  wrote {out}")
     return 0
