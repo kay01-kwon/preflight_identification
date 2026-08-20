@@ -1112,7 +1112,23 @@ mean $0.26$). The three anchors form a ladder: per-run with the
 branch subtracted (used $0.50$--$0.52$), per-run and model-blind
 ($0.39$), one model-blind campaign constant ($0.26$) --- each step
 buys independence from the method at a factor in slack, and the
-reader may stop wherever their scepticism is satisfied. \emph{No quiet data in
+reader may stop wherever their scepticism is satisfied.
+Fig.~\ref{fig:sgbound} draws the constant-anchor rung against the
+campaign.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.86\linewidth]{fig_sg_bound.png}
+\caption{Equation (20) with the fully method-blind noise constant:
+the campaign maximum of the Savitzky--Golay anchor,
+$N^\ast = 1.81^\circ$/s, times $\sqrt{1+\kappa_{\sup}^2}$ --- one
+grey number for every run, no model curve anywhere in the noise side.
+Purple is the per-run model term, green the measured residual with
+$95\%$ intervals. All $140$ runs stay inside at used
+$0.25$--$0.28$: the price of full method independence is a factor
+$\sim$$2$ against the deployed per-run anchor.}
+\label{fig:sgbound}
+\end{figure} \emph{No quiet data in
 the amplitude:} the quiet stretch enters only through the
 dimensionless shape ratio $\kappa_q$, never through the level ---
 deliberately, since the in-window contact-borne disturbance runs $2$
@@ -1421,6 +1437,7 @@ python analysis/failing_runs.py       DataSet/exp   # writes the cache
 python analysis/kernel_free_bound.py  docs/fig_kernel_free.png
 python analysis/design_range_chart.py docs/fig_design_range.png
 python analysis/noise_spectrum_figure.py docs/fig_noise_spectrum.png
+python analysis/sg_bound_figure.py    docs/fig_sg_bound.png
 \end{verbatim}
 \texttt{kernel\_free\_bound.py} evaluates (16)--(20) per run against
 the campaign cache and draws Fig.~\ref{fig:check}
