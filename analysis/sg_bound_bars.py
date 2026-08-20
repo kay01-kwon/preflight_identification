@@ -4,9 +4,10 @@
 measured minimiser RMS, per rate, with 95% intervals and per-rate
 used fractions.
 
-The disturbance term is one campaign constant, 2.27 deg/s: the
-Savitzky-Golay high-band anchor with a declared safety factor of 1.5,
-times sqrt(1 + kappa_sup^2).  No model curve enters the noise side.
+The disturbance term is one campaign constant, N_n = 3 N_med =
+2.31 deg/s: three times the campaign median of the Savitzky-Golay
+high-band anchor.  The factor 3 is declared (1.5 level spread x 1.96
+shape ceiling, rounded up); the noise term never touches the fit.
 
 Usage: python analysis/sg_bound_bars.py [out.png]
 """
@@ -30,7 +31,7 @@ from fit_quality_bound import rho_bar
 from kernel_free_bound import model_term
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-KS = 1.5
+FACTOR = 3.0
 C_M, C_N, C_MEAS = '#1a5276', '0.72', '#148f77'
 
 
@@ -38,8 +39,6 @@ def main():
     out = sys.argv[1] if len(sys.argv) > 1 else 'sg_bound_bars.png'
     with open(os.path.join(HERE, '.failing_cache.pkl'), 'rb') as fh:
         rows, kqmax, s_med, kb = enrich(measure(pickle.load(fh)))
-    ksup = max(d['kimp'] for d in rows)
-    mult = np.sqrt(1 + ksup ** 2)
     hi = lambda v: float(np.sqrt(np.mean(v ** 2)))
     sgs = []
     for d in rows:
@@ -51,7 +50,8 @@ def main():
         rb, _, _ = rho_bar(d['axis'], PHI_BOX, d['dm_win'])
         de, dpre = model_term(d, rb)
         d['m'] = de + dpre
-    noise = KS * float(np.rad2deg(np.median(sgs))) * mult
+    n_med = float(np.rad2deg(np.median(sgs)))
+    noise = FACTOR * n_med
     for d in rows:
         d['cap'] = d['m'] + noise
     rates = sorted({d['rate'] for d in rows})
@@ -74,8 +74,8 @@ def main():
     ax.bar(i - 0.21, mmod, w, color=C_M,
            label='model term (17)+(18)')
     ax.bar(i - 0.21, [noise] * len(i), w, bottom=mmod, color=C_N,
-           label=(r'disturbance term, $%.2f^\circ$/s '
-                  '(SG filter, campaign constant)' % noise))
+           label=(r'$N_n = 3N_{\rm med} = %.2f^\circ$/s '
+                  '(SG filter, declared factor 3)' % noise))
     ax.errorbar(i - 0.21, [c[0] for c in capm],
                 yerr=[c[1] for c in capm], fmt='none', ecolor='k',
                 capsize=4, lw=1.4)
@@ -101,7 +101,7 @@ def main():
     ax.set_title(
         r'$\mathrm{RMS}(r) \leq (M_2\dot\rho_2 + M_1\dot\rho_1)/Wz_{CoM}'
         r' + \Delta_{\rm pre} + N_n$ on all %d runs' % ins + '\n'
-        'the disturbance term is one method-blind constant; '
+        'the noise term never touches the fit; '
         f'used {min(np.mean([d["rms_min"]/d["cap"] for d in v]) for v in grp):.2f} '
         f'to {max(np.mean([d["rms_min"]/d["cap"] for d in v]) for v in grp):.2f}, '
         f'worst run {max(used_all):.2f}', fontsize=12)

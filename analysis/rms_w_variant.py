@@ -8,17 +8,20 @@ window is genuinely smaller: RMS(delta_e) <= RMS(w), computed here
 exactly on a grid.  Asymptotically RMS(B2) -> sqrt(1/(108 x)) and
 RMS(B1) -> sqrt(1/(16 x)) -- a 1/sqrt(x) dilution the sup ignores.
 
-Campaign result: model term tightens by 1.43-1.69x, per-rate mean used
-rises to 0.63-0.73, coverage stays 140/140, and the worst run reaches
-used 0.95 -- the cap has almost no fat left.  The sup form stays the
-deployed one (margin for vehicles beyond this campaign); this variant
-quantifies the remaining conservatism.
+Campaign result: the model term tightens by 1.43-1.69x; with the
+declared noise constant N_n = 3 N_med dominating the cap, per-rate
+mean used moves only 0.36-0.41 -> 0.38-0.43 (worst run 0.76),
+coverage stays 140/140.  The sup form stays the deployed one (margin
+for vehicles beyond this campaign); this variant quantifies the
+remaining conservatism of the model term itself.
 
 Usage: python analysis/rms_w_variant.py
 """
 import os, pickle, sys
 import numpy as np
+from scipy.signal import savgol_filter
 sys.path.insert(0, '/home/user/preflight_identification/analysis')
+from failing_runs import split, FC
 from fit_quality_bound import ARMS, W, BETA_M, rho_bar
 from rms_check import measure, PHI_BOX
 from tight_rms_bound import enrich
@@ -37,7 +40,14 @@ HERE = '/home/user/preflight_identification/analysis'
 with open(os.path.join(HERE, '.failing_cache.pkl'), 'rb') as fh:
     rows, kqmax, s_med, kb = enrich(measure(pickle.load(fh)))
 
-ksup = max(d['kimp'] for d in rows)
+_hi = lambda v: float(np.sqrt(np.mean(v ** 2)))
+_sg = []
+for d in rows:
+    _om = np.asarray(d['om'], float)
+    _w = max(int(round(2.0 / (FC * d['dt']))) | 1, 7)
+    _w = min(_w, len(_om) - 1 if (len(_om) - 1) % 2 else len(_om) - 2)
+    _sg.append(_hi(split(_om - savgol_filter(_om, _w, 3), d['dt'])[1]))
+N_n = 3.0 * float(np.rad2deg(np.median(_sg)))
 for d in rows:
     rb, _, _ = rho_bar(d['axis'], PHI_BOX, d['dm_win'])
     de_sup, dpre = model_term(d, rb)          # current sup version
@@ -51,9 +61,8 @@ for d in rows:
     u = np.linspace(-x, 0.0, 4001)
     wtot = (rd2 * B2(u, x) + rd1 * B1(u, x)) / wz
     de_rms = float(np.rad2deg(np.sqrt(np.mean(wtot ** 2))))
-    nh = d['rms_n'] * np.sqrt(1.0 + ksup ** 2)
-    d['cap_sup'] = de_sup + dpre + nh
-    d['cap_rms'] = de_rms + dpre + nh
+    d['cap_sup'] = de_sup + dpre + N_n
+    d['cap_rms'] = de_rms + dpre + N_n
     d['ms'], d['mr'] = de_sup, de_rms
 
 rates = sorted({d['rate'] for d in rows})

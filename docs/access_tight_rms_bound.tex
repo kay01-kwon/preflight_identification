@@ -55,6 +55,8 @@ C & fitted baseline (pre-onset median) &
 n_{\rm hi} & residual content above $5$ Hz &
   \kappa_q,\ s_{\rm med} & quiet-window shape ratio; median\\
 \hat n & noise estimate, Sec.~6 & & \ in-window enhancement ($1.60$)\\
+N_n & noise constant $3N_{\rm med} = 2.31^\circ$/s &
+  N_{\rm med} & median SG anchor, eq.\ (19b)\\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -530,7 +532,7 @@ over-covers. One consequence is structural: at this box the model
 term no longer subsidises the noise estimate --- with the old
 $10^\circ$ box its slack was absorbing the estimation error of
 $\hat n$ on the tail runs; that duty now sits explicitly with the
-envelope (19b), and the model term's own slack over the realised
+noise constant (19b), and the model term's own slack over the realised
 $\de$ drops to $1.4$--$2.0\times$.
 
 \emph{What ``decays like'' means --- the bridge from (16) to (16a).}
@@ -976,46 +978,42 @@ orthogonal, so their RMS values add in quadrature:
 $\rms(n)^2 = \rms(n_{\rm hi})^2\big(1 + (s_{\rm med}\kappa_q)^2\big)$
 --- which is (19).
 
-\emph{The envelope form that the cap uses.} (19) is an
-\emph{estimate} --- $s_{\rm med}$ is a campaign median, so on roughly
-half the runs the true disturbance exceeds $\hat n$. An estimate is
+\emph{The constant the cap uses.} (19) is an \emph{estimate} ---
+$s_{\rm med}$ is a campaign median, so on roughly half the runs the
+true disturbance exceeds $\hat n$ --- and it is built from the
+minimiser residual, the very object the cap bounds. An estimate is
 the right tool for interpretation (Sec.~7) but not for a guarantee,
-so the cap (20) carries the envelope form instead:
+so the cap (20) carries one campaign constant that never touches the
+fit:
 \begin{equation}
-  \hat n_b \;=\; \rms(n_{\rm hi})
-  \sqrt{1 + \kappa_{\sup}^2},
-  \qquad \kappa_{\sup} = \max_{\rm runs}\kappa_{\rm imp} = 1.69 ,
+  N_n \;=\; 3\,N_{\rm med} \;=\; 2.31^\circ/\text{s},
+  \qquad N_{\rm med} = 0.77^\circ/\text{s},
   \tag{19b}
 \end{equation}
-the campaign maximum of the in-window ratio itself --- the
-\emph{direct} pooled maximum of the quantity the bound needs. (An
-intermediate version bounded it indirectly, through the quiet ratios,
-as $s_{\rm med}\kappa_b = 2.09$ with $\kappa_b = \max\kappa_q$; the
-direct maximum is $24\%$ tighter with the same status.) The
-multiplier is $\sqrt{1 + 1.69^2} = 1.96$ on $\rms(n_{\rm hi})$:
-$\hat n_b$ is anchored at the largest measured ratio --- it
-upper-bounds every observed run's disturbance, with equality on the
-one run that sets the maximum, where the model term supplies the
-margin. The maximum is not an isolated freak: five runs sit above
-$0.8\,\kappa_{\sup}$. This is what frees
-the model term from double duty: with (19) in the cap, the model
-term's slack was absorbing the noise-estimation error of the tail
-runs; with (19b) each term guards exactly its own object --- the
-model term $\de$, the noise envelope the disturbance.
-
-\emph{Why the pooled maximum and not a pooled mean$+3\sigma$.} The
-natural statistical alternative pools the $140$ in-window ratios and
-uses their mean$+3\sigma$: it would tighten the multiplier from
-$1.96$ only to $1.88$ --- $4\%$ --- and it is not sound here, because
-the data refuses the Gaussian tail the $3\sigma$ logic assumes: the
-pooled $\kappa_{\rm imp}$ distribution reaches its maximum at
-$3.3\sigma$ above its mean, so mean$+3\sigma = 1.59$ sits \emph{below}
-the observed maximum $1.69$ --- the statistical noise term alone
-would leave the worst run to the model term, quietly reintroducing
-the double duty (19b) exists to remove. The pooled \emph{maximum} is
-itself a campaign statistic, needs no distributional assumption, and
-keeps the guarantee unconditional over everything observed --- at a
-price of $4\%$ against an assumption the data visibly violates.
+where $N_{\rm med}$ is the campaign median of the
+\emph{Savitzky--Golay high-band anchor}: smooth the raw record with a
+cubic SG filter (window $\approx 2/(f_c\,T_s)$, matched to the split),
+subtract the smooth, and take the RMS above $f_c$ with the same
+brick-wall partition --- a generic detrend, no cosh curve, no
+minimiser, no PNLS anywhere in the noise side. The factor $3$ is
+\emph{declared}, and it decomposes into the two jobs the noise term
+must do: $1.5$ for the run-to-run \emph{level} spread of the anchor
+(campaign max/median $= 2.35$, between runs) times $1.96$ for the
+worst within-run spectral \emph{shape} --- the $\sqrt{1+\kappa^2}$
+extension of a high-band level to the full band at the largest
+measured low/high ratio ($1.69$; the largest \emph{quiet-stretch}
+route gives $2.09$, and a pooled mean$+3\sigma$ of the ratios would
+sit \emph{below} the observed maximum, the distribution reaching it
+at $3.3\sigma$) --- $1.5 \times 1.96 = 2.94$, rounded up. The bare
+minimum total factor for coverage on this campaign is $2.05$; the
+shape ceiling alone (total $1.96$, no level factor) leaves the two
+level-outlier runs outside. This is what frees the model term from
+double duty: with (19) in the cap, the model term's slack was
+absorbing the noise-estimation error of the tail runs; with (19b)
+each term guards exactly its own object --- the model term $\de$,
+the declared constant the disturbance --- and the noise term is
+falsifiable in advance: it fails only if a future run's disturbance
+exceeds three times the campaign-median anchor.
 
 \emph{Implementation, and the picture
 (Fig.~\ref{fig:spectrum}).} The split is a brick-wall FFT partition:
@@ -1081,69 +1079,58 @@ band is its quietest part; and the MAD variant additionally discounts
 the bursts that carry much of a contact disturbance's energy. The
 under-read is systematic, not random: the ratios are nearly constant
 across the seven rates ($0.42$--$0.48$ and $0.57$--$0.71$). Swapped
-into (19b) as the anchor, the second-difference cap fails on $59$ of
+in as the per-run anchor under the shape envelope, the
+second-difference cap fails on $59$ of
 the $140$ runs (worst run at $2.16\times$ its cap) and the MAD cap on
 $13$ (worst $1.86\times$).
 (19)'s anchor is the same idea made band-honest: integrate the whole
 model-free band instead of sampling its quietest corner.
 
-\emph{A model-curve-free anchor exists, and it confirms the deployed
-one.} For a reader uneasy that the method's own curve appears in the
-anchor at all, three generic estimators handle the truncation leakage
-without ever seeing the cosh family
-(\texttt{analysis/neutral\_anchor.py}): a degree-$4$ Legendre detrend
-before the split, a DCT brick-wall split (the even extension removes
-the periodicity jump that defeats the raw DFT split), and a
-Savitzky--Golay residual. Against the deployed anchor their medians
-are $0.97$, $1.19$ and $0.97$ --- independent confirmation that the
-cosh subtraction is not flattering the method --- but each has runs
-where generic smoothing absorbs genuine disturbance (on one run all
-three under-read by $38\%$), so singly they cover $139/140$. The
-per-run maximum of the three, inflated $1.10\times$, is a valid
-fully model-free cap: $140/140$, worst used $0.94$, at a mean used of
-$0.39$ against the deployed $0.50$--$0.52$. The deployed anchor stays
---- tighter, fit-robust, and now independently corroborated. The
-simplest member of this family is also worth stating: take the
-campaign \emph{maximum} of the Savitzky--Golay anchor as a single
-constant, $N^\ast = 1.81^\circ$/s, and the noise term becomes one
-method-blind number, $N^\ast\sqrt{1+\kappa_{\sup}^2} = 3.6^\circ$/s
-for every run --- the cap still holds $140/140$ (worst used $0.49$,
-mean $0.26$). For the constant, the \emph{adopted} form is a declared
-engineering safety factor rather than the maximum: $1.5$ times the
-median anchor, giving one method-blind number
-$1.5\,N_{\rm med}\sqrt{1+\kappa_{\sup}^2} = 2.27^\circ$/s ---
-$140/140$, worst run $0.74$, mean used $0.40$; the factor is stated
-up front, the bare minimum for coverage is $1.05$, and the maximum
-would correspond to $2.35$. The anchors form a ladder: per-run with
-the branch subtracted (used $0.50$--$0.52$), per-run and model-blind
-($0.39$), the declared-factor constant ($0.40$), the maximum constant
-($0.26$) --- each step trades tightness for independence from the
-method, and the reader may stop wherever their scepticism is
-satisfied. Fig.~\ref{fig:sgbound} draws the adopted constant-anchor
-form against the campaign.
+\emph{The SG anchor is corroborated, and where it sits in the
+ladder.} The Savitzky--Golay anchor of (19b) is one of three generic
+estimators that handle the truncation leakage without ever seeing the
+cosh family (\texttt{analysis/neutral\_anchor.py}); the other two ---
+a degree-$4$ Legendre detrend before the split and a DCT brick-wall
+split (the even extension removes the periodicity jump that defeats
+the raw DFT split) --- read $1.00$ and $1.23$ times the SG anchor at
+the campaign median, and the fit-robust per-run anchor
+$\rms(n_{\rm hi})$ of (19) reads $1.03\times$: four independent
+routes to the same level, so the SG choice is not flattering the
+method. The alternatives to the adopted constant form a ladder, each
+step trading tightness for independence from declared judgment: the
+per-run envelope $\rms(n_{\rm hi})\sqrt{1+\kappa_{\sup}^2}$ (with
+$\kappa_{\sup} = 1.69$ the largest measured low/high ratio) is
+tighter (mean used $\approx0.50$) but takes its anchor from the
+minimiser residual; the declared-factor constant $N_n$ is the adopted
+form (mean used $0.36$--$0.41$); and the campaign-\emph{maximum} SG
+anchor with the shape ceiling, $3.6^\circ$/s, needs no declared
+factor at all --- every multiplier is an observed campaign extreme
+--- at mean used $0.26$. The reader may stop wherever their
+scepticism is satisfied; the cap holds $140/140$ at every rung.
+Fig.~\ref{fig:sgbound} draws the adopted form against the campaign.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.92\linewidth]{fig_sg_bars.png}
-\caption{Equation (20) with the method-blind noise constant, the
-adopted form: $1.5\times$ the median Savitzky--Golay anchor
-($N_{\rm med} = 0.77^\circ$/s), times $\sqrt{1+\kappa_{\sup}^2}$ ---
-one grey number, $2.27^\circ$/s, for every run, no model curve
-anywhere in the noise side; the safety factor is declared up front.
-Dark blue is the per-run model term, green the measured minimiser
-residual with $95\%$ intervals; all $140$ runs stay inside at used
-$0.37$--$0.42$, worst run $0.74$. For context: the bare minimum
-factor for coverage is $1.05$; the median alone ($k = 1$) leaves $2$
-runs outside (worst $1.04\times$); picking a covering quantile (p75)
-would be in-sample calibration; and the campaign maximum ---
-equivalent to $k = 2.35$ --- needs no declared factor at all but
-costs mean used $0.26$. The two multipliers do different jobs and
-neither can absorb the other's: $\sqrt{1+\kappa_{\sup}^2}$ extends a
-given high-band \emph{level} to the full band under the worst
-spectral \emph{shape} (within-run), while the declared factor covers
-the run-to-run spread of the level itself (max/median $= 2.35$,
-between-run) --- which is why no shape factor, however large, can
-replace it.}
+\caption{Equation (20) with the adopted noise constant (19b):
+$N_n = 3\,N_{\rm med} = 2.31^\circ$/s, three times the campaign
+median of the Savitzky--Golay high-band anchor
+($N_{\rm med} = 0.77^\circ$/s) --- one grey number for every run, no
+model curve, no minimiser, anywhere in the noise side; the factor is
+declared up front. Dark blue is the per-run model term, green the
+measured minimiser residual with $95\%$ intervals; all $140$ runs
+stay inside at used $0.36$--$0.41$, worst run $0.72$. For context:
+the bare minimum total factor for coverage is $2.05$; the shape
+ceiling alone (total $1.96$) leaves $2$ runs outside; picking a
+covering quantile would be in-sample calibration; and the campaign
+maximum with the shape ceiling ($3.6^\circ$/s) needs no declared
+factor at all but costs mean used $0.26$. The two halves of the
+factor do different jobs and neither can absorb the other's: $1.96$
+extends a high-band \emph{level} to the full band under the worst
+spectral \emph{shape} (within-run), while $1.5$ covers the
+run-to-run spread of the level itself (max/median $= 2.35$,
+between-run) --- which is why no shape factor, however large, could
+replace the level half.}
 \label{fig:sgbound}
 \end{figure} \emph{No quiet data in
 the amplitude:} the quiet stretch enters only through the
@@ -1197,9 +1184,9 @@ leaves spectral bins on both sides (a \emph{bin} is one discrete
 frequency of the window's FFT, $f_k = k/T$, spaced $1/T \approx
 1.4$--$2.5$ Hz apart here --- the shortest windows have only two or
 three below $5$ Hz, hence $f_c \gtrsim 2/(NT_s) \approx 3$
-Hz): recomputing the entire check at
-$f_c = 2$, $3$ and $5$ Hz gives identical results ($140/140$ inside,
-mean used $0.57$--$0.58$), and only past $8$ Hz does the shrinking
+Hz): recomputing the check with the estimate (19) in the cap's place
+at $f_c = 2$, $3$ and $5$ Hz gives identical results ($140/140$
+inside, mean used $0.57$--$0.58$), and only past $8$ Hz does the shrinking
 high band make the estimate noisy ($133/140$ at $8$, $129/140$ at
 $10$). The invariance is expected: $\hat n$ estimates the total
 $\rms(n)$, which does not depend on where the record is split. What
@@ -1216,16 +1203,16 @@ $k = 49$, collapses the used fraction from $0.58$ to $0.16$.
   \boxed{\;\rms(r) \;\le\;
   \underbrace{\frac{M_2\dot\rho_2 + M_1\dot\rho_1}{Wz_{CoM}}
   + \Delta_{\rm pre}}_{\text{model, before the experiment}}
-  \;+\; \hat n_b \;}
+  \;+\; N_n \;}
   \tag{20}
 \end{equation}
 The three terms have three different statuses, worth naming. The
 first is a \emph{sup} bound standing in for an RMS: (17) caps
 $|\de(\tau)|$ at every point, and $\rms(\de) \le \sup|\de|$ always
 --- a conservative substitution, not an approximation. The second is
-an RMS \emph{by definition}, (18b). The third upper-bounds
-$\rms(n)$ by the envelope (19b) --- the estimate (19) serves the
-interpretation, the envelope serves the guarantee. They combine by the triangle inequality of the
+an RMS \emph{by definition}, (18b). The third caps $\rms(n)$ by the
+declared campaign constant (19b) --- the estimate (19) serves the
+interpretation, the constant serves the guarantee. They combine by the triangle inequality of the
 $L^2$ norm, $\rms(A+B) \le \rms(A) + \rms(B)$; the first two live on
 disjoint segments and are therefore orthogonal, so quadrature
 ($\sqrt{\text{model}^2 + \Delta_{\rm pre}^2}$) would be admissible
@@ -1246,10 +1233,10 @@ $\int_{-\infty}^{0} B_{2,\infty}^2\,du = 1/108$ and
 $\int u^2e^{2u}/4\,du = 1/16$). Evaluated exactly on the campaign
 (\texttt{analysis/rms\_w\_variant.py}): the model term tightens by
 $1.43\times$ at the fastest ramp to $1.69\times$ at the slowest
-(where $\xe$ is largest) --- but with the envelope (19b) now
+(where $\xe$ is largest) --- but with the constant $N_n$ now
 dominating the cap, the total barely moves: mean used
-$0.50$--$0.52$ against $0.53$--$0.56$, coverage $140/140$ either
-way, worst run $0.77$ against $0.83$. With each term guarding its
+$0.36$--$0.41$ against $0.38$--$0.43$, coverage $140/140$ either
+way, worst run $0.72$ against $0.76$. With each term guarding its
 own object, the norm choice inside the sub-dominant model term is a
 matter of taste; the sup form is kept for its simpler statement.
 
@@ -1258,35 +1245,35 @@ matter of taste; the sup form is kept for its simpler statement.
 \includegraphics[width=0.86\linewidth]{fig_kernel_free.png}
 \caption{Equation (20) against the campaign: means over the twenty
 runs at each rate, $95\%$ $t$ intervals. Purple is the model term of
-(17)$+$(18), grey the noise envelope (19b), green the measured
-residual. All $140$ runs are inside; the used fraction is
-$0.50$--$0.52$ and the cap is flat, like the residual.}
+(17)$+$(18), grey the noise constant $N_n$ of (19b), green the
+measured residual. All $140$ runs are inside; the used fraction is
+$0.36$--$0.41$ and the cap is flat, like the residual.}
 \label{fig:check}
 \end{figure}
 
 \begin{center}\small
 \begin{tabular}{@{}rrrrrrr@{}}
 \toprule
-$\Mdot$ & model (17)+(18) & of it (18) & $\hat n_b$ & cap (20) &
+$\Mdot$ & model (17)+(18) & of it (18) & $N_n$ & cap (20) &
 measured & used\\
 N\,m/s & $^\circ$/s & $^\circ$/s & $^\circ$/s & $^\circ$/s &
 $^\circ$/s & \\
 \midrule
-$0.10$ & $0.238$ & $0.001$ & $1.750$ & $1.99$ & $0.987$ & $0.50$\\
-$0.20$ & $0.243$ & $0.000$ & $1.686$ & $1.93$ & $0.964$ & $0.50$\\
-$0.30$ & $0.257$ & $0.000$ & $1.780$ & $2.04$ & $1.014$ & $0.50$\\
-$0.45$ & $0.289$ & $0.000$ & $1.610$ & $1.90$ & $0.947$ & $0.50$\\
-$0.65$ & $0.302$ & $0.000$ & $1.767$ & $2.07$ & $1.084$ & $0.52$\\
-$0.90$ & $0.308$ & $0.000$ & $1.654$ & $1.96$ & $1.023$ & $0.52$\\
-$1.20$ & $0.339$ & $0.000$ & $1.683$ & $2.02$ & $1.052$ & $0.52$\\
+$0.10$ & $0.238$ & $0.001$ & $2.315$ & $2.55$ & $0.987$ & $0.39$\\
+$0.20$ & $0.243$ & $0.000$ & $2.315$ & $2.56$ & $0.964$ & $0.38$\\
+$0.30$ & $0.257$ & $0.000$ & $2.315$ & $2.57$ & $1.014$ & $0.39$\\
+$0.45$ & $0.289$ & $0.000$ & $2.315$ & $2.60$ & $0.947$ & $0.36$\\
+$0.65$ & $0.302$ & $0.000$ & $2.315$ & $2.62$ & $1.084$ & $0.41$\\
+$0.90$ & $0.308$ & $0.000$ & $2.315$ & $2.62$ & $1.023$ & $0.39$\\
+$1.20$ & $0.339$ & $0.000$ & $2.315$ & $2.65$ & $1.052$ & $0.40$\\
 \bottomrule
 \end{tabular}
 \end{center}
 
-Inside on $140/140$ runs; per-run used fraction p10 $0.44$, median
-$0.49$, worst $0.77$. (That the $\hat n_b$ column exceeds the
-measured residual is by construction, twice over: $\hat n_b$ is the
-\emph{envelope} (19b), a bound on the disturbance rather than its
+Inside on $140/140$ runs; per-run used fraction p10 $0.24$, median
+$0.38$, worst $0.72$. (That the $N_n$ column exceeds the
+measured residual is by construction, twice over: $N_n$ is the
+declared \emph{bound} (19b), a cap on the disturbance rather than its
 level --- the level estimate (19) sits at the residual --- and even
 the true disturbance generically exceeds the residual slightly,
 because the fit absorbs the noise component parallel to the family:
@@ -1309,10 +1296,10 @@ is calibrated to its own residual. What is \emph{not} by
 construction, and is the actual evidence: the spread stays narrow
 (the calibration pins the median, not the IQR), the ratio is flat in
 $\Mdot$, and the upper tail --- runs up to $1.76\,\hat n$ --- is
-covered by the noise envelope (19b), anchored at the largest measured
-ratio $\kappa_{\sup}$, with the model term adding the
-guaranteed $\de$ headroom on top. The $140/140$ coverage therefore
-rests on the envelope and the model term, not on the calibration.
+covered by the declared constant $N_n$ of (19b), with the model term
+adding the guaranteed $\de$ headroom on top. The $140/140$ coverage
+therefore rests on the constant and the model term, not on the
+calibration.
 
 (What ``measured'' is, precisely: the onset is
 placed by the paper's PNLS estimator, and the residual is then the
@@ -1345,8 +1332,8 @@ $\times1.6$), and the bound charges the box tilt $\varphi_{\max}$
 trajectory never realises both extremes together and its remainder
 stays flat, so the bound's slack widens, from $\times1.4$ at the
 slowest ramp to $\times2.0$ at the fastest --- while the used
-fraction of the cap stays flat at $0.50$--$0.52$, the envelope noise
-term dominating. This is not a wrong
+fraction of the cap stays flat at $0.36$--$0.41$, the noise constant
+dominating. This is not a wrong
 rate law in the theory; it is the honest price of a product-of-sups
 over correlated quantities, and it is paid where the cap can afford
 it --- the model term stays sub-noise at every rate, so its growth
@@ -1371,7 +1358,7 @@ two routes now cross \emph{inside} the sweep: the $\rho$-anchored
 form starts winning on runs at the fastest ramps, and the per-run
 minimum of the two --- valid, since each is a valid bound --- runs
 $0.23$--$0.28$ with trend $\times1.24$, $140/140$, worst used
-$0.77$. The reviewer-facing statement: the full bound is
+$0.74$. The reviewer-facing statement: the full bound is
 $\min(\text{$\dot\rho$-anchored},\ \text{$\rho$-anchored})$; its
 growing arm happens to be the binding one on this sweep, and the flat
 arm --- matching the data's trend --- takes over beyond it. The
@@ -1447,8 +1434,8 @@ the campaign shows.
 
 \section*{Reproduction}
 
-All numbers and figures in this document come from three scripts, run
-from the repository root:
+All numbers and figures in this document come from the scripts
+below, run from the repository root:
 \begin{verbatim}
 python analysis/failing_runs.py       DataSet/exp   # writes the cache
 python analysis/kernel_free_bound.py  docs/fig_kernel_free.png
@@ -1465,7 +1452,11 @@ Sec.~9 with the same closed forms and draws
 Fig.~\ref{fig:design}; its box limits are constants at the top of the
 file. Neither script solves an ODE or builds a kernel matrix ---
 elementary functions and one scalar root-find (the window equation)
-per combination.
+per combination. \texttt{noise\_spectrum\_figure.py} draws
+Fig.~\ref{fig:spectrum}, and \texttt{sg\_bound\_bars.py} computes the
+SG anchor of (19b) and draws Fig.~\ref{fig:sgbound}; the variant
+checks of Sec.~7--8 are \texttt{rms\_w\_variant.py},
+\texttt{k\_route\_trend.py} and \texttt{neutral\_anchor.py}.
 
 \section*{Remarks}
 
@@ -1483,10 +1474,10 @@ is what forbids $\rho$ from flipping sign with $K$, and that
 smoothness is worth exactly that factor.
 
 \emph{(b) What is a priori and what is not.} The model term of (20)
-uses only pre-experiment constants (list under (16)). The noise term
-(19) is measured: $n_{\rm hi}$ from the run itself, $\kappa_q$ from
-quiet stretches, $s_{\rm med}$ one campaign median. A fully
-pre-experiment cap replaces $\hat n$ with a bench noise figure.
+uses only pre-experiment constants (list under (16)). The noise
+constant $N_n$ is a campaign statistic --- one number measured once,
+then frozen. A fully pre-experiment cap replaces $N_n$ with a bench
+noise figure times the declared factor.
 
 \emph{(c) Exponent mismatch.} If the true exponent differs from the
 pinned $C_2$ by a relative $\varepsilon_2$, the mismatch joins

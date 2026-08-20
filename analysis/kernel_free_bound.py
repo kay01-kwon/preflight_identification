@@ -76,13 +76,22 @@ from CAD, l_arm from geometry, phi_max the design box, beta_M from the
 GE model, Mdot and the window from the protocol.  Add a gyro noise
 figure and the whole cap is computable before a single run is flown.
 
+The disturbance term is one campaign constant that never touches the
+fit: N_n = 3 N_med = 2.31 deg/s, where N_med = 0.772 deg/s is the
+campaign median of the Savitzky-Golay high-band anchor (cubic SG,
+window ~ 2/(f_c dt), split above f_c = 5 Hz, RMS) and the factor 3 is
+declared: 1.5 (between-run level spread, max/median 2.35) times 1.96
+(spectral shape ceiling sqrt(1 + kappa^2)), = 2.94, rounded up.  The
+minimum viable total factor on this campaign is 2.05.
+
 On the campaign: the model term is 0.24-0.34 deg/s -- the level of the
 projected Phi, with no kernel computed -- the cap holds on 140/140 runs
-at used 0.50-0.52 (per-run worst 0.77), and the realised witness
-remainder on the exact nonlinear solution is 0.16-0.17 deg/s, flat.
-The model term sits 1.4-2.0x above the realised value: with the
-box at the 5-degree excitation cap, most of the old slack is gone;
-the cap's slack lives in the noise ENVELOPE (kappa_sup), by design.
+at used 0.36-0.41 (per-run p10 0.24, median 0.38, worst 0.72), and the
+realised witness remainder on the exact nonlinear solution is
+0.16-0.17 deg/s, flat.  The model term sits 1.4-2.0x above the
+realised value: with the box at the 5-degree excitation cap, most of
+the old slack is gone; the cap's slack lives in the declared noise
+factor, by design.
 
 Usage: python analysis/kernel_free_bound.py [out.png]
 """
@@ -91,6 +100,7 @@ import pickle
 import sys
 
 import numpy as np
+from scipy.signal import savgol_filter
 from scipy.stats import t as student
 
 import matplotlib
@@ -179,20 +189,29 @@ def main():
     with open(os.path.join(HERE, '.failing_cache.pkl'), 'rb') as fh:
         rows, kqmax, s_med, kb = enrich(measure(pickle.load(fh)))
     kqm = float(np.median([d['kq'] for d in rows if d['kq'] is not None]))
-    ksup = max(d['kimp'] for d in rows)
+    # the cap's noise term: fully method-blind.  N_med is the campaign
+    # median of the Savitzky-Golay high-band anchor (no model curve
+    # anywhere); the declared factor 3 decomposes as 1.5 (between-run
+    # level spread; minimum viable 1.05, maximum 2.35) times the shape
+    # ceiling sqrt(1 + kappa_sup^2) = 1.96 measured once, rounded up.
+    # Minimum viable TOTAL factor on this campaign: 2.05.
+    from failing_runs import split as _split, FC as _FC
+    _hi = lambda v: float(np.sqrt(np.mean(v ** 2)))
+    _sg = []
+    for d in rows:
+        _om = np.asarray(d['om'], float)
+        _n = len(_om)
+        _w = max(int(round(2.0 / (_FC * d['dt']))) | 1, 7)
+        _w = min(_w, _n - 1 if (_n - 1) % 2 else _n - 2)
+        _sg.append(_hi(_split(_om - savgol_filter(_om, _w, 3),
+                              d['dt'])[1]))
+    N_n = 3.0 * float(np.rad2deg(np.median(_sg)))
     from fit_quality_bound import rho_bar
     for d in rows:
         rb, _, _ = rho_bar(d['axis'], PHI_BOX, d['dm_win'])
         d['de'], d['dpre'] = model_term(d, rb)
         d['de'] += d['dpre']
-        # envelope noise term: kappa_sup = the campaign MAX in-window
-        # shape ratio, the direct pooled maximum of the quantity the
-        # bound needs (the earlier two-step s_med * kappa_b bounded it
-        # indirectly through the quiet ratios, 24% looser).  n_b is an
-        # upper bound on every observed run's disturbance -- anchored
-        # at the largest measured ratio, the model term supplying the
-        # margin above it.  No double duty, no distribution assumption.
-        d['nh'] = d['rms_n'] * np.sqrt(1.0 + ksup ** 2)
+        d['nh'] = N_n
         d['kcap'] = d['de'] + d['nh']
     rates = sorted({d['rate'] for d in rows})
     grp = [[d for d in rows if d['rate'] == rt] for rt in rates]
@@ -218,7 +237,7 @@ def main():
            label=r'$(M_2\dot\rho_2+M_1\dot\rho_1)/Wz_{CoM}+\Delta_{\rm pre}$'
                  ', a priori')
     ax.bar(i - 0.20, nz, 0.36, bottom=de, color=C_N,
-           label=r'$\hat n_b$, the disturbance envelope (19b)')
+           label=r'$N_n = 3N_{\rm med} = 2.31^\circ$/s (SG, campaign constant)')
     ax.errorbar(i - 0.20, cap, yerr=cap_ci, fmt='none', ecolor='0.15',
                 elinewidth=1.3, capsize=4, zorder=5)
     ax.bar(i + 0.20, mm, 0.36, color=C_MEAS,
