@@ -47,8 +47,9 @@ from analysis.ge_dynamics_check import (                  # noqa: E402
     MASS_KG, G, OFF_SIGN, OFF_MM, j_parallel, analyse)
 
 Z = 0.261
-W_SG = 41              # the 5 Hz-rule window, order 2 (deployed order)
-K_TRIM = 20            # half-width: the regime-mixing exclusion
+W_SG = int(os.environ.get('GE_W', '9'))     # SG window (deployed 9, order 2)
+K_TRIM = int(os.environ.get('GE_K', str(max((W_SG - 1) // 2, 1))))
+# trim = the window's own half-width: the regime-mixing exclusion
 
 
 def collect():
@@ -127,24 +128,44 @@ def main():
     fig.subplots_adjust(left=0.065, right=0.99, top=0.79, bottom=0.115,
                         wspace=0.24)
 
+    PH, GD, GM = [], [], []
     for r in rows:
         ph, gd, gm = r['trace']
         e = len(ph) - K_TRIM
         if e < 10:
             continue
-        a1.plot(ph[:e], gd[:e], '-', color='#c0392b', lw=0.5, alpha=0.30)
-        a1.plot(ph[:e], gm[:e], '-', color='#e08214', lw=0.5, alpha=0.30)
+        PH.append(ph[:e]); GD.append(gd[:e]); GM.append(gm[:e])
+    PH, GD, GM = map(np.concatenate, (PH, GD, GM))
+    bins = np.arange(-0.5, PH.max() + 0.25, 0.25)
+    cx, md_d, q1_d, q3_d, p10, p90, md_m, lo_m, hi_m = ([] for _ in range(9))
+    for b0, b1 in zip(bins[:-1], bins[1:]):
+        m = (PH >= b0) & (PH < b1)
+        if m.sum() < 150:
+            continue
+        cx.append(0.5 * (b0 + b1))
+        md_d.append(np.median(GD[m])); q1_d.append(np.percentile(GD[m], 25))
+        q3_d.append(np.percentile(GD[m], 75))
+        p10.append(np.percentile(GD[m], 10)); p90.append(np.percentile(GD[m], 90))
+        md_m.append(np.median(GM[m])); lo_m.append(np.percentile(GM[m], 10))
+        hi_m.append(np.percentile(GM[m], 90))
+    a1.fill_between(cx, p10, p90, color='#c0392b', alpha=0.12, lw=0)
+    a1.fill_between(cx, q1_d, q3_d, color='#c0392b', alpha=0.25, lw=0)
+    a1.plot(cx, md_d, '-', color='#c0392b', lw=2.0)
+    a1.fill_between(cx, lo_m, hi_m, color='#e08214', alpha=0.35, lw=0)
+    a1.plot(cx, md_m, '-', color='#e08214', lw=2.0)
     a1.plot([], [], '-', color='#c0392b', lw=1.6,
-            label=f'dynamic inversion, trimmed ({len(d_trim)} runs)')
+            label=f'dynamic inversion: median, IQR, 10-90% '
+                  f'({len(d_trim)} runs)')
     a1.plot([], [], '-', color='#e08214', lw=1.6,
-            label='rotor-interference model')
+            label='rotor-interference model: median, 10-90%')
     a1.axhline(0, color='0.5', lw=0.8)
     a1.set_xlabel(r'excursion $\delta\varphi$ [deg]', fontsize=10)
     a1.set_ylabel(r'$\Delta M_{GE}$ [mN$\cdot$m]', fontsize=10)
-    a1.set_title('(a) the trusted span only (last half-width excluded):\n'
-                 'no zero crossings; the point scatter is $J_P\\dot\\omega$ '
-                 'noise -- the per-run mean is the test', fontsize=11)
-    a1.legend(fontsize=8.5, loc='upper right')
+    a1.set_title('(a) campaign aggregate by tilt (last half-width '
+                 'excluded;\nbins with $\\geq$150 samples): the band is '
+                 'run-to-run and noise spread', fontsize=11)
+    a1.legend(fontsize=8.5, loc='upper left')
+    a1.set_ylim(-260, 640)
     a1.grid(alpha=0.22, lw=0.4)
 
     bins = np.linspace(-400, 400, 33)
@@ -158,10 +179,11 @@ def main():
     a2.set_xlabel(r'per-run mean of $\Delta M_{GE}^{dyn} - \Delta M_{GE}'
                   r'^{model}$ [mN$\cdot$m]', fontsize=10)
     a2.set_ylabel('runs', fontsize=10)
-    a2.set_title('(b) level agreement per run: trimmed median $+77$ matches the\n'
-                 'static check\'s $+70$ mN$\\cdot$m offset '
-                 f'(model level itself: median {np.median(lvl):.0f} '
-                 'mN$\\cdot$m)', fontsize=11)
+    a2.set_title('(b) level agreement per run, before and after the trim\n'
+                 f'trimmed median {np.median(d_trim):+.0f} of a '
+                 f'{np.median(lvl):.0f} mN$\\cdot$m model level '
+                 f'($|d|{{<}}100$: {int(np.sum(np.abs(d_trim)<100))}'
+                 f'/{len(d_trim)})', fontsize=11)
     a2.legend(fontsize=8.5, loc='upper left')
     a2.grid(alpha=0.22, lw=0.4, axis='y')
 
