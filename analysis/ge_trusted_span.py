@@ -38,12 +38,10 @@ distortion over the kept span is only -2 mN.m, so this part is the
 long window's response to real onset-transition structure (its
 support straddles the pre-onset flat), not sinh clipping.  The
 per-run IQR width stays ~125 either way: the visible band narrowing
-is pointwise, and buys no test power at the per-run level.  The wider 41-sample window
-does worse (median +77, RMS 128, 1.6 deg left): its parabola clips
-more of the sinh growth and its exclusion spends more of the
-excursion.  The SLOPE (attitude dependence) is deliberately not
-claimed at either setting -- the range needed to resolve the model's
--2.5..-0.1 mN.m/deg is not available in the trusted span.
+is pointwise, and buys no test power at the per-run level.  The
+SLOPE (attitude dependence) is deliberately not claimed at either
+setting -- the range needed to resolve the model's -2.5..-0.1
+mN.m/deg is not available in the trusted span.
 
 Panel (a) aggregates the campaign by tilt -- median, IQR and 10-90%
 bands over all trusted-span samples in 0.25 deg bins (>= 150 samples
