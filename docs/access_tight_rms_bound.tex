@@ -1053,12 +1053,18 @@ unabsorbed model remainder $\de$ as well as low-band disturbance, so
 $\kappa_{\rm imp}$ --- and with it $s_{\rm med}$ --- errs high: the
 enhancement conservatively charges any model leftover to the noise
 term's low band too, and the cap can only grow for it. Two clarifications that
-head off natural objections. \emph{No circularity:} $n_{\rm hi}$ is
-computed from the minimiser residual --- the same residual the cap
-bounds --- but above the split the fit can neither add nor remove
-content (the branch has none there), so $r$'s high band equals the
-\emph{record's} high band: the anchor is fit-independent, and
-splitting $y$ directly gives the same number. \emph{No quiet data in
+head off natural objections. \emph{No circularity --- but stated carefully:} $n_{\rm hi}$
+is computed from the minimiser residual, the same residual the cap
+bounds. It is not \emph{fit-free}: splitting the raw record fails
+(the finite window's truncated branch leaks into the high bins
+themselves, $4$--$14\times$ the disturbance, and only subtracting a
+curve that carries the same leakage cancels it). It is
+\emph{fit-robust}, which is what breaks the circle: the high-band RMS
+is insensitive to \emph{which} good smooth curve is subtracted ---
+swapping the $C_2$-pinned two-parameter refit for the fully free fit
+changes it by $1.4\%$ at the median ($16\%$ worst) --- so the anchor
+does not reward the minimiser for fitting well; any member of the
+family delivers the same number. \emph{No quiet data in
 the amplitude:} the quiet stretch enters only through the
 dimensionless shape ratio $\kappa_q$, never through the level ---
 deliberately, since the in-window contact-borne disturbance runs $2$
