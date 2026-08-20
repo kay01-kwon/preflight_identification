@@ -1,62 +1,57 @@
 #!/usr/bin/env python3
 """What band-limited denoising does to the dynamic ground-effect check.
 
-The Savitzky-Golay window of the omega_dot differentiator is swept from
-the deployed 9 samples toward the band-limit rule of the noise model
-(docs/noise_model_notes.tex, w ~ 2/(f_c T_s), i.e. 41 samples for
-f_c = 5 Hz at T_s = 9.9 ms), and the three results are drawn on one
-pair of axes.
+The omega_dot differentiator is run at the band-limit window of the
+noise model (docs/noise_model_notes.tex, w ~ 2/(f_c T_s), i.e. 41
+samples for f_c = 5 Hz at T_s = 9.9 ms) at two polynomial orders, the
+deployed 2 and a curvature-matched 7, and the results are drawn
+together.
 
-Widening the window at the DEPLOYED order steepens the anomaly
-(-42 -> -53 -> -90 mN.m/deg at 9/21/41 samples) -- but that is a
-filter artefact, not physics, and the fix is the polynomial ORDER
-rather than the window length.  omega_dot ~ sinh(C2 tau) with an
-e-folding time 1/C2 = 163 ms, so a 41-sample (405 ms) window spans
-2.5 e-foldings, far more curvature than the deployed local parabola
-can follow (rate_derivative.omega_dot defaults to poly=2, deriv=1:
-the analytic slope of a parabola fitted to the raw omega, so the raw
-difference is never formed).  The parabola clips the growth of
-J_P omega_dot, which is exactly the term that has to cancel
--W z_CoM sin(phi), and the residual slope opens up.
+WHY THE ORDER MATTERS.  omega_dot ~ sinh(C2 tau) with an e-folding
+time 1/C2 = 163 ms, so a 41-sample (410 ms) window spans 2.5
+e-foldings -- far more curvature than a local parabola can follow
+(rate_derivative.omega_dot defaults to poly=2, deriv=1: the analytic
+slope of a parabola fitted to the raw omega, so the raw difference is
+never formed).  The parabola clips the growth of J_P omega_dot, which
+is exactly the term that has to cancel -W z_CoM sin(phi), and the
+fitted slope opens up: -89.7 mN.m/deg at order 2 against -38.2 at
+order 7 on this run.  On a NOISE-FREE cosh with these constants the
+endpoint error of the derivative is -6.4% at order 3 and -0.2% at
+order 5, so the difference is signal distortion, not noise (see
+analysis/sg_derivative_order.py).  The cost of the high order is
+noise gain, visible in panel (b): it buys fidelity only once sinh has
+taken off, and pays for it everywhere before that.
 
-Panel (b) shows the mechanism directly: the 41-sample parabola turns
-OVER past tau = 0.67 s while the 9-sample one keeps rising, and the
-true growth is monotone.  (Raising the order over the same window
-removes the distortion -- endpoint error on a noise-free cosh is
--6.4% at order 3 and -0.2% at order 5, and the anomaly then becomes
-invariant to the differentiator at -37 to -43 mN.m/deg; see
-analysis/sg_derivative_order.py and ge_differentiator_compare.py.
-The deployed order stays 2, so that result is kept as a diagnostic
-rather than adopted.)
+WHY THE TRAILING ZONE IS SUSPECT -- and why the usual reason is the
+wrong one.  It is NOT that samples run out: the pipeline
+differentiates the FULL bag trace and slices afterwards, and 335
+samples follow the excitation window on this run, so every point
+inside the window has two-sided filter support and nothing is
+extrapolated.  The real reason is regime mixing: within a half-width
+of the window end (20 samples, 0.20 s for w = 41) the filter's
+support reaches PAST the moment cap at i1, where the commanded moment
+stops ramping and becomes constant.  Panels (a) and (b) are therefore
+displayed only up to one full filter length before the window end
+(--trim-end, default 0.41 s), and the same zone is shaded in panel
+(c).  The fits themselves always use the whole window.
 
-TRIMMING THE WINDOW END DOES NOT RESCUE IT (panel c).  Two things are
-worth separating.  First, the differentiator is NOT extrapolating at
-the window end: the pipeline differentiates the FULL bag trace and
-slices afterwards, and 335 samples follow the excitation window here,
-so every point has two-sided support.  Second, and decisively, the
-trailing samples are not disposable.  Refitting the slope with the
-last k samples excluded does move it (-89.7 -> -12.5 mN.m/deg at
-k = 20 for the 41-sample window), but phi grows EXPONENTIALLY, so
-those samples carry nearly all the attitude range: dropping 20 of 79
-leaves 2.1 deg of the 6.9 deg excursion, and dropping 41 leaves
-0.8 deg, where the regression has no lever arm left and the estimate
-blows up (-199.7).  Excluding the tail removes the very quantity the
-check is trying to measure.
+WHAT THE TRIMMED VIEW CAN AND CANNOT SHOW.  Over the trusted span
+both orders sit on the model line -- but phi stays below 0.8 deg
+there, so that agreement is the INTERCEPT, the static balance which
+analysis/mcrit_prediction.py already establishes, and not evidence
+about the attitude dependence.  Panel (c) makes the trade explicit:
+excluding trailing samples does pull the slope toward the model
+(-89.7 -> about -13 at k = 20 for order 2), but phi grows
+exponentially, so those samples carry nearly all of the attitude
+range -- dropping 20 of 79 leaves 2.1 deg of the 6.9 deg excursion,
+dropping 41 leaves 0.8 deg, where the regression has no lever arm and
+the estimate collapses.  Trimming the tail removes the very quantity
+the check exists to measure, so it cannot rescue it.
 
 The noise model's window rule therefore does not transfer unchanged:
 there the smooth curve is DISCARDED and only the residue above f_c is
 kept, so distorting it errs safe; here the smooth curve IS the
 measurement.
-
-Panels (a) and (b) are DISPLAYED only up to one full filter length
-(41 samples, 0.41 s) before the window end, so the reader sees the
-span where even the widest filter draws entirely on excitation-window
-data; --trim-end changes it.  The fits and panel (c) always use the
-whole window.  Read that trimmed span carefully: with phi below
-0.8 deg there, the agreement it shows is the INTERCEPT -- the static
-balance, which the static check already establishes -- and not
-evidence about the attitude dependence, which only exists in the part
-that has been trimmed away.
 
 Usage: python analysis/ge_savgol_overlay.py [out.png]
        [--dir DataSet/exp/case_02/Mx] [--bag pos_Mx_01] [--z-com 0.261]
@@ -88,9 +83,8 @@ from analysis.ge_dynamics_check import (                  # noqa: E402
     MASS_KG, G, OFF_SIGN, OFF_MM, j_parallel)
 
 #            window, poly order, colour, dash
-VARIANTS = [(9, 2, '#1f77b4', '-'),        # deployed
-            (21, 2, '#7b3294', '-'),
-            (41, 2, '#c0392b', '-')]
+VARIANTS = [(41, 2, '#c0392b', '-'),       # parabola: cannot follow sinh
+            (41, 7, '#148f77', '--')]      # order matched to the curvature
 DROPS = [0, 3, 5, 8, 10, 15, 20, 30, 41]   # trailing samples excluded
 
 
@@ -194,6 +188,8 @@ def main():
             sl_k.append(1e3 * sk * np.pi / 180)
         a3.plot(ks, sl_k, ls, color=c, lw=1.5, marker='o', ms=4, label=lab)
         a3_slopes.append(sl_k)
+        print(f"      slope vs trailing samples dropped: "
+              + "  ".join(f"k={kk}:{vv:.1f}" for kk, vv in zip(ks, sl_k)))
 
     a1.plot(tau, 1e3 * ge_mod, '-', color='#e08214', lw=2.2,
             label='image-superposition model')
@@ -212,15 +208,15 @@ def main():
         ax_.set_ylim(v.min() - pad, v.max() + pad)
     a1.set_xlabel(r'$\tau$ [s]', fontsize=10)
     a1.set_ylabel(r'$\Delta M_{GE}$ [mN$\cdot$m]', fontsize=10)
-    a1.set_title('(a) the dynamic inversion, shown only where the widest\n'
-                 'filter has support inside the window', fontsize=11)
+    a1.set_title('(a) the dynamic inversion over the trusted span:\n'
+                 'both orders sit on the model', fontsize=11)
     a1.legend(fontsize=8.5, loc='lower left')
     a1.grid(alpha=0.22, lw=0.4)
 
     a2.set_xlabel(r'$\tau$ [s]', fontsize=10)
     a2.set_ylabel(r'$\dot\omega$ [rad/s$^2$]', fontsize=10)
-    a2.set_title(r'(b) $\dot\omega$ over the same trimmed span: the three'
-                 '\nwindows still agree here, before the growth takes off',
+    a2.set_title(r'(b) $\dot\omega$ over the same span: order 7 costs '
+                 'noise\nhere, and buys fidelity only once sinh takes off',
                  fontsize=11)
     a2.legend(fontsize=8.5, loc='upper left')
     a2.grid(alpha=0.22, lw=0.4)
@@ -232,6 +228,11 @@ def main():
     a3.axhline(0, color='0.6', lw=0.7)
     lo_y = min(min(sk_) for sk_ in a3_slopes)
     a3.set_ylim(1.18 * lo_y, max(30.0, -0.12 * lo_y))
+    # k below the half-width: the filter's support still reaches past the
+    # moment cap at the window end, so those fits mix the two regimes
+    a3.axvspan(0, 20, color='0.85', alpha=0.55, lw=0, zorder=0)
+    a3.text(10, a3.get_ylim()[1], 'filter support crosses\nthe moment cap',
+            fontsize=7.5, color='0.35', ha='center', va='top')
     for k in (0, 10, 20, 30, 41):
         e = len(phi) - k
         if e < 15:
@@ -242,9 +243,9 @@ def main():
                 rotation=90)
     a3.set_xlabel('trailing samples excluded from the fit', fontsize=10)
     a3.set_ylabel(r'fitted slope [mN$\cdot$m/deg]', fontsize=10)
-    a3.set_title('(c) the trailing samples are not disposable: '
+    a3.set_title('(c) past the shaded zone the two orders agree, but '
                  r'$\varphi$ grows' '\n'
-                 f'exponentially, so dropping 20 of {len(phi)} leaves '
+                 f'exponentially: dropping 20 of {len(phi)} leaves '
                  f'{np.rad2deg(phi[len(phi)-21]):.1f}$^\\circ$ of '
                  f'{np.rad2deg(phi[-1]):.1f}$^\\circ$', fontsize=11)
     a3.legend(fontsize=8.5, loc='lower left')
