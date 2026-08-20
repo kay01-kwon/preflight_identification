@@ -1085,7 +1085,24 @@ into (19b) as the anchor, the second-difference cap fails on $59$ of
 the $140$ runs (worst run at $2.16\times$ its cap) and the MAD cap on
 $13$ (worst $1.86\times$).
 (19)'s anchor is the same idea made band-honest: integrate the whole
-model-free band instead of sampling its quietest corner. \emph{No quiet data in
+model-free band instead of sampling its quietest corner.
+
+\emph{A model-curve-free anchor exists, and it confirms the deployed
+one.} For a reader uneasy that the method's own curve appears in the
+anchor at all, three generic estimators handle the truncation leakage
+without ever seeing the cosh family
+(\texttt{analysis/neutral\_anchor.py}): a degree-$4$ Legendre detrend
+before the split, a DCT brick-wall split (the even extension removes
+the periodicity jump that defeats the raw DFT split), and a
+Savitzky--Golay residual. Against the deployed anchor their medians
+are $0.97$, $1.19$ and $0.97$ --- independent confirmation that the
+cosh subtraction is not flattering the method --- but each has runs
+where generic smoothing absorbs genuine disturbance (on one run all
+three under-read by $38\%$), so singly they cover $139/140$. The
+per-run maximum of the three, inflated $1.10\times$, is a valid
+fully model-free cap: $140/140$, worst used $0.94$, at a mean used of
+$0.39$ against the deployed $0.50$--$0.52$. The deployed anchor stays
+--- tighter, fit-robust, and now independently corroborated. \emph{No quiet data in
 the amplitude:} the quiet stretch enters only through the
 dimensionless shape ratio $\kappa_q$, never through the level ---
 deliberately, since the in-window contact-borne disturbance runs $2$
