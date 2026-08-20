@@ -10,7 +10,10 @@ pair of axes.
 The point of the picture: smoothing harder does NOT quiet the anomaly,
 it inflates it.  omega_dot ~ sinh(C2 tau) with an e-folding time
 1/C2 = 163 ms, so a 41-sample (405 ms) window spans 2.5 e-foldings --
-more curvature than a local cubic can follow.  The smoother therefore
+more curvature than the differentiator's local parabola can follow
+(rate_derivative.omega_dot is savgol_filter with poly=2, deriv=1:
+the analytic slope of a parabola fitted to the raw omega, so the raw
+difference is never formed).  The smoother therefore
 clips the growth of J_P omega_dot, which is exactly the term that has
 to cancel -W z_CoM sin(phi), and the residual slope opens up.  A
 filter that removed only noise would converge as the window grows.

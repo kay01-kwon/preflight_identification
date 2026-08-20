@@ -103,15 +103,20 @@ theorem), which are independently measured rather than fitted:
    A filter that only removed noise would converge, not diverge.  The
    peak omega_dot falls 49% by w = 61, so the smoother is eating the
    SIGNAL: omega_dot ~ sinh(C2 tau) with 1/C2 = 163 ms, and a 41- or
-   61-sample window spans 2.5-3.7 e-foldings, which a local cubic
-   cannot follow.  Suppressing the growth of J_P omega_dot is exactly
+   61-sample window spans 2.5-3.7 e-foldings, which the local
+   QUADRATIC of the SG differentiator (rate_derivative.omega_dot uses
+   poly=2, deriv=1: a parabola fitted to the raw omega, differentiated
+   analytically) cannot follow.  Suppressing the growth of J_P omega_dot is exactly
    suppressing the term that must cancel -W z_CoM sin phi, so the
    residual slope inflates.  The noise model's window rule does not
    transfer here because the FILTER PLAYS THE OPPOSITE ROLE: there the
    smooth curve is discarded and only the residue above f_c is kept,
    so over-smoothing errs safe; here the smooth curve IS the
    measurement.  w = 9 (89 ms = 0.54 e-folding) stays in the regime
-   where the local cubic is a good approximation.
+   where the local parabola is a good approximation.  (Note the noise
+   model's smoother is a different object -- poly=3, deriv=0, window
+   matched to f_c -- which is why its window rule cannot be carried
+   over verbatim.)
 
        PYTHONPATH=<stubs> python analysis/ge_dynamics_check.py \
            --all --z-com 0.261 --savgol {9,21,41}
