@@ -16,6 +16,7 @@ quantifies the remaining conservatism.
 
 Usage: python analysis/rms_w_variant.py
 """
+import os, pickle, sys
 import numpy as np
 sys.path.insert(0, '/home/user/preflight_identification/analysis')
 from fit_quality_bound import ARMS, W, BETA_M, rho_bar
@@ -42,7 +43,7 @@ for d in rows:
     de_sup, dpre = model_term(d, rb)          # current sup version
     tau, c2, k = d['tau'], d['c2'], d['k']
     x = c2 * tau[-1]; wz = 1.0 / k
-    om = k * d['md_full'] * np.sinh(min(x, 30.0))
+    om = k * d['md_full'] * (np.cosh(min(x, 30.0)) - 1.0)
     rd2 = SHAPE_SAFETY * (W * ARMS[d['axis']] * PHI_BOX) * om
     rd1 = abs(BETA_M) * (d['md_full'] * PHI_BOX + d['dm_win'] * om)
     u = np.linspace(-x, 0.0, 4001)

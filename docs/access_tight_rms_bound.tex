@@ -48,7 +48,7 @@ C & fitted baseline (pre-onset median) &
   \rbar & window average bound on $\rho$, eq.\ (91)\\
 \dot\rho & its time derivative &
   \varphi_{\max} & $10^\circ$ design box\\
-\omega_{\max} & nominal peak rate $K\Mdot\sinh \xe$ &
+\omega_{\max} & nominal end rate $K\Mdot(\cosh\xe - 1)$ &
   l_{\rm arm},\ \beta_M & pivot arm; GE coefficient\\
 \Delta M_{\rm win} & in-window moment excursion &
   E(\tau) & envelope $\rbar\sinh(C_2\tau)/(J_PC_2)$, eq.\ (90)\\
@@ -471,7 +471,12 @@ $\rbar$ (91) already uses ($Wz_{CoM}(\sin\varphi-\varphi) \le 0$
 there), and it is exactly what the manuscript's (85) says at
 $\varphi^\ast = 0$: $G''(0) = W(l_p + p_{\rm off})$, the
 $Wz_{CoM}\sin\varphi^\ast$ term vanishing. Bounding on the $10^\circ$
-box, with $\omega_{\max} = K\Mdot\sinh \xe$:
+box, with $\omega_{\max} = K\Mdot(\cosh\xe - 1)$ --- the nominal
+\emph{end} rate itself, its small excess against the true end rate
+covered by the same $1.05$. (An earlier draft used $K\Mdot\sinh\xe$
+here, an overbound by $\coth(\xe/2)$: $5\%$ at the slowest ramp but
+$34\%$ at the fastest, which manufactured part of the model term's
+growth with $\Mdot$.) Then:
 \begin{equation}
   \sup|\dot\rho| \;\le\;
   \underbrace{W l_{\rm arm}\varphi_{\max}\,
@@ -783,10 +788,10 @@ split, whose correction term is negative on the whole interval --- so
 with no $M$ curves, no window length, and no $C_2$ beyond what sits
 inside $\dot\rho_{1,2}$ --- exactly as (85) trades the exact
 remainder for $\tfrac12 G''(0)\varphi^2$. Rerun on the $140$ runs,
-the constant version costs at most $15\%$ on the worst run ($0.2$--$7\%$
+the constant version costs at most $12\%$ on the worst run ($0.1$--$6\%$
 in the per-rate mean, largest at the fastest ramps where $\xe$ is
 smallest), keeps $140/140$ coverage, and the worst-run used fraction
-rises only to $0.86$. Note where the simplification is \emph{not}
+rises only to $0.87$. Note where the simplification is \emph{not}
 available: the channel amplitudes $\dot\rho_{1,2}$ are already the
 $\varphi^\ast = 0$ worst-case Taylor coefficients of (85) --- nothing
 further to drop there --- and the time \emph{shape} behind $M_2, M_1$
@@ -1067,15 +1072,16 @@ $\int_{-\infty}^{0} B_{2,\infty}^2\,du = 1/108$ and
 $\int u^2e^{2u}/4\,du = 1/16$). Evaluated exactly on the campaign
 (\texttt{analysis/rms\_w\_variant.py}): the model term tightens by
 $1.43\times$ at the fastest ramp to $1.69\times$ at the slowest
-(where $\xe$ is largest), the per-rate mean used fraction rises from
-$0.55$--$0.64$ to $0.63$--$0.73$, coverage stays $140/140$ --- and
-the worst run reaches used $0.95$. That last number is the point:
-tightened to its RMS form, the cap comes within $5\%$ of the worst
-measured residual, so there is almost no conservatism left to remove.
-The sup form remains the deployed one --- its worst-run margin
-($0.86$) is headroom for vehicles and disturbance levels beyond this
-campaign --- but the variant certifies that the slack it carries is
-chosen, not unaccounted.
+(where $\xe$ is largest), and the per-rate mean used fraction rises
+from $0.61$--$0.65$ to $0.70$--$0.75$ --- but coverage drops to
+$138/140$: the two worst runs exceed the RMS-form cap by up to
+$4\%$. That is the finding, and it is a strong one: with the
+$\cosh - 1$ anchor in place, the RMS form has crossed from bound to
+estimate --- it sits \emph{at} the data, not above it. The deployed
+sup form keeps $140/140$ with worst-run used $0.90$, and the variant
+certifies that the margin it carries is essentially the minimum a
+valid bound can have on this campaign: the slack is chosen, not
+unaccounted.
 
 \begin{figure}[t]
 \centering
@@ -1084,7 +1090,7 @@ chosen, not unaccounted.
 runs at each rate, $95\%$ $t$ intervals. Purple is the model term of
 (17)$+$(18), grey the noise estimate (19), green the measured
 residual. All $140$ runs are inside; the used fraction is
-$0.54$--$0.64$ and the cap is flat, like the residual.}
+$0.61$--$0.65$ and the cap is flat, like the residual.}
 \label{fig:check}
 \end{figure}
 
@@ -1096,19 +1102,19 @@ measured & used\\
 N\,m/s & $^\circ$/s & $^\circ$/s & $^\circ$/s & $^\circ$/s &
 $^\circ$/s & \\
 \midrule
-$0.10$ & $0.476$ & $0.036$ & $1.064$ & $1.54$ & $0.987$ & $0.64$\\
-$0.20$ & $0.505$ & $0.011$ & $1.050$ & $1.56$ & $0.964$ & $0.62$\\
-$0.30$ & $0.556$ & $0.006$ & $1.059$ & $1.62$ & $1.014$ & $0.63$\\
-$0.45$ & $0.647$ & $0.004$ & $0.993$ & $1.64$ & $0.947$ & $0.58$\\
-$0.65$ & $0.709$ & $0.002$ & $1.080$ & $1.79$ & $1.084$ & $0.61$\\
-$0.90$ & $0.760$ & $0.001$ & $1.020$ & $1.78$ & $1.023$ & $0.57$\\
-$1.20$ & $0.866$ & $0.001$ & $1.073$ & $1.94$ & $1.052$ & $0.54$\\
+$0.10$ & $0.453$ & $0.036$ & $1.064$ & $1.52$ & $0.987$ & $0.65$\\
+$0.20$ & $0.460$ & $0.011$ & $1.050$ & $1.51$ & $0.964$ & $0.64$\\
+$0.30$ & $0.490$ & $0.006$ & $1.059$ & $1.55$ & $1.014$ & $0.65$\\
+$0.45$ & $0.552$ & $0.004$ & $0.993$ & $1.54$ & $0.947$ & $0.61$\\
+$0.65$ & $0.578$ & $0.002$ & $1.080$ & $1.66$ & $1.084$ & $0.65$\\
+$0.90$ & $0.589$ & $0.001$ & $1.020$ & $1.61$ & $1.023$ & $0.64$\\
+$1.20$ & $0.645$ & $0.001$ & $1.073$ & $1.72$ & $1.052$ & $0.61$\\
 \bottomrule
 \end{tabular}
 \end{center}
 
-Inside on $140/140$ runs; per-run used fraction p10 $0.45$, median
-$0.61$, worst $0.86$.
+Inside on $140/140$ runs; per-run used fraction p10 $0.49$, median
+$0.65$, worst $0.90$.
 
 \emph{The table's most striking feature --- measured $\approx$
 $\hat n$ --- and what it does and does not prove.} The measured
@@ -1153,15 +1159,17 @@ $\approx 1^\circ$/s disturbance floor, so the theory's observable
 prediction is $\rms(r) \approx \hat n$, flat --- and the data agrees:
 $\rms(r) = 0.95$--$1.08^\circ$/s across a twelvefold change in
 $\Mdot$ (correlation $r = +0.09$, $p = 0.31$). The \emph{model term}
-of (20), by contrast, grows $\times1.8$ across the sweep, from one
-identifiable factor: the nominal peak rate $\omega_{\max} =
-K\Mdot\sinh\xe$ genuinely doubles (faster ramps tip faster through
-the same tilt), and the bound charges the box tilt $\varphi_{\max}$
-\emph{at} that peak rate --- a product of sups. The true trajectory
-never realises both extremes together and its remainder stays flat,
-so the bound's slack widens, from $\times2.9$ at the slowest ramp to
-$\times5.2$ at the fastest --- the used fraction easing from $0.64$
-to $0.55$ is the same fact seen from the cap. This is not a wrong
+of (20), by contrast, grows $\times1.4$ across the sweep, from one
+identifiable factor: the nominal end rate $\omega_{\max} =
+K\Mdot(\cosh\xe - 1)$ genuinely grows $\times1.6$ (faster ramps
+tip faster through the same tilt), and the bound charges the box tilt
+$\varphi_{\max}$ \emph{at} that end rate --- a product of sups.
+(Before the anchor correction of Step 5 the growth was $\times1.8$;
+the $\sinh$ overbound was manufacturing the difference.) The true
+trajectory never realises both extremes together and its remainder
+stays flat, so the bound's slack widens, from $\times2.7$ at the
+slowest ramp to $\times3.8$ at the fastest --- while the used
+fraction of the cap is now nearly flat, $0.65$ to $0.61$. This is not a wrong
 rate law in the theory; it is the honest price of a product-of-sups
 over correlated quantities, and it is paid where the cap can afford
 it --- the model term stays sub-noise at every rate, so its growth
@@ -1181,12 +1189,11 @@ Green-kernel route of Remark (a), $|\de| \le
 (1/J_P)\int|K|\rho_{\rm env}$ --- and evaluated per run
 (\texttt{analysis/k\_route\_trend.py}) it inherits exactly that
 flatness: $1.16$--$1.19^\circ$/s across the sweep, a trend of
-$\times1.03$ against the deployed route's $\times1.96$. On this
-campaign it is looser everywhere (the crossover sits near
-$\Mdot \approx 2$ N\,m/s, beyond the sweep), and since both routes
-are valid bounds their per-run minimum is valid too ---
-$140/140$, worst used $0.86$, indistinguishable from the deployed
-form here. The reviewer-facing statement: the full bound is
+$\times1.03$ against the deployed route's $\times1.5$. On this
+campaign it is looser everywhere (the crossover sits well beyond the
+sweep), and since both routes are valid bounds their per-run minimum
+is valid too --- $140/140$, worst used $0.90$, indistinguishable from
+the deployed form here. The reviewer-facing statement: the full bound is
 $\min(\text{$\dot\rho$-anchored},\ \text{$\rho$-anchored})$; its
 growing arm happens to be the binding one on this sweep, and the flat
 arm --- matching the data's trend --- takes over beyond it. The
@@ -1231,8 +1238,8 @@ rates, each with its own tilt-limited window
 \centering
 \includegraphics[width=\linewidth]{fig_design_range.png}
 \caption{The design-box sweep. \emph{(a)} the bound on
-$\rms(\de)$, eq.\ (17)$+$(18): $0.26$--$1.00^\circ$/s over box and
-rates, median $0.43$--$0.62$. The band is set by the ratio
+$\rms(\de)$, eq.\ (17)$+$(18): $0.25$--$0.87^\circ$/s over box and
+rates, median $0.42$--$0.55$. The band is set by the ratio
 $\mathrm{arm}/z_{CoM}$ --- worst at arm $0.160$ m with
 $z_{CoM} = 0.20$ m, best at arm $0.090$ m with $0.30$ m.
 \emph{(b)} the critical-moment shift $\Mdot|\dtc|$ of (21):
@@ -1248,7 +1255,7 @@ $\mathrm{arm}/z_{CoM}$.}
 \end{figure}
 
 Two readings (Fig.~\ref{fig:design}). The residual bound stays within
-$0.26$--$1.00^\circ$/s everywhere in the box --- below the measured
+$0.25$--$0.87^\circ$/s everywhere in the box --- below the measured
 disturbance floor of $\approx1^\circ$/s at almost every corner --- so
 the fit-quality gate can be set from the noise figure alone for any
 vehicle in this class. And the identification error from the absorbed
@@ -1302,7 +1309,7 @@ pre-experiment cap replaces $\hat n$ with a bench noise figure.
 \emph{(c) Exponent mismatch.} If the true exponent differs from the
 pinned $C_2$ by a relative $\varepsilon_2$, the mismatch joins
 $e_\omega$ by definition and its unabsorbed part costs
-$0.018$--$0.022^\circ$/s per $1\%$ of $\varepsilon_2$ --- $5$--$8\%$
+$0.018$--$0.022^\circ$/s per $1\%$ of $\varepsilon_2$ --- $3$--$5\%$
 of the model term, and the calibration residuals limit
 $\varepsilon_2$ to a few percent.
 

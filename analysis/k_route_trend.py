@@ -16,6 +16,7 @@ coverage 140/140, worst used 0.86.
 
 Usage: python analysis/k_route_trend.py
 """
+import os, pickle, sys
 import numpy as np
 sys.path.insert(0, '/home/user/preflight_identification/analysis')
 from fit_quality_bound import ARMS, W, BETA_M, rho_bar

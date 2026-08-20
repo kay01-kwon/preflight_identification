@@ -70,7 +70,7 @@ def combo(m, lp, poff, z, md):
     x = brentq(lambda q: np.sinh(q) - q - rhs, 0.05, 25.0)
     T = x / c2
     dmw = md * T
-    om = md * np.sinh(x) / wz
+    om = md * (np.cosh(x) - 1.0) / wz   # nominal end rate
     # Wz term dropped by sign: d(rho_grav)/dphi = W a sin(phi)
     # + Wz (cos(phi) - 1) with the second term negative, and
     # a >= z tan(phi/2) everywhere in the box (min 0.090 vs max 0.026).
