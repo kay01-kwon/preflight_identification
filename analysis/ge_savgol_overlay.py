@@ -49,7 +49,7 @@ from utils import math_tools                              # noqa: E402
 from error_budget import ge_moment, LP                    # noqa: E402
 from analysis.rate_derivative import omega_dot            # noqa: E402
 from analysis.ge_dynamics_check import (                  # noqa: E402
-    MASS_KG, G, OFF_SIGN, OFF_MM)
+    MASS_KG, G, OFF_SIGN, OFF_MM, j_parallel)
 
 WINDOWS = [9, 21, 41]
 COLORS = ['#1f77b4', '#7b3294', '#c0392b']
@@ -61,6 +61,11 @@ def main():
     p.add_argument('--dir', default='DataSet/exp/case_02/Mx')
     p.add_argument('--bag', default=None)
     p.add_argument('--z-com', type=float, default=0.261)
+    p.add_argument('--jp-mode', choices=['parallel', 'identity'],
+                   default='parallel',
+                   help="parallel: J_COM + m(z^2 + l_p^2), the CAD "
+                        "parallel-axis value the batch uses; identity: "
+                        "W z / C2^2, which sits below the rigid-body floor")
     a_ = p.parse_args()
 
     d = Path(a_.dir)
@@ -85,7 +90,8 @@ def main():
     lp = (piv['pivot_abs'] * 1e-3 if not np.isnan(piv['pivot_abs'])
           else LP[axis])
     arm = lp + s * off_truth
-    j_p = W * a_.z_com / c2 ** 2
+    j_p = (j_parallel(axis, a_.z_com, MASS_KG[case])
+           if a_.jp_mode == 'parallel' else W * a_.z_com / c2 ** 2)
 
     sig = cvp.prepare_signals(bag, axis)
     roll, pitch = math_tools.quaternion_to_euler_vectorized(
@@ -113,7 +119,10 @@ def main():
 
     print(f"\n  {case}/{axname}/{name}:  C2 = {c2:.3f} rad/s, "
           f"1/C2 = {1e3/c2:.0f} ms,  T_s = {1e3*dt:.1f} ms,  "
-          f"window {len(tau)} samples / {tau[-1]:.2f} s\n")
+          f"window {len(tau)} samples / {tau[-1]:.2f} s")
+    print(f"  J_P = {j_p:.4f} kg m^2 ({a_.jp_mode});  for reference: "
+          f"parallel axis {j_parallel(axis, a_.z_com, MASS_KG[case]):.4f}, "
+          f"identity W z/C2^2 {W*a_.z_com/c2**2:.4f}\n")
     print(f"  {'w':>4}{'[ms]':>8}{'e-fold':>9}{'f_c~[Hz]':>10}"
           f"{'|om_dot|max':>13}{'slope':>10}{'at phi=0':>10}")
     for w, c in zip(WINDOWS, COLORS):
@@ -148,10 +157,13 @@ def main():
     a2.legend(fontsize=8.5, loc='upper left')
     a2.grid(alpha=0.22, lw=0.4)
 
+    jp_note = ('CAD parallel axis' if a_.jp_mode == 'parallel'
+               else r'from $Wz/C_2^2$')
     fig.suptitle('The noise model\'s SG rule does not transfer to a '
                  f'derivative  ({case}/{axname}/{name}, '
                  rf'$z_{{CoM}}$ = {a_.z_com:.3f} m, '
-                 rf'$J_P$ = {j_p:.3f} kg m$^2$)', fontsize=11.5, y=0.985)
+                 rf'$J_P$ = {j_p:.3f} kg m$^2$, {jp_note})',
+                 fontsize=11.5, y=0.985)
     fig.savefig(a_.out, dpi=150)
     print(f"\n  wrote {a_.out}\n")
     return 0
