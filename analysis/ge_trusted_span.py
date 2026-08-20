@@ -68,7 +68,8 @@ from analysis.ge_dynamics_check import (                  # noqa: E402
     MASS_KG, G, OFF_SIGN, OFF_MM, J_COM, j_parallel, analyse)
 
 Z = 0.261
-W_SG = int(os.environ.get('GE_W', '9'))     # SG window (deployed 9, order 2)
+W_SG = int(os.environ.get('GE_W', '9'))     # SG window (deployed 9)
+SG_P = int(os.environ.get('GE_P', '2'))     # SG order (noise doc uses 3)
 K_TRIM = int(os.environ.get('GE_K', str(max((W_SG - 1) // 2, 1))))
 # trim = the window's own half-width: the regime-mixing exclusion
 
@@ -123,7 +124,7 @@ def collect():
             arm_jp = LP[axis] + s_dir * analyse.off_truth
             j_p_run = J_COM[axis] + mass * (Z ** 2 + arm_jp ** 2)
             r = analyse(bag, crit, axis, sig, phi_all, nn, Z, j_p_run,
-                        W_SG, q_rest=qr)
+                        W_SG, q_rest=qr, sg_poly=SG_P)
             if r and 'trace' in r:
                 r.update(case=case, axisname=axname)
                 rows.append(r)
@@ -134,7 +135,8 @@ def collect():
 def main():
     out = sys.argv[1] if len(sys.argv) > 1 else 'ge_trusted_span.png'
     rows = collect()
-    print(f"\n  {len(rows)} runs;  w = {W_SG}, order 2, trim k = {K_TRIM}\n")
+    print(f"\n  {len(rows)} runs;  w = {W_SG}, order {SG_P}, "
+          f"trim k = {K_TRIM}\n")
 
     d_trim, d_full, phi_left, rates = [], [], [], []
     for r in rows:
@@ -226,7 +228,7 @@ def main():
     a2.grid(alpha=0.22, lw=0.4, axis='y')
 
     fig.suptitle('Dynamic GE moment against the rotor-interference model, '
-                 f'trusted span ($w={W_SG}$, order 2, trim {K_TRIM}; '
+                 f'trusted span ($w={W_SG}$, order {SG_P}, trim {K_TRIM}; '
                  r'$J_{CoM}=0.051$ kg m$^2$, $z_{CoM}=0.261$ m)',
                  fontsize=12, y=0.965)
     fig.savefig(out, dpi=150)

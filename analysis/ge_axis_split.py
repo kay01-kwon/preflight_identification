@@ -22,7 +22,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-from analysis.ge_trusted_span import collect, K_TRIM, W_SG
+from analysis.ge_trusted_span import collect, K_TRIM, W_SG, SG_P
 
 
 def agg(rows):
@@ -53,7 +53,8 @@ def band(PH, V, bins):
 def main():
     out = sys.argv[1] if len(sys.argv) > 1 else 'ge_axis_split.png'
     rows = collect()
-    print(f"\n  {len(rows)} runs;  w = {W_SG}, order 2, trim k = {K_TRIM}\n")
+    print(f"\n  {len(rows)} runs;  w = {W_SG}, order {SG_P}, "
+          f"trim k = {K_TRIM}\n")
 
     print(f"  {'group':<12}{'n':>4}{'model lvl':>11}{'median d':>10}"
           f"{'IQR':>19}{'RMS':>7}{'|d|<100':>9}")
@@ -128,7 +129,8 @@ def main():
         ax.grid(alpha=0.22, lw=0.4, axis='y')
 
     fig.suptitle('Trusted-span GE level test split by axis '
-                 f'($w={W_SG}$, order 2, trim {K_TRIM}, relative attitude)',
+                 f'($w={W_SG}$, order {SG_P}, trim {K_TRIM}, '
+                 'relative attitude)',
                  fontsize=12, y=0.975)
     fig.savefig(out, dpi=150)
     print(f"\n  wrote {out}")
