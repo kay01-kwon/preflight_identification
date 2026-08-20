@@ -1179,7 +1179,14 @@ $1.20$ & $0.334$ & $0.000$ & $1.986$ & $2.32$ & $1.052$ & $0.45$\\
 \end{center}
 
 Inside on $140/140$ runs; per-run used fraction p10 $0.39$, median
-$0.43$, worst $0.68$.
+$0.43$, worst $0.68$. (That the $\hat n_b$ column exceeds the
+measured residual is by construction, twice over: $\hat n_b$ is the
+\emph{envelope} (19b), a bound on the disturbance rather than its
+level --- the level estimate (19) sits at the residual --- and even
+the true disturbance generically exceeds the residual slightly,
+because the fit absorbs the noise component parallel to the family:
+$\mathbb E[\rms(r)^2] = \sigma^2(1 - p/N)$, the projection
+$\|(I-P)n\| \le \|n\|$ of the appendix.)
 
 \emph{The table's most striking feature --- measured $\approx$
 $\hat n$ --- and what it does and does not prove.} The measured
