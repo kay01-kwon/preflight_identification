@@ -33,17 +33,39 @@ differentiator side.  The information about departures from the family
 lives in the RESIDUAL of the pinned fit, not in its derivative, which
 is what docs/access_tight_rms_bound.tex bounds.
 
-A SIDE FINDING worth its own look.  Fitted freely on the excitation
-windows themselves, C2 lands at a median of 4.72 rad/s (range
-3.80-5.92 over the 14 bags of case_02/Mx) -- essentially the CAD
-parallel-axis prediction sqrt(W z / J_P) = 4.97 -- and fits better
-than the calibrated 6.125 on EVERY run.  That points the 23% exponent
-discrepancy behind J_P = W z / C2^2 = 0.220 (below the rigid-body
-floor 0.283) at the C2 calibration rather than at the windows.
-Caveat: the three-parameter family with C2 free is partly degenerate
-over a 0.8 s window, since a smaller exponent with a larger sinh
-coefficient mimics a larger one, so this is a diagnostic, not a
-conclusion.  analysis/c2_free_check.py runs the sweep.
+A SIDE FINDING, AND ITS REFUTATION.  Fitted freely on the 14 windows
+of case_02/Mx, C2 landed at a median 4.72 rad/s -- essentially that
+dataset's CAD parallel-axis prediction of 4.97 -- against its
+calibrated 6.12, which looked like evidence that the exponent
+discrepancy behind the sub-floor J_P = W z / C2^2 = 0.220 lived in the
+C2 calibration.  Run over the whole campaign
+(analysis/c2_campaign_fit.py) that reading does NOT survive, and it is
+recorded here so the same inference is not made again:
+
+  * Campaign medians agree exactly.  Calibrated C2 has median 5.06
+    over the 140 runs; the CAD prediction has median 5.06.  There is
+    no systematic offset to explain.
+
+  * The per-dataset ratio scatters BOTH ways, 0.70 to 1.62
+    (case_03/Mx 3.50 against 4.97; case_01/Mx 8.00 against 4.95).
+    case_02/Mx, at 1.23, is simply one of the high ones.  What the
+    campaign shows is that the calibrated exponent varies 2.3x across
+    datasets while the geometry predicts a nearly constant 4.95-5.17
+    -- the dataset-to-dataset variability already recorded in
+    ge_dynamics_check.py, not a bias.
+
+  * The constrained two-coefficient fit is not the clean instrument it
+    appears to be: dropping the sinh trades one degeneracy for
+    another.  Over a short window cosh(C2 tau) - 1 is nearly
+    (C2 tau)^2/2, so C1 and C2 separate only once the window spans
+    enough e-foldings; below that the fit rails at the low end of the
+    search grid, which it does on 70 of the 140 runs.  Adding a
+    baseline back (three coefficients, still no sinh) lifts the median
+    to 4.26 but leaves a 1.50-8.09 range.
+
+  * "The free fit beats the calibrated exponent on 140/140 runs" is
+    not evidence either way: an extra free parameter always fits the
+    same data better.
 
 Usage: PYTHONPATH=<stubs> python analysis/cosh_differentiator.py
 """
