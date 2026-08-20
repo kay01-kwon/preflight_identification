@@ -1169,6 +1169,29 @@ never reaches the observable. The envelope (90), which grows like
 $\sinh \xe$, bounds $e_\omega$ --- not the residual --- and comparing
 the residual against it is what made the old cap look loose.
 
+\emph{The trend is an anchor choice, and the theory contains the flat
+anchor too.} Why is the realised $\de$ flat while its bound grows?
+Because the Dirichlet boundary zero sits directly under the
+$\dot\rho$ peak, the true response is governed not by the peak of
+$\dot\rho$ (which rides $\omega_{\max}$ and doubles) but by the
+$\rho$ \emph{level}: $\int\dot\rho = \rho(\tau_{\rm end}) \propto
+\varphi_{\rm end}^2$, flat in rate since the realised end tilt is.
+A bound anchored on $\rho(\tau_{\rm end})$ exists --- the
+Green-kernel route of Remark (a), $|\de| \le
+(1/J_P)\int|K|\rho_{\rm env}$ --- and evaluated per run
+(\texttt{analysis/k\_route\_trend.py}) it inherits exactly that
+flatness: $1.16$--$1.19^\circ$/s across the sweep, a trend of
+$\times1.03$ against the deployed route's $\times1.96$. On this
+campaign it is looser everywhere (the crossover sits near
+$\Mdot \approx 2$ N\,m/s, beyond the sweep), and since both routes
+are valid bounds their per-run minimum is valid too ---
+$140/140$, worst used $0.86$, indistinguishable from the deployed
+form here. The reviewer-facing statement: the full bound is
+$\min(\text{$\dot\rho$-anchored},\ \text{$\rho$-anchored})$; its
+growing arm happens to be the binding one on this sweep, and the flat
+arm --- matching the data's trend --- takes over beyond it. The
+growth is which arm binds, not a wrong law.
+
 \emph{How far the shift moves the critical moment.} The absorbed shift
 is (9), and the moment error it causes cancels $\Mdot$ exactly:
 \begin{equation}
