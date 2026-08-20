@@ -218,7 +218,7 @@ def main():
            label=r'$(M_2\dot\rho_2+M_1\dot\rho_1)/Wz_{CoM}+\Delta_{\rm pre}$'
                  ', a priori')
     ax.bar(i - 0.20, nz, 0.36, bottom=de, color=C_N,
-           label=r'$\hat n$, the disturbance')
+           label=r'$\hat n_b$, the disturbance envelope (19b)')
     ax.errorbar(i - 0.20, cap, yerr=cap_ci, fmt='none', ecolor='0.15',
                 elinewidth=1.3, capsize=4, zorder=5)
     ax.bar(i + 0.20, mm, 0.36, color=C_MEAS,

@@ -139,7 +139,7 @@ def main():
     a1.set_ylim(0, hi(rms).max() * 1.18)
     a1.set_title(r'(a) bound on $\mathrm{RMS}(\delta e_\omega)$, the model'
                  ' term of (20)\n(17)$+$(18) over the design box;'
-                 ' the cap adds $\hat n$ on top', fontsize=11)
+                 ' the cap adds the noise envelope $\hat n_b$ on top', fontsize=11)
     a1.grid(alpha=0.22, lw=0.4)
 
     a2.fill_between(RATES, lo(dmc), hi(dmc), color=C_B, alpha=0.18, lw=0)
