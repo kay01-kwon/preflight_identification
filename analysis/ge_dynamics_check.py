@@ -277,7 +277,8 @@ def j_parallel(axis, z_com, mass):
     return J_COM[axis] + mass * (z_com ** 2 + LP[axis] ** 2)
 
 
-def analyse(bag, crit, axis, sig, phi_all, n, z_com, j_p, savgol=9):
+def analyse(bag, crit, axis, sig, phi_all, n, z_com, j_p, savgol=9,
+            q_rest=None):
     """Dynamic inversion of dM_GE for one run; returns the fit summary."""
     case_w = analyse.W
     pos = crit.bag_name.startswith('pos')
@@ -326,7 +327,7 @@ def analyse(bag, crit, axis, sig, phi_all, n, z_com, j_p, savgol=9):
 
     ge_dyn = (j_p * om_dot - m - f * lp
               + case_w * a * np.cos(phi) - case_w * z_com * np.sin(phi))
-    raw = ge_moment(bag, sig, axis, n, pos, window=sl)
+    raw = ge_moment(bag, sig, axis, n, pos, q_rest=q_rest, window=sl)
     if raw is None:
         return None
     ge_mod = s * raw[sl]

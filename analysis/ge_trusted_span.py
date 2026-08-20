@@ -16,9 +16,14 @@ the per-run mean difference
 
     d = mean( dM_GE^dyn - dM_GE^model )        [trimmed span]
 
-Campaign result at the deployed differentiator: median d = +25 mN.m
-(IQR -44..+90, RMS 105) of a 159 mN.m model level, |d| < 100 on
-96/140 runs, 4.75 deg median tilt left.  The wider 41-sample window
+The GE model is evaluated on attitude RELATIVE to the resting pose:
+q_rest, the median pre-ramp quaternion, is passed to ge_moment so the
+rotor heights are taken along the pad normal rather than world
+vertical (the pad is not level; see analysis/attitude_reference.py).
+
+Campaign result at the deployed differentiator: median d = +26 mN.m
+(IQR -42..+86, RMS 106) of a 157 mN.m model level, |d| < 100 on
+98/140 runs, 4.75 deg median tilt left.  The wider 41-sample window
 does worse (median +77, RMS 128, 1.6 deg left): its parabola clips
 more of the sinh growth and its exclusion spends more of the
 excursion.  The SLOPE (attitude dependence) is deliberately not
@@ -94,10 +99,19 @@ def collect():
                     sig = cvp.prepare_signals(bag, axis)
                 roll, pitch = math_tools.quaternion_to_euler_vectorized(
                     bag.odom.quaternion)
-                cache[crit.bag_name] = (sig, roll if axis == 'x' else pitch)
-            sig, phi_all = cache[crit.bag_name]
+                # resting attitude before the ramp: the GE model is
+                # evaluated on attitude RELATIVE to it (heights along
+                # the pad normal), not on absolute world attitude
+                i0w, _ = cvp.detect_excitation_window(
+                    sig['moment'], moment_cap=cvp.MOMENT_CAP.get(axis))
+                qr = np.median(bag.odom.quaternion[:max(20, i0w)], axis=0)
+                qr = qr / np.linalg.norm(qr)
+                cache[crit.bag_name] = (
+                    sig, roll if axis == 'x' else pitch, qr)
+            sig, phi_all, qr = cache[crit.bag_name]
             nn = min(len(phi_all), len(sig['t']))
-            r = analyse(bag, crit, axis, sig, phi_all, nn, Z, j_p, W_SG)
+            r = analyse(bag, crit, axis, sig, phi_all, nn, Z, j_p, W_SG,
+                        q_rest=qr)
             if r and 'trace' in r:
                 r.update(case=case, axisname=axname)
                 rows.append(r)
@@ -147,7 +161,7 @@ def main():
             continue
         PH.append(ph[:e]); GD.append(gd[:e]); GM.append(gm[:e])
     PH, GD, GM = map(np.concatenate, (PH, GD, GM))
-    bins = np.arange(-0.5, PH.max() + 0.25, 0.25)
+    bins = np.arange(0.0, PH.max() + 0.25, 0.25)
     cx, md_d, q1_d, q3_d, p10, p90, md_m, lo_m, hi_m = ([] for _ in range(9))
     for b0, b1 in zip(bins[:-1], bins[1:]):
         m = (PH >= b0) & (PH < b1)
@@ -177,6 +191,7 @@ def main():
                  'run-to-run and noise spread', fontsize=11)
     a1.legend(fontsize=8.5, loc='upper left')
     a1.set_ylim(-260, 640)
+    a1.set_xlim(left=0.0)
     a1.grid(alpha=0.22, lw=0.4)
 
     bins = np.linspace(-400, 400, 33)
