@@ -78,11 +78,11 @@ figure and the whole cap is computable before a single run is flown.
 
 On the campaign: the model term is 0.24-0.34 deg/s -- the level of the
 projected Phi, with no kernel computed -- the cap holds on 140/140 runs
-at used 0.43-0.46 (per-run worst 0.68), and the realised witness
+at used 0.50-0.52 (per-run worst 0.77), and the realised witness
 remainder on the exact nonlinear solution is 0.16-0.17 deg/s, flat.
 The model term sits 1.4-2.0x above the realised value: with the
 box at the 5-degree excitation cap, most of the old slack is gone;
-the cap's slack lives in the noise ENVELOPE (kappa_b), by design.
+the cap's slack lives in the noise ENVELOPE (kappa_sup), by design.
 
 Usage: python analysis/kernel_free_bound.py [out.png]
 """
