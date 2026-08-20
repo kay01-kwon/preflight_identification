@@ -1137,7 +1137,13 @@ factor for coverage is $1.05$; the median alone ($k = 1$) leaves $2$
 runs outside (worst $1.04\times$); picking a covering quantile (p75)
 would be in-sample calibration; and the campaign maximum ---
 equivalent to $k = 2.35$ --- needs no declared factor at all but
-costs mean used $0.26$.}
+costs mean used $0.26$. The two multipliers do different jobs and
+neither can absorb the other's: $\sqrt{1+\kappa_{\sup}^2}$ extends a
+given high-band \emph{level} to the full band under the worst
+spectral \emph{shape} (within-run), while the declared factor covers
+the run-to-run spread of the level itself (max/median $= 2.35$,
+between-run) --- which is why no shape factor, however large, can
+replace it.}
 \label{fig:sgbound}
 \end{figure} \emph{No quiet data in
 the amplitude:} the quiet stretch enters only through the
