@@ -7,21 +7,38 @@ the deployed 9 samples toward the band-limit rule of the noise model
 f_c = 5 Hz at T_s = 9.9 ms), and the three results are drawn on one
 pair of axes.
 
-The point of the picture: smoothing harder does NOT quiet the anomaly,
-it inflates it.  omega_dot ~ sinh(C2 tau) with an e-folding time
-1/C2 = 163 ms, so a 41-sample (405 ms) window spans 2.5 e-foldings --
-more curvature than the differentiator's local parabola can follow
-(rate_derivative.omega_dot is savgol_filter with poly=2, deriv=1:
+Widening the window at the DEPLOYED order steepens the anomaly
+(-42 -> -53 -> -90 mN.m/deg at 9/21/41 samples) -- but that is a
+filter artefact, not physics, and the fix is the polynomial ORDER
+rather than the window length.  omega_dot ~ sinh(C2 tau) with an
+e-folding time 1/C2 = 163 ms, so a 41-sample (405 ms) window spans
+2.5 e-foldings, far more curvature than the deployed local parabola
+can follow (rate_derivative.omega_dot defaults to poly=2, deriv=1:
 the analytic slope of a parabola fitted to the raw omega, so the raw
-difference is never formed).  The smoother therefore
-clips the growth of J_P omega_dot, which is exactly the term that has
-to cancel -W z_CoM sin(phi), and the residual slope opens up.  A
-filter that removed only noise would converge as the window grows.
+difference is never formed).  The parabola clips the growth of
+J_P omega_dot, which is exactly the term that has to cancel
+-W z_CoM sin(phi), and the residual slope opens up.
 
-The noise model's window rule does not transfer here because the
-filter plays the opposite role: there the smooth curve is DISCARDED and
-only the residue above f_c is kept, so over-smoothing errs safe; here
-the smooth curve IS the measurement.
+Raising the order over the SAME window removes the distortion
+completely.  On a noise-free cosh with this run's constants, the
+endpoint error of the derivative is -6.4% at (41, 3) and -0.2% at
+(41, 5); the deployed (9, 2) is faithful only because its window is
+short, at the cost of the worst noise gain of the set (1.89 rad/s^2
+RMS at the endpoint for a 1 deg/s disturbance, against 0.69 at
+(41, 5) -- 85% of the peak signal versus 31%).
+
+With the order matched, the anomaly becomes INVARIANT to the
+differentiator: -37 to -43 mN.m/deg across 90-510 ms windows, and
+-23 to -30 for the windowless anchored polynomial of
+rate_derivative.omega_dot_poly, against the model's -3.1.  That is a
+stronger negative result than the original, which could still be
+read as an artefact of the differentiator.
+
+The noise model's window rule therefore DOES transfer, with one
+amendment: there the smooth curve is DISCARDED and only the residue
+above f_c is kept, so distorting it errs safe and any order will do;
+here the smooth curve IS the measurement, so the order must be high
+enough to represent the signal inside the window.
 
 Usage: python analysis/ge_savgol_overlay.py [out.png]
        [--dir DataSet/exp/case_02/Mx] [--bag pos_Mx_01] [--z-com 0.261]
@@ -51,8 +68,11 @@ from analysis.rate_derivative import omega_dot            # noqa: E402
 from analysis.ge_dynamics_check import (                  # noqa: E402
     MASS_KG, G, OFF_SIGN, OFF_MM, j_parallel)
 
-WINDOWS = [9, 21, 41]
-COLORS = ['#1f77b4', '#7b3294', '#c0392b']
+#            window, poly order, colour, dash
+VARIANTS = [(9, 2, '#1f77b4', '-'),        # deployed
+            (21, 2, '#7b3294', '-'),
+            (41, 2, '#c0392b', '-'),
+            (41, 5, '#148f77', '--')]      # order matched to the curvature
 
 
 def main():
@@ -114,7 +134,7 @@ def main():
     ge_mod = s * ge_moment(bag, sig, axis, n, pos, window=sl)[sl]
 
     fig, (a1, a2) = plt.subplots(1, 2, figsize=(12.4, 4.9))
-    fig.subplots_adjust(left=0.065, right=0.99, top=0.805, bottom=0.115,
+    fig.subplots_adjust(left=0.065, right=0.99, top=0.775, bottom=0.115,
                         wspace=0.24)
 
     print(f"\n  {case}/{axname}/{name}:  C2 = {c2:.3f} rad/s, "
@@ -123,18 +143,17 @@ def main():
     print(f"  J_P = {j_p:.4f} kg m^2 ({a_.jp_mode});  for reference: "
           f"parallel axis {j_parallel(axis, a_.z_com, MASS_KG[case]):.4f}, "
           f"identity W z/C2^2 {W*a_.z_com/c2**2:.4f}\n")
-    print(f"  {'w':>4}{'[ms]':>8}{'e-fold':>9}{'f_c~[Hz]':>10}"
+    print(f"  {'w':>4}{'ord':>5}{'[ms]':>7}{'e-fold':>9}{'f_c~[Hz]':>10}"
           f"{'|om_dot|max':>13}{'slope':>10}{'at phi=0':>10}")
-    for w, c in zip(WINDOWS, COLORS):
-        od = omega_dot(om_full, dt, w)[sl]
+    for w, p_, c, ls in VARIANTS:
+        od = omega_dot(om_full, dt, w, p_)[sl]
         ge_dyn = (j_p * od - m - f * lp
                   + W * arm * np.cos(phi) - W * a_.z_com * np.sin(phi))
         sd, id_ = np.polyfit(phi, ge_dyn, 1)
-        lab = (f'SG {w} samples ({1e3*w*dt:.0f} ms, '
-               rf'$f_c\approx${2.0/(w*dt):.0f} Hz)')
-        a1.plot(tau, 1e3 * ge_dyn, '-', color=c, lw=1.3, label=lab)
-        a2.plot(tau, od, '-', color=c, lw=1.3, label=lab)
-        print(f"  {w:4d}{1e3*w*dt:8.0f}{w*dt*c2:9.2f}{2.0/(w*dt):10.1f}"
+        lab = (f'SG {w} samples ({1e3*w*dt:.0f} ms), order {p_}')
+        a1.plot(tau, 1e3 * ge_dyn, ls, color=c, lw=1.5, label=lab)
+        a2.plot(tau, od, ls, color=c, lw=1.5, label=lab)
+        print(f"  {w:4d}{p_:5d}{1e3*w*dt:7.0f}{w*dt*c2:9.2f}{2.0/(w*dt):10.1f}"
               f"{np.abs(od).max():13.2f}"
               f"{1e3*sd*np.pi/180:10.1f}{1e3*id_:10.1f}")
 
@@ -143,27 +162,29 @@ def main():
     a1.axhline(0, color='0.6', lw=0.7)
     a1.set_xlabel(r'$\tau$ [s]', fontsize=10)
     a1.set_ylabel(r'$\Delta M_{GE}$ [mN$\cdot$m]', fontsize=10)
-    a1.set_title('(a) the dynamic inversion: smoothing harder does not\n'
-                 'quiet the drift, it steepens it', fontsize=11)
+    a1.set_title('(a) the dynamic inversion: the window-driven steepening\n'
+                 'is a filter artefact; the anomaly itself is not',
+                 fontsize=11)
     a1.legend(fontsize=8.5, loc='lower left')
     a1.grid(alpha=0.22, lw=0.4)
 
     a2.set_xlabel(r'$\tau$ [s]', fontsize=10)
     a2.set_ylabel(r'$\dot\omega$ [rad/s$^2$]', fontsize=10)
-    a2.set_title(r'(b) why: the smoother eats the signal. '
-                 r'$\dot\omega\sim\sinh(C_2\tau)$,' '\n'
-                 f'e-folding {1e3/c2:.0f} ms; the 41-sample window spans '
-                 f'{41*dt*c2:.1f} of them', fontsize=11)
+    a2.set_title(r'(b) why: a parabola cannot follow '
+                 r'$\dot\omega\sim\sinh(C_2\tau)$ over' '\n'
+                 f'{41*dt*c2:.1f} e-foldings (163 ms each) -- '
+                 'order 5 over the same window can', fontsize=11)
     a2.legend(fontsize=8.5, loc='upper left')
     a2.grid(alpha=0.22, lw=0.4)
 
     jp_note = ('CAD parallel axis' if a_.jp_mode == 'parallel'
                else r'from $Wz/C_2^2$')
-    fig.suptitle('The noise model\'s SG rule does not transfer to a '
-                 f'derivative  ({case}/{axname}/{name}, '
+    fig.suptitle('Denoising the GE dynamic inversion: raise the order, '
+                 'not the window\n'
+                 f'({case}/{axname}/{name}, '
                  rf'$z_{{CoM}}$ = {a_.z_com:.3f} m, '
                  rf'$J_P$ = {j_p:.3f} kg m$^2$, {jp_note})',
-                 fontsize=11.5, y=0.985)
+                 fontsize=11.5, y=0.995)
     fig.savefig(a_.out, dpi=150)
     print(f"\n  wrote {a_.out}\n")
     return 0
