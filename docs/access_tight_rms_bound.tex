@@ -1126,7 +1126,12 @@ grey number for every run, no model curve anywhere in the noise side.
 Purple is the per-run model term, green the measured residual with
 $95\%$ intervals. All $140$ runs stay inside at used
 $0.25$--$0.28$: the price of full method independence is a factor
-$\sim$$2$ against the deployed per-run anchor.}
+$\sim$$2$ against the deployed per-run anchor. Lower quantiles of the
+pooled anchor tempt but do not hold: the median constant
+($0.77^\circ$/s) leaves $2$ runs outside (worst $1.04\times$), and
+while p75 would cover $140/140$ at used $0.43$, choosing a quantile
+\emph{by} its coverage is in-sample calibration --- the maximum is
+the one constant that needs no such defense.}
 \label{fig:sgbound}
 \end{figure} \emph{No quiet data in
 the amplitude:} the quiet stretch enters only through the
