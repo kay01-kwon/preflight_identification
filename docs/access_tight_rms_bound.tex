@@ -1054,6 +1054,29 @@ and slightly tighter --- linear addition is kept as the conservative,
 simpler form, and with $\Delta_{\rm pre} \le 0.036^\circ$/s the
 difference is invisible.
 
+\emph{The RMS-of-$w$ variant: how much the sup substitution costs.}
+The genuinely available tightening sits in the first term. Since
+(17) caps $|\de(\tau)|$ pointwise by the comparison solution
+$w(\tau)$, one may use $\rms(\de) \le \rms(w)$ instead of
+$\sup w$ --- and because $w$ is concentrated in the last e-foldings,
+its RMS over the window is genuinely smaller, with a $1/\sqrt{\xe}$
+dilution the sup ignores: asymptotically
+$\rms(B_2) \to \sqrt{1/(108\,\xe)}$ and
+$\rms(B_1) \to \sqrt{1/(16\,\xe)}$ (the integrals
+$\int_{-\infty}^{0} B_{2,\infty}^2\,du = 1/108$ and
+$\int u^2e^{2u}/4\,du = 1/16$). Evaluated exactly on the campaign
+(\texttt{analysis/rms\_w\_variant.py}): the model term tightens by
+$1.43\times$ at the fastest ramp to $1.69\times$ at the slowest
+(where $\xe$ is largest), the per-rate mean used fraction rises from
+$0.55$--$0.64$ to $0.63$--$0.73$, coverage stays $140/140$ --- and
+the worst run reaches used $0.95$. That last number is the point:
+tightened to its RMS form, the cap comes within $5\%$ of the worst
+measured residual, so there is almost no conservatism left to remove.
+The sup form remains the deployed one --- its worst-run margin
+($0.86$) is headroom for vehicles and disturbance levels beyond this
+campaign --- but the variant certifies that the slack it carries is
+chosen, not unaccounted.
+
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.86\linewidth]{fig_kernel_free.png}
