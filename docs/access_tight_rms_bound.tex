@@ -492,6 +492,30 @@ the scale, $J_P$ from CAD, $l_{\rm arm}$ from geometry,
 $\varphi_{\max}$ the design box, $\beta_M$ from the GE model, $\Mdot$
 and the window from the protocol.
 
+\emph{Where $\varphi_{\max}$ enters, and why $10^\circ$.}
+$\varphi_{\max}$ is not a measurement --- it is the tilt box the
+protocol guarantees, and it enters the theory at exactly three
+points: the channel amplitudes above (every trigonometric remainder
+is monotone in $\varphi$ on $[0, \varphi_{\max}]$, so each sup is its
+value at the box edge --- the $\varphi^\ast = 0$ Taylor coefficients
+of (85) evaluated at $\varphi_{\max}$ powers); the tilt-limited
+window of the design sweep
+($\sinh\xe - \xe = \varphi_{\max}Wz_{CoM}C_2/\Mdot$; the campaign
+check uses the measured windows instead); and everything downstream
+of $\rbar \propto \varphi_{\max}^2$ --- $u$, $\dtc$,
+$\Delta_{\rm pre}$, the ceiling of (21). The value: the excitation
+design caps the \emph{commanded} excursion at $5^\circ$, but the
+windows are truncated by moment, not angle, so the realised tilt
+exceeds it --- up to $\approx 4.8^\circ$ inside the fit windows and
+up to $9.4^\circ$ over the whole contact phase --- and the box is set
+at $10^\circ$ to cover the entire phase with margin. Every
+appearance is monotone in $\varphi$, so the box only over-covers;
+it is also the dominant remaining conservatism: against the
+in-window $4.8^\circ$ it costs $\times 2.1$ on $\dot\rho_2$
+(linear) and $\times 4.3$ on $\rbar$ (quadratic) --- most of the
+factor $\sim$$3$ between the bound and the realised $\de$ lives
+here, the stated price of a pre-experiment bound.
+
 \emph{What ``decays like'' means --- the bridge from (16) to (16a).}
 Nothing in the window decreases with time: $\varphi$ and $\omega$
 both grow. The decay is the same fact read \emph{backwards from the
