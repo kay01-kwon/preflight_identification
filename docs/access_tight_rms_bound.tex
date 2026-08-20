@@ -1108,7 +1108,29 @@ $1.20$ & $0.866$ & $0.001$ & $1.073$ & $1.94$ & $1.052$ & $0.54$\\
 \end{center}
 
 Inside on $140/140$ runs; per-run used fraction p10 $0.45$, median
-$0.61$, worst $0.86$. (What ``measured'' is, precisely: the onset is
+$0.61$, worst $0.86$.
+
+\emph{The table's most striking feature --- measured $\approx$
+$\hat n$ --- and what it does and does not prove.} The measured
+residual sits at the noise estimate (campaign median of
+$\rms(r)/\hat n$: $0.976$, IQR $0.89$--$1.09$): the residual is
+statistically indistinguishable from the disturbance floor, i.e.\ the
+fit absorbed the model error --- the realised $\de$ of
+$0.16$--$0.17^\circ$/s is invisible under a $1^\circ$/s floor
+($\sqrt{1^2 + 0.17^2} = 1.014$). One part of this is by
+construction and must not be cited as evidence: on the $113$ runs
+with their own quiet stretch the median of $\rms(r)/\hat n$ is
+exactly $1.000$ with $50\%$ above --- $s_{\rm med}$ \emph{is} the
+median of $\kappa_{\rm imp}/\kappa_q$, so the median run's $\hat n$
+is calibrated to its own residual. What is \emph{not} by
+construction, and is the actual evidence: the spread stays narrow
+(the calibration pins the median, not the IQR), the ratio is flat in
+$\Mdot$, and the upper tail --- runs up to $1.76\,\hat n$ --- is
+covered by the model term, which is that term's empirical job: it
+guards the tail, not the middle. The $140/140$ coverage therefore
+does not rest on the calibration.
+
+(What ``measured'' is, precisely: the onset is
 placed by the paper's PNLS estimator, and the residual is then the
 least-squares refit of amplitude and baseline on that window with
 $C_2$ pinned to the calibrated value. The full minimiser --- onset
