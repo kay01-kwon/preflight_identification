@@ -49,13 +49,14 @@ def k_route(d):
         best = max(best, float(np.sum(np.abs(Kv) * env) * ds))
     return float(np.rad2deg(best * c2 / wz))
 
+ksup = max(d['kimp'] for d in rows)
 for d in rows:
     rb, _, _ = rho_bar(d['axis'], PHI_BOX, d['dm_win'])
     de_sup, dpre = model_term(d, rb)
     d['mA'] = de_sup                       # rho_dot route (sup form)
     d['mK'] = k_route(d)                   # rho-level K route
     d['mmin'] = min(d['mA'], d['mK'])
-    nh = d['rms_n'] * np.sqrt(1.0 + (s_med * kqmax) ** 2)
+    nh = d['rms_n'] * np.sqrt(1.0 + ksup ** 2)
     d['cap_min'] = d['mmin'] + dpre + nh
 
 rates = sorted({d['rate'] for d in rows})

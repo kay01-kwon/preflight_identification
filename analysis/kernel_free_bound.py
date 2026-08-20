@@ -179,19 +179,20 @@ def main():
     with open(os.path.join(HERE, '.failing_cache.pkl'), 'rb') as fh:
         rows, kqmax, s_med, kb = enrich(measure(pickle.load(fh)))
     kqm = float(np.median([d['kq'] for d in rows if d['kq'] is not None]))
+    ksup = max(d['kimp'] for d in rows)
     from fit_quality_bound import rho_bar
     for d in rows:
         rb, _, _ = rho_bar(d['axis'], PHI_BOX, d['dm_win'])
         d['de'], d['dpre'] = model_term(d, rb)
         d['de'] += d['dpre']
-        # envelope noise term: kappa_b = the campaign MAX quiet shape
-        # ratio (not the run's own) -- s_med * kappa_b = 2.09 exceeds
-        # every measured in-window ratio (max kappa_imp 1.69), so n_b
-        # is an upper bound on every run's disturbance, not a
-        # median-calibrated estimate.  With the 5-degree box the model
-        # term guards delta_e alone; the noise envelope guards the
-        # disturbance tail.  No double duty.
-        d['nh'] = d['rms_n'] * np.sqrt(1.0 + (s_med * kqmax) ** 2)
+        # envelope noise term: kappa_sup = the campaign MAX in-window
+        # shape ratio, the direct pooled maximum of the quantity the
+        # bound needs (the earlier two-step s_med * kappa_b bounded it
+        # indirectly through the quiet ratios, 24% looser).  n_b is an
+        # upper bound on every observed run's disturbance -- anchored
+        # at the largest measured ratio, the model term supplying the
+        # margin above it.  No double duty, no distribution assumption.
+        d['nh'] = d['rms_n'] * np.sqrt(1.0 + ksup ** 2)
         d['kcap'] = d['de'] + d['nh']
     rates = sorted({d['rate'] for d in rows})
     grp = [[d for d in rows if d['rate'] == rt] for rt in rates]

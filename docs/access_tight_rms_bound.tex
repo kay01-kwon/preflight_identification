@@ -983,16 +983,21 @@ the right tool for interpretation (Sec.~7) but not for a guarantee,
 so the cap (20) carries the envelope form instead:
 \begin{equation}
   \hat n_b \;=\; \rms(n_{\rm hi})
-  \sqrt{1 + (s_{\rm med}\,\kappa_b)^2},
-  \qquad \kappa_b = \max_{\rm runs}\kappa_q = 1.31 ,
+  \sqrt{1 + \kappa_{\sup}^2},
+  \qquad \kappa_{\sup} = \max_{\rm runs}\kappa_{\rm imp} = 1.69 ,
   \tag{19b}
 \end{equation}
-the campaign \emph{maximum} quiet shape ratio in place of the run's
-own. The product $s_{\rm med}\kappa_b = 2.09$ exceeds every measured
-in-window ratio ($\max\kappa_{\rm imp} = 1.69$, a $24\%$ margin), so
-$\hat n_b$ upper-bounds every run's disturbance rather than splitting
-them at the median; the multiplier is
-$\sqrt{1 + 2.09^2} = 2.32$ on $\rms(n_{\rm hi})$. This is what frees
+the campaign maximum of the in-window ratio itself --- the
+\emph{direct} pooled maximum of the quantity the bound needs. (An
+intermediate version bounded it indirectly, through the quiet ratios,
+as $s_{\rm med}\kappa_b = 2.09$ with $\kappa_b = \max\kappa_q$; the
+direct maximum is $24\%$ tighter with the same status.) The
+multiplier is $\sqrt{1 + 1.69^2} = 1.96$ on $\rms(n_{\rm hi})$:
+$\hat n_b$ is anchored at the largest measured ratio --- it
+upper-bounds every observed run's disturbance, with equality on the
+one run that sets the maximum, where the model term supplies the
+margin. The maximum is not an isolated freak: five runs sit above
+$0.8\,\kappa_{\sup}$. This is what frees
 the model term from double duty: with (19) in the cap, the model
 term's slack was absorbing the noise-estimation error of the tail
 runs; with (19b) each term guards exactly its own object --- the
@@ -1000,17 +1005,17 @@ model term $\de$, the noise envelope the disturbance.
 
 \emph{Why the pooled maximum and not a pooled mean$+3\sigma$.} The
 natural statistical alternative pools the $140$ in-window ratios and
-replaces $\kappa_b$ by their mean$+3\sigma$: it would tighten the
-multiplier from $2.32$ to $1.88$ (worst-run used $0.80$ instead of
-$0.68$, still $140/140$). It is not used because the data refuses the
-Gaussian tail the $3\sigma$ logic assumes: the pooled
-$\kappa_{\rm imp}$ distribution reaches its maximum at
+uses their mean$+3\sigma$: it would tighten the multiplier from
+$1.96$ only to $1.88$ --- $4\%$ --- and it is not sound here, because
+the data refuses the Gaussian tail the $3\sigma$ logic assumes: the
+pooled $\kappa_{\rm imp}$ distribution reaches its maximum at
 $3.3\sigma$ above its mean, so mean$+3\sigma = 1.59$ sits \emph{below}
 the observed maximum $1.69$ --- the statistical noise term alone
 would leave the worst run to the model term, quietly reintroducing
 the double duty (19b) exists to remove. The pooled \emph{maximum} is
 itself a campaign statistic, needs no distributional assumption, and
-keeps the guarantee unconditional over everything observed.
+keeps the guarantee unconditional over everything observed --- at a
+price of $4\%$ against an assumption the data visibly violates.
 
 \emph{Implementation, and the picture
 (Fig.~\ref{fig:spectrum}).} The split is a brick-wall FFT partition:
@@ -1156,8 +1161,8 @@ $\int u^2e^{2u}/4\,du = 1/16$). Evaluated exactly on the campaign
 $1.43\times$ at the fastest ramp to $1.69\times$ at the slowest
 (where $\xe$ is largest) --- but with the envelope (19b) now
 dominating the cap, the total barely moves: mean used
-$0.43$--$0.46$ against $0.45$--$0.48$, coverage $140/140$ either
-way, worst run $0.68$ against $0.72$. With each term guarding its
+$0.50$--$0.52$ against $0.53$--$0.56$, coverage $140/140$ either
+way, worst run $0.77$ against $0.83$. With each term guarding its
 own object, the norm choice inside the sub-dominant model term is a
 matter of taste; the sup form is kept for its simpler statement.
 
@@ -1168,7 +1173,7 @@ matter of taste; the sup form is kept for its simpler statement.
 runs at each rate, $95\%$ $t$ intervals. Purple is the model term of
 (17)$+$(18), grey the noise envelope (19b), green the measured
 residual. All $140$ runs are inside; the used fraction is
-$0.43$--$0.46$ and the cap is flat, like the residual.}
+$0.50$--$0.52$ and the cap is flat, like the residual.}
 \label{fig:check}
 \end{figure}
 
@@ -1180,19 +1185,19 @@ measured & used\\
 N\,m/s & $^\circ$/s & $^\circ$/s & $^\circ$/s & $^\circ$/s &
 $^\circ$/s & \\
 \midrule
-$0.10$ & $0.238$ & $0.001$ & $2.065$ & $2.30$ & $0.987$ & $0.43$\\
-$0.20$ & $0.243$ & $0.000$ & $1.989$ & $2.23$ & $0.964$ & $0.43$\\
-$0.30$ & $0.257$ & $0.000$ & $2.101$ & $2.36$ & $1.014$ & $0.43$\\
-$0.45$ & $0.289$ & $0.000$ & $1.900$ & $2.19$ & $0.947$ & $0.43$\\
-$0.65$ & $0.302$ & $0.000$ & $2.085$ & $2.39$ & $1.084$ & $0.45$\\
-$0.90$ & $0.308$ & $0.000$ & $1.952$ & $2.26$ & $1.023$ & $0.45$\\
-$1.20$ & $0.339$ & $0.000$ & $1.986$ & $2.33$ & $1.052$ & $0.45$\\
+$0.10$ & $0.238$ & $0.001$ & $1.750$ & $1.99$ & $0.987$ & $0.50$\\
+$0.20$ & $0.243$ & $0.000$ & $1.686$ & $1.93$ & $0.964$ & $0.50$\\
+$0.30$ & $0.257$ & $0.000$ & $1.780$ & $2.04$ & $1.014$ & $0.50$\\
+$0.45$ & $0.289$ & $0.000$ & $1.610$ & $1.90$ & $0.947$ & $0.50$\\
+$0.65$ & $0.302$ & $0.000$ & $1.767$ & $2.07$ & $1.084$ & $0.52$\\
+$0.90$ & $0.308$ & $0.000$ & $1.654$ & $1.96$ & $1.023$ & $0.52$\\
+$1.20$ & $0.339$ & $0.000$ & $1.683$ & $2.02$ & $1.052$ & $0.52$\\
 \bottomrule
 \end{tabular}
 \end{center}
 
-Inside on $140/140$ runs; per-run used fraction p10 $0.38$, median
-$0.43$, worst $0.68$. (That the $\hat n_b$ column exceeds the
+Inside on $140/140$ runs; per-run used fraction p10 $0.44$, median
+$0.49$, worst $0.77$. (That the $\hat n_b$ column exceeds the
 measured residual is by construction, twice over: $\hat n_b$ is the
 \emph{envelope} (19b), a bound on the disturbance rather than its
 level --- the level estimate (19) sits at the residual --- and even
@@ -1217,8 +1222,8 @@ is calibrated to its own residual. What is \emph{not} by
 construction, and is the actual evidence: the spread stays narrow
 (the calibration pins the median, not the IQR), the ratio is flat in
 $\Mdot$, and the upper tail --- runs up to $1.76\,\hat n$ --- is
-covered by the noise envelope (19b), whose $s_{\rm med}\kappa_b =
-2.09$ sits above every measured ratio, with the model term adding the
+covered by the noise envelope (19b), anchored at the largest measured
+ratio $\kappa_{\sup}$, with the model term adding the
 guaranteed $\de$ headroom on top. The $140/140$ coverage therefore
 rests on the envelope and the model term, not on the calibration.
 
@@ -1253,7 +1258,7 @@ $\times1.6$), and the bound charges the box tilt $\varphi_{\max}$
 trajectory never realises both extremes together and its remainder
 stays flat, so the bound's slack widens, from $\times1.4$ at the
 slowest ramp to $\times2.0$ at the fastest --- while the used
-fraction of the cap stays flat at $0.43$--$0.45$, the envelope noise
+fraction of the cap stays flat at $0.50$--$0.52$, the envelope noise
 term dominating. This is not a wrong
 rate law in the theory; it is the honest price of a product-of-sups
 over correlated quantities, and it is paid where the cap can afford
@@ -1279,7 +1284,7 @@ two routes now cross \emph{inside} the sweep: the $\rho$-anchored
 form starts winning on runs at the fastest ramps, and the per-run
 minimum of the two --- valid, since each is a valid bound --- runs
 $0.23$--$0.28$ with trend $\times1.24$, $140/140$, worst used
-$0.68$. The reviewer-facing statement: the full bound is
+$0.77$. The reviewer-facing statement: the full bound is
 $\min(\text{$\dot\rho$-anchored},\ \text{$\rho$-anchored})$; its
 growing arm happens to be the binding one on this sweep, and the flat
 arm --- matching the data's trend --- takes over beyond it. The
