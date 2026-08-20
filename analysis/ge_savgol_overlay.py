@@ -18,9 +18,22 @@ fitted slope opens up: -89.7 mN.m/deg at order 2 against -38.2 at
 order 7 on this run.  On a NOISE-FREE cosh with these constants the
 endpoint error of the derivative is -6.4% at order 3 and -0.2% at
 order 5, so the difference is signal distortion, not noise (see
-analysis/sg_derivative_order.py).  The cost of the high order is
-noise gain, visible in panel (b): it buys fidelity only once sinh has
-taken off, and pays for it everywhere before that.
+analysis/sg_derivative_order.py).
+
+WHAT THE HIGH ORDER COSTS, and why order 2 stays deployed.  The wiggle
+in the order-7 curve of panel (b) -- the dip near tau = 0.32 s in
+particular -- is not random noise but a 5.5 Hz oscillation carried by
+the record itself, present only under load (7.99 deg/s RMS in the
+window against 0.22 at rest, a factor of 36: airframe/contact motion
+excited by the pivoting).  Normalised to an ideal differentiator the
+41-sample SG derivative passes 5 Hz at 0.923 for order 7 and 0.073
+for order 2, so the two orders differ by that band alone: their
+difference is a clean 5.5 Hz oscillation, 1.79 rad/s^2 peak to peak
+against a signal peaking at 1.5-2.3.  Order 7 is thus more faithful
+to the RECORD and order 2 more faithful to the RIGID-BODY MODEL,
+whose balance J_P omega_dot = ... assumes one rigid body about a fixed
+pivot and cannot represent a 5.5 Hz structural mode.  See
+analysis/omega_band_probe.py and sg_frequency_response.py.
 
 WHY THE TRAILING ZONE IS SUSPECT -- and why the usual reason is the
 wrong one.  It is NOT that samples run out: the pipeline
