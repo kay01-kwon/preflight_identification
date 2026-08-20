@@ -48,8 +48,19 @@ there the smooth curve is DISCARDED and only the residue above f_c is
 kept, so distorting it errs safe; here the smooth curve IS the
 measurement.
 
+Panels (a) and (b) are DISPLAYED only up to one full filter length
+(41 samples, 0.41 s) before the window end, so the reader sees the
+span where even the widest filter draws entirely on excitation-window
+data; --trim-end changes it.  The fits and panel (c) always use the
+whole window.  Read that trimmed span carefully: with phi below
+0.8 deg there, the agreement it shows is the INTERCEPT -- the static
+balance, which the static check already establishes -- and not
+evidence about the attitude dependence, which only exists in the part
+that has been trimmed away.
+
 Usage: python analysis/ge_savgol_overlay.py [out.png]
        [--dir DataSet/exp/case_02/Mx] [--bag pos_Mx_01] [--z-com 0.261]
+       [--trim-end 0.41] [--jp-mode parallel]
 """
 import argparse
 import contextlib
@@ -89,6 +100,11 @@ def main():
     p.add_argument('--dir', default='DataSet/exp/case_02/Mx')
     p.add_argument('--bag', default=None)
     p.add_argument('--z-com', type=float, default=0.261)
+    p.add_argument('--trim-end', type=float, default=None,
+                   help="seconds trimmed off the END of panels (a) and (b), "
+                        "display only -- the fits and panel (c) always use "
+                        "the whole window.  Default: one full 41-sample "
+                        "filter length (0.41 s).")
     p.add_argument('--jp-mode', choices=['parallel', 'identity'],
                    default='parallel',
                    help="parallel: J_COM + m(z^2 + l_p^2), the CAD "
@@ -151,7 +167,7 @@ def main():
     print(f"  J_P = {j_p:.4f} kg m^2 ({a_.jp_mode});  for reference: "
           f"parallel axis {j_parallel(axis, a_.z_com, MASS_KG[case]):.4f}, "
           f"identity W z/C2^2 {W*a_.z_com/c2**2:.4f}\n")
-    a3_slopes = []
+    a3_slopes, vis_a1, vis_a2 = [], [], []
     print(f"  {'w':>4}{'ord':>5}{'[ms]':>7}{'e-fold':>9}{'f_c~[Hz]':>10}"
           f"{'|om_dot|max':>13}{'slope':>10}{'at phi=0':>10}")
     for w, p_, c, ls in VARIANTS:
@@ -162,6 +178,8 @@ def main():
         lab = (f'SG {w} samples ({1e3*w*dt:.0f} ms), order {p_}')
         a1.plot(tau, 1e3 * ge_dyn, ls, color=c, lw=1.5, label=lab)
         a2.plot(tau, od, ls, color=c, lw=1.5, label=lab)
+        vis_a1.append(1e3 * ge_dyn)
+        vis_a2.append(od)
         print(f"  {w:4d}{p_:5d}{1e3*w*dt:7.0f}{w*dt*c2:9.2f}{2.0/(w*dt):10.1f}"
               f"{np.abs(od).max():13.2f}"
               f"{1e3*sd*np.pi/180:10.1f}{1e3*id_:10.1f}")
@@ -179,21 +197,31 @@ def main():
 
     a1.plot(tau, 1e3 * ge_mod, '-', color='#e08214', lw=2.2,
             label='image-superposition model')
+    vis_a1.append(1e3 * ge_mod)
     a1.axhline(0, color='0.6', lw=0.7)
+
+    # display trim: keep only where the widest filter's support lies
+    # inside the excitation window (fits are unaffected)
+    trim = 41 * dt if a_.trim_end is None else a_.trim_end
+    t_cut = max(tau[-1] - trim, 3 * dt)
+    vis = tau <= t_cut
+    for ax_, series in ((a1, vis_a1), (a2, vis_a2)):
+        ax_.set_xlim(0, t_cut)
+        v = np.concatenate([np.asarray(y)[vis] for y in series])
+        pad = 0.09 * (v.max() - v.min())
+        ax_.set_ylim(v.min() - pad, v.max() + pad)
     a1.set_xlabel(r'$\tau$ [s]', fontsize=10)
     a1.set_ylabel(r'$\Delta M_{GE}$ [mN$\cdot$m]', fontsize=10)
-    a1.set_title('(a) the dynamic inversion: the window-driven steepening\n'
-                 'is a filter artefact; the anomaly itself is not',
-                 fontsize=11)
+    a1.set_title('(a) the dynamic inversion, shown only where the widest\n'
+                 'filter has support inside the window', fontsize=11)
     a1.legend(fontsize=8.5, loc='lower left')
     a1.grid(alpha=0.22, lw=0.4)
 
     a2.set_xlabel(r'$\tau$ [s]', fontsize=10)
     a2.set_ylabel(r'$\dot\omega$ [rad/s$^2$]', fontsize=10)
-    a2.set_title(r'(b) why: a parabola cannot follow '
-                 r'$\dot\omega\sim\sinh(C_2\tau)$ over' '\n'
-                 f'{41*dt*c2:.1f} e-foldings (163 ms each); the '
-                 '41-sample curve turns over', fontsize=11)
+    a2.set_title(r'(b) $\dot\omega$ over the same trimmed span: the three'
+                 '\nwindows still agree here, before the growth takes off',
+                 fontsize=11)
     a2.legend(fontsize=8.5, loc='upper left')
     a2.grid(alpha=0.22, lw=0.4)
 
