@@ -1064,7 +1064,24 @@ is insensitive to \emph{which} good smooth curve is subtracted ---
 swapping the $C_2$-pinned two-parameter refit for the fully free fit
 changes it by $1.4\%$ at the median ($16\%$ worst) --- so the anchor
 does not reward the minimiser for fitting well; any member of the
-family delivers the same number. \emph{No quiet data in
+family delivers the same number.
+
+\emph{Why not the textbook noise estimators.} The two standard
+fit-free estimators --- the second-difference formula
+$\sigma^2 = \sum(y_{i+1} - 2y_i + y_{i-1})^2/6N$ and the
+finest-scale wavelet MAD of Donoho--Johnstone --- run on the raw
+record without any fit, and both \emph{under}-read this disturbance:
+$0.47\times$ and $0.65\times$ of $\rms(n_{\rm hi})$ at the campaign
+median. The reasons are structural, not tuning. Both anchor at the
+very top of the band (the second difference weights the spectrum by
+$|2\sin(\pi f/f_s)|^4$, concentrated near Nyquist; the finest wavelet
+scale is the top octave), and the contact-borne disturbance is
+\emph{coloured} --- falling above a few hertz --- so the top of the
+band is its quietest part; and the MAD variant additionally discounts
+the bursts that carry much of a contact disturbance's energy. A cap
+built on either would have failed exactly on the runs that matter.
+(19)'s anchor is the same idea made band-honest: integrate the whole
+model-free band instead of sampling its quietest corner. \emph{No quiet data in
 the amplitude:} the quiet stretch enters only through the
 dimensionless shape ratio $\kappa_q$, never through the level ---
 deliberately, since the in-window contact-borne disturbance runs $2$
