@@ -8,17 +8,20 @@ sits directly under the rho_dot peak, so the true response is governed
 by the rho LEVEL (int rho_dot = rho(T) ~ phi_end^2, flat in rate), not
 the rho_dot peak (~ omega_max, doubling).  A bound anchored on rho(T)
 -- the Green-kernel route, |delta_e| <= (1/J_P) int |K| rho_env with
-K the two-piece kernel of the Dirichlet representation -- inherits the
-flat trend (x1.03 across the sweep) at a looser level (1.16-1.19
-deg/s).  Both routes are valid bounds, so min(A, K) is valid: on this
-campaign the rho_dot route wins everywhere (crossover near Mdot ~ 2),
-coverage 140/140, worst used 0.86.
+K the two-piece kernel of the Dirichlet representation -- inherits an
+almost flat trend (x1.08 across the sweep) at 0.29-0.32 deg/s.  Both
+routes are valid bounds, so min(A, K) is valid: the rho_dot route
+wins below Mdot ~ 1, the K route above (crossover near 1 N m/s);
+with the noise constant N_n the min-route cap covers 140/140 at
+worst used 0.74, trend x1.24.
 
 Usage: python analysis/k_route_trend.py
 """
 import os, pickle, sys
 import numpy as np
+from scipy.signal import savgol_filter
 sys.path.insert(0, '/home/user/preflight_identification/analysis')
+from failing_runs import split, FC
 from fit_quality_bound import ARMS, W, BETA_M, rho_bar
 from rms_check import measure, PHI_BOX
 from tight_rms_bound import enrich
@@ -49,15 +52,21 @@ def k_route(d):
         best = max(best, float(np.sum(np.abs(Kv) * env) * ds))
     return float(np.rad2deg(best * c2 / wz))
 
-ksup = max(d['kimp'] for d in rows)
+_hi = lambda v: float(np.sqrt(np.mean(v ** 2)))
+_sg = []
+for d in rows:
+    _om = np.asarray(d['om'], float)
+    _w = max(int(round(2.0 / (FC * d['dt']))) | 1, 7)
+    _w = min(_w, len(_om) - 1 if (len(_om) - 1) % 2 else len(_om) - 2)
+    _sg.append(_hi(split(_om - savgol_filter(_om, _w, 3), d['dt'])[1]))
+N_n = 3.0 * float(np.rad2deg(np.median(_sg)))
 for d in rows:
     rb, _, _ = rho_bar(d['axis'], PHI_BOX, d['dm_win'])
     de_sup, dpre = model_term(d, rb)
     d['mA'] = de_sup                       # rho_dot route (sup form)
     d['mK'] = k_route(d)                   # rho-level K route
     d['mmin'] = min(d['mA'], d['mK'])
-    nh = d['rms_n'] * np.sqrt(1.0 + ksup ** 2)
-    d['cap_min'] = d['mmin'] + dpre + nh
+    d['cap_min'] = d['mmin'] + dpre + N_n
 
 rates = sorted({d['rate'] for d in rows})
 print(f"{'Mdot':>6}{'rho_dot rt':>12}{'K (rho) rt':>12}{'min':>8}"

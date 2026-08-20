@@ -16,9 +16,9 @@ tilt-limited one: x solves sinh(x) - x = phi_max Wz C2 / Mdot.
 For every combination the script evaluates, all closed form:
   * the model term of the residual cap, (17) + (18):
         (M2 rho2_dot + M1 rho1_dot)/Wz + Delta_pre        [deg/s]
-  * the critical-moment shift of (21):
-        |dM_crit| = Mdot |dt_c|,  dt_c from (9) with e_w <= E,
-    together with its ceiling rho_bar                      [mN m]
+  * the critical-moment shift ceiling of (21), artanh exact with
+    rho_bar inside:  (Mdot/C2) artanh(rho_bar C2 / Mdot),
+    against its small-u limit rho_bar                      [mN m]
 
 and draws both as min-median-max bands against Mdot.
 
@@ -139,17 +139,18 @@ def main():
     a1.set_ylim(0, hi(rms).max() * 1.18)
     a1.set_title(r'(a) bound on $\mathrm{RMS}(\delta e_\omega)$, the model'
                  ' term of (20)\n(17)$+$(18) over the design box;'
-                 ' the cap adds the noise envelope $\hat n_b$ on top', fontsize=11)
+                 ' the cap adds the noise constant $N_n$ on top', fontsize=11)
     a1.grid(alpha=0.22, lw=0.4)
 
     a2.fill_between(RATES, lo(dmc), hi(dmc), color=C_B, alpha=0.18, lw=0)
     a2.plot(RATES, md_(dmc), 'o-', color=C_B, lw=2.2, ms=6,
-            label=r'shift $\dot M\,|\delta t_c|$, eq. (21)')
+            label=r'ceiling $(\dot M/C_2)\,\mathrm{artanh}'
+                  r'(\bar\rho C_2/\dot M)$, eq. (21)')
     a2.plot(RATES, lo(dmc), '-', color=C_B, lw=0.9, alpha=0.55)
     a2.plot(RATES, hi(dmc), '-', color=C_B, lw=0.9, alpha=0.55)
     a2.plot(RATES, lo(ceil), '--', color=C_CEIL, lw=1.6)
     a2.plot(RATES, hi(ceil), '--', color=C_CEIL, lw=1.6,
-            label=r'ceiling $\bar\rho$ (box min/max)')
+            label=r'small-$u$ limit $\bar\rho$ (box min/max)')
     a2.text(RATES[-1], hi(dmc)[-1] - 0.55,
             'box max: $m$ 3.22 kg, arm 0.160 m, $z$ 0.30 m', ha='right',
             va='top', fontsize=8.5, color=C_B)
@@ -162,10 +163,10 @@ def main():
     a2.minorticks_off()
     a2.set_xlabel(r'$\dot M$ [N m/s]', fontsize=10)
     a2.set_ylabel(r'$|\Delta M_{\rm crit}|$ [mN m]', fontsize=10)
-    a2.set_ylim(0, hi(ceil).max() * 1.18)
-    a2.set_title('(b) critical-moment shift from the absorbed onset '
-                 'shift\nvs its ceiling $\\bar\\rho$; exact artanh '
-                 'excess below 0.7% everywhere', fontsize=11)
+    a2.set_ylim(0, hi(dmc).max() * 1.18)
+    a2.set_title('(b) critical-moment shift ceiling, artanh exact '
+                 '($\\bar\\rho$ inside)\nits small-$u$ limit '
+                 '$\\bar\\rho$ within 0.7% everywhere', fontsize=11)
     a2.legend(fontsize=9, loc='center right')
     a2.grid(alpha=0.22, lw=0.4)
 
