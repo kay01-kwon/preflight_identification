@@ -232,6 +232,44 @@ $\rms(n_{\rm hi})$ by $1.4\%$ at the campaign median. The high band
 does not care which good smooth curve was removed; it only needed the
 seam gone.
 
+\emph{Where the cutoff comes from.} $f_c = 5$ Hz is not tuned; it is
+the middle of a plateau between two constraints that close in from
+opposite sides. \emph{From below}, the cutoff must clear the model's
+spectral home $C_2/2\pi = 0.56$--$0.90$ Hz by a wide margin, or the
+high band inherits model content and the anchor stops being
+model-free --- the foundation of the whole construction. There is a
+second floor: the low band must keep some bins of its own for
+$\kappa_q$ to exist, and with a bin spacing of $0.97$--$4.0$ Hz the
+shortest windows have \emph{no} bin below $1$--$2$ Hz.
+\emph{From above}, the disturbance is coloured --- its spectrum falls
+with frequency --- so raising $f_c$ makes the anchor sample an ever
+quieter corner of it, the same failure mode as the textbook
+estimators of Sec.~7. Sweeping the deployed construction:
+\begin{center}\small
+\begin{tabular}{@{}rcccc@{}}
+\toprule
+$f_c$ [Hz] & low-band bins & $N_{\rm med}$ [$^\circ$/s] & $N_n$ &
+coverage\\
+\midrule
+$1$  & $0$--$1$  & $0.821$ & $2.46$ & $140/140$\\
+$2$  & $0$--$2$  & $0.816$ & $2.45$ & $140/140$\\
+$3$  & $0$--$3$  & $0.800$ & $2.40$ & $140/140$\\
+$5$  & $1$--$5$  & $0.772$ & $2.31$ & $140/140$\\
+$6$  & $1$--$6$  & $0.774$ & $2.32$ & $140/140$\\
+$8$  & $1$--$8$  & $0.652$ & $1.96$ & $140/140$\\
+$10$ & $2$--$10$ & $0.453$ & $1.36$ & $136/140$\\
+$15$ & $3$--$15$ & $0.352$ & $1.06$ & $117/140$\\
+\bottomrule
+\end{tabular}
+\end{center}
+Between $2$ and $6$ Hz the anchor barely moves ($0.77$--$0.82$) and
+the cap holds everywhere --- as theory demands, since a total does
+not depend on where it is split. Past $8$ Hz the coloured decay takes
+over and the anchor reads progressively low. That the answer is
+insensitive across the plateau is what justifies the choice: $5$ Hz
+sits about six times above the model's content, with both bands still
+populated.
+
 \section{From the high band to the full band: two measured ratios}
 
 (N5) now needs the disturbance's shape ratio $\kappa$. Two
@@ -398,10 +436,11 @@ On the $140$-run campaign, with the model term of the main document:
 the cap holds on $140/140$ runs; the used fraction is
 $0.36$--$0.41$ by rate (per-run: p10 $0.24$, median $0.38$, worst
 $0.72$); the split's orthogonality is machine-exact ($6\times
-10^{-16}$); moving the cutoff to $2$ or $3$ Hz changes nothing
-($140/140$ either way) because a total does not depend on where it is
-split --- only past $8$ Hz, where too few bins remain above the
-cutoff, does the construction degrade; and the anchor is insensitive
+10^{-16}$); moving the cutoff anywhere between $2$ and $6$ Hz changes nothing
+($140/140$ throughout) because a total does not depend on where it is
+split --- only past $8$ Hz, where the coloured decay leaves the
+anchor sampling the disturbance's quietest corner, does the
+construction degrade (Sec.~3); and the anchor is insensitive
 to the subtracted curve at the $1.4\%$ level. The residual itself
 sits at the noise estimate ($\rms(r)/\hat n$: median $0.976$, IQR
 $0.89$--$1.09$, flat across a twelvefold rate change) --- the
