@@ -1130,8 +1130,13 @@ $\sim$$2$ against the deployed per-run anchor. Lower quantiles of the
 pooled anchor tempt but do not hold: the median constant
 ($0.77^\circ$/s) leaves $2$ runs outside (worst $1.04\times$), and
 while p75 would cover $140/140$ at used $0.43$, choosing a quantile
-\emph{by} its coverage is in-sample calibration --- the maximum is
-the one constant that needs no such defense.}
+\emph{by} its coverage is in-sample calibration. Two constants escape
+that charge: the maximum (the definition needs no tuning), and an
+engineering safety factor \emph{declared up front} --- twice the
+median anchor gives a noise term of $3.03^\circ$/s, $140/140$ at
+worst used $0.57$, and the factor $2$ both is conventional and nearly
+spans the observed spread (max/median $= 2.35$; the bare minimum for
+coverage would have been $1.05$).}
 \label{fig:sgbound}
 \end{figure} \emph{No quiet data in
 the amplitude:} the quiet stretch enters only through the
