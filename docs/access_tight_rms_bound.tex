@@ -1108,35 +1108,36 @@ campaign \emph{maximum} of the Savitzky--Golay anchor as a single
 constant, $N^\ast = 1.81^\circ$/s, and the noise term becomes one
 method-blind number, $N^\ast\sqrt{1+\kappa_{\sup}^2} = 3.6^\circ$/s
 for every run --- the cap still holds $140/140$ (worst used $0.49$,
-mean $0.26$). The three anchors form a ladder: per-run with the
-branch subtracted (used $0.50$--$0.52$), per-run and model-blind
-($0.39$), one model-blind campaign constant ($0.26$) --- each step
-buys independence from the method at a factor in slack, and the
-reader may stop wherever their scepticism is satisfied.
-Fig.~\ref{fig:sgbound} draws the constant-anchor rung against the
-campaign.
+mean $0.26$). For the constant, the \emph{adopted} form is a declared
+engineering safety factor rather than the maximum: $1.5$ times the
+median anchor, giving one method-blind number
+$1.5\,N_{\rm med}\sqrt{1+\kappa_{\sup}^2} = 2.27^\circ$/s ---
+$140/140$, worst run $0.74$, mean used $0.40$; the factor is stated
+up front, the bare minimum for coverage is $1.05$, and the maximum
+would correspond to $2.35$. The anchors form a ladder: per-run with
+the branch subtracted (used $0.50$--$0.52$), per-run and model-blind
+($0.39$), the declared-factor constant ($0.40$), the maximum constant
+($0.26$) --- each step trades tightness for independence from the
+method, and the reader may stop wherever their scepticism is
+satisfied. Fig.~\ref{fig:sgbound} draws the adopted constant-anchor
+form against the campaign.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.86\linewidth]{fig_sg_bound.png}
-\caption{Equation (20) with the fully method-blind noise constant:
-the campaign maximum of the Savitzky--Golay anchor,
-$N^\ast = 1.81^\circ$/s, times $\sqrt{1+\kappa_{\sup}^2}$ --- one
-grey number for every run, no model curve anywhere in the noise side.
-Purple is the per-run model term, green the measured residual with
-$95\%$ intervals. All $140$ runs stay inside at used
-$0.25$--$0.28$: the price of full method independence is a factor
-$\sim$$2$ against the deployed per-run anchor. Lower quantiles of the
-pooled anchor tempt but do not hold: the median constant
-($0.77^\circ$/s) leaves $2$ runs outside (worst $1.04\times$), and
-while p75 would cover $140/140$ at used $0.43$, choosing a quantile
-\emph{by} its coverage is in-sample calibration. Two constants escape
-that charge: the maximum (the definition needs no tuning), and an
-engineering safety factor \emph{declared up front} --- twice the
-median anchor gives a noise term of $3.03^\circ$/s, $140/140$ at
-worst used $0.57$, and the factor $2$ both is conventional and nearly
-spans the observed spread (max/median $= 2.35$; the bare minimum for
-coverage would have been $1.05$).}
+\includegraphics[width=0.92\linewidth]{fig_sg_bars.png}
+\caption{Equation (20) with the method-blind noise constant, the
+adopted form: $1.5\times$ the median Savitzky--Golay anchor
+($N_{\rm med} = 0.77^\circ$/s), times $\sqrt{1+\kappa_{\sup}^2}$ ---
+one grey number, $2.27^\circ$/s, for every run, no model curve
+anywhere in the noise side; the safety factor is declared up front.
+Dark blue is the per-run model term, green the measured minimiser
+residual with $95\%$ intervals; all $140$ runs stay inside at used
+$0.37$--$0.42$, worst run $0.74$. For context: the bare minimum
+factor for coverage is $1.05$; the median alone ($k = 1$) leaves $2$
+runs outside (worst $1.04\times$); picking a covering quantile (p75)
+would be in-sample calibration; and the campaign maximum ---
+equivalent to $k = 2.35$ --- needs no declared factor at all but
+costs mean used $0.26$.}
 \label{fig:sgbound}
 \end{figure} \emph{No quiet data in
 the amplitude:} the quiet stretch enters only through the
@@ -1447,7 +1448,7 @@ python analysis/failing_runs.py       DataSet/exp   # writes the cache
 python analysis/kernel_free_bound.py  docs/fig_kernel_free.png
 python analysis/design_range_chart.py docs/fig_design_range.png
 python analysis/noise_spectrum_figure.py docs/fig_noise_spectrum.png
-python analysis/sg_bound_figure.py    docs/fig_sg_bound.png
+python analysis/sg_bound_bars.py      docs/fig_sg_bars.png
 \end{verbatim}
 \texttt{kernel\_free\_bound.py} evaluates (16)--(20) per run against
 the campaign cache and draws Fig.~\ref{fig:check}
