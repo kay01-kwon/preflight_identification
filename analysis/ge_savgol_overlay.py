@@ -19,26 +19,34 @@ difference is never formed).  The parabola clips the growth of
 J_P omega_dot, which is exactly the term that has to cancel
 -W z_CoM sin(phi), and the residual slope opens up.
 
-Raising the order over the SAME window removes the distortion
-completely.  On a noise-free cosh with this run's constants, the
-endpoint error of the derivative is -6.4% at (41, 3) and -0.2% at
-(41, 5); the deployed (9, 2) is faithful only because its window is
-short, at the cost of the worst noise gain of the set (1.89 rad/s^2
-RMS at the endpoint for a 1 deg/s disturbance, against 0.69 at
-(41, 5) -- 85% of the peak signal versus 31%).
+Panel (b) shows the mechanism directly: the 41-sample parabola turns
+OVER past tau = 0.67 s while the 9-sample one keeps rising, and the
+true growth is monotone.  (Raising the order over the same window
+removes the distortion -- endpoint error on a noise-free cosh is
+-6.4% at order 3 and -0.2% at order 5, and the anomaly then becomes
+invariant to the differentiator at -37 to -43 mN.m/deg; see
+analysis/sg_derivative_order.py and ge_differentiator_compare.py.
+The deployed order stays 2, so that result is kept as a diagnostic
+rather than adopted.)
 
-With the order matched, the anomaly becomes INVARIANT to the
-differentiator: -37 to -43 mN.m/deg across 90-510 ms windows, and
--23 to -30 for the windowless anchored polynomial of
-rate_derivative.omega_dot_poly, against the model's -3.1.  That is a
-stronger negative result than the original, which could still be
-read as an artefact of the differentiator.
+TRIMMING THE WINDOW END DOES NOT RESCUE IT (panel c).  Two things are
+worth separating.  First, the differentiator is NOT extrapolating at
+the window end: the pipeline differentiates the FULL bag trace and
+slices afterwards, and 335 samples follow the excitation window here,
+so every point has two-sided support.  Second, and decisively, the
+trailing samples are not disposable.  Refitting the slope with the
+last k samples excluded does move it (-89.7 -> -12.5 mN.m/deg at
+k = 20 for the 41-sample window), but phi grows EXPONENTIALLY, so
+those samples carry nearly all the attitude range: dropping 20 of 79
+leaves 2.1 deg of the 6.9 deg excursion, and dropping 41 leaves
+0.8 deg, where the regression has no lever arm left and the estimate
+blows up (-199.7).  Excluding the tail removes the very quantity the
+check is trying to measure.
 
-The noise model's window rule therefore DOES transfer, with one
-amendment: there the smooth curve is DISCARDED and only the residue
-above f_c is kept, so distorting it errs safe and any order will do;
-here the smooth curve IS the measurement, so the order must be high
-enough to represent the signal inside the window.
+The noise model's window rule therefore does not transfer unchanged:
+there the smooth curve is DISCARDED and only the residue above f_c is
+kept, so distorting it errs safe; here the smooth curve IS the
+measurement.
 
 Usage: python analysis/ge_savgol_overlay.py [out.png]
        [--dir DataSet/exp/case_02/Mx] [--bag pos_Mx_01] [--z-com 0.261]
@@ -71,8 +79,8 @@ from analysis.ge_dynamics_check import (                  # noqa: E402
 #            window, poly order, colour, dash
 VARIANTS = [(9, 2, '#1f77b4', '-'),        # deployed
             (21, 2, '#7b3294', '-'),
-            (41, 2, '#c0392b', '-'),
-            (41, 5, '#148f77', '--')]      # order matched to the curvature
+            (41, 2, '#c0392b', '-')]
+DROPS = [0, 3, 5, 8, 10, 15, 20, 30, 41]   # trailing samples excluded
 
 
 def main():
@@ -133,9 +141,9 @@ def main():
     # ge_moment returns the whole trace; `window` only scopes its R/4 test
     ge_mod = s * ge_moment(bag, sig, axis, n, pos, window=sl)[sl]
 
-    fig, (a1, a2) = plt.subplots(1, 2, figsize=(12.4, 4.9))
-    fig.subplots_adjust(left=0.065, right=0.99, top=0.775, bottom=0.115,
-                        wspace=0.24)
+    fig, (a1, a2, a3) = plt.subplots(1, 3, figsize=(16.6, 4.9))
+    fig.subplots_adjust(left=0.048, right=0.99, top=0.775, bottom=0.115,
+                        wspace=0.27)
 
     print(f"\n  {case}/{axname}/{name}:  C2 = {c2:.3f} rad/s, "
           f"1/C2 = {1e3/c2:.0f} ms,  T_s = {1e3*dt:.1f} ms,  "
@@ -143,6 +151,7 @@ def main():
     print(f"  J_P = {j_p:.4f} kg m^2 ({a_.jp_mode});  for reference: "
           f"parallel axis {j_parallel(axis, a_.z_com, MASS_KG[case]):.4f}, "
           f"identity W z/C2^2 {W*a_.z_com/c2**2:.4f}\n")
+    a3_slopes = []
     print(f"  {'w':>4}{'ord':>5}{'[ms]':>7}{'e-fold':>9}{'f_c~[Hz]':>10}"
           f"{'|om_dot|max':>13}{'slope':>10}{'at phi=0':>10}")
     for w, p_, c, ls in VARIANTS:
@@ -156,6 +165,17 @@ def main():
         print(f"  {w:4d}{p_:5d}{1e3*w*dt:7.0f}{w*dt*c2:9.2f}{2.0/(w*dt):10.1f}"
               f"{np.abs(od).max():13.2f}"
               f"{1e3*sd*np.pi/180:10.1f}{1e3*id_:10.1f}")
+        # slope refitted with the last k samples excluded
+        ks, sl_k = [], []
+        for k in DROPS:
+            e = len(phi) - k
+            if e < 15:
+                continue
+            sk, _ = np.polyfit(phi[:e], ge_dyn[:e], 1)
+            ks.append(k)
+            sl_k.append(1e3 * sk * np.pi / 180)
+        a3.plot(ks, sl_k, ls, color=c, lw=1.5, marker='o', ms=4, label=lab)
+        a3_slopes.append(sl_k)
 
     a1.plot(tau, 1e3 * ge_mod, '-', color='#e08214', lw=2.2,
             label='image-superposition model')
@@ -172,15 +192,40 @@ def main():
     a2.set_ylabel(r'$\dot\omega$ [rad/s$^2$]', fontsize=10)
     a2.set_title(r'(b) why: a parabola cannot follow '
                  r'$\dot\omega\sim\sinh(C_2\tau)$ over' '\n'
-                 f'{41*dt*c2:.1f} e-foldings (163 ms each) -- '
-                 'order 5 over the same window can', fontsize=11)
+                 f'{41*dt*c2:.1f} e-foldings (163 ms each); the '
+                 '41-sample curve turns over', fontsize=11)
     a2.legend(fontsize=8.5, loc='upper left')
     a2.grid(alpha=0.22, lw=0.4)
 
+    # ---- (c) does excluding the trailing samples rescue it? ----
+    sm_, _ = np.polyfit(phi, ge_mod, 1)
+    a3.axhline(1e3 * sm_ * np.pi / 180, color='#e08214', lw=2.0,
+               label='image-superposition model')
+    a3.axhline(0, color='0.6', lw=0.7)
+    lo_y = min(min(sk_) for sk_ in a3_slopes)
+    a3.set_ylim(1.18 * lo_y, max(30.0, -0.12 * lo_y))
+    for k in (0, 10, 20, 30, 41):
+        e = len(phi) - k
+        if e < 15:
+            continue
+        a3.text(k, 0.055 * lo_y,
+                rf'{np.rad2deg(phi[e-1]):.1f}$^\circ$ left',
+                fontsize=7.5, color='0.35', ha='center', va='top',
+                rotation=90)
+    a3.set_xlabel('trailing samples excluded from the fit', fontsize=10)
+    a3.set_ylabel(r'fitted slope [mN$\cdot$m/deg]', fontsize=10)
+    a3.set_title('(c) the trailing samples are not disposable: '
+                 r'$\varphi$ grows' '\n'
+                 f'exponentially, so dropping 20 of {len(phi)} leaves '
+                 f'{np.rad2deg(phi[len(phi)-21]):.1f}$^\\circ$ of '
+                 f'{np.rad2deg(phi[-1]):.1f}$^\\circ$', fontsize=11)
+    a3.legend(fontsize=8.5, loc='lower left')
+    a3.grid(alpha=0.22, lw=0.4)
+
     jp_note = ('CAD parallel axis' if a_.jp_mode == 'parallel'
                else r'from $Wz/C_2^2$')
-    fig.suptitle('Denoising the GE dynamic inversion: raise the order, '
-                 'not the window\n'
+    fig.suptitle('Denoising the GE dynamic inversion, and why trimming '
+                 'the window end does not rescue it\n'
                  f'({case}/{axname}/{name}, '
                  rf'$z_{{CoM}}$ = {a_.z_com:.3f} m, '
                  rf'$J_P$ = {j_p:.3f} kg m$^2$, {jp_note})',
