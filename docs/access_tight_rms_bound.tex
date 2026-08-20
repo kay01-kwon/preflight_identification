@@ -1078,8 +1078,12 @@ $|2\sin(\pi f/f_s)|^4$, concentrated near Nyquist; the finest wavelet
 scale is the top octave), and the contact-borne disturbance is
 \emph{coloured} --- falling above a few hertz --- so the top of the
 band is its quietest part; and the MAD variant additionally discounts
-the bursts that carry much of a contact disturbance's energy. A cap
-built on either would have failed exactly on the runs that matter.
+the bursts that carry much of a contact disturbance's energy. The
+under-read is systematic, not random: the ratios are nearly constant
+across the seven rates ($0.42$--$0.48$ and $0.57$--$0.71$). Swapped
+into (19b) as the anchor, the second-difference cap fails on $59$ of
+the $140$ runs (worst run at $2.16\times$ its cap) and the MAD cap on
+$13$ (worst $1.86\times$).
 (19)'s anchor is the same idea made band-honest: integrate the whole
 model-free band instead of sampling its quietest corner. \emph{No quiet data in
 the amplitude:} the quiet stretch enters only through the
