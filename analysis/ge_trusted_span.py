@@ -23,7 +23,22 @@ vertical (the pad is not level; see analysis/attitude_reference.py).
 
 Campaign result at the deployed differentiator: median d = +26 mN.m
 (IQR -43..+85, RMS 106) of a 157 mN.m model level, |d| < 100 on
-99/140 runs, 4.75 deg median tilt left.  The wider 41-sample window
+99/140 runs, 4.75 deg median tilt left.
+
+THE BIAS-SCATTER DECOMPOSITION (GE_W/GE_K sweeps).  The noise-doc
+setting (w = 41 cubic, trim 20) reads median +74.5 at |d| < 100 on
+81/140: the pointwise scatter drops 3.5x (0.26 -> 0.08 rad/s^2 in
+om_dot) but the bias grows +49 mN.m, and the growth splits almost
+evenly into two causes.  (i) SPAN, +27: the same deployed filter with
+trim 20 alone reads +52.4 -- the near-onset region carries the known
+~+80 static-check excess, and the later downward drift that offsets
+it in the average is what the long exclusion removes.  (ii) WINDOW,
++22 at matched trim: on a noise-free cosh the 41-sample kernel's
+distortion over the kept span is only -2 mN.m, so this part is the
+long window's response to real onset-transition structure (its
+support straddles the pre-onset flat), not sinh clipping.  The
+per-run IQR width stays ~125 either way: the visible band narrowing
+is pointwise, and buys no test power at the per-run level.  The wider 41-sample window
 does worse (median +77, RMS 128, 1.6 deg left): its parabola clips
 more of the sinh growth and its exclusion spends more of the
 excursion.  The SLOPE (attitude dependence) is deliberately not
