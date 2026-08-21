@@ -154,6 +154,13 @@ def main():
     n = len(rows)
     d_eff = np.array([float(np.mean(r['eff'] - r['mod'])) for r in rows])
     d_cad = np.array([float(np.mean(r['cad'] - r['mod'])) for r in rows])
+    # onset-anchored dynamic increment: subtract each trace's own onset
+    # level (mean of the first 5 samples) from BOTH sides, so the static
+    # repeatability floor -- which the static check tests separately --
+    # cancels and only the tilt-driven increment is compared
+    d_anc = np.array([float(np.mean(
+        (r['cad'] - np.mean(r['cad'][:5])) -
+        (r['mod'] - np.mean(r['mod'][:5])))) for r in rows])
     s_eff = np.array([np.polyfit(r['phi'], r['eff'] - r['mod'], 1)[0]
                       for r in rows])
     s_cad = np.array([np.polyfit(r['phi'], r['cad'] - r['mod'], 1)[0]
@@ -170,6 +177,9 @@ def main():
           f"(no filter, no trim)\n")
     stats(d_eff, 'self-consistent J_P')
     stats(d_cad, 'CAD parallel-axis J_P')
+    stats(d_anc, 'CAD, onset-anchored')
+    print(f"  onset-anchored |d|<50: "
+          f"{int(np.sum(np.abs(d_anc)<50))}/{len(d_anc)}")
     print(f"  model level: median {lvl:.1f} mN.m")
     print(f"  residual slope (self-consistent): median "
           f"{np.median(s_eff):+.1f} mN.m/deg, IQR "
@@ -233,19 +243,19 @@ def main():
     hb = np.linspace(-400, 400, 33)
     a2.hist(np.clip(d_cad, hb[0], hb[-1]), bins=hb, color='0.75', alpha=0.9,
             label=f'CAD $J_P$  (RMS {np.sqrt(np.mean(d_cad**2)):.0f})')
-    a2.hist(np.clip(d_eff, hb[0], hb[-1]), bins=hb, color='#7b3294',
+    a2.hist(np.clip(d_anc, hb[0], hb[-1]), bins=hb, color='#148f77',
             alpha=0.75,
-            label=f'self-consistent $J_P$  '
-                  f'(RMS {np.sqrt(np.mean(d_eff**2)):.0f})')
+            label=f'CAD, onset-anchored  '
+                  f'(RMS {np.sqrt(np.mean(d_anc**2)):.0f})')
     a2.axvline(0, color='#e08214', lw=2.0, label='model')
     a2.axvline(float(np.median(d_cad)), color='0.35', lw=1.2, ls='--',
                label=f'CAD median {np.median(d_cad):+.0f}')
     a2.set_xlabel(r'per-run mean of $\Delta M_{GE}^{dyn} - \Delta M_{GE}'
                   r'^{model}$ [mN$\cdot$m]', fontsize=10)
     a2.set_ylabel('runs', fontsize=10)
-    a2.set_title('(b) level agreement per run: the physical $J_P$ closes\n'
-                 'on the model; $Wz/C_2^2$ imports the calibration scatter',
-                 fontsize=11)
+    a2.set_title('(b) per-run agreement: raw level (grey) carries the\n'
+                 'static floor; the onset-anchored increment (green) '
+                 'halves it', fontsize=11)
     a2.legend(fontsize=8.5, loc='upper left')
     a2.grid(alpha=0.22, lw=0.4, axis='y')
 
