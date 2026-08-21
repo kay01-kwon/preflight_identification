@@ -46,28 +46,62 @@ def est(key,m):
     return SIGN[key[1]]*1e3*mff/W, 1e3*half/W
 
 cases=[f'case_0{i}' for i in range(1,6)]
-fig,axes=plt.subplots(1,5,figsize=(12.5,3.0),sharey=True)
-for ci_,case in enumerate(cases):
-    ax=axes[ci_]
-    ax.axhline(0,color='0.35',lw=0.9,zorder=1)
-    # component x <- My, component y <- Mx
-    for xi,axname in enumerate(['My','Mx']):
-        key=(case,axname)
+
+# One shared x axis: ten case-component slots at unit spacing, the six
+# estimators dodged inside each slot, and the case names annotated above
+# the panel with light separators between cases -- rather than five
+# subplots, which repeat the axis furniture and break the eye's ability
+# to compare across cases.
+fig,ax=plt.subplots(figsize=(12.5,3.4))
+SLOT=1.0            # spacing between the x_off / y_off slots
+GAP=0.55            # extra gap between cases
+pos={}              # (case, axname) -> x centre
+x=0.0
+for case in cases:
+    for axname in ('My','Mx'):          # x_off from pitch, y_off from roll
+        pos[(case,axname)]=x
+        x+=SLOT
+    x+=GAP
+
+ax.axhline(0,color='0.35',lw=0.9,zorder=1)
+for case in cases:
+    for axname in ('My','Mx'):
+        key=(case,axname); xc=pos[key]
         for k,m in enumerate(M):
             lam,h=est(key,m)
-            e=lam-TRUTH[key]
-            ax.errorbar(xi+(k-2.5)*0.11,e,yerr=h,fmt=MRK[m],color=COL[m],
-                        ms=4.5,elinewidth=1.2,capsize=2.0,zorder=3,
-                        label=LBL[m] if (ci_==0 and xi==0) else None)
-    ax.set_xticks([0,1]); ax.set_xticklabels([r'$x_{\mathrm{off}}$',r'$y_{\mathrm{off}}$'])
-    ax.set_xlim(-0.55,1.55)
-    ax.set_title(f'Case 0{ci_+1}',fontsize=10)
-    ax.grid(axis='y',alpha=0.25,lw=0.6); ax.set_axisbelow(True)
-    for s in ('top','right'): ax.spines[s].set_visible(False)
-axes[0].set_ylabel('CoM offset error [mm]')
-handles,labels=axes[0].get_legend_handles_labels()
+            ax.errorbar(xc+(k-2.5)*0.115,lam-TRUTH[key],yerr=h,
+                        fmt=MRK[m],color=COL[m],ms=5.5,elinewidth=1.2,
+                        capsize=2.0,zorder=3,
+                        label=LBL[m] if key==(cases[0],'My') else None)
+
+ax.set_xticks([pos[(c,a)] for c in cases for a in ('My','Mx')])
+ax.set_xticklabels([r'$x_{\mathrm{off}}$',r'$y_{\mathrm{off}}$']*len(cases),
+                   fontsize=9)
+ax.set_xlim(pos[(cases[0],'My')]-0.75, pos[(cases[-1],'Mx')]+0.75)
+ax.set_ylabel('CoM offset error [mm]')
+# the horizontal grid is the one being read against, so it carries
+# more weight than the vertical slot guides
+ax.grid(axis='y',alpha=0.55,lw=0.9,color='0.55')
+ax.grid(axis='x',alpha=0.20,lw=0.6,color='0.6')
+ax.set_axisbelow(True)
+for sp in ('top','right'): ax.spines[sp].set_visible(False)
+
+# case names above the panel, with separators in between
+ylim=ax.get_ylim(); span=ylim[1]-ylim[0]
+ax.set_ylim(ylim[0], ylim[1]+0.13*span)
+ytxt=ylim[1]+0.045*span
+for ci_,case in enumerate(cases):
+    xc=0.5*(pos[(case,'My')]+pos[(case,'Mx')])
+    ax.text(xc,ytxt,f'Case 0{ci_+1}',ha='center',va='bottom',fontsize=10)
+    if ci_:
+        xs=pos[(case,'My')]-0.5*(SLOT+GAP)
+        ax.axvline(xs,color='0.85',lw=0.8,zorder=0)
+
+handles,labels=ax.get_legend_handles_labels()
 fig.legend(handles,labels,loc='upper center',ncol=6,fontsize=8,
-           frameon=False,bbox_to_anchor=(0.5,1.06))
-fig.tight_layout(rect=(0,0,1,0.97))
+           frameon=False,bbox_to_anchor=(0.5,1.05))
+fig.tight_layout(rect=(0,0,1,0.96))
 fig.savefig(REPO / 'docs' / 'fig_estimator_err.pdf', bbox_inches='tight')
+fig.savefig(REPO / 'docs' / 'fig_estimator_err.png', dpi=150,
+            bbox_inches='tight')
 print('saved')

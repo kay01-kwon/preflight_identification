@@ -1450,25 +1450,53 @@ the question is how much of it near-ground aerodynamics accounts for.
 
 \paragraph{How much the model accounts for.}
 Ground effect enters through \emph{both} channels of the pivot-moment
-decomposition $\Delta M_{\mathrm{GE}} = \mathrm{sgn}\cdot a + b\,M$
-(\texttt{analysis/ge\_linearity.py}): the thrust channel
-$a = c_a f l$ and the moment-proportional channel $b$. The onset
-balance $M(1+b) + \mathrm{sgn}\,a = T_{\mathrm{rigid}}$ gives
+decomposition (\texttt{analysis/ge\_linearity.py}),
+$\Delta M_{\mathrm{GE}} = \mathrm{sgn}\cdot\alpha_f f l +
+\alpha_M M$: a thrust channel and a moment-proportional channel. The
+comparison is made \emph{at matched total thrust}: since the thrust
+channel acts identically on the experiment and on any reference, the
+theoretical threshold is defined with the thrust-side moment carrying
+the same augmentation $(1+\alpha_f) f l$, and only the moment channel
+separates the two. The onset balances of experiment and reference are
+then
 \begin{equation}
-M_{\mathrm{pred}} \;=\; \frac{T_{\mathrm{rigid}} -
-\mathrm{sgn}\cdot c_a f l}{1 + b} ,
+\begin{aligned}
+(1+\alpha_M)\,M_{\mathrm{crit}} + (1+\alpha_f)\,\mathrm{sgn}\,f l
+  &= \mathrm{sgn}\,W(l + p_{\mathrm{off}}) ,\\
+M_{\mathrm{theory}} + (1+\alpha_f)\,\mathrm{sgn}\,f l
+  &= \mathrm{sgn}\,W(l + p_{\mathrm{off}}) ,
+\end{aligned}
 \end{equation}
-evaluated at three levels of physics: \emph{(a)} no ground effect;
+whose difference gives the prediction in one multiplicative step,
+\begin{equation}
+M_{\mathrm{pred}} \;=\; \frac{M_{\mathrm{theory}}}{1+\alpha_M},
+\qquad
+M_{\mathrm{theory}} = \mathrm{sgn}\,W(l + p_{\mathrm{off}}) -
+(1+\alpha_f)\,\mathrm{sgn}\,f l .
+\end{equation}
+Every level of physics below is evaluated in this same
+matched-thrust convention, each with its own pair of gains
+$(\alpha_f, \alpha_M)$ --- algebraically identical to
+$M_{\mathrm{pred}} = (T_{\mathrm{rigid}} - \mathrm{sgn}\,\alpha_f f
+l)/(1+\alpha_M)$, which is what
+\texttt{analysis/mcrit\_prediction.py} computes. The matching is not
+optional bookkeeping: dropping the thrust-channel term from the
+reference shifts every directional prediction by
+$\alpha_f f l/(1+\alpha_M) = 90$--$127$ mN\,m and degrades the
+interference-model residual median from $59$ to $147$ mN\,m
+(\texttt{analysis/mcrit\_matched\_thrust.py}).
+The levels are: \emph{(a)} no ground effect
+($\alpha_f = \alpha_M = 0$);
 \emph{(b)} ground effect \emph{without} rotor--rotor interference ---
 the per-rotor Cheeseman--Bennett superposition at the tilted heights
-($c_a = 1.03\%$, $b = 1.03\%$); and \emph{(c)} ground effect
+($\alpha_f = \alpha_M = 1.03\%$); and \emph{(c)} ground effect
 \emph{with} rotor interference --- the image superposition over the
 rotor-centre distances,
 $s_{\mathrm{rot},j} = (R^2/4)\sum_n (z_j{+}z_n)/[d_{jn}^2 +
 (z_j{+}z_n)^2]^{3/2}$, $\gamma_j = (1-s_{\mathrm{rot},j})^{-1}$,
 whose self term reduces exactly to Cheeseman--Bennett and which
 contains \emph{no empirical constant of any kind}
-($c_a = b = 4.31\%$).
+($\alpha_f = \alpha_M = 4.31\%$).
 
 Evaluated at the onset, that model predicts $165$~mN\,m of
 ground-induced moment per direction against the $204$ the gap
@@ -1498,7 +1526,11 @@ $\mathbf{-35.8}$ & $12/20$ \\
 \bottomrule
 \end{tabular}
 \caption{Residuals of the identified directional means against the
-static thresholds (odometry-fitted arms held fixed). The magnitude
+static thresholds (odometry-fitted arms held fixed). All three rows
+share the matched-total-thrust reference,
+$M_{\mathrm{pred}} = M_{\mathrm{theory}}/(1+\alpha_M)$ with
+$M_{\mathrm{theory}}$ carrying $(1+\alpha_f)fl$, each level with its
+own gains. The magnitude
 deficit is $|M_{\mathrm{ident}}| - |M_{\mathrm{pred}}|$, whose sign
 exposes systematic over-prediction (the raw signed residual hides it,
 the two tip directions carrying opposite signs); one-sided'' counts
@@ -1515,7 +1547,8 @@ leaves no one-sidedness worth the name.}
 colored markers) against the static-threshold predictions with truth
 offsets and odometry-fitted arms: no ground effect (black solid),
 ground effect without rotor interference (gray dotted), and with
-rotor interference (green dashed). The interference prediction falls
+rotor interference (green dashed) --- both ground-effect predictions
+in the matched-total-thrust convention with their own gains. The interference prediction falls
 inside the range spanned by the five estimators in $9$ of the $20$
 groups, where neither of the other two ever does ($0/20$); the median
 estimator range is $108$~mN\,m. A $19$~mm inboard shift of the
@@ -1523,6 +1556,24 @@ static contact lever would move the black line by a similar amount:
 the figure shows the \emph{size} of the near-ground correction, not
 its attribution.}
 \label{fig:static}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{fig_mcrit_report.png}
+\caption{The matched-thrust comparison, per run. \emph{(a)} Parity of
+the identified $M_{\mathrm{crit}}$ against
+$M_{\mathrm{theory}}/(1+\alpha_M)$ over the $138$ runs with a valid
+pivot fit: both tip directions sit on the diagonal within the
+$\pm 88$~mN\,m static repeatability band (RMS $95$~mN\,m).
+\emph{(b)} Per-run $|$residual$|$ as one physics ingredient is added
+per step: no ground effect ($191$~mN\,m median), single-rotor ground
+effect ($154$), the interference model with the thrust channel
+dropped from the reference ($143$), and the full matched-thrust
+interference prediction ($64$). The largest single step is the
+thrust matching itself. (Per-run medians; the group-mean medians of
+Table~\ref{tab:static-arms} differ slightly by aggregation.)}
+\label{fig:mcrit-report}
 \end{figure}
 
 \begin{table}[t]
@@ -1586,7 +1637,7 @@ configurations. Restoring the interference channels brings the
 directional spread to $3.6$~mm (worst $9.0$), a factor of $3.5$, and
 the weight to $1.1\%$ below
 (\texttt{analysis/offset\_pivot\_based.py}). The thrust channel does
-most of the second, since it enters Eq.~(34) as $(1+c_a)f$.
+most of the second, since it enters Eq.~(34) as $(1+\alpha_f)f$.
 
 Neither result identifies ground effect. A $19$~mm inboard shift of
 the contact resultant closes both, exactly as it closes the threshold

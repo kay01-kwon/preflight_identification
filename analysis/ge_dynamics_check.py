@@ -278,7 +278,7 @@ def j_parallel(axis, z_com, mass):
 
 
 def analyse(bag, crit, axis, sig, phi_all, n, z_com, j_p, savgol=9,
-            q_rest=None):
+            q_rest=None, sg_poly=2):
     """Dynamic inversion of dM_GE for one run; returns the fit summary."""
     case_w = analyse.W
     pos = crit.bag_name.startswith('pos')

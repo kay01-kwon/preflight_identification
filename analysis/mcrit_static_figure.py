@@ -65,39 +65,67 @@ for key, col in (('no GE', 'resid_mNm'), ('no interference',
 SLOTS = [('Mx', 'neg'), ('Mx', 'pos'), ('My', 'neg'), ('My', 'pos')]
 XL = [r'$M_{x,-}$', r'$M_{x,+}$', r'$M_{y,-}$', r'$M_{y,+}$']
 cases = [f'case_0{i}' for i in range(1, 6)]
-fig, axes = plt.subplots(1, 5, figsize=(12.5, 3.2), sharey=True)
-for ci, case in enumerate(cases):
-    ax = axes[ci]
-    ax.axhline(0, color='0.85', lw=0.7, zorder=0)
-    for xi, (axname, dirn) in enumerate(SLOTS):
-        r = pred[(case, axname, dirn)]
+
+# One shared x axis: twenty case-slot positions at unit spacing, the six
+# estimators dodged inside each, the case names annotated above the panel
+# with light separators between cases.  Matches fig_estimator_err.
+SLOT, GAP = 1.0, 0.7
+pos, x = {}, 0.0
+for case in cases:
+    for sl in SLOTS:
+        pos[(case,) + sl] = x
+        x += SLOT
+    x += GAP
+
+fig, ax = plt.subplots(figsize=(13.6, 3.6))
+ax.axhline(0, color='0.85', lw=0.7, zorder=0)
+for case in cases:
+    for (axname, dirn) in SLOTS:
+        k = (case, axname, dirn)
+        xc = pos[k]
+        r = pred[k]
         pA, pS, pI = (float(r['M_pred']), float(r['M_pred_single']),
                       float(r['M_pred_interf']))
-        ax.plot([xi - 0.34, xi + 0.34], [pA, pA], color='k', lw=1.5,
+        ax.plot([xc - 0.34, xc + 0.34], [pA, pA], color='k', lw=1.5,
                 zorder=2)
-        ax.plot([xi - 0.34, xi + 0.34], [pS, pS], color='0.45', lw=1.2,
+        ax.plot([xc - 0.34, xc + 0.34], [pS, pS], color='0.45', lw=1.2,
                 ls=(0, (1.6, 1.6)), zorder=2)
-        ax.plot([xi - 0.36, xi + 0.36], [pI, pI], color='#009E73', lw=2.0,
+        ax.plot([xc - 0.36, xc + 0.36], [pI, pI], color='#009E73', lw=2.0,
                 ls=(0, (4.5, 1.8)), zorder=2)
-        k = (case, axname, dirn)
+        first = (k == (cases[0],) + SLOTS[0])
         for mi, m in enumerate(M):
             val = (float(r['M_ident']) if m == 'cosh'
                    else bmean[k].get(m))
             if val is None:
                 continue
-            ax.plot(xi - 0.24 + mi * 0.12, val, MRK[m], color=COL[m],
-                    ms=4.2, zorder=3,
-                    label=LBL[m] if (ci == 0 and xi == 0) else None)
-    ax.set_xticks(range(4))
-    ax.set_xticklabels(XL, fontsize=8)
-    ax.set_xlim(-0.6, 3.6)
-    ax.set_title(f'Case 0{ci + 1}', fontsize=10)
-    ax.grid(axis='y', alpha=0.25, lw=0.6)
-    ax.set_axisbelow(True)
-    for s in ('top', 'right'):
-        ax.spines[s].set_visible(False)
-axes[0].set_ylabel(r'$M_{\mathrm{crit}}$ [N$\cdot$m]')
-h, l = axes[0].get_legend_handles_labels()
+            ax.plot(xc - 0.24 + mi * 0.12, val, MRK[m], color=COL[m],
+                    ms=5.5, zorder=3, label=LBL[m] if first else None)
+
+ax.set_xticks([pos[(c,) + sl] for c in cases for sl in SLOTS])
+ax.set_xticklabels(XL * len(cases), fontsize=8)
+ax.set_xlim(pos[(cases[0],) + SLOTS[0]] - 0.75,
+            pos[(cases[-1],) + SLOTS[-1]] + 0.75)
+ax.set_ylabel(r'$M_{\mathrm{crit}}$ [N$\cdot$m]')
+# the horizontal grid is what the thresholds are read against
+ax.grid(axis='y', alpha=0.55, lw=0.9, color='0.55')
+ax.grid(axis='x', alpha=0.20, lw=0.6, color='0.6')
+ax.set_axisbelow(True)
+for sp in ('top', 'right'):
+    ax.spines[sp].set_visible(False)
+
+ylim = ax.get_ylim()
+span = ylim[1] - ylim[0]
+ax.set_ylim(ylim[0], ylim[1] + 0.13 * span)
+ytxt = ylim[1] + 0.045 * span
+for ci, case in enumerate(cases):
+    xc = 0.5 * (pos[(case,) + SLOTS[0]] + pos[(case,) + SLOTS[-1]])
+    ax.text(xc, ytxt, f'Case 0{ci + 1}', ha='center', va='bottom',
+            fontsize=10)
+    if ci:
+        ax.axvline(pos[(case,) + SLOTS[0]] - 0.5 * (SLOT + GAP),
+                   color='0.85', lw=0.8, zorder=0)
+
+h, l = ax.get_legend_handles_labels()
 import matplotlib.lines as mlines
 
 # figures belong to this repository, wherever it is checked out
@@ -107,9 +135,10 @@ h += [mlines.Line2D([], [], color='k', lw=1.5),
       mlines.Line2D([], [], color='#009E73', lw=2.0, ls=(0, (4.5, 1.8)))]
 l += ['no ground effect', 'GE without rotor interference',
       'GE with rotor interference (parameter-free)']
-fig.legend(h, l, loc='upper center', ncol=7, fontsize=7.5,
-           frameon=False, bbox_to_anchor=(0.5, 1.08))
-fig.tight_layout(rect=(0, 0, 1, 0.96))
-fig.savefig(REPO / 'docs' / 'fig_mcrit_static.pdf',
+fig.legend(h, l, loc='upper center', ncol=5, fontsize=7.5,
+           frameon=False, bbox_to_anchor=(0.5, 1.10))
+fig.tight_layout(rect=(0, 0, 1, 0.94))
+fig.savefig(REPO / 'docs' / 'fig_mcrit_static.pdf', bbox_inches='tight')
+fig.savefig(REPO / 'docs' / 'fig_mcrit_static.png', dpi=150,
             bbox_inches='tight')
 print('figure saved')

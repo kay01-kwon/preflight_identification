@@ -22,20 +22,37 @@ rotor heights are taken along the pad normal rather than world
 vertical (the pad is not level; see analysis/attitude_reference.py).
 
 Campaign result at the deployed differentiator: median d = +26 mN.m
-(IQR -42..+86, RMS 106) of a 157 mN.m model level, |d| < 100 on
-98/140 runs, 4.75 deg median tilt left.  The wider 41-sample window
-does worse (median +77, RMS 128, 1.6 deg left): its parabola clips
-more of the sinh growth and its exclusion spends more of the
-excursion.  The SLOPE (attitude dependence) is deliberately not
-claimed at either setting -- the range needed to resolve the model's
--2.5..-0.1 mN.m/deg is not available in the trusted span.
+(IQR -43..+85, RMS 106) of a 157 mN.m model level, |d| < 100 on
+99/140 runs, 4.75 deg median tilt left.
+
+THE BIAS-SCATTER DECOMPOSITION (GE_W/GE_K sweeps).  The noise-doc
+setting (w = 41 cubic, trim 20) reads median +74.5 at |d| < 100 on
+81/140: the pointwise scatter drops 3.5x (0.26 -> 0.08 rad/s^2 in
+om_dot) but the bias grows +49 mN.m, and the growth splits almost
+evenly into two causes.  (i) SPAN, +27: the same deployed filter with
+trim 20 alone reads +52.4 -- the near-onset region carries the known
+~+80 static-check excess, and the later downward drift that offsets
+it in the average is what the long exclusion removes.  (ii) WINDOW,
++22 at matched trim: on a noise-free cosh the 41-sample kernel's
+distortion over the kept span is only -2 mN.m, so this part is the
+long window's response to real onset-transition structure (its
+support straddles the pre-onset flat), not sinh clipping.  The
+per-run IQR width stays ~125 either way: the visible band narrowing
+is pointwise, and buys no test power at the per-run level.  The
+SLOPE (attitude dependence) is deliberately not claimed at either
+setting -- the range needed to resolve the model's -2.5..-0.1
+mN.m/deg is not available in the trusted span.
 
 Panel (a) aggregates the campaign by tilt -- median, IQR and 10-90%
 bands over all trusted-span samples in 0.25 deg bins (>= 150 samples
 per bin) -- rather than drawing 140 individual traces.
 
-Constants: J_CoM = 0.051 kg m^2 (CAD Table 5), J_P by the parallel
-axis, z_CoM = 0.261 m.
+Constants: J_CoM = 0.051 kg m^2 (CAD Table 5), z_CoM = 0.261 m, and
+J_P by the parallel axis WITH the CoM offset in the horizontal leg:
+J_P = J_CoM + m (z^2 + (l_p + s lambda)^2), the offset component
+perpendicular to the pivot line, so J_P is direction-dependent (a
+<= 4% effect; Mx pos moves from +11 to +1 mN.m, everything else
+within a few mN.m).
 
 Usage: PYTHONPATH=<stubs> [GE_W=9] [GE_K=4]
        python analysis/ge_trusted_span.py [out.png]
@@ -59,11 +76,13 @@ sys.path.insert(0, _HERE)
 import critical_value_getter_piecewise as cvp             # noqa: E402
 from utils.extractor import load_excitation_dataset       # noqa: E402
 from utils import math_tools                              # noqa: E402
+from error_budget import LP                               # noqa: E402
 from analysis.ge_dynamics_check import (                  # noqa: E402
-    MASS_KG, G, OFF_SIGN, OFF_MM, j_parallel, analyse)
+    MASS_KG, G, OFF_SIGN, OFF_MM, J_COM, j_parallel, analyse)
 
 Z = 0.261
-W_SG = int(os.environ.get('GE_W', '9'))     # SG window (deployed 9, order 2)
+W_SG = int(os.environ.get('GE_W', '9'))     # SG window (deployed 9)
+SG_P = int(os.environ.get('GE_P', '2'))     # SG order (noise doc uses 3)
 K_TRIM = int(os.environ.get('GE_K', str(max((W_SG - 1) // 2, 1))))
 # trim = the window's own half-width: the regime-mixing exclusion
 
@@ -78,7 +97,7 @@ def collect():
         mass = MASS_KG[case]
         analyse.W = mass * G
         analyse.off_truth = OFF_SIGN[axname] * OFF_MM[(case, axname)] * 1e-3
-        j_p = j_parallel(axis, Z, mass)
+        j_p = j_parallel(axis, Z, mass)      # dataset-level, for extraction
         try:
             with contextlib.redirect_stdout(io.StringIO()):
                 bags = load_excitation_dataset(d)
@@ -110,8 +129,15 @@ def collect():
                     sig, roll if axis == 'x' else pitch, qr)
             sig, phi_all, qr = cache[crit.bag_name]
             nn = min(len(phi_all), len(sig['t']))
-            r = analyse(bag, crit, axis, sig, phi_all, nn, Z, j_p, W_SG,
-                        q_rest=qr)
+            # parallel-axis J_P with the CoM offset in the horizontal
+            # leg: the offset component perpendicular to the pivot line
+            # (the tipping-sense lambda) adds to l_p, so J_P is
+            # direction-dependent
+            s_dir = 1.0 if crit.bag_name.startswith('pos') else -1.0
+            arm_jp = LP[axis] + s_dir * analyse.off_truth
+            j_p_run = J_COM[axis] + mass * (Z ** 2 + arm_jp ** 2)
+            r = analyse(bag, crit, axis, sig, phi_all, nn, Z, j_p_run,
+                        W_SG, q_rest=qr, sg_poly=SG_P)
             if r and 'trace' in r:
                 r.update(case=case, axisname=axname)
                 rows.append(r)
@@ -122,7 +148,8 @@ def collect():
 def main():
     out = sys.argv[1] if len(sys.argv) > 1 else 'ge_trusted_span.png'
     rows = collect()
-    print(f"\n  {len(rows)} runs;  w = {W_SG}, order 2, trim k = {K_TRIM}\n")
+    print(f"\n  {len(rows)} runs;  w = {W_SG}, order {SG_P}, "
+          f"trim k = {K_TRIM}\n")
 
     d_trim, d_full, phi_left, rates = [], [], [], []
     for r in rows:
@@ -214,7 +241,7 @@ def main():
     a2.grid(alpha=0.22, lw=0.4, axis='y')
 
     fig.suptitle('Dynamic GE moment against the rotor-interference model, '
-                 f'trusted span ($w={W_SG}$, order 2, trim {K_TRIM}; '
+                 f'trusted span ($w={W_SG}$, order {SG_P}, trim {K_TRIM}; '
                  r'$J_{CoM}=0.051$ kg m$^2$, $z_{CoM}=0.261$ m)',
                  fontsize=12, y=0.965)
     fig.savefig(out, dpi=150)
