@@ -1458,7 +1458,20 @@ balance $M(1+b) + \mathrm{sgn}\,a = T_{\mathrm{rigid}}$ gives
 M_{\mathrm{pred}} \;=\; \frac{T_{\mathrm{rigid}} -
 \mathrm{sgn}\cdot c_a f l}{1 + b} ,
 \end{equation}
-evaluated at three levels of physics: \emph{(a)} no ground effect;
+which has an equivalent reading worth making explicit: the numerator
+is the theoretical threshold \emph{at matched total thrust},
+$M_{\mathrm{theory}} = \mathrm{sgn}\,W(l + p_{\mathrm{off}}) -
+(1+c_a)\,\mathrm{sgn}\,f l$ --- the rigid balance written with the
+thrust-side moment carrying its own ground-effect augmentation
+$(1+c_a) f l$, since that channel acts identically in experiment and
+reference --- so that
+$M_{\mathrm{pred}} = M_{\mathrm{theory}}/(1+b)$ and the comparison
+isolates the moment channel alone. The matching is not optional
+bookkeeping: dropping the thrust-channel term from the reference
+shifts every directional prediction by $c_a f l/(1+b) = 90$--$127$
+mN\,m and degrades the interference-model residual median from
+$59$ to $147$ mN\,m (\texttt{analysis/mcrit\_matched\_thrust.py}).
+The prediction is evaluated at three levels of physics: \emph{(a)} no ground effect;
 \emph{(b)} ground effect \emph{without} rotor--rotor interference ---
 the per-rotor Cheeseman--Bennett superposition at the tilted heights
 ($c_a = 1.03\%$, $b = 1.03\%$); and \emph{(c)} ground effect
