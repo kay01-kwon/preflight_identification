@@ -70,7 +70,7 @@ for case in cases:
         for k,m in enumerate(M):
             lam,h=est(key,m)
             ax.errorbar(xc+(k-2.5)*0.115,lam-TRUTH[key],yerr=h,
-                        fmt=MRK[m],color=COL[m],ms=4.5,elinewidth=1.2,
+                        fmt=MRK[m],color=COL[m],ms=5.5,elinewidth=1.2,
                         capsize=2.0,zorder=3,
                         label=LBL[m] if key==(cases[0],'My') else None)
 
@@ -79,7 +79,7 @@ ax.set_xticklabels([r'$x_{\mathrm{off}}$',r'$y_{\mathrm{off}}$']*len(cases),
                    fontsize=9)
 ax.set_xlim(pos[(cases[0],'My')]-0.75, pos[(cases[-1],'Mx')]+0.75)
 ax.set_ylabel('CoM offset error [mm]')
-ax.grid(axis='y',alpha=0.25,lw=0.6); ax.set_axisbelow(True)
+ax.grid(axis='both',alpha=0.25,lw=0.6); ax.set_axisbelow(True)
 for sp in ('top','right'): ax.spines[sp].set_visible(False)
 
 # case names above the panel, with separators in between
