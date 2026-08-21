@@ -1,20 +1,33 @@
-% OFFSET_GE_THEORY  The no-GE offset reading error, pure theory sweep.
+% OFFSET_GE_THEORY  Eq. (120) drawn: the CoM-offset error the no-GE
+%   reading carries under static ground effect.
 %
-%   Generates the identified moments from the matched-thrust GE balance,
+%   Identified moments come from the matched-thrust GE balance,
 %       (1+alpha) M_s + s (1+alpha) f l_s = W (s l_s + p_off),
-%   inverts them (i) with the GE model -- exact recovery, the sanity
-%   rail -- and (ii) without it, and sweeps the true offset over
-%   +-20 mm.  Substituting the balance into the no-GE inversion leaves
+%   and are inverted (i) WITH the GE model -- exact recovery, the
+%   sanity rail -- and (ii) WITHOUT it, over p_off in +-20 mm.
 %
-%       p_hat_s - p = -alpha (l_s + s p)/(1+alpha)
-%       p_hat_avg - p = -alpha p/(1+alpha)
-%                       + alpha (l_n - l_p)/(2(1+alpha)),
+%   The pair-average curve is computed FROM EQ. (120) itself,
 %
-%   in which BOTH W and f have cancelled identically: the reading error
-%   depends only on (alpha, l_+, l_-, p_off).  The unloaded vehicle is
-%   therefore not merely the conservative case, it is the only case --
-%   3.220 kg gives the same curves to the last digit -- so one panel is
-%   drawn.
+%       alpha (M_+ + M_-)/(2W)  +  alpha f (l_p,+ - l_p,-)/(2W),
+%
+%   and the run-time check confirms it equals p_off - p_hat_avg to
+%   machine precision (~1e-17 m over the sweep).
+%
+%   SIGN, worth stating once.  Eq. (120)'s right-hand side is
+%   (true offset) - (no-GE reading): it is the correction the ground
+%   effect hides, positive when the reading under-reads.  If the
+%   manuscript's left-hand side is written as
+%   p_hat_off,avg - p_off,GE,avg -- reading minus truth -- then the
+%   two sides differ by a sign and one of them needs flipping.  The
+%   ordinate here follows the right-hand side.
+%
+%   Substituting the balance also cancels W and f identically,
+%       p_off - p_hat_s   = alpha (l_s + s p_off)/(1+alpha),
+%       p_off - p_hat_avg = alpha p_off/(1+alpha)
+%                           + alpha (l_p,+ - l_p,-)/(2(1+alpha)),
+%   so the error depends only on (alpha, l_+, l_-, p_off): the
+%   unloaded vehicle is not merely the conservative case, it is the
+%   only case, and one panel suffices.
 %
 %   Companion to docs/ge_offset_shift.tex and
 %   analysis/offset_error_sweep.py.
@@ -39,43 +52,53 @@ pp_GE = (1+alpha)*Mp/W - (1-(1+alpha)*f_col/W)*l_pp;
 pn_GE = (1+alpha)*Mn/W + (1-(1+alpha)*f_col/W)*l_pn;
 
 % (ii) inverted WITHOUT the GE model
-pp   = Mp/W - (1-f_col/W)*l_pp;
-pn   = Mn/W + (1-f_col/W)*l_pn;
-pavg = 0.5*(pp + pn);
+pp = Mp/W - (1-f_col/W)*l_pp;
+pn = Mn/W + (1-f_col/W)*l_pn;
+
+% the pair average, straight from Eq. (120)
+err_avg_120 = alpha*(Mp + Mn)/(2*W) ...
+            + alpha*f_col*(l_pp - l_pn)/(2*W);
 
 co = [0.850 0.325 0.098;             % + tip
       0.000 0.447 0.741;             % - tip
-      0.466 0.674 0.188];            % pair average
+      0.466 0.674 0.188];            % pair average, Eq. (120)
 
 fig = figure('Color', 'w', 'Units', 'inches', 'Position', [1 1 3.5 3.1]);
 ax  = axes(fig); hold(ax, 'on'); box(ax, 'on'); grid(ax, 'on')
 
-plot(ax, 1e3*p_off, 1e3*(pp - p_off), '--', 'Color', co(1,:), ...
+plot(ax, 1e3*p_off, 1e3*(p_off - pp), '--', 'Color', co(1,:), ...
      'LineWidth', 1.2)
-plot(ax, 1e3*p_off, 1e3*(pn - p_off), '--', 'Color', co(2,:), ...
+plot(ax, 1e3*p_off, 1e3*(p_off - pn), '--', 'Color', co(2,:), ...
      'LineWidth', 1.2)
-plot(ax, 1e3*p_off, 1e3*(pavg - p_off), '-', 'Color', co(3,:), ...
+plot(ax, 1e3*p_off, 1e3*err_avg_120, '-', 'Color', co(3,:), ...
      'LineWidth', 1.8)
-plot(ax, 1e3*p_off, 1e3*(0.5*(pp_GE+pn_GE) - p_off), 'k:', ...
+plot(ax, 1e3*p_off, 1e3*(p_off - 0.5*(pp_GE+pn_GE)), 'k:', ...
      'LineWidth', 1.0)               % sanity rail: identically zero
 
 xlabel(ax, 'true $p_{\mathrm{off}}$ [mm]', 'Interpreter', 'latex', ...
        'FontSize', 9)
-ylabel(ax, 'reading error $\hat{p} - p_{\mathrm{off}}$ [mm]', ...
+ylabel(ax, '$p_{\mathrm{off}} - \hat{p}_{\mathrm{off}}$ [mm]', ...
        'Interpreter', 'latex', 'FontSize', 9)
 set(ax, 'FontName', 'Times New Roman', 'FontSize', 9, 'GridAlpha', 0.15)
 xlim(ax, [-20 20]);  ylim(ax, [-7 7])
 
-legend(ax, {'$\hat{p}_{\mathrm{off},+}$', '$\hat{p}_{\mathrm{off},-}$', ...
-            'pair average', 'GE inversion (exact)'}, ...
+legend(ax, {'$+$ tip alone', '$-$ tip alone', ...
+            'pair average, Eq. (120)', 'GE inversion (exact)'}, ...
        'Interpreter', 'latex', 'FontSize', 8, 'NumColumns', 2, ...
        'Location', 'southoutside', 'Box', 'off')
 
 exportgraphics(fig, 'offset_ge_theory.png', 'Resolution', 600);
 fprintf('figure -> offset_ge_theory.png\n');
-fprintf(['at p = 0: +tip %.2f mm, -tip %.2f mm, average %.2f mm; ' ...
-         'error slope %.4f\n'], ...
-        -1e3*alpha*l_pp/(1+alpha), 1e3*alpha*l_pn/(1+alpha), ...
-        1e3*alpha*(l_pn-l_pp)/(2*(1+alpha)), -alpha/(1+alpha));
-fprintf('pair-average error at p = +-20 mm: %+.2f / %+.2f mm\n', ...
-        1e3*(pavg(end) - p_off(end)), 1e3*(pavg(1) - p_off(1)));
+
+% Eq. (120) against the direct difference, and the two terms
+chk = max(abs(err_avg_120 - (p_off - 0.5*(pp + pn))));
+fprintf('Eq.(120) vs (p_off - p_hat_avg): max |diff| = %.2e m\n', chk);
+fprintf(['at p = 0: moment term %+.3f mm, thrust term %+.3f mm, ' ...
+         'total %+.3f mm\n'], ...
+        1e3*alpha*(Mp(p_off==0) + Mn(p_off==0))/(2*W), ...
+        1e3*alpha*f_col*(l_pp - l_pn)/(2*W), ...
+        1e3*err_avg_120(p_off==0));
+fprintf('pair average at p = -20 / +20 mm: %+.3f / %+.3f mm\n', ...
+        1e3*err_avg_120(1), 1e3*err_avg_120(end));
+fprintf('single direction at p = 0: %+.3f / %+.3f mm\n', ...
+        1e3*alpha*l_pp/(1+alpha), -1e3*alpha*l_pn/(1+alpha));
