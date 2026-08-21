@@ -139,6 +139,7 @@ def collect():
             gm = s * raw[sl]
             rows.append(dict(
                 case=case, axisname=axname, bag=crit.bag_name,
+                mism=float(jp_cad * c2 ** 2 / (W * Z) - 1.0),
                 phi=np.rad2deg(phi),
                 eff=1e3 * (jp_eff * om_dot + base),
                 cad=1e3 * (jp_cad * om_dot + base),
@@ -177,6 +178,21 @@ def main():
           f"{np.median(s_cad):+.1f} mN.m/deg, IQR "
           f"[{np.percentile(s_cad,25):+.1f},{np.percentile(s_cad,75):+.1f}],"
           f" {int(np.sum(s_cad < 0))}/{len(s_cad)} negative")
+    # where the run-to-run scatter comes from
+    mism = np.array([r['mism'] for r in rows])
+    cc = float(np.corrcoef(mism, d_cad)[0, 1])
+    print(f"\n  scatter attribution: corr(d, J_P C2^2/Wz - 1) = {cc:+.2f}")
+    print(f"  {'dataset':<14}{'C2 mism':>9}{'median d':>10}")
+    seen = []
+    for r in rows:
+        key = (r['case'], r['axisname'])
+        if key in seen:
+            continue
+        seen.append(key)
+        ds = [q for q in rows
+              if (q['case'], q['axisname']) == key]
+        dd = np.median([float(np.mean(q['cad'] - q['mod'])) for q in ds])
+        print(f"  {key[0]+'/'+key[1]:<14}{ds[0]['mism']:+9.2f}{dd:+10.1f}")
 
     fig, (a1, a2) = plt.subplots(1, 2, figsize=(12.4, 4.9))
     fig.subplots_adjust(left=0.065, right=0.99, top=0.79, bottom=0.115,
@@ -189,7 +205,7 @@ def main():
     cx, md, q1, q3, p10, p90, mm, m1, m3 = ([] for _ in range(9))
     for b0, b1 in zip(bins[:-1], bins[1:]):
         k = (PH >= b0) & (PH < b1)
-        if k.sum() < 150:
+        if k.sum() < 50:
             continue
         cx.append(0.5 * (b0 + b1))
         md.append(np.median(GE[k])); q1.append(np.percentile(GE[k], 25))
@@ -206,7 +222,7 @@ def main():
     a1.plot(cx, mm, '-', color='#e08214', lw=2.0,
             label='rotor-interference model: median, 10-90%')
     a1.axhline(0, color='0.5', lw=0.8)
-    a1.set_xlim(left=0.0)
+    a1.set_xlim(0.0, 5.2)
     a1.set_xlabel(r'excursion $\delta\varphi$ [deg]', fontsize=10)
     a1.set_ylabel(r'$\Delta M_{GE}$ [mN$\cdot$m]', fontsize=10)
     a1.set_title('(a) analytic $\\dot\\omega$ from the fitted branch:\n'
