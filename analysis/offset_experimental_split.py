@@ -131,24 +131,23 @@ def main():
     up, dn = L.max(axis=0), L.min(axis=0)
 
     fig, ax = plt.subplots(figsize=(7.6, 5.2))
-    ax.axhspan(-1.64, 1.64, color='0.90', lw=0, zorder=0,
-               label='delivered-offset validation RMS $\\pm 1.64$ mm')
     ax.axhline(0, color='0.5', lw=0.8)
+    # RMS of each series drawn as +- lines, so the reduction is visual
+    for v, c, ls, nm in ((IND, '#c0392b', ':', 'individual'),
+                         (EA, C['a'], '--', 'paired')):
+        for sgn in (+1, -1):
+            ax.axhline(sgn * rms(v), color=c, ls=ls, lw=1.4,
+                       alpha=0.9,
+                       label=(f'{nm} RMS $\\pm${rms(v):.2f} mm'
+                              if sgn > 0 else None))
     ax.plot(1e3 * pg, up, '-', color='#e08214', lw=1.8,
             label='ground-effect bound, single direction')
     ax.plot(1e3 * pg, dn, '-', color='#e08214', lw=1.8)
     ax.scatter(np.concatenate([TRU, TRU]), IND, s=42, c='#c0392b',
                marker='x', lw=1.4,
-               label=f'individual $\\hat{{p}}_{{\\rm off,\\pm}}$'
-                     f'   RMS {rms(IND):.1f} mm')
-    ax.errorbar(TRU, EA, xerr=SE, fmt='o', ms=8, color=C['a'],
-                ecolor='0.35', elinewidth=1.2, capsize=3, lw=0,
-                label=f'paired $\\hat{{p}}_{{\\rm off,avg}}$'
-                      f'   RMS {rms(EA):.2f} mm')
-    ax.errorbar([], [], xerr=1, fmt='none', ecolor='0.35',
-                elinewidth=1.2, capsize=3,
-                label=f'load-cell truth uncertainty '
-                      f'(pooled {np.sqrt(np.nanmean(SE**2)):.2f} mm)')
+               label='individual $\\hat{p}_{\\rm off,\\pm}$')
+    ax.scatter(TRU, EA, s=64, c=C['a'], marker='o', lw=0,
+               label='paired $\\hat{p}_{\\rm off,avg}$')
     ax.set_xlabel('load-cell truth $p_{\\rm off}$ [mm]', fontsize=11)
     ax.set_ylabel('$\\hat{p}_{\\rm off} - p_{\\rm off}$ [mm]',
                   fontsize=11)
@@ -160,9 +159,12 @@ def main():
                  'ten configurations\n'
                  f'{n_out_t} of {len(IND)} single-direction estimates fall '
                  'outside the ground-effect bound;\npairing cuts the RMS '
-                 f'{rms(IND):.1f} $\\rightarrow$ {rms(EA):.2f} mm',
+                 f'{rms(IND):.1f} $\\rightarrow$ {rms(EA):.2f} mm '
+                 f'(load-cell truth uncertainty '
+                 f'{np.sqrt(np.nanmean(SE**2)):.2f} mm, not drawn)',
                  fontsize=11)
-    ax.legend(fontsize=9, loc='upper right', framealpha=0.95)
+    ax.legend(fontsize=8.5, loc='upper right', framealpha=0.95,
+              ncol=2)
     ax.grid(alpha=0.25, lw=0.4)
     ax.set_xlim(-17, 13)
     fig.tight_layout()
