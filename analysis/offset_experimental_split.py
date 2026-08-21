@@ -30,6 +30,7 @@ from pathlib import Path
 
 import numpy as np
 import scipy.io as sio
+from scipy.stats import t as student
 
 import matplotlib
 matplotlib.use('Agg')
@@ -96,13 +97,25 @@ def main():
         q['ta'].append(1e3 * (0.5 * (the['pos'] + the['neg']) - p))
         q['lab'].append(key[0][-2:])
         q.setdefault('sem', []).append(SEM.get(key, np.nan))
+        # 95% CI of the paired estimate, propagated from the run-to-run
+        # scatter of the identified moments in each direction:
+        #   u(p_s) = sd_s / (sqrt(n_s) W),  u(p_avg) = |u_+ , u_-| / 2
+        u2, dof = 0.0, 0
+        for dn in ('pos', 'neg'):
+            rr = grp[dn]
+            sd = float(rr['resid_run_std_mNm']) * 1e-3
+            n_r = int(rr['n_piv'].split('/')[0])
+            u2 += (sd / (np.sqrt(n_r) * W)) ** 2
+            dof += n_r - 1
+        q.setdefault('ci', []).append(
+            1e3 * 0.5 * np.sqrt(u2) * float(student.ppf(0.975, dof)))
         q.setdefault('geom', []).append(
             (W, sa, float(grp['pos']['f_onset']),
              float(grp['pos']['l_odom_mm']) * 1e-3,
              float(grp['neg']['f_onset']),
              float(grp['neg']['l_odom_mm']) * 1e-3))
     for q in D.values():
-        for k in 'tru ep en ea tp tn ta sem'.split():
+        for k in 'tru ep en ea tp tn ta sem ci'.split():
             q[k] = np.array(q[k])
 
     # pooled arrays
@@ -111,6 +124,7 @@ def main():
     EN = np.concatenate([D[a]['en'] for a in ('Mx', 'My')])
     EA = np.concatenate([D[a]['ea'] for a in ('Mx', 'My')])
     SE = np.concatenate([D[a]['sem'] for a in ('Mx', 'My')])
+    CI = np.concatenate([D[a]['ci'] for a in ('Mx', 'My')])
     IND = np.concatenate([EP, EN])
     rms = lambda v: float(np.sqrt(np.mean(v ** 2)))
 
@@ -132,22 +146,15 @@ def main():
 
     fig, ax = plt.subplots(figsize=(7.6, 5.2))
     ax.axhline(0, color='0.5', lw=0.8)
-    # RMS of each series drawn as +- lines, so the reduction is visual
-    for v, c, ls, nm in ((IND, '#c0392b', ':', 'individual'),
-                         (EA, C['a'], '--', 'paired')):
-        for sgn in (+1, -1):
-            ax.axhline(sgn * rms(v), color=c, ls=ls, lw=1.4,
-                       alpha=0.9,
-                       label=(f'{nm} RMS $\\pm${rms(v):.2f} mm'
-                              if sgn > 0 else None))
     ax.plot(1e3 * pg, up, '-', color='#e08214', lw=1.8,
             label='ground-effect bound, single direction')
     ax.plot(1e3 * pg, dn, '-', color='#e08214', lw=1.8)
     ax.scatter(np.concatenate([TRU, TRU]), IND, s=42, c='#c0392b',
                marker='x', lw=1.4,
                label='individual $\\hat{p}_{\\rm off,\\pm}$')
-    ax.scatter(TRU, EA, s=64, c=C['a'], marker='o', lw=0,
-               label='paired $\\hat{p}_{\\rm off,avg}$')
+    ax.errorbar(TRU, EA, yerr=CI, fmt='o', ms=8, color=C['a'],
+                ecolor=C['a'], elinewidth=1.4, capsize=4, lw=0,
+                label='paired $\\hat{p}_{\\rm off,avg}$, 95% CI')
     ax.set_xlabel('load-cell truth $p_{\\rm off}$ [mm]', fontsize=11)
     ax.set_ylabel('$\\hat{p}_{\\rm off} - p_{\\rm off}$ [mm]',
                   fontsize=11)
