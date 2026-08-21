@@ -103,6 +103,27 @@ plot(ax, 1e3*p_off(ii), 1e3*d_cf(ii), 'o', 'Color', co(3,:), ...
 plot(ax, 1e3*p_off, 1e3*(0.5*(pp_G + pn_G) - p_off), 'k:', ...
      'LineWidth', 1.0)               % rail: GE inversion is exact
 
+% ---- annotate each curve's worst case over the swept box ---------
+ann = {d_p, co(1,:); d_n, co(2,:); d_avg, co(3,:)};
+for k = 1:size(ann, 1)
+    v = ann{k,1};
+    [~, j] = max(abs(v));
+    if p_off(j) > 0
+        ha = 'right';  dx = -0.7;
+    else
+        ha = 'left';   dx = +0.7;
+    end
+    if v(j) < 0
+        va = 'top';    dy = -0.25;
+    else
+        va = 'bottom'; dy = +0.25;
+    end
+    text(ax, 1e3*p_off(j) + dx, 1e3*v(j) + dy, ...
+         sprintf('%+.2f mm', 1e3*v(j)), 'Color', ann{k,2}, ...
+         'FontSize', 7.5, 'FontName', 'Times New Roman', ...
+         'HorizontalAlignment', ha, 'VerticalAlignment', va)
+end
+
 xlabel(ax, 'true $p_{\mathrm{off}}$ [mm]', 'Interpreter', 'latex', ...
        'FontSize', 9)
 ylabel(ax, ['$\hat{p}_{\mathrm{off,avg}} - p_{\mathrm{off,GE,avg}}$ ' ...
