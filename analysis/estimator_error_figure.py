@@ -79,7 +79,11 @@ ax.set_xticklabels([r'$x_{\mathrm{off}}$',r'$y_{\mathrm{off}}$']*len(cases),
                    fontsize=9)
 ax.set_xlim(pos[(cases[0],'My')]-0.75, pos[(cases[-1],'Mx')]+0.75)
 ax.set_ylabel('CoM offset error [mm]')
-ax.grid(axis='both',alpha=0.25,lw=0.6); ax.set_axisbelow(True)
+# the horizontal grid is the one being read against, so it carries
+# more weight than the vertical slot guides
+ax.grid(axis='y',alpha=0.55,lw=0.9,color='0.55')
+ax.grid(axis='x',alpha=0.20,lw=0.6,color='0.6')
+ax.set_axisbelow(True)
 for sp in ('top','right'): ax.spines[sp].set_visible(False)
 
 # case names above the panel, with separators in between
