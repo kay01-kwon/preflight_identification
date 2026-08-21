@@ -52,7 +52,8 @@ def main():
     for r in rows:
         by.setdefault((r['case'], r['axis']), {})[r['dir']] = r
 
-    tru, ep, en, ea, tp, tn, ta = ([] for _ in range(7))
+    D = {'Mx': {k: [] for k in 'tru ep en ea tp tn ta lab'.split()},
+         'My': {k: [] for k in 'tru ep en ea tp tn ta lab'.split()}}
     for key, grp in sorted(by.items()):
         W = float(grp['pos']['W'])
         sa = SGN[key[1]]
@@ -68,85 +69,111 @@ def main():
             m_ge = (s * (W - f) * l + sa * W * p - s * ALPHA * f * l) \
                 / (1.0 + ALPHA)
             the[dn] = sa * (m_ge - s * (W - f) * l) / W
-        tru.append(1e3 * p)
-        ep.append(1e3 * (est['pos'] - p))
-        en.append(1e3 * (est['neg'] - p))
-        ea.append(1e3 * (0.5 * (est['pos'] + est['neg']) - p))
-        tp.append(1e3 * (the['pos'] - p))
-        tn.append(1e3 * (the['neg'] - p))
-        ta.append(1e3 * (0.5 * (the['pos'] + the['neg']) - p))
-    tru, ep, en, ea = map(np.array, (tru, ep, en, ea))
-    tp, tn, ta = map(np.array, (tp, tn, ta))
+        q = D[key[1]]
+        q['tru'].append(1e3 * p)
+        q['ep'].append(1e3 * (est['pos'] - p))
+        q['en'].append(1e3 * (est['neg'] - p))
+        q['ea'].append(1e3 * (0.5 * (est['pos'] + est['neg']) - p))
+        q['tp'].append(1e3 * (the['pos'] - p))
+        q['tn'].append(1e3 * (the['neg'] - p))
+        q['ta'].append(1e3 * (0.5 * (the['pos'] + the['neg']) - p))
+        q['lab'].append(key[0][-2:])
+        q.setdefault('geom', []).append(
+            (W, sa, float(grp['pos']['f_onset']),
+             float(grp['pos']['l_odom_mm']) * 1e-3,
+             float(grp['neg']['f_onset']),
+             float(grp['neg']['l_odom_mm']) * 1e-3))
+    for q in D.values():
+        for k in 'tru ep en ea tp tn ta'.split():
+            q[k] = np.array(q[k])
 
-    fig, (a1, a2) = plt.subplots(1, 2, figsize=(11.6, 4.7))
+    fig, axs = plt.subplots(1, 2, figsize=(11.6, 4.9), sharey=True)
     fig.subplots_adjust(left=0.07, right=0.985, top=0.80, bottom=0.13,
-                        wspace=0.26)
+                        wspace=0.08)
 
-    # ---- (a) errors against the truth offset ----
-    a1.axhspan(-1.64, 1.64, color='0.90', lw=0, zorder=0,
-               label='load-cell validation RMS $\\pm 1.64$ mm')
-    a1.axhline(0, color='0.5', lw=0.8)
-    # ground-effect-only prediction, per configuration: drawn as open
-    # markers, not a line -- the two axes carry different arms, so a
-    # curve through them sorted by truth would zigzag meaninglessly
-    for v, c, mk in ((tp, C['p'], '^'), (tn, C['n'], 'v'),
-                     (ta, C['a'], 'o')):
-        a1.scatter(tru, v, s=46, facecolors='none', edgecolors=c,
-                   marker=mk, lw=1.0, alpha=0.85)
-    a1.scatter([], [], s=46, facecolors='none', edgecolors='0.35',
-               marker='s', lw=1.0,
-               label='open: ground effect alone (interference model)')
-    a1.scatter(tru, ep, s=44, c=C['p'], marker='^', lw=0,
-               label=f'$\\hat{{p}}_{{\\rm off,+}}$   RMS '
-                     f'{np.sqrt(np.mean(ep**2)):.1f} mm')
-    a1.scatter(tru, en, s=44, c=C['n'], marker='v', lw=0,
-               label=f'$\\hat{{p}}_{{\\rm off,-}}$   RMS '
-                     f'{np.sqrt(np.mean(en**2)):.1f} mm')
-    a1.scatter(tru, ea, s=52, c=C['a'], marker='o', lw=0,
-               label=f'$\\hat{{p}}_{{\\rm off,avg}}$  RMS '
-                     f'{np.sqrt(np.mean(ea**2)):.1f} mm')
-    a1.set_xlabel('load-cell truth $p_{\\rm off}$ [mm]', fontsize=10)
-    a1.set_ylabel('$\\hat{p}_{\\rm off} - p_{\\rm off}$ [mm]', fontsize=10)
-    a1.set_title('(a) measured offset error, ten configurations\n'
-                 'single directions 6-8 mm RMS, the pair average 1.8',
-                 fontsize=11)
-    a1.legend(fontsize=7.5, loc='upper right', framealpha=0.95,
-              ncol=1)
-    a1.grid(alpha=0.25, lw=0.4)
+    ttl = {'Mx': ('(a) roll ($M_x$): $y_{\\rm off}$, arm $\\approx 140$ mm',
+                  '$y_{\\rm off}$'),
+           'My': ('(b) pitch ($M_y$): $x_{\\rm off}$, arm $\\approx 113$ mm',
+                  '$x_{\\rm off}$')}
+    for ax, an in zip(axs, ('Mx', 'My')):
+        q = D[an]
+        ax.axhspan(-1.64, 1.64, color='0.90', lw=0, zorder=0)
+        ax.axhline(0, color='0.5', lw=0.8)
+        # continuous GE-only prediction, on this axis's median geometry
+        gm = np.median(np.array(q['geom']), axis=0)
+        Wm, sam, fp, lp_, fn, ln_ = gm
+        pg = np.linspace(-20e-3, 20e-3, 200)
+        cur = {}
+        for nm2, sg, fq, lq in (('p', +1.0, fp, lp_), ('n', -1.0, fn, ln_)):
+            m_ge = (sg * (Wm - fq) * lq + sam * Wm * pg
+                    - sg * ALPHA * fq * lq) / (1.0 + ALPHA)
+            cur[nm2] = sam * (m_ge - sg * (Wm - fq) * lq) / Wm - pg
+        for nm2, c in (('p', C['p']), ('n', C['n'])):
+            ax.plot(1e3 * pg, 1e3 * cur[nm2], '--', color=c, lw=1.0,
+                    alpha=0.8)
+        ax.plot(1e3 * pg, 1e3 * 0.5 * (cur['p'] + cur['n']), '-',
+                color=C['a'], lw=1.6, alpha=0.9)
+        for key, c, mk in (('tp', C['p'], '^'), ('tn', C['n'], 'v'),
+                           ('ta', C['a'], 'o')):
+            ax.scatter(q['tru'], q[key], s=46, facecolors='none',
+                       edgecolors=c, marker=mk, lw=1.0, alpha=0.85)
+        rms = lambda v: float(np.sqrt(np.mean(v ** 2)))
+        ax.scatter(q['tru'], q['ep'], s=48, c=C['p'], marker='^', lw=0,
+                   label=f"$\\hat{{p}}_{{\\rm off,+}}$   "
+                         f"{rms(q['ep']):.1f} mm")
+        ax.scatter(q['tru'], q['en'], s=48, c=C['n'], marker='v', lw=0,
+                   label=f"$\\hat{{p}}_{{\\rm off,-}}$   "
+                         f"{rms(q['en']):.1f} mm")
+        ax.scatter(q['tru'], q['ea'], s=56, c=C['a'], marker='o', lw=0,
+                   label=f"$\\hat{{p}}_{{\\rm off,avg}}$  "
+                         f"{rms(q['ea']):.1f} mm")
+        for x, y, lb in zip(q['tru'], q['ea'], q['lab']):
+            ax.annotate(lb, (x, y), fontsize=6.5, color='0.35',
+                        xytext=(4, 4), textcoords='offset points')
+        r_ax = float(np.corrcoef(q['ep'], q['en'])[0, 1])
+        ax.set_xlabel(f"load-cell truth {ttl[an][1]} [mm]", fontsize=10)
+        ax.set_title(f"{ttl[an][0]}\n"
+                     f"pair average {rms(q['ea']):.2f} mm RMS, "
+                     f"$r(e_+, e_-) = {r_ax:+.2f}$", fontsize=10.5)
+        ax.legend(fontsize=8, loc='upper right', framealpha=0.95,
+                  title='RMS', title_fontsize=7.5)
+        ax.grid(alpha=0.25, lw=0.4)
+        ax.set_ylim(-14, 14)
+    axs[0].set_ylabel('$\\hat{p}_{\\rm off} - p_{\\rm off}$ [mm]',
+                      fontsize=10)
+    axs[0].scatter([], [], s=46, facecolors='none', edgecolors='0.35',
+                   marker='s', lw=1.0)
 
-    # ---- (b) the antisymmetry the pairing exploits ----
-    lim = 1.15 * max(np.abs(ep).max(), np.abs(en).max())
-    a2.plot([-lim, lim], [lim, -lim], 'k-', lw=1.0,
-            label='$e_- = -e_+$ (perfect cancellation)')
-    a2.axhline(0, color='0.6', lw=0.7)
-    a2.axvline(0, color='0.6', lw=0.7)
-    a2.scatter(ep, en, s=52, c=C['a'], lw=0)
-    for x, y, k in zip(ep, en, sorted(by)):
-        a2.annotate(k[0][-2:] + '/' + k[1][-1], (x, y), fontsize=6.5,
-                    xytext=(4, 3), textcoords='offset points',
-                    color='0.35')
-    r = float(np.corrcoef(ep, en)[0, 1])
-    a2.set_xlabel('$+$ direction error $e_+$ [mm]', fontsize=10)
-    a2.set_ylabel('$-$ direction error $e_-$ [mm]', fontsize=10)
-    a2.set_title('(b) why the average works: the two directions err\n'
-                 f'in opposite senses on all ten ($r = {r:+.2f}$)',
-                 fontsize=11)
-    a2.legend(fontsize=8.5, loc='upper right')
-    a2.grid(alpha=0.25, lw=0.4)
-    a2.set_xlim(-lim, lim)
-    a2.set_ylim(-lim, lim)
-
-    fig.suptitle('Per-direction versus paired CoM-offset estimates, '
-                 'measured (filled) against the ground-effect '
-                 'prediction (open)', fontsize=12.5, y=0.975)
+    fig.suptitle('Per-direction vs paired CoM-offset estimates, by axis: '
+                 'measured (filled) vs ground-effect prediction (open)',
+                 fontsize=11.5, y=0.975)
     fig.savefig(out, dpi=150)
 
+    for an in ('Mx', 'My'):
+        q = D[an]
+        print(f"  --- {an} ---")
+        for nm, k, tk in (('+ direction', 'ep', 'tp'),
+                          ('- direction', 'en', 'tn'),
+                          ('pair average', 'ea', 'ta')):
+            v, t = q[k], q[tk]
+            print(f"    {nm:<13} RMS {np.sqrt(np.mean(v**2)):5.2f} mm, "
+                  f"worst {np.abs(v).max():5.2f};  GE alone "
+                  f"{np.sqrt(np.mean(t**2)):4.2f}")
+    ep = np.concatenate([D[a]['ep'] for a in D])
+    en = np.concatenate([D[a]['en'] for a in D])
+    ea = np.concatenate([D[a]['ea'] for a in D])
+    tp = np.concatenate([D[a]['tp'] for a in D])
+    tn = np.concatenate([D[a]['tn'] for a in D])
+    ta = np.concatenate([D[a]['ta'] for a in D])
+    r = float(np.corrcoef(ep, en)[0, 1])
+    print("  --- pooled ---")
     for nm, v, t in (('+ direction', ep, tp), ('- direction', en, tn),
                      ('pair average', ea, ta)):
-        print(f"  {nm:<13} RMS {np.sqrt(np.mean(v**2)):5.2f} mm, "
+        print(f"    {nm:<13} RMS {np.sqrt(np.mean(v**2)):5.2f} mm, "
               f"worst {np.abs(v).max():5.2f};  GE alone predicts RMS "
               f"{np.sqrt(np.mean(t**2)):4.2f}")
-    print(f"  corr(e+, e-) = {r:+.3f};  wrote {out}")
+    print(f"    corr(e+, e-) = {r:+.3f}")
+    print(f"  wrote {out}")
     return 0
 
 
