@@ -1,0 +1,222 @@
+% ---------------------------------------------------------------------
+% Assembly reference for the remaining manuscript work: for each item
+% still to be written, what theory exists, what numbers to quote, which
+% script and figure produce them, and what is still open.
+%
+% Every number here has been evaluated in this repository; the script
+% that produces it is named beside it.
+% ---------------------------------------------------------------------
+
+\documentclass[10pt]{article}
+\usepackage[a4paper,margin=20mm]{geometry}
+\usepackage{amsmath,amssymb,booktabs,array,longtable}
+\setlength{\parskip}{0.35em}\setlength{\parindent}{0pt}
+\newcommand{\scr}[1]{\texttt{\small #1}}
+\title{\vspace{-16mm}\textbf{Assembly reference: what is ready, what is
+open}\vspace{-3mm}}
+\date{\small companion to \emph{cosh\_methodology},
+\emph{access\_tight\_rms\_bound}, \emph{ge\_offset\_shift},
+\emph{noise\_model\_notes}}
+\begin{document}\maketitle
+
+\section{Item A --- why the moment pair may be averaged}
+
+\emph{Status: complete.} Theory, closed form and measurement all
+exist; only the manuscript prose is left.
+
+\paragraph{The general statement.} Write the unmodelled part of the
+onset balance as $\Delta_\pm$ and split it,
+$\Delta_a = (\Delta_+-\Delta_-)/2$, $\Delta_s = (\Delta_++\Delta_-)/2$.
+\emph{Everything that acts as force $\times$ pivot distance changes
+sign with the tip direction} and therefore lands in $\Delta_a$, so
+\begin{equation*}
+  M_{\mathrm{ff}} = \tfrac12 (M_+ + M_-)
+  = \tfrac12 (W-f)(l_+-l_-) + S_{\mathrm{off}} + \Delta_s ,
+\end{equation*}
+in which $\Delta_a$ has cancelled identically. The ground-effect
+thrust channel, a common displacement of the contact resultant and
+rolling resistance are all instances. Measured:
+$|\Delta_a| = 54$ mN\,m and $|\Delta_s| = 37$ mN\,m at the median, the
+latter $3.7\%$ of the half-width of the interval $[M_-,M_+]$ the
+excitation measures directly ($1000$ mN\,m median, $8.2\times$ the
+worst $|\Delta_s|$). \hfill (\emph{cosh\_methodology}, present text)
+
+\paragraph{The closed form for the offset.} With the matched-thrust
+gains $(\alpha_f,\alpha_M)$,
+\begin{equation*}
+  \hat p_{\mathrm{off},s} - p_{\mathrm{off}}
+  = -\frac{\alpha_M (p_{\mathrm{off}} + s\,l_s)}{1+\alpha_M}
+    + \frac{s\,f l_s (\alpha_M-\alpha_f)}{W(1+\alpha_M)},
+\end{equation*}
+\begin{equation*}
+  \hat p_{\mathrm{off,avg}} - p_{\mathrm{off}}
+  = -\frac{\alpha_M\,p_{\mathrm{off}}}{1+\alpha_M}
+    - \Bigl[\alpha_M - \frac{f(\alpha_M-\alpha_f)}{W}\Bigr]
+      \frac{l_+-l_-}{2(1+\alpha_M)} .
+\end{equation*}
+The slope in $p_{\mathrm{off}}$ is $-\alpha_M/(1+\alpha_M) = -4.13\%$
+--- the moment channel alone; the thrust channel only scales the
+arm-asymmetry constant and vanishes at $\alpha_f=\alpha_M$, where the
+pair average reduces to Eq.~(120). Over the $\pm 20$ mm design box a
+single direction carries $\pm 4.1$--$5.8$ mm while the pair average
+stays within $\pm 0.83$ mm.
+\hfill (\scr{matlab/offset\_ge\_theory.m}, \emph{ge\_offset\_shift})
+
+\paragraph{The measurement.} Per direction $7.5$ / $6.4$ mm RMS
+(pooled $7.0$, worst $12.2$); paired $1.77$ mm RMS (worst $2.96$),
+with per-configuration $95\%$ confidence intervals of $0.37$--$1.73$
+mm (median $0.66$). Ground effect alone predicts $5.4$ / $5.1 \to
+0.48$ mm, and $12$ of the $20$ single-direction estimates fall outside
+that bound --- so the pairing removes more than ground effect: it
+removes every antisymmetric source at once.
+\hfill (\scr{offset\_experimental\_split.py}, \scr{fig\_offset\_experimental})
+
+\paragraph{The truth it is measured against.} Load-cell standard error
+$0.003$--$0.64$ mm over the ten case-axis measurements, pooled
+$0.30$, median $0.03$; datasheet propagation $u_p = l u_f/W = 0.15$ mm.
+Contributes $2.8\%$ of the variance of the paired identification error
+and is uncorrelated with it ($r = -0.08$).
+\hfill (\scr{loadcell\_uncertainty.py}, \scr{DataSet/loadcell})
+
+\section{Item B --- the calibration in the introduction}
+
+\emph{Status: pipeline settled; prose to write.}
+
+The order is worth stating exactly, because it is easy to read
+backwards. \emph{Stage 1:} per-run free nonlinear least squares
+(PNLS) over $(C_1,C_2,C)$; the per-dataset \emph{medians} of
+$(C_2,K)$ locate a search centre. \emph{Stage 2:} the
+ramp-invariance score is minimised on a grid around that centre,
+fixing $(C_2,K)$; these are frozen in \scr{pnls\_constants.py}.
+\emph{Then} COSH runs with the amplitude pinned at $C_1 = K\dot M$,
+the baseline at the median, and the onset swept exhaustively. PNLS
+seeds the calibration; it is not part of the estimator.
+
+\paragraph{The robustness sentence to include.} The \scr{cosh\_wide}
+variant minimises the same score over the wide box
+$[3,8]\times[0.05,0.70]$ \emph{with no PNLS centre} and is visually
+indistinguishable from COSH. This is the one line that forecloses
+``the result depends on the PNLS seed''.
+
+\section{Item C --- the Gazebo ablation}
+
+\emph{Status: open. This is the only item with no material yet.}
+
+\paragraph{What it should target.} The hardware cannot separate the
+static ground effect from a contact-resultant shift: a $19$ mm inboard
+shift closes the same threshold gap that the interference model
+closes. Simulation can set the two independently, so the ablation is
+worth most if aimed there rather than at re-confirming what the
+hardware already shows.
+
+\begin{center}\small
+\begin{tabular}{@{}llp{0.46\linewidth}@{}}
+\toprule
+run & configuration & what it establishes\\
+\midrule
+A & GE off, lever exact &
+  the pipeline is unbiased: identified offset $=$ truth\\
+B & GE on, lever exact &
+  the gap appears, and its size is testable against the
+  interference model's $\approx 64$ mN\,m residual level\\
+C & GE off, lever shifted $19$ mm &
+  the same gap reappears --- the degeneracy demonstrated
+  directly rather than argued\\
+\addlinespace
+D & slow ramp, $u>1$ &
+  optional: exercises the admissibility floor of (9a),
+  $\dot M > \bar\rho C_2$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+A, B and C together let the manuscript say: \emph{the two mechanisms
+are individually sufficient and jointly unidentifiable at this
+clearance}, which is stronger than the present argument and costs no
+hardware.
+
+\section{Item D --- figures and tables already available}
+
+\begin{center}\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+figure & script & carries\\
+\midrule
+\scr{fig\_estimator\_err} & \scr{estimator\_error\_figure.py} &
+  offset error, six estimators, $95\%$ CI\\
+\scr{fig\_mcrit\_static} & \scr{mcrit\_static\_figure.py} &
+  thresholds vs three physics levels\\
+\scr{fig\_mcrit\_report} & \scr{mcrit\_report\_figure.py} &
+  parity plot $+$ physics ladder\\
+\scr{fig\_offset\_experimental} & \scr{offset\_experimental\_split.py} &
+  per-direction vs paired offsets\\
+\scr{fig\_kernel\_free} & \scr{kernel\_free\_bound.py} &
+  the residual cap on all $140$ runs\\
+\scr{fig\_sg\_bars} & \scr{sg\_bound\_bars.py} &
+  the cap with the declared noise constant\\
+\scr{fig\_design\_range} & \scr{design\_range\_chart.py} &
+  the bound over the design box\\
+\scr{fig\_noise\_spectrum} & \scr{noise\_spectrum\_figure.py} &
+  the spectral construction behind (19)\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Tables come from \scr{mcrit\_prediction.csv} (per case/axis/direction)
+and \scr{mcrit\_per\_run.csv} (per run), both written by
+\scr{mcrit\_prediction.py}.
+
+\section{Numbers to quote, in one place}
+
+\begin{center}\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+quantity & value & source\\
+\midrule
+static residual, no GE $\to$ interference &
+  $191 \to 64$ mN\,m (per-run median) & \scr{mcrit\_report\_figure.py}\\
+\quad of which the thrust matching &
+  $143 \to 64$ mN\,m & \scr{mcrit\_matched\_thrust.py}\\
+one-sided over-prediction &
+  $20/20 \to 12/20$ & \scr{mcrit\_prediction.py}\\
+share of the gap explained & $81\%$ &
+  \emph{cosh\_methodology}\\
+\addlinespace
+offset error, single $\to$ paired &
+  $7.0 \to 1.77$ mm RMS & \scr{offset\_experimental\_split.py}\\
+load-cell truth uncertainty &
+  $0.30$ mm pooled ($0.64$ worst) & \scr{loadcell\_uncertainty.py}\\
+\addlinespace
+residual cap coverage & $140/140$, used $0.36$--$0.41$ &
+  \scr{kernel\_free\_bound.py}\\
+noise constant $N_n$ & $2.31^\circ$/s $= 3N_{\mathrm{med}}$ &
+  \scr{sg\_bound\_bars.py}\\
+realised $\delta e_\omega$ & $0.16$--$0.17^\circ$/s &
+  \scr{kernel\_free\_bound.py}\\
+$\bar\rho$ at the $5^\circ$ box & $1.8$--$3.3$ mN\,m &
+  \scr{design\_range\_chart.py}\\
+GE share of $\bar\rho$ & $2$--$10\%$; $6\times$ inflation $\to$
+  cap $+0.1\%$ & \scr{ge\_channel\_share.py}\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Two cautions carried forward}
+
+\emph{The dynamic ground effect.} The attitude dependence is not
+resolvable here: the inversion's sensitivity floor is
+$\approx 90$ mN\,m --- the static repeatability --- against a model
+variation of $-2.5$ to $-0.1$ mN\,m/deg over the $5^\circ$ cap. The
+bound route is not a fallback but the tighter statement: unmodelled
+forcing that the family cannot absorb shows in the residual, capped at
+$140/140$; what the family does absorb shifts $M_{\mathrm{crit}}$ by at
+most $\bar\rho = 1.8$--$3.3$ mN\,m through (21). Both branches must be
+stated together --- the first alone invites ``the fit absorbed it''.
+
+\emph{Attribution language.} The interference model \emph{accounts
+for} the gap; it does not \emph{identify} ground effect, because a
+$19$ mm contact-resultant shift closes the same gap. Keep
+``the size of the near-ground correction, not its attribution''
+wherever the static result is stated.
+
+\end{document}
