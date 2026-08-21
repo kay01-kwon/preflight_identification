@@ -216,40 +216,41 @@ def main():
     fig.subplots_adjust(left=0.065, right=0.99, top=0.79, bottom=0.115,
                         wspace=0.24)
 
+    # per-degree residual increment: the anchored difference divided by
+    # tilt.  The moment-unit bands widen linearly because per-run slope
+    # scatter integrates with tilt; dividing by phi removes exactly that
+    # accumulation, so this band's width IS the slope scatter, constant.
     PH = np.concatenate([r['phi'] for r in rows])
-    GE = np.concatenate([r['cad'] - np.mean(r['cad'][:5]) for r in rows])
-    GM = np.concatenate([r['mod'] - np.mean(r['mod'][:5]) for r in rows])
-    bins = np.arange(0.0, PH.max() + 0.25, 0.25)
-    cx, md, q1, q3, p10, p90, mm, m1, m3 = ([] for _ in range(9))
+    DQ = np.concatenate([
+        ((r['cad'] - np.mean(r['cad'][:5])) -
+         (r['mod'] - np.mean(r['mod'][:5]))) for r in rows])
+    keep = PH >= 0.75
+    PHk, Qk = PH[keep], DQ[keep] / PH[keep]
+    bins = np.arange(0.75, PHk.max() + 0.25, 0.25)
+    cx, md, q1, q3, p10, p90 = ([] for _ in range(6))
     for b0, b1 in zip(bins[:-1], bins[1:]):
-        k = (PH >= b0) & (PH < b1)
+        k = (PHk >= b0) & (PHk < b1)
         if k.sum() < 50:
             continue
         cx.append(0.5 * (b0 + b1))
-        md.append(np.median(GE[k])); q1.append(np.percentile(GE[k], 25))
-        q3.append(np.percentile(GE[k], 75))
-        p10.append(np.percentile(GE[k], 10)); p90.append(np.percentile(GE[k], 90))
-        mm.append(np.median(GM[k])); m1.append(np.percentile(GM[k], 10))
-        m3.append(np.percentile(GM[k], 90))
-    mm = np.array(mm)
-    a1.fill_between(cx, mm - 50, mm + 50, color='0.88', lw=0, zorder=0,
-                    label=r'model $\pm 50$ mN$\cdot$m')
+        md.append(np.median(Qk[k])); q1.append(np.percentile(Qk[k], 25))
+        q3.append(np.percentile(Qk[k], 75))
+        p10.append(np.percentile(Qk[k], 10)); p90.append(np.percentile(Qk[k], 90))
+    a1.axhspan(-10, 10, color='0.88', lw=0, zorder=0,
+               label=r'$\pm 10$ mN$\cdot$m/deg')
     a1.fill_between(cx, p10, p90, color='#148f77', alpha=0.12, lw=0)
     a1.fill_between(cx, q1, q3, color='#148f77', alpha=0.28, lw=0)
     a1.plot(cx, md, '-', color='#148f77', lw=2.0,
-            label=f'anchored inversion increment ({n} runs): '
-                  'median, IQR, 10-90%')
-    a1.fill_between(cx, m1, m3, color='#e08214', alpha=0.4, lw=0)
-    a1.plot(cx, mm, '-', color='#e08214', lw=2.0,
-            label='model increment: median, 10-90%')
-    a1.axhline(0, color='0.5', lw=0.8)
-    a1.set_xlim(0.0, 5.2)
+            label=f'(inversion $-$ model) increment / tilt '
+                  f'({n} runs): median, IQR, 10-90%')
+    a1.axhline(0, color='#e08214', lw=2.0, zorder=3)
+    a1.set_xlim(0.5, 5.2)
     a1.set_xlabel(r'excursion $\delta\varphi$ [deg]', fontsize=10)
-    a1.set_ylabel(r'$\Delta M_{GE} - \Delta M_{GE}(0)$ [mN$\cdot$m]',
+    a1.set_ylabel(r'residual increment / tilt [mN$\cdot$m/deg]',
                   fontsize=10)
-    a1.set_title('(a) onset-anchored increment, campaign aggregate:\n'
-                 'median inside model $\\pm 50$ except the 3-4$^\\circ$ '
-                 'dip; the spread grows with tilt', fontsize=11)
+    a1.set_title('(a) the per-degree view: dividing by tilt removes the\n'
+                 'integrating slope scatter, so the band no longer grows',
+                 fontsize=11)
     a1.legend(fontsize=8.5, loc='upper left')
     a1.grid(alpha=0.22, lw=0.4)
 
