@@ -23,7 +23,7 @@ l_pp  = 0.120;                       % + tip arm [m]
 l_pn  = 0.110;                       % - tip arm [m]
 alpha = 0.0430;
 
-fig = figure('Color', 'w', 'Units', 'inches', 'Position', [1 1 7.2 3.0]);
+fig = figure('Color', 'w', 'Units', 'inches', 'Position', [1 1 3.5 5.0]);
 co  = [0.850 0.325 0.098;            % + tip
        0.000 0.447 0.741;            % - tip
        0.466 0.674 0.188];           % pair average
@@ -44,7 +44,7 @@ for i = 1:2
     pn = Mn/W(i) + (1-f_col/W(i))*l_pn;
     pavg = 0.5*(pp + pn);
 
-    subplot(1,2,i); hold on; box on; grid on
+    subplot(2,1,i); hold on; box on; grid on
     plot(1e3*p_off, 1e3*(pp - p_off),   '--', 'Color', co(1,:), ...
          'LineWidth', 1.2)
     plot(1e3*p_off, 1e3*(pn - p_off),   '--', 'Color', co(2,:), ...
@@ -58,20 +58,21 @@ for i = 1:2
     plot(1e3*p_off(ii), 1e3*(-alpha*p_off(ii)/(1+alpha) ...
          + alpha*(l_pn-l_pp)/(2*(1+alpha))), 'o', 'Color', co(3,:), ...
          'MarkerSize', 3.5)
-    xlabel('true $p_{\mathrm{off}}$ [mm]', 'Interpreter', 'latex', ...
-           'FontSize', 9)
+    if i == 2
+        xlabel('true $p_{\mathrm{off}}$ [mm]', 'Interpreter', 'latex', ...
+               'FontSize', 9)
+    end
     ylabel('reading error $\hat{p} - p_{\mathrm{off}}$ [mm]', ...
            'Interpreter', 'latex', 'FontSize', 9)
     title(sprintf('m = %.3f kg', m(i)), 'FontSize', 9)
     set(gca, 'FontName', 'Times New Roman', 'FontSize', 9, ...
              'GridAlpha', 0.15)
-    ylim([-6 6])
+    ylim([-8 8])
     if i == 1
         legend({'$+$ tip alone', '$-$ tip alone', 'pair average', ...
-                'GE-model inversion (exact)', ...
-                'closed form $-\alpha p/(1{+}\alpha) + \alpha\Delta l/(2(1{+}\alpha))$'}, ...
+                'GE inversion (exact)', 'closed form'}, ...
                'Interpreter', 'latex', 'FontSize', 6.5, ...
-               'Location', 'northeast', 'Box', 'off')
+               'Location', 'north', 'NumColumns', 2, 'Box', 'off')
     end
 end
 
