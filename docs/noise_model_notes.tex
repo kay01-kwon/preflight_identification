@@ -324,10 +324,19 @@ smoother that has never heard of the cosh family. A Savitzky--Golay
 sample by the value of a least-squares cubic fitted \emph{locally}
 inside that window --- a moving polynomial smoother, standard in
 chemistry and spectroscopy for a half-century. Its window length sets
-what it can follow: choosing $\approx 2/(f_c T_s)$ samples makes it
-track everything slower than about $f_c$ and nothing faster, so
-(record $-$ SG smooth) carries the disturbance's high band with the
-trend --- and its leakage --- removed. The same brick wall then reads
+what it can follow, and the rule $w \approx 2/(f_c T_s)$ makes the
+window span exactly \emph{two periods} of $f_c$. The factor $2$ is
+not Nyquist's --- it counts oscillations against polynomial
+flexibility: a cubic has at most two interior extrema, so it can
+track about one full cycle inside its window and no more. Measured
+on this kernel ($w = 41$, $T_s = 9.9$ ms): the smoother's $-3$ dB
+point sits at $2.6$ Hz --- almost exactly one period per window ---
+and by two periods per window ($f_c = 5$ Hz) it passes only $0.20$
+of the amplitude. So (record $-$ SG smooth) keeps $80\%$-plus of
+everything at and above $f_c$ while the trend --- and its leakage
+--- is removed; the residual partial-tracking near the edge is
+covered empirically by the cross-checks below and by the
+$2$--$6$ Hz cutoff plateau of Sec.~3. The same brick wall then reads
 off the level. Per run:
 \begin{equation}
   N_{\rm SG} \;=\; \rms\big[(y - \mathrm{SG}(y))_{\rm hi}\big],
