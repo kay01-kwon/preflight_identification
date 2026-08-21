@@ -29,6 +29,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import scipy.io as sio
 
 import matplotlib
 matplotlib.use('Agg')
@@ -44,8 +45,24 @@ SGN = {'Mx': +1.0, 'My': -1.0}       # S_off = +W y_off / -W x_off
 C = {'p': '#c0392b', 'n': '#1a5276', 'a': '#148f77'}
 
 
+def truth_sem(root=Path('DataSet/loadcell')):
+    """Standard error of the five load-cell repeats, per case and axis.
+
+    Mx identifies y_off and My identifies x_off, so the roll entry
+    takes the y-column scatter and the pitch entry the x-column."""
+    out = {}
+    for f in sorted(root.glob('case_*.mat')):
+        r = sio.loadmat(f, squeeze_me=True,
+                        struct_as_record=False)['results']
+        for ax, col in (('Mx', 'y'), ('My', 'x')):
+            v = np.atleast_1d(getattr(r, f'{col}_com')).astype(float)
+            out[(f.stem, ax)] = float(v.std(ddof=1)) / np.sqrt(v.size)
+    return out
+
+
 def main():
     d = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('.')
+    SEM = truth_sem()
     out = sys.argv[2] if len(sys.argv) > 2 else 'offset_experimental.png'
     rows = list(csv.DictReader(open(d / 'mcrit_prediction.csv')))
     by = {}
@@ -78,13 +95,14 @@ def main():
         q['tn'].append(1e3 * (the['neg'] - p))
         q['ta'].append(1e3 * (0.5 * (the['pos'] + the['neg']) - p))
         q['lab'].append(key[0][-2:])
+        q.setdefault('sem', []).append(SEM.get(key, np.nan))
         q.setdefault('geom', []).append(
             (W, sa, float(grp['pos']['f_onset']),
              float(grp['pos']['l_odom_mm']) * 1e-3,
              float(grp['neg']['f_onset']),
              float(grp['neg']['l_odom_mm']) * 1e-3))
     for q in D.values():
-        for k in 'tru ep en ea tp tn ta'.split():
+        for k in 'tru ep en ea tp tn ta sem'.split():
             q[k] = np.array(q[k])
 
     # pooled arrays
@@ -92,6 +110,7 @@ def main():
     EP = np.concatenate([D[a]['ep'] for a in ('Mx', 'My')])
     EN = np.concatenate([D[a]['en'] for a in ('Mx', 'My')])
     EA = np.concatenate([D[a]['ea'] for a in ('Mx', 'My')])
+    SE = np.concatenate([D[a]['sem'] for a in ('Mx', 'My')])
     IND = np.concatenate([EP, EN])
     rms = lambda v: float(np.sqrt(np.mean(v ** 2)))
 
@@ -113,7 +132,7 @@ def main():
 
     fig, ax = plt.subplots(figsize=(7.6, 5.2))
     ax.axhspan(-1.64, 1.64, color='0.90', lw=0, zorder=0,
-               label='load-cell validation RMS $\\pm 1.64$ mm')
+               label='delivered-offset validation RMS $\\pm 1.64$ mm')
     ax.axhline(0, color='0.5', lw=0.8)
     ax.plot(1e3 * pg, up, '-', color='#e08214', lw=1.8,
             label='ground-effect bound, single direction')
@@ -122,9 +141,14 @@ def main():
                marker='x', lw=1.4,
                label=f'individual $\\hat{{p}}_{{\\rm off,\\pm}}$'
                      f'   RMS {rms(IND):.1f} mm')
-    ax.scatter(TRU, EA, s=64, c=C['a'], marker='o', lw=0,
-               label=f'paired $\\hat{{p}}_{{\\rm off,avg}}$'
-                     f'   RMS {rms(EA):.2f} mm')
+    ax.errorbar(TRU, EA, xerr=SE, fmt='o', ms=8, color=C['a'],
+                ecolor='0.35', elinewidth=1.2, capsize=3, lw=0,
+                label=f'paired $\\hat{{p}}_{{\\rm off,avg}}$'
+                      f'   RMS {rms(EA):.2f} mm')
+    ax.errorbar([], [], xerr=1, fmt='none', ecolor='0.35',
+                elinewidth=1.2, capsize=3,
+                label=f'load-cell truth uncertainty '
+                      f'(pooled {np.sqrt(np.nanmean(SE**2)):.2f} mm)')
     ax.set_xlabel('load-cell truth $p_{\\rm off}$ [mm]', fontsize=11)
     ax.set_ylabel('$\\hat{p}_{\\rm off} - p_{\\rm off}$ [mm]',
                   fontsize=11)
