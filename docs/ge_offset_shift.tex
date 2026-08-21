@@ -1,0 +1,160 @@
+% ---------------------------------------------------------------------
+% What the static ground effect does to the identified CoM offset,
+% channel by channel -- the difference between the no-GE reading and
+% the matched-thrust GE balance, in closed form and on the campaign.
+%
+% Numbers: analysis/mcrit_prediction.py -> mcrit_prediction.csv, and
+% the channel split of analysis/ge_offset_effect.py.
+% ---------------------------------------------------------------------
+
+\documentclass[10pt]{article}
+\usepackage[a4paper,margin=22mm]{geometry}
+\usepackage{amsmath,amssymb,booktabs,graphicx,array}
+\setlength{\parskip}{0.35em}\setlength{\parindent}{0pt}
+\newcommand{\Soff}{S_{\mathrm{off}}}
+\newcommand{\Sread}{S_{\mathrm{read}}}
+\newcommand{\Mff}{M_{\mathrm{ff}}}
+\title{\vspace{-16mm}\textbf{The CoM offset under ground effect,
+channel by channel}\vspace{-3mm}}
+\date{\small companion to \emph{cosh\_methodology}; gains
+$(\alpha_f, \alpha_M)$ from Table~3 at $\varphi^\ast = 0$
+(interference model, $\alpha_f = \alpha_M = 4.31\%$)}
+\begin{document}\maketitle
+
+\section{The question}
+
+The delivered CoM offset is read from the static tip-over balance.
+If that balance is written \emph{without} ground effect while the
+vehicle actually tips \emph{with} it, the identified offset differs
+from the true one. This note derives the difference in closed form,
+separates it into its two channels, and evaluates both on the
+campaign. The punchline: per tip direction the error is
+millimetres, but the deliverable's direction pairing cancels the
+dominant channel identically, leaving at most $0.67$ mm --- a
+$4.31\%$ multiplicative scale factor plus a small geometric
+asymmetry.
+
+\section{The two balances}
+
+Write the onset balance per tip direction $s = \pm 1$ in the
+matched-thrust convention (companion document), with $l_s$ the
+direction's pivot arm, $f_s$ the collective thrust at onset, and
+$\Soff = W \times \text{(signed offset)}$:
+\begin{equation}
+  (1+\alpha_M)\,M_s \;+\; s\,\alpha_f f_s l_s
+  \;=\; s\,(W - f_s)\,l_s \;+\; \Soff .
+  \tag{1}
+\end{equation}
+The no-GE model reads the offset from the same data by solving
+\begin{equation}
+  \Sread{}_{,s} \;=\; M_s \;-\; s\,(W - f_s)\,l_s .
+  \tag{2}
+\end{equation}
+Substituting (1) into (2) gives the per-direction reading error in
+one line:
+\begin{equation}
+  \boxed{\;\Sread{}_{,s} \;=\; \Soff
+  \;-\; \alpha_M M_s \;-\; s\,\alpha_f f_s l_s \;}
+  \tag{3}
+\end{equation}
+
+\section{One direction alone: millimetres}
+
+Both channels of (3) are large per direction: $\alpha_M M_s \approx
+0.043 \times 1$--$1.8$ N\,m $\approx 40$--$80$ mN\,m, and
+$\alpha_f f_s l_s \approx 0.043 \times 21 \times 0.11$--$0.14
+\approx 100$--$130$ mN\,m. Divided by $W \approx 31$ N, a
+single-direction offset reading is off by
+\begin{equation*}
+  \text{median } 5.2 \text{ mm}, \qquad \text{max } 6.5 \text{ mm}
+\end{equation*}
+over the campaign --- comparable to the offsets being identified.
+This is the quantitative reason the deliverable never uses one
+direction alone.
+
+\section{The direction pair: what cancels, what survives}
+
+The deliverable averages the two directions,
+$\Sread = \tfrac12(\Sread{}_{,+} + \Sread{}_{,-})$. In (3) the
+thrust-channel term carries the factor $s$, so its \emph{symmetric}
+part --- the $\pm 5$ mm monster of the previous section --- cancels
+identically, and
+\begin{equation}
+  \boxed{\;\Soff - \Sread \;=\;
+  \alpha_M\,\Mff \;+\; \frac{\alpha_f}{2}
+  \big(f_+ l_+ - f_- l_-\big)\;}, \qquad
+  \Mff = \tfrac12\,(M_+ + M_-),
+  \tag{4}
+\end{equation}
+or in millimetres of offset, dividing by $W$. Two channels remain:
+
+\emph{The moment channel} $\alpha_M \Mff / W$. Since
+$\Mff \approx W \times \text{offset}$ up to the arm asymmetry, this
+term is $\alpha_M$ \emph{of the offset itself}: the no-GE reading
+under-estimates the offset magnitude by the factor $1/(1+\alpha_M)$
+--- a multiplicative $4.31\%$ scale error that no pairing can
+remove, because it multiplies the very quantity being delivered.
+
+\emph{The thrust channel} $\tfrac{\alpha_f}{2}(f_+l_+ - f_-l_-)/W$.
+Only the direction \emph{asymmetry} of $f l$ survives the pair; with
+symmetric thrust and arms it vanishes exactly.
+
+\section{The campaign numbers}
+
+Evaluated per configuration from the identified moments, onset
+thrusts and odometry-fitted arms
+(\texttt{mcrit\_prediction.csv}):
+\begin{center}\small
+\begin{tabular}{@{}l r r r r@{}}
+\toprule
+config & $\Mff$ [N\,m] & moment ch. [mm] & thrust ch. [mm] &
+total [mm]\\
+\midrule
+case\_01/Mx & $-0.048$ & $-0.069$ & $-0.098$ & $-0.167$\\
+case\_01/My & $+0.336$ & $+0.482$ & $+0.154$ & $+0.636$\\
+case\_02/Mx & $-0.479$ & $-0.653$ & $-0.006$ & $-0.659$\\
+case\_02/My & $+0.334$ & $+0.456$ & $+0.188$ & $+0.644$\\
+case\_03/Mx & $-0.272$ & $-0.371$ & $-0.059$ & $-0.430$\\
+case\_03/My & $-0.023$ & $-0.031$ & $+0.124$ & $+0.093$\\
+case\_04/Mx & $+0.165$ & $+0.226$ & $-0.041$ & $+0.185$\\
+case\_04/My & $-0.007$ & $-0.010$ & $+0.168$ & $+0.158$\\
+case\_05/Mx & $+0.341$ & $+0.465$ & $-0.070$ & $+0.395$\\
+case\_05/My & $+0.334$ & $+0.455$ & $+0.214$ & $+0.669$\\
+\midrule
+$|$median$|$ & & $0.41$ & $0.11$ & $\approx 0.4$\\
+$|$max$|$    & & $0.65$ & $0.21$ & $0.67$\\
+\bottomrule
+\end{tabular}
+\end{center}
+The moment channel dominates and tracks $\Mff$ exactly as (4) says;
+the thrust channel is the small residue of the $f l$ asymmetry. For
+scale, the load-cell validation RMS of the delivered offsets is
+$1.64$ mm: the entire ground-effect footprint on the deliverable is
+below half of it.
+
+\section{Why the correction is reported, not applied}
+
+(4) says the true offset is the read one \emph{plus} up to
+$0.67$ mm; the honest question is whether adding it improves the
+agreement with the load-cell truth. It does not
+(\texttt{analysis/ge\_offset\_effect.py}): the corrected offsets sit
+slightly \emph{farther} from truth, by an amount inside the scatter.
+The reason is a degeneracy the static data cannot break --- a
+common shift of the contact resultant by a few millimetres produces
+the same signature, and the two mechanisms cannot be separated
+without a second ground clearance. The correction is therefore
+reported as a \emph{bound on the channel}: the delivered offset is
+insensitive to the static ground effect at the $\le 0.7$ mm level,
+dominated by the multiplicative $4.31\%$ of the moment channel.
+
+\section*{Reproduction}
+
+\begin{verbatim}
+python analysis/mcrit_prediction.py <outdir>   # writes the CSVs
+python analysis/ge_offset_effect.py <outdir>   # the channel split
+\end{verbatim}
+The table above is (4) evaluated on \texttt{mcrit\_prediction.csv}
+with $\alpha_f = \alpha_M = 0.0431$; the single-direction numbers
+are (3) evaluated per row.
+
+\end{document}
