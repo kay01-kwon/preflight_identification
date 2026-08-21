@@ -87,46 +87,70 @@ def main():
         for k in 'tru ep en ea tp tn ta'.split():
             q[k] = np.array(q[k])
 
-    fig, axs = plt.subplots(1, 2, figsize=(9.8, 4.6), sharey=True)
-    fig.subplots_adjust(left=0.085, right=0.985, top=0.80, bottom=0.12,
-                        wspace=0.07)
+    # pooled arrays
+    TRU = np.concatenate([D[a]['tru'] for a in ('Mx', 'My')])
+    EP = np.concatenate([D[a]['ep'] for a in ('Mx', 'My')])
+    EN = np.concatenate([D[a]['en'] for a in ('Mx', 'My')])
+    EA = np.concatenate([D[a]['ea'] for a in ('Mx', 'My')])
+    IND = np.concatenate([EP, EN])
+    rms = lambda v: float(np.sqrt(np.mean(v ** 2)))
 
-    ttl = {'Mx': '(a) roll ($M_x$): $y_{\\rm off}$, arm $\\approx 140$ mm',
-           'My': '(b) pitch ($M_y$): $x_{\\rm off}$, arm $\\approx 113$ mm'}
-    grp = [('$\\hat{p}_{\\rm off,+}$', 'ep', 'tp'),
-           ('$\\hat{p}_{\\rm off,-}$', 'en', 'tn'),
-           ('$\\hat{p}_{\\rm off,avg}$', 'ea', 'ta')]
-    for ax, an in zip(axs, ('Mx', 'My')):
-        q = D[an]
-        ax.axhspan(-1.64, 1.64, color='0.90', lw=0, zorder=0)
-        ax.axhline(0, color='0.5', lw=0.8)
-        for i, (nm, mk, tk) in enumerate(grp):
-            mv, tv = q[mk], q[tk]
-            ax.errorbar(i - 0.16, mv.mean(), yerr=mv.std(ddof=1),
-                        fmt='o', ms=8, color=C['a'], capsize=5, lw=1.6,
-                        label='measured' if i == 0 else None)
-            ax.errorbar(i + 0.16, tv.mean(), yerr=tv.std(ddof=1),
-                        fmt='s', ms=7, color='#e08214', capsize=5,
-                        lw=1.6,
-                        label='ground effect alone' if i == 0 else None)
-            ax.text(i, 13.0, f'RMS {np.sqrt(np.mean(mv**2)):.1f}',
-                    ha='center', fontsize=8.5, color=C['a'])
-        ax.set_xticks(range(3))
-        ax.set_xticklabels([g[0] for g in grp], fontsize=11)
-        ax.set_xlim(-0.55, 2.55)
-        ax.set_ylim(-14, 15.5)
-        ax.set_title(ttl[an], fontsize=11)
-        ax.grid(alpha=0.25, lw=0.4, axis='y')
-        if an == 'Mx':
-            ax.legend(fontsize=9, loc='lower left', framealpha=0.95)
-    axs[0].set_ylabel('$\\hat{p}_{\\rm off} - p_{\\rm off}$ [mm]',
-                      fontsize=10.5)
+    # ground-effect envelope for a SINGLE direction, over both axes:
+    # the theory error is linear in p_off, so max/min across the four
+    # (axis, direction) combinations give two straight boundary lines
+    pg = np.linspace(-0.020, 0.020, 41)
+    lines = []
+    for an in ('Mx', 'My'):
+        gm = np.median(np.array(D[an]['geom']), axis=0)
+        Wm, sam, fp, lp_, fn, ln_ = gm
+        for sg, fq, lq in ((+1.0, fp, lp_), (-1.0, fn, ln_)):
+            m_ge = (sg * (Wm - fq) * lq + sam * Wm * pg
+                    - sg * ALPHA * fq * lq) / (1.0 + ALPHA)
+            lines.append(1e3 * (sam * (m_ge - sg * (Wm - fq) * lq) / Wm
+                                - pg))
+    L = np.array(lines)
+    up, dn = L.max(axis=0), L.min(axis=0)
 
-    fig.suptitle('CoM-offset error by estimator and axis: mean $\\pm$ '
-                 's.d. over five configurations\n'
-                 'grey band: load-cell validation RMS $\\pm 1.64$ mm',
-                 fontsize=11.5, y=0.975)
+    fig, ax = plt.subplots(figsize=(7.6, 5.2))
+    ax.axhspan(-1.64, 1.64, color='0.90', lw=0, zorder=0,
+               label='load-cell validation RMS $\\pm 1.64$ mm')
+    ax.axhline(0, color='0.5', lw=0.8)
+    ax.plot(1e3 * pg, up, '-', color='#e08214', lw=1.8,
+            label='ground-effect bound, single direction')
+    ax.plot(1e3 * pg, dn, '-', color='#e08214', lw=1.8)
+    ax.scatter(np.concatenate([TRU, TRU]), IND, s=42, c='#c0392b',
+               marker='x', lw=1.4,
+               label=f'individual $\\hat{{p}}_{{\\rm off,\\pm}}$'
+                     f'   RMS {rms(IND):.1f} mm')
+    ax.scatter(TRU, EA, s=64, c=C['a'], marker='o', lw=0,
+               label=f'paired $\\hat{{p}}_{{\\rm off,avg}}$'
+                     f'   RMS {rms(EA):.2f} mm')
+    ax.set_xlabel('load-cell truth $p_{\\rm off}$ [mm]', fontsize=11)
+    ax.set_ylabel('$\\hat{p}_{\\rm off} - p_{\\rm off}$ [mm]',
+                  fontsize=11)
+    n_out_t = int(np.sum((IND > np.interp(np.concatenate([TRU, TRU]),
+                                          1e3 * pg, up))
+                         | (IND < np.interp(np.concatenate([TRU, TRU]),
+                                            1e3 * pg, dn))))
+    ax.set_title('CoM-offset error against the load-cell truth, '
+                 'ten configurations\n'
+                 f'{n_out_t} of {len(IND)} single-direction estimates fall '
+                 'outside the ground-effect bound;\npairing cuts the RMS '
+                 f'{rms(IND):.1f} $\\rightarrow$ {rms(EA):.2f} mm',
+                 fontsize=11)
+    ax.legend(fontsize=9, loc='upper right', framealpha=0.95)
+    ax.grid(alpha=0.25, lw=0.4)
+    ax.set_xlim(-17, 13)
+    fig.tight_layout()
     fig.savefig(out, dpi=150)
+
+    n_out = int(np.sum((IND > np.interp(np.concatenate([TRU, TRU]),
+                                        1e3 * pg, up))
+                       | (IND < np.interp(np.concatenate([TRU, TRU]),
+                                          1e3 * pg, dn))))
+    print(f"  individual points outside the GE bound: {n_out}/{len(IND)}")
+    print(f"  paired points inside +-1.64 mm: "
+          f"{int(np.sum(np.abs(EA) <= 1.64))}/{len(EA)}")
 
     for an in ('Mx', 'My'):
         q = D[an]
