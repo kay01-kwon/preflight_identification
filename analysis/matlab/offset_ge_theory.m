@@ -103,25 +103,28 @@ plot(ax, 1e3*p_off(ii), 1e3*d_cf(ii), 'o', 'Color', co(3,:), ...
 plot(ax, 1e3*p_off, 1e3*(0.5*(pp_G + pn_G) - p_off), 'k:', ...
      'LineWidth', 1.0)               % rail: GE inversion is exact
 
-% ---- annotate each curve's worst case over the swept box ---------
+% ---- annotate the min AND max of each error curve ----------------
 ann = {d_p, co(1,:); d_n, co(2,:); d_avg, co(3,:)};
 for k = 1:size(ann, 1)
     v = ann{k,1};
-    [~, j] = max(abs(v));
-    if p_off(j) > 0
-        ha = 'right';  dx = -0.7;
-    else
-        ha = 'left';   dx = +0.7;
+    [~, jmin] = min(v);
+    [~, jmax] = max(v);
+    for j = [jmin jmax]
+        if p_off(j) > 0
+            ha = 'right';  dx = -0.7;
+        else
+            ha = 'left';   dx = +0.7;
+        end
+        if v(j) < 0
+            va = 'top';    dy = -0.25;
+        else
+            va = 'bottom'; dy = +0.25;
+        end
+        text(ax, 1e3*p_off(j) + dx, 1e3*v(j) + dy, ...
+             sprintf('%+.2f mm', 1e3*v(j)), 'Color', ann{k,2}, ...
+             'FontSize', 7.5, 'FontName', 'Times New Roman', ...
+             'HorizontalAlignment', ha, 'VerticalAlignment', va)
     end
-    if v(j) < 0
-        va = 'top';    dy = -0.25;
-    else
-        va = 'bottom'; dy = +0.25;
-    end
-    text(ax, 1e3*p_off(j) + dx, 1e3*v(j) + dy, ...
-         sprintf('%+.2f mm', 1e3*v(j)), 'Color', ann{k,2}, ...
-         'FontSize', 7.5, 'FontName', 'Times New Roman', ...
-         'HorizontalAlignment', ha, 'VerticalAlignment', va)
 end
 
 xlabel(ax, 'true $p_{\mathrm{off}}$ [mm]', 'Interpreter', 'latex', ...
@@ -131,8 +134,10 @@ ylabel(ax, ['$\hat{p}_{\mathrm{off,avg}} - p_{\mathrm{off,GE,avg}}$ ' ...
 set(ax, 'FontName', 'Times New Roman', 'FontSize', 9, 'GridAlpha', 0.15)
 xlim(ax, [-20 20]);  ylim(ax, [-7 7])
 
-legend(ax, {'$+$ tip alone', '$-$ tip alone', 'pair average', ...
-            'closed form', 'GE inversion $-\ p_{\mathrm{off}}$'}, ...
+legend(ax, {'$\hat{p}_{\mathrm{off},+}$', '$\hat{p}_{\mathrm{off},-}$', ...
+            '$\hat{p}_{\mathrm{off},avg}$', ...
+            '$\Delta p_{\mathrm{off},avg}$', ...
+            'GE inversion $-\ p_{\mathrm{off}}$'}, ...
        'Interpreter', 'latex', 'FontSize', 7.5, 'NumColumns', 2, ...
        'Location', 'southoutside', 'Box', 'off')
 
