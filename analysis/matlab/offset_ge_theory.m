@@ -6,12 +6,17 @@
 %   and are inverted (i) WITH the GE model -- exact recovery, the
 %   sanity rail -- and (ii) WITHOUT it, over p_off in +-20 mm.
 %
-%   The pair-average curve is computed FROM EQ. (120) itself,
-%
-%       alpha (M_+ + M_-)/(2W)  +  alpha f (l_p,+ - l_p,-)/(2W),
-%
-%   and the run-time check confirms it equals p_off - p_hat_avg to
-%   machine precision (~1e-17 m over the sweep).
+%   The pair-average error is drawn TWICE, from the two directions it
+%   can be reached from, and they coincide to ~1e-18 m:
+%     * Eq. (120) itself (solid), built from the IDENTIFIED moments,
+%           alpha (M_+ + M_-)/(2W) + alpha f (l_p,+ - l_p,-)/(2W),
+%       which is what the experiment evaluates; and
+%     * the closed form (markers), built from the TRUE offset and the
+%       geometry alone,
+%           alpha p_off/(1+alpha) + alpha (l_p,+ - l_p,-)/(2(1+alpha)),
+%       with W and f already cancelled analytically.
+%   A run-time check also confirms Eq. (120) equals p_off - p_hat_avg
+%   to machine precision (~1e-17 m over the sweep).
 %
 %   SIGN, worth stating once.  Eq. (120)'s right-hand side is
 %   (true offset) - (no-GE reading): it is the correction the ground
@@ -55,9 +60,15 @@ pn_GE = (1+alpha)*Mn/W + (1-(1+alpha)*f_col/W)*l_pn;
 pp = Mp/W - (1-f_col/W)*l_pp;
 pn = Mn/W + (1-f_col/W)*l_pn;
 
-% the pair average, straight from Eq. (120)
+% the pair average, straight from Eq. (120) -- built from the
+% IDENTIFIED moments, so it is what the experiment would evaluate
 err_avg_120 = alpha*(Mp + Mn)/(2*W) ...
             + alpha*f_col*(l_pp - l_pn)/(2*W);
+
+% the same quantity in closed form -- built from the TRUE offset and
+% the geometry alone, with W and f already cancelled analytically
+err_avg_cf  = alpha*p_off/(1+alpha) ...
+            + alpha*(l_pp - l_pn)/(2*(1+alpha));
 
 co = [0.850 0.325 0.098;             % + tip
       0.000 0.447 0.741;             % - tip
@@ -72,6 +83,9 @@ plot(ax, 1e3*p_off, 1e3*(p_off - pn), '--', 'Color', co(2,:), ...
      'LineWidth', 1.2)
 plot(ax, 1e3*p_off, 1e3*err_avg_120, '-', 'Color', co(3,:), ...
      'LineWidth', 1.8)
+ii = 1:4:numel(p_off);
+plot(ax, 1e3*p_off(ii), 1e3*err_avg_cf(ii), 'o', 'Color', co(3,:), ...
+     'MarkerSize', 3.8, 'LineWidth', 0.9)
 plot(ax, 1e3*p_off, 1e3*(p_off - 0.5*(pp_GE+pn_GE)), 'k:', ...
      'LineWidth', 1.0)               % sanity rail: identically zero
 
@@ -83,8 +97,10 @@ set(ax, 'FontName', 'Times New Roman', 'FontSize', 9, 'GridAlpha', 0.15)
 xlim(ax, [-20 20]);  ylim(ax, [-7 7])
 
 legend(ax, {'$+$ tip alone', '$-$ tip alone', ...
-            'pair average, Eq. (120)', 'GE inversion (exact)'}, ...
-       'Interpreter', 'latex', 'FontSize', 8, 'NumColumns', 2, ...
+            'pair average, Eq. (120)', ...
+            'theory: $\frac{\alpha p_{\mathrm{off}}}{1+\alpha} + \frac{\alpha \Delta l_p}{2(1+\alpha)}$', ...
+            'GE inversion (exact)'}, ...
+       'Interpreter', 'latex', 'FontSize', 7.5, 'NumColumns', 2, ...
        'Location', 'southoutside', 'Box', 'off')
 
 exportgraphics(fig, 'offset_ge_theory.png', 'Resolution', 600);
@@ -93,6 +109,8 @@ fprintf('figure -> offset_ge_theory.png\n');
 % Eq. (120) against the direct difference, and the two terms
 chk = max(abs(err_avg_120 - (p_off - 0.5*(pp + pn))));
 fprintf('Eq.(120) vs (p_off - p_hat_avg): max |diff| = %.2e m\n', chk);
+fprintf('Eq.(120) vs closed form         : max |diff| = %.2e m\n', ...
+        max(abs(err_avg_120 - err_avg_cf)));
 fprintf(['at p = 0: moment term %+.3f mm, thrust term %+.3f mm, ' ...
          'total %+.3f mm\n'], ...
         1e3*alpha*(Mp(p_off==0) + Mn(p_off==0))/(2*W), ...
