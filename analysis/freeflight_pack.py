@@ -82,6 +82,21 @@ KIND = {OdometryData: 'odom', PoseData: 'pose',
         HexaRpmData: 'rpm', ImuData: 'imu'}
 
 
+def find_bags(root):
+    """Every bag directory at or under *root*, at any depth.
+
+    A campaign is usually filed by condition -- case / controller /
+    compensation variant -- so the bags sit several levels down and the
+    depth differs between branches.  Recognise a bag by its
+    metadata.yaml wherever it is, and accept *root* itself being one.
+    """
+    root = Path(root)
+    if (root / 'metadata.yaml').exists():
+        return [root]
+    return [d for d in root.rglob('*')
+            if d.is_dir() and (d / 'metadata.yaml').exists()]
+
+
 def _write(arrays, dest, fmt):
     """Serialise to *dest* (a path or a file object) in *fmt*."""
     if fmt == 'npz':
@@ -151,25 +166,38 @@ def main():
     a = p.parse_args()
 
     dtype = np.float64 if a.float64 else np.float32
-    bags = sorted(d for d in a.bag_dir.iterdir()
-                  if d.is_dir() and (d / 'metadata.yaml').exists())
+    bags = sorted(find_bags(a.bag_dir))
     if not bags:
-        p.error(f'no bag folders (with metadata.yaml) under {a.bag_dir}')
+        sub = sorted(d.name for d in a.bag_dir.iterdir() if d.is_dir())[:8] \
+            if a.bag_dir.is_dir() else []
+        p.error(f'no bag folders (a directory holding metadata.yaml) at or '
+                f'under {a.bag_dir}'
+                + (f'; it contains {", ".join(sub)}' if sub else ''))
 
     if not a.dry_run:
         a.out_dir.mkdir(parents=True, exist_ok=True)
 
+    # the campaign's directory structure (case / controller / variant)
+    # is the labelling, so mirror it in the output rather than
+    # flattening to bag names that would collide across branches
+    root = a.bag_dir.parent if len(bags) == 1 and bags[0] == a.bag_dir \
+        else a.bag_dir
+    width = max(34, min(60, max(len(str(b.relative_to(root))) for b in bags)))
+
     src_tot = dst_tot = 0
-    print(f'{"bag":<34}{"bag [MB]":>10}'
+    print(f'{"bag":<{width}}{"bag [MB]":>10}'
           f'{a.format + " [MB]":>10}{"ratio":>8}')
     for b in bags:
+        rel = b.relative_to(root)
         src = sum(f.stat().st_size for f in b.rglob('*') if f.is_file())
         try:
             arrays = pack_bag(b, a.imu, dtype, a.window)
         except Exception as exc:                      # keep the sweep going
-            print(f'{b.name:<34}{"":>10}{"":>10}   SKIPPED  {exc}')
+            print(f'{str(rel):<{width}}{"":>10}{"":>10}   SKIPPED  {exc}')
             continue
-        dst_path = a.out_dir / f'{b.name}.{a.format}'
+        dst_path = a.out_dir / rel.with_suffix(f'.{a.format}')
+        if not a.dry_run:
+            dst_path.parent.mkdir(parents=True, exist_ok=True)
         if a.dry_run:
             # measure by packing to memory rather than guessing
             import io
@@ -180,7 +208,7 @@ def main():
             _write(arrays, dst_path, a.format)
             dst = dst_path.stat().st_size
         src_tot, dst_tot = src_tot + src, dst_tot + dst
-        print(f'{b.name:<34}{src/1e6:>10.1f}{dst/1e6:>10.3f}'
+        print(f'{str(rel):<{width}}{src/1e6:>10.1f}{dst/1e6:>10.3f}'
               f'{src/max(dst, 1):>8.1f}x')
 
     print(f'\n{len(bags)} bags   {src_tot/1e6:.0f} MB -> '
