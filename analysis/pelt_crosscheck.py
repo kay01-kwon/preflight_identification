@@ -8,6 +8,9 @@ The identification locates the tip-over onset with the closed-form solution
 of the unstable dynamics (``cosh`` model). This script benchmarks that onset
 against classic change-point / onset detectors:
 
+  * threshold  — first sustained 3-sigma departure from the quiet level;
+                 the detector a practitioner reaches for first, included
+                 so the comparison is not only against elaborate methods
   * CPD normal — optimal single change point, Gaussian (mean+variance) cost (ruptures)
   * CPD rbf    — optimal single change point, RBF-kernel cost (nonparametric)
   * CUSUM       — tabular cumulative-sum sequential detector
@@ -55,14 +58,16 @@ from critical_value_getter_piecewise import (
 )
 
 # Proposed model = 'cosh'. Classic detectors benchmarked against it:
-CLASSIC = ['pelt_normal', 'pelt_rbf', 'cusum']
+CLASSIC = ['threshold', 'pelt_normal', 'pelt_rbf', 'cusum']
 ALL_METHODS = ['cosh'] + CLASSIC
-_LABEL = {'cosh': 'cosh (proposed)', 'pelt_normal': 'CPD normal',
-          'pelt_rbf': 'CPD rbf', 'cusum': 'CUSUM'}
-_SHORT = {'cosh': 'cosh', 'pelt_normal': 'CPDnorm',
-          'pelt_rbf': 'CPDrbf', 'cusum': 'CUSUM'}
-_COLOR = {'cosh': 'tab:blue', 'pelt_normal': 'tab:orange',
-          'pelt_rbf': 'tab:purple', 'cusum': 'tab:brown'}
+_LABEL = {'cosh': 'cosh (proposed)', 'threshold': 'threshold 3-sigma',
+          'pelt_normal': 'CPD normal', 'pelt_rbf': 'CPD rbf',
+          'cusum': 'CUSUM'}
+_SHORT = {'cosh': 'cosh', 'threshold': 'thresh',
+          'pelt_normal': 'CPDnorm', 'pelt_rbf': 'CPDrbf', 'cusum': 'CUSUM'}
+_COLOR = {'cosh': 'tab:blue', 'threshold': 'tab:green',
+          'pelt_normal': 'tab:orange', 'pelt_rbf': 'tab:purple',
+          'cusum': 'tab:brown'}
 
 
 # ═════════════════════════════════════════════════════════════
@@ -101,11 +106,41 @@ def cusum_onset_index(omega_win, guess, direction, k=2.0, h=5.0):
     return int(len(x) - 1)
 
 
+def threshold_onset_index(omega_win, guess, direction, k=3.0, n_hold=3):
+    """First sustained k-sigma departure from the quiet level = onset.
+
+    The detector a practitioner reaches for first, and the one a reader
+    will ask about: measure the pre-onset level and its scatter, then
+    declare onset where the rate leaves that band.  The baseline
+    statistics are formed exactly as in cusum_onset_index, so the two
+    differ only in the decision rule and the comparison is controlled.
+
+    A single-sample crossing is not a fair rendering of the method --
+    propeller vibration puts isolated samples past 3 sigma while the
+    vehicle is still resting -- so a crossing must persist n_hold
+    samples (30 ms at 100 Hz) before it is accepted.  This is the
+    detector at its best, not a straw man.
+    """
+    x = np.asarray(omega_win, dtype=float)
+    base = x[:max(guess, 5)]
+    mu0 = float(np.median(base))
+    sigma = float(np.std(base)) + 1e-9
+    over = direction * (x - mu0) > k * sigma
+    run = 0
+    for t in range(len(x)):
+        run = run + 1 if over[t] else 0
+        if run >= n_hold:
+            return int(t - n_hold + 1)          # the first sample of the run
+    return int(len(x) - 1)
+
+
 def classic_onset_index(name, omega_win, guess, direction):
     if name.startswith('pelt_'):
         return pelt_onset_index(omega_win, name.split('_', 1)[1])
     if name == 'cusum':
         return cusum_onset_index(omega_win, guess, direction)
+    if name == 'threshold':
+        return threshold_onset_index(omega_win, guess, direction)
     raise ValueError(f"unknown detector '{name}'")
 
 
