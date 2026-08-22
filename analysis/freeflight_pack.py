@@ -82,6 +82,41 @@ KIND = {OdometryData: 'odom', PoseData: 'pose',
         HexaRpmData: 'rpm', ImuData: 'imu'}
 
 
+C_T = 1.3175e-7            # N/rpm^2, table 9 (load-cell identified)
+G = 9.81
+
+
+def probe_bag(bag_dir, mass):
+    """Where the lift-off sits inside a record, so a window can be set.
+
+    A window is measured from the odometry start, but the take-off is
+    not: the vehicle is armed, idles, and climbs when commanded. Packing
+    a window that lands before lift-off would keep the quiet part and
+    discard the transient the metrics are computed from, at a
+    compression ratio that looks flattering precisely because the
+    interesting samples were dropped. Reconstruct the collective thrust
+    from the rotor speeds as in (1) and report the first crossing of the
+    nominal weight -- the same t_lo the paper defines.
+    """
+    ext = RosBagExtractor(bag_dir)
+    loaded = ext.load_all()
+    odom = next((d for d in loaded.values()
+                 if isinstance(d, OdometryData)), None)
+    rpm = next((d for d in loaded.values()
+                if isinstance(d, HexaRpmData)), None)
+    if odom is None:
+        return None
+    t0 = float(odom.t[0])
+    span = float(odom.t[-1]) - t0
+    t_lo = None
+    if rpm is not None and len(rpm.t):
+        f = C_T * np.sum(np.asarray(rpm.rpm, dtype=np.float64) ** 2, axis=1)
+        hit = np.flatnonzero(f >= mass * G)
+        if hit.size:
+            t_lo = float(rpm.t[hit[0]]) - t0
+    return span, t_lo
+
+
 def find_bags(root):
     """Every bag directory at or under *root*, at any depth.
 
@@ -163,6 +198,11 @@ def main():
     p.add_argument('--imu', action='store_true', help='include raw IMU')
     p.add_argument('--float64', action='store_true', help='do not downcast')
     p.add_argument('--dry-run', action='store_true')
+    p.add_argument('--probe', action='store_true',
+                   help='report each record span and its lift-off time, so '
+                        '--window can be checked against the take-off')
+    p.add_argument('--mass', type=float, default=3.066,
+                   help='nominal mass [kg] for the lift-off probe')
     a = p.parse_args()
 
     dtype = np.float64 if a.float64 else np.float32
@@ -173,6 +213,36 @@ def main():
         p.error(f'no bag folders (a directory holding metadata.yaml) at or '
                 f'under {a.bag_dir}'
                 + (f'; it contains {", ".join(sub)}' if sub else ''))
+
+    if a.probe:
+        root = a.bag_dir.parent if bags == [a.bag_dir] else a.bag_dir
+        w = max(34, min(60, max(len(str(b.relative_to(root)))
+                                for b in bags)))
+        print(f'{"bag":<{w}}{"span [s]":>10}{"lift-off [s]":>14}')
+        lows, missing = [], 0
+        for b in sorted(bags):
+            r = probe_bag(b, a.mass)
+            if r is None:
+                continue
+            span, t_lo = r
+            if t_lo is None:
+                missing += 1
+                print(f'{str(b.relative_to(root)):<{w}}{span:>10.1f}'
+                      f'{"never":>14}')
+            else:
+                lows.append(t_lo)
+                print(f'{str(b.relative_to(root)):<{w}}{span:>10.1f}'
+                      f'{t_lo:>14.2f}')
+        if lows:
+            lo, hi = min(lows), max(lows)
+            print(f'\nlift-off spans {lo:.2f} to {hi:.2f} s after the '
+                  f'odometry start')
+            print(f'a window covering every trial: '
+                  f'--window {np.floor(lo) - 1:.0f} {np.ceil(hi) + 8:.0f}')
+        if missing:
+            print(f'{missing} bags never reach {a.mass * G:.1f} N; check '
+                  f'--mass, or that the rotor-speed topic was recorded')
+        return
 
     if not a.dry_run:
         a.out_dir.mkdir(parents=True, exist_ok=True)
