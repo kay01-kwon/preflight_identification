@@ -34,6 +34,7 @@ nls_comparison_runs.csv
 nls_comparison_summary.csv
 tiltcap_mcrit.csv
 alpha_at_peak_runs.csv
+freeflight_metrics_runs.csv
 *.aux
 *.out
 *.toc
