@@ -38,6 +38,22 @@ alpha_at_peak_runs.csv
 *.out
 *.toc
 
+# Archives and raw bags never belong in the repository: GitHub rejects
+# any single file over 100 MB, and a bag or a zip of bags cannot be
+# diffed or partially fetched, so it burdens every clone forever.
+# Convert bags with analysis/freeflight_pack.py and commit the packed
+# arrays instead (measured 97x on case_01/Mx); archive the originals
+# externally and cite the DOI in the Data Availability statement.
+# These patterns only guard new files -- the excitation bags already
+# tracked under DataSet/exp are unaffected.
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+*.bag
+*.db3
+
 # cached traces for analysis/ge_dynamics_figure.py (regenerable, ~MBs)
 analysis/.ge_dynamics_traces.npz
 
