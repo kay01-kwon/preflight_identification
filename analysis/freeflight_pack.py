@@ -38,11 +38,19 @@ accepts 50 GB per record) is what a Data Availability statement should
 point at.  This script is the bridge: the repository stays clonable and
 the analysis stays reproducible from what it contains.
 
+CHOOSING THE CONTAINER.  npz and MATLAB v5 are within 4% of each other
+(0.412 vs 0.397 MB on pos_Mx_03): both deflate the same float32 arrays,
+so the container is not where anything is saved.  Pick by workflow --
+npz for the Python analysis here, mat to open the trials in MATLAB;
+scipy.io reads both either way.  The window is the lever that matters:
+trimming a 51 s record to 8 s takes 0.412 MB to 0.065 MB.
+
 Usage
 -----
   python analysis/freeflight_pack.py <bag_dir> <out_dir> [options]
 
     --window T0 T1   keep only t_rel in [T0, T1] seconds (odom t[0] = 0)
+    --format {npz,mat}   container; size is equivalent, see above
     --imu            include the raw IMU topic (roughly doubles size)
     --float64        do not downcast
     --dry-run        report sizes without writing
@@ -72,6 +80,18 @@ FIELDS = {
 }
 KIND = {OdometryData: 'odom', PoseData: 'pose',
         HexaRpmData: 'rpm', ImuData: 'imu'}
+
+
+def _write(arrays, dest, fmt):
+    """Serialise to *dest* (a path or a file object) in *fmt*."""
+    if fmt == 'npz':
+        np.savez_compressed(dest, **arrays)
+    else:
+        # MATLAB v5 variable names cannot carry '/', so the topic
+        # separator becomes '_': odom/t -> odom_t
+        from scipy.io import savemat
+        savemat(dest, {k.replace('/', '_'): v for k, v in arrays.items()},
+                do_compression=True)
 
 
 def _slice(t, window):
@@ -123,6 +143,8 @@ def main():
     p.add_argument('out_dir', type=Path, help='where the .npz files go')
     p.add_argument('--window', type=float, nargs=2, metavar=('T0', 'T1'),
                    default=None, help='keep t_rel in [T0, T1] seconds')
+    p.add_argument('--format', choices=('npz', 'mat'), default='npz',
+                   help='container (sizes are equivalent; pick by workflow)')
     p.add_argument('--imu', action='store_true', help='include raw IMU')
     p.add_argument('--float64', action='store_true', help='do not downcast')
     p.add_argument('--dry-run', action='store_true')
@@ -138,7 +160,8 @@ def main():
         a.out_dir.mkdir(parents=True, exist_ok=True)
 
     src_tot = dst_tot = 0
-    print(f'{"bag":<34}{"bag [MB]":>10}{"npz [MB]":>10}{"ratio":>8}')
+    print(f'{"bag":<34}{"bag [MB]":>10}'
+          f'{a.format + " [MB]":>10}{"ratio":>8}')
     for b in bags:
         src = sum(f.stat().st_size for f in b.rglob('*') if f.is_file())
         try:
@@ -146,15 +169,15 @@ def main():
         except Exception as exc:                      # keep the sweep going
             print(f'{b.name:<34}{"":>10}{"":>10}   SKIPPED  {exc}')
             continue
-        dst_path = a.out_dir / f'{b.name}.npz'
+        dst_path = a.out_dir / f'{b.name}.{a.format}'
         if a.dry_run:
             # measure by packing to memory rather than guessing
             import io
             buf = io.BytesIO()
-            np.savez_compressed(buf, **arrays)
+            _write(arrays, buf, a.format)
             dst = buf.getbuffer().nbytes
         else:
-            np.savez_compressed(dst_path, **arrays)
+            _write(arrays, dst_path, a.format)
             dst = dst_path.stat().st_size
         src_tot, dst_tot = src_tot + src, dst_tot + dst
         print(f'{b.name:<34}{src/1e6:>10.1f}{dst/1e6:>10.3f}'
