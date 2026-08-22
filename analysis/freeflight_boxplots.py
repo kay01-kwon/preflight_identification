@@ -43,7 +43,9 @@ from matplotlib.lines import Line2D                   # noqa: E402
 CASES = ['01', '02', '03', '04', '05']
 PAIR = [('wo_ff', 'uncompensated'), ('ff_pivot_free', 'pivot-free')]
 COL = {'wo_ff': '#D55E00', 'ff_pivot_free': '#0072B2'}
-MRK = {'hgdo': 'o', 'l1': '^'}
+CTRLS = ['hgdo', 'l1']
+CNAME = {'hgdo': 'HGDO', 'l1': r'$\mathcal{L}_1$'}
+HATCH = {'hgdo': '', 'l1': '///'}
 METRICS = [
     ('tilt',  'peak tilt from vertical [deg]',      '{:.2f}'),
     ('rate',  r'peak $\|(\omega_x,\omega_y)\|$ [deg/s]', '{:.1f}'),
@@ -55,42 +57,49 @@ METRICS = [
 def draw(rows, key, ylabel, fmt, outdir):
     by = defaultdict(list)
     for r in rows:
-        by[(r['case'], r['variant'])].append(r)
+        by[(r['case'], r['variant'], r['controller'])].append(r)
 
     groups = CASES + ['all']
-    # two boxes per group, a wide gap between groups so the eye reads
-    # the pair as the unit of comparison
-    W, GAP = 0.34, 0.55
-    centres = np.arange(len(groups)) * (2 * W + GAP)
+    # four boxes per group: each variant split by controller, so the
+    # compensation effect and the HGDO/L1 comparison are answered on one
+    # axis. The pair of a variant sits together, with a wider gap
+    # between variants than within one
+    W, INNER, MID, GAP = 0.22, 0.03, 0.16, 0.42
+    span = 4 * W + 2 * INNER + MID
+    centres = np.arange(len(groups)) * (span + GAP)
+    off = {}
+    x = -span / 2 + W / 2
+    for var, _ in PAIR:
+        for ctrl in CTRLS:
+            off[(var, ctrl)] = x
+            x += W + INNER
+        x += MID - INNER
 
-    fig, ax = plt.subplots(figsize=(8.2, 3.6))
-    for k, (var, _) in enumerate(PAIR):
-        pos, data = [], []
-        for gi, g in enumerate(groups):
-            sel = ([r for r in rows if r['variant'] == var] if g == 'all'
-                   else by[(g, var)])
-            data.append([float(r[key]) for r in sel])
-            pos.append(centres[gi] + (k - 0.5) * (W + 0.06))
-        bp = ax.boxplot(data, positions=pos, widths=W, patch_artist=True,
-                        medianprops=dict(color='0.15', lw=1.6),
-                        whiskerprops=dict(color='0.35'),
-                        capprops=dict(color='0.35'),
-                        flierprops=dict(marker='', ms=0), zorder=2)
-        for b in bp['boxes']:
-            b.set(facecolor=COL[var], alpha=0.30, edgecolor=COL[var], lw=1.3)
-        # every trial on top of its box, controller by marker
-        rng = np.random.default_rng(0)
-        for gi, g in enumerate(groups):
-            sel = ([r for r in rows if r['variant'] == var] if g == 'all'
-                   else by[(g, var)])
-            for r in sel:
-                ax.plot(pos[gi] + rng.uniform(-0.09, 0.09), float(r[key]),
-                        MRK[r['controller']], ms=3.4, mfc='none',
-                        mec=COL[var], mew=0.9, alpha=0.85, zorder=3)
+    fig, ax = plt.subplots(figsize=(9.2, 3.6))
+    for (var, _) in PAIR:
+        for ctrl in CTRLS:
+            pos, data = [], []
+            for gi, g in enumerate(groups):
+                sel = ([r for r in rows if r['variant'] == var
+                        and r['controller'] == ctrl] if g == 'all'
+                       else by[(g, var, ctrl)])
+                data.append([float(r[key]) for r in sel])
+                pos.append(centres[gi] + off[(var, ctrl)])
+            bp = ax.boxplot(data, positions=pos, widths=W,
+                            patch_artist=True,
+                            medianprops=dict(color='0.15', lw=1.5),
+                            whiskerprops=dict(color='0.35'),
+                            capprops=dict(color='0.35'),
+                            flierprops=dict(marker='', ms=0), zorder=2)
+            for b in bp['boxes']:
+                b.set(facecolor=COL[var], alpha=0.30, edgecolor=COL[var],
+                      lw=1.2, hatch=HATCH[ctrl])
 
     ax.set_xticks(centres)
-    ax.set_xticklabels([f'case {g}' for g in CASES]
-                       + [f'all\n({len(rows) // 2} each)'], fontsize=9)
+    # the per-case boxes rest on three repeats, so their whiskers are
+    # the range rather than a percentile estimate -- say so on the axis
+    ax.set_xticklabels([f'case {g}\n(n=3)' for g in CASES]
+                       + [f'all\n(n={len(rows) // 4})'], fontsize=8.5)
     ax.set_ylabel(ylabel, fontsize=9.5)
     # headroom for the legend and the pooled annotation, so neither
     # sits on a box -- case 02 reaches nearly the top of the data range
@@ -113,12 +122,13 @@ def draw(rows, key, ylabel, fmt, outdir):
                 xy=(0.995, 0.965), xycoords='axes fraction',
                 ha='right', va='top', fontsize=8.5, color='0.25')
 
-    h = [plt.Rectangle((0, 0), 1, 1, fc=COL[v], alpha=0.30, ec=COL[v])
-         for v, _ in PAIR]
-    h += [Line2D([], [], ls='', marker=MRK[c], ms=4, mfc='none', mec='0.35')
-          for c in ('hgdo', 'l1')]
-    ax.legend(h, [n for _, n in PAIR] + ['HGDO', r'$\mathcal{L}_1$'],
-              fontsize=8, ncol=4, loc='upper left', framealpha=0.9)
+    h, lab = [], []
+    for v, name in PAIR:
+        for c in CTRLS:
+            h.append(plt.Rectangle((0, 0), 1, 1, fc=COL[v], alpha=0.30,
+                                   ec=COL[v], hatch=HATCH[c]))
+            lab.append(f'{name}, {CNAME[c]}')
+    ax.legend(h, lab, fontsize=8, ncol=2, loc='upper left', framealpha=0.9)
 
     for ext, kw in (('pdf', {}), ('png', dict(dpi=200))):
         fig.savefig(outdir / f'fig_ff_box_{key}.{ext}',
