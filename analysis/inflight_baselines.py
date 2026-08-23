@@ -25,17 +25,22 @@ the vehicle does accelerate, and the inertia becomes identifiable. Both
 regimes are present in every trial, which is why a filter run over the
 whole record can separate them.
 
-THE THREE ESTIMATORS.
-  RLS  regression Mgeom = [wdot, w w, f] . [J, dJ, p], solved
-       recursively with a forgetting factor. Needs wdot, so the angular
-       rate is differentiated with the Savitzky-Golay setting used
-       elsewhere in this work (order 2, 5 Hz).
-  EKF  state [w, a, p] with a = 1/J, propagated through
+THE THREE ESTIMATORS, and where each comes from.
+  RLS  after Mellinger, Lindsey, Shomin and Kumar (2011), who estimate
+       the inertial parameters of the vehicle-plus-payload from the
+       rigid-body dynamics written linearly in those parameters. Here
+       that is Mgeom + gyro = [wdot, f] . [J, -/+ p], solved
+       recursively with a forgetting factor. It needs wdot, so the rate
+       is differentiated with the Savitzky-Golay setting used elsewhere
+       in this work (order 2, 5 Hz).
+  EKF  after Wuest, Kumar and Loianno (2019), who carry the geometric
+       and inertia parameters as filter states. Here the state is
+       [w, a, p] with a = 1/J, propagated through
        wdot = a (Mgeom -/+ p f + gyro) and corrected by the measured w.
        The parameters enter as a product, which is what makes the
        problem nonlinear and the filter necessary.
-  UKF  the same state and model, propagated by the unscented transform
-       rather than a Jacobian.
+  UKF  the same state and model as the EKF, propagated by the unscented
+       transform rather than a Jacobian.
 
 Neither filter differentiates the rate; that is the property the
 filter-based works are chosen for, and it is preserved here.
