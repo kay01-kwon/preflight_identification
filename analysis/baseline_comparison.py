@@ -166,6 +166,47 @@ def main():
                     bbox_inches='tight', **kw)
     print(f'\nwritten to {a.outdir / "fig_baselines.pdf"}')
 
+    # ---- the distribution behind the RMS, as a box per method -------
+    # Every method is aggregated to the same level first -- the mean
+    # over the trials of a configuration -- so the boxes hold the same
+    # ten case-axis values and the comparison is like for like. The
+    # baselines have thirty trials behind them and the proposed
+    # estimate has the excitation campaign; pooling to the
+    # configuration removes that asymmetry rather than hiding it.
+    present = [m for m in ORDER if m in S]
+    fig2, ax = plt.subplots(figsize=(6.4, 3.6))
+    data = [np.abs(S[m]['est'] - S[m]['truth']) for m in present]
+    bp = ax.boxplot(data, positions=np.arange(len(present)), widths=0.55,
+                    patch_artist=True,
+                    medianprops=dict(color='0.15', lw=1.6),
+                    whiskerprops=dict(color='0.35'),
+                    capprops=dict(color='0.35'),
+                    flierprops=dict(marker='', ms=0), zorder=2)
+    for b, m in zip(bp['boxes'], present):
+        b.set(facecolor=COL[m], alpha=0.32, edgecolor=COL[m], lw=1.4)
+    # the limit is set before the annotations so they anchor to the
+    # final top rather than to the autoscaled one, which put them on
+    # the tallest whisker
+    ax.set_ylim(0, max(d.max() for d in data) * 1.28)
+    for k, m in enumerate(present):
+        ax.annotate(f'{S[m]["rms"]:.2f}', (k, ax.get_ylim()[1]),
+                    xytext=(0, -3), textcoords='offset points',
+                    ha='center', va='top', fontsize=8.5, color='0.25')
+    ax.set_xticks(np.arange(len(present)))
+    ax.set_xticklabels([('proposed\n(pre-flight)' if m == 'proposed'
+                         else m) for m in present], fontsize=9)
+    ax.set_ylabel('offset error [mm]', fontsize=9.5)
+    ax.grid(axis='y', alpha=0.55, lw=0.9, color='0.55')
+    ax.set_axisbelow(True)
+    ax.axvline(0.5, color='0.6', lw=0.8, ls=':')
+    ax.set_title(f'RMS annotated; n = {len(data[0])} configurations each',
+                 fontsize=9, loc='right', color='0.35')
+    fig2.tight_layout()
+    for ext, kw in (('pdf', {}), ('png', dict(dpi=200))):
+        fig2.savefig(a.outdir / f'fig_baselines_box.{ext}',
+                     bbox_inches='tight', **kw)
+    print(f'written to {a.outdir / "fig_baselines_box.pdf"}')
+
     # the same numbers as a LaTeX table body
     tex = a.outdir / 'tab_baselines.tex'
     with open(tex, 'w') as fh:
