@@ -224,7 +224,7 @@ def main():
         # a slow ramp holds an order of magnitude more samples than a
         # fast one; on a log axis the gate margin stays readable at both
         a3.set_yscale('log')
-        a3.set_ylabel(r'window sample count $N_{full}$')
+        a3.set_ylabel(r'$N_{full}$')
         a3.set_xlabel(r'commanded ramp rate $\dot M$ [N·m/s]')
         a3.set_title('(c) Window sample count')
         a3.legend(fontsize=8)
