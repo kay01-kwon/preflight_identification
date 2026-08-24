@@ -379,14 +379,17 @@ class BagData:
     ------
     name       : str           bag folder name
     odom       : OdometryData  EKF2 fused odometry
-    pose       : PoseData      mocap pose (/S550/pose)
+    pose       : PoseData | None  mocap pose (/S550/pose), absent in sim
     rpm        : HexaRpmData   actual per-motor RPM
     imu        : ImuData | None  raw IMU (/mavros/imu/data_raw), optional
     """
     name: str
     odom: OdometryData
-    pose: PoseData
     rpm: HexaRpmData
+    # Absent in simulation, which has no motion-capture rig. Only the
+    # pivot-based route needs it; the pivot-free identification the
+    # deliverable uses runs on odometry and rotor speeds alone.
+    pose: Optional[PoseData] = None
     imu: Optional[ImuData] = None
 
     @property
@@ -477,8 +480,8 @@ def load_excitation_dataset(
             print(f"  [WARN] {bag_name}: missing /mavros/local_position/odom, skipping")
             continue
         if pose is None:
-            print(f"  [WARN] {bag_name}: missing /S550/pose, skipping")
-            continue
+            print(f"  [INFO] {bag_name}: no /S550/pose "
+                  f"(pivot-based identification unavailable for this bag)")
         if rpm is None:
             print(f"  [WARN] {bag_name}: missing /uav/actual_rpm, skipping")
             continue
