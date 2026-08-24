@@ -54,6 +54,26 @@ cases:
       pitch: [-1.865, 0.662]
       verdict: "ok"
   - id: sim_06
+    group: corner
+    x_off_mm: -20.0
+    y_off_mm: 20.0
+    mass_kg: 3.066
+    z_com_m: 0.261
+    expect:
+      roll:  [-0.391, 1.594]
+      pitch: [-0.662, 1.865]
+      verdict: "ok"
+  - id: sim_07
+    group: corner
+    x_off_mm: -20.0
+    y_off_mm: -20.0
+    mass_kg: 3.066
+    z_com_m: 0.261
+    expect:
+      roll:  [-1.594, 0.391]
+      pitch: [-0.662, 1.865]
+      verdict: "ok"
+  - id: sim_08
     group: diagonal
     x_off_mm: 25.0
     y_off_mm: 25.0
@@ -63,7 +83,7 @@ cases:
       roll:  [-0.241, 1.744]
       pitch: [-2.015, 0.511]
       verdict: "ok"
-  - id: sim_07
+  - id: sim_09
     group: diagonal
     x_off_mm: 32.0
     y_off_mm: 32.0
@@ -73,7 +93,7 @@ cases:
       roll:  [-0.03, 1.955]
       pitch: [-2.226, 0.301]
       verdict: "ok"
-  - id: sim_08
+  - id: sim_10
     group: diagonal
     x_off_mm: 38.0
     y_off_mm: 38.0
@@ -83,7 +103,7 @@ cases:
       roll:  [0.15, 2.135]
       pitch: [-2.406, 0.12]
       verdict: "roll: contact unloaded under the excitation collective"
-  - id: sim_09
+  - id: sim_11
     group: shallow
     x_off_mm: 38.0
     y_off_mm: 14.0
@@ -93,7 +113,7 @@ cases:
       roll:  [-0.571, 1.414]
       pitch: [-2.406, 0.12]
       verdict: "ok"
-  - id: sim_10
+  - id: sim_12
     group: shallow
     x_off_mm: 46.0
     y_off_mm: 17.0
@@ -103,7 +123,7 @@ cases:
       roll:  [-0.481, 1.504]
       pitch: [-2.647, -0.12]
       verdict: "pitch: contact unloaded under the excitation collective"
-  - id: sim_11
+  - id: sim_13
     group: loaded
     x_off_mm: 25.0
     y_off_mm: 25.0
