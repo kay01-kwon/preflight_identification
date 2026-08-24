@@ -104,8 +104,32 @@ class HexaRpmData:
         return self.t - t0
 
 
+@dataclass
+class HexaCmdData:
+    """Vectorized ros2_libcanard_msgs/msg/HexaCmdRaw
+
+    The raw per-motor command the allocator issued, before the rotor
+    responds to it. Held alongside the measured speed because the pair
+    is what makes the rotor lag observable: the commanded moment is
+    reconstructed from cmd, the achieved moment from rpm, and the
+    difference between them is the second-order-plus-delay behaviour the
+    ablation of section VII isolates.
+    """
+    t: np.ndarray       # (N,) [s]
+    cmd: np.ndarray     # (N,6) raw ESC command counts
+    frame_id: str
+
+    @property
+    def N(self) -> int:
+        return len(self.t)
+
+    def t_rel(self, t0: float) -> np.ndarray:
+        """Time relative to a global reference t0."""
+        return self.t - t0
+
+
 # Type alias for any data container
-TopicData = Union[OdometryData, PoseData, HexaRpmData, ImuData]
+TopicData = Union[OdometryData, PoseData, HexaRpmData, HexaCmdData, ImuData]
 
 # ===============================================
 # Message -> dictionary converters
@@ -162,11 +186,20 @@ def _convert_hexa_rpm(msg) -> dict:
     )
 
 
+def _convert_hexa_cmd(msg) -> dict:
+    return dict(
+        t=stamp_to_sec(msg.header.stamp),
+        frame_id=msg.header.frame_id,
+        cmd=np.array(msg.cmd[:6], dtype=np.int32),
+    )
+
+
 _TYPE_CONVERTERS = {
     "nav_msgs/msg/Odometry":                _convert_odometry,
     "geometry_msgs/msg/PoseStamped":        _convert_pose,
     "sensor_msgs/msg/Imu":                  _convert_imu,
     "ros2_libcanard_msgs/msg/HexaActualRpm": _convert_hexa_rpm,
+    "ros2_libcanard_msgs/msg/HexaCmdRaw":   _convert_hexa_cmd,
 }
 
 # ====================================================
@@ -324,6 +357,16 @@ class RosBagExtractor:
             frame_id=msgs[0]["frame_id"],
         )
 
+    def get_hexa_cmd(self, topic: str) -> HexaCmdData:
+        msgs = self._read_converted(topic)
+        if not msgs:
+            raise ValueError(f"No messages on '{topic}'")
+        return HexaCmdData(
+            t=np.array([m["t"] for m in msgs]),
+            cmd=np.vstack([m["cmd"] for m in msgs]),
+            frame_id=msgs[0]["frame_id"],
+        )
+
     # ── auto-load all ─────────────────────────────────────
 
     def load_all(self) -> dict[str, TopicData]:
@@ -345,6 +388,8 @@ class RosBagExtractor:
                     result[name] = self.get_imu(name)
                 elif mtype == "ros2_libcanard_msgs/msg/HexaActualRpm":
                     result[name] = self.get_hexa_rpm(name)
+                elif mtype == "ros2_libcanard_msgs/msg/HexaCmdRaw":
+                    result[name] = self.get_hexa_cmd(name)
             except Exception as e:
                 print(f"  [WARN] Skipping '{name}': {e}")
 
@@ -381,6 +426,7 @@ class BagData:
     odom       : OdometryData  EKF2 fused odometry
     pose       : PoseData | None  mocap pose (/S550/pose), absent in sim
     rpm        : HexaRpmData   actual per-motor RPM
+    cmd        : HexaCmdData | None  raw per-motor command, optional
     imu        : ImuData | None  raw IMU (/mavros/imu/data_raw), optional
     """
     name: str
@@ -390,6 +436,8 @@ class BagData:
     # pivot-based route needs it; the pivot-free identification the
     # deliverable uses runs on odometry and rotor speeds alone.
     pose: Optional[PoseData] = None
+    # What the allocator asked for, against what rpm reports it got.
+    cmd: Optional[HexaCmdData] = None
     imu: Optional[ImuData] = None
 
     @property
@@ -474,6 +522,7 @@ def load_excitation_dataset(
         odom = topics.get("/mavros/local_position/odom")
         pose = topics.get("/S550/pose")
         rpm  = topics.get("/uav/actual_rpm")
+        cmd  = topics.get("/uav/cmd_raw")
         imu  = topics.get("/mavros/imu/data_raw")
 
         if odom is None:
@@ -485,6 +534,9 @@ def load_excitation_dataset(
         if rpm is None:
             print(f"  [WARN] {bag_name}: missing /uav/actual_rpm, skipping")
             continue
+        if cmd is None:
+            print(f"  [INFO] {bag_name}: no /uav/cmd_raw "
+                  f"(commanded-vs-achieved moment unavailable for this bag)")
         if imu is None:
             print(f"  [INFO] {bag_name}: no /mavros/imu/data_raw "
                   f"(IMU-based onset detection unavailable for this bag)")
@@ -494,6 +546,7 @@ def load_excitation_dataset(
             odom=odom,
             pose=pose,
             rpm=rpm,
+            cmd=cmd,
             imu=imu,
         ))
 
@@ -532,12 +585,14 @@ def load_packed_bag(path: str | Path) -> BagData:
     pose = (PoseData(t=col('pose/t'), position=col('pose/position'),
                      quaternion=col('pose/quaternion'), frame_id='')
             if 'pose/t' in have else None)
+    cmd = (HexaCmdData(t=col('cmd/t'), cmd=col('cmd/cmd'), frame_id='')
+           if 'cmd/t' in have else None)
     imu = (ImuData(t=col('imu/t'), angular_vel=col('imu/angular_vel'),
                    linear_acc=col('imu/linear_acc'),
                    quaternion=np.zeros((len(d['imu/t']), 4)), frame_id='')
            if 'imu/t' in have else None)
     return BagData(name=Path(path).stem, odom=odom, rpm=rpm,
-                   pose=pose, imu=imu)
+                   pose=pose, cmd=cmd, imu=imu)
 
 
 def load_packed_dataset(dataset_dir: str | Path) -> list[BagData]:

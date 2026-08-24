@@ -16,12 +16,19 @@ nothing else:
     odom : t, position, quaternion, linear_vel, angular_vel
     pose : t, position, quaternion        (mocap, for drift truth)
     rpm  : t, rpm, acc                    (thrust reconstruction)
+    cmd  : t, cmd                         (what the allocator asked for)
     imu  : t, angular_vel, linear_acc     (optional, --imu)
 
 so that peak |phi|/|theta|, peak |w_x|/|w_y|, the drift components
 d_x/d_y and the peak linear velocity all remain recomputable from the
 committed arrays.  Nothing here is a summary: the time series survive,
 only the container changes.
+
+The raw command is kept even though no published metric reads it: the
+rotor-lag ablation compares the moment that was commanded against the
+moment the rotors delivered, and without cmd only one half of that pair
+survives packing.  It costs about 0.02 MB per excitation run, an order
+below the rotor speeds it is paired with.
 
 WHAT IS DROPPED.  Message headers, frame ids, covariances, and every
 topic not listed above.  float32 is used by
@@ -69,17 +76,18 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from utils.extractor import RosBagExtractor          # noqa: E402
 from utils.extractor import (OdometryData, PoseData,  # noqa: E402
-                             HexaRpmData, ImuData)
+                             HexaRpmData, HexaCmdData, ImuData)
 
 # topic role -> the fields worth keeping, in the order they are stored
 FIELDS = {
     'odom': ('position', 'quaternion', 'linear_vel', 'angular_vel'),
     'pose': ('position', 'quaternion'),
     'rpm':  ('rpm', 'acc'),
+    'cmd':  ('cmd',),
     'imu':  ('angular_vel', 'linear_acc'),
 }
-KIND = {OdometryData: 'odom', PoseData: 'pose',
-        HexaRpmData: 'rpm', ImuData: 'imu'}
+KIND = {OdometryData: 'odom', PoseData: 'pose', HexaRpmData: 'rpm',
+        HexaCmdData: 'cmd', ImuData: 'imu'}
 
 
 C_T = 1.3175e-7            # N/rpm^2, table 9 (load-cell identified)
