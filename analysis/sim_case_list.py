@@ -108,6 +108,75 @@ def predict(c):
     return M, m, ('ok' if not why else '; '.join(why))
 
 
+def figure(rows, outdir):
+    """The sweep in the offset plane, which is where it reads at a glance.
+
+    The identifiable region is a rectangle and not a disc -- the roll
+    bound sits on the y component and the pitch bound on the x -- so
+    coverage and the two crossings are geometric facts a reader can see,
+    where a table asks them to compare columns of numbers.
+
+    The landing-gear footprint, 110 by 140 mm, is left out of the axes
+    deliberately: drawn to scale it would be seven times the area of
+    everything else and compress the part that matters. It belongs in
+    the caption.
+    """
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+
+    W = M_UNLOADED * G
+    f = THRUST_FRAC * W
+    ylim = (1 - f / W) * L_ROLL * 1e3
+    xlim = (1 - f / W) * L_PITCH * 1e3
+
+    def box(ax, bx, by, **kw):
+        ax.plot([-bx, bx, bx, -bx, -bx], [-by, -by, by, by, -by], **kw)
+
+    fig, ax = plt.subplots(figsize=(5.6, 4.4))
+    box(ax, xlim, ylim, color='#0072B2', lw=1.8, zorder=2,
+        label=f'identifiable, ${xlim:.0f}\\times{ylim:.0f}$ mm')
+    box(ax, 20, 20, color='#D55E00', lw=1.4, ls='--', zorder=2,
+        label='declared design box, $20\\times20$ mm')
+
+    # the loaded case repeats an unloaded offset, so it needs its own
+    # marker or the two sit on top of each other with their labels
+    ok = [(r['x_off_mm'], r['y_off_mm']) for r in rows
+          if r['verdict'] == 'ok' and r['group'] != 'loaded']
+    ld = [(r['x_off_mm'], r['y_off_mm']) for r in rows
+          if r['group'] == 'loaded']
+    no = [(r['x_off_mm'], r['y_off_mm']) for r in rows
+          if r['verdict'] != 'ok']
+    ax.plot(*zip(*ok), 'o', ms=6.5, mfc='#4DAF4A', mec='0.2', mew=0.9,
+            ls='', zorder=4, label='expected to apply')
+    ax.plot(*zip(*ld), 's', ms=8.5, mfc='none', mec='#1B7837', mew=1.8,
+            ls='', zorder=3, label=f'same offset, loaded ({M_LOADED} kg)')
+    ax.plot(*zip(*no), 'X', ms=9.5, mfc='#C1121F', mec='0.2', mew=0.9,
+            ls='', zorder=4, label='expected to fail')
+    for k, r in enumerate(rows, 1):
+        dx, dy = (5, 4) if r['group'] != 'loaded' else (6, -11)
+        ax.annotate(f'S{k}', (r['x_off_mm'], r['y_off_mm']),
+                    xytext=(dx, dy), textcoords='offset points',
+                    fontsize=7.5, color='0.25', zorder=5)
+
+    ax.set_xlim(-58, 58)
+    ax.set_ylim(-46, 46)
+    ax.set_aspect('equal')
+    ax.axhline(0, color='0.8', lw=0.7, zorder=1)
+    ax.axvline(0, color='0.8', lw=0.7, zorder=1)
+    ax.grid(alpha=0.4, lw=0.7, color='0.65')
+    ax.set_axisbelow(True)
+    ax.set_xlabel('$x_{\\mathrm{off}}$ [mm]', fontsize=9.5)
+    ax.set_ylabel('$y_{\\mathrm{off}}$ [mm]', fontsize=9.5)
+    ax.legend(fontsize=7.6, loc='lower center', ncol=2,
+              bbox_to_anchor=(0.5, -0.30), frameon=False)
+    fig.tight_layout()
+    for ext, kw in (('pdf', {}), ('png', dict(dpi=200))):
+        fig.savefig(outdir / f'fig_sim_cases.{ext}',
+                    bbox_inches='tight', **kw)
+    plt.close(fig)
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('--out', type=Path,
@@ -181,6 +250,8 @@ def main():
               f'{r["roll_neg"]:>8.2f}{r["roll_pos"]:>8.2f}'
               f'{r["pitch_neg"]:>8.2f}{r["pitch_pos"]:>8.2f}'
               f'  {r["verdict"]}')
+
+    figure(rows, a.out)
 
     n_ok = sum(r['verdict'] == 'ok' for r in rows)
     print(f'\n{len(rows)} cases, {n_ok} expected to apply, '
