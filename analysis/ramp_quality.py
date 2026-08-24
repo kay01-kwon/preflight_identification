@@ -226,18 +226,17 @@ def main():
         a3.set_yscale('log')
         a3.set_ylabel(r'window sample count $N_{full}$')
         a3.set_xlabel(r'commanded ramp rate $\dot M$ [N·m/s]')
-        a3.set_title('(c) Realized window support')
+        a3.set_title('(c) Window sample count')
         a3.legend(fontsize=8)
         a3.grid(alpha=0.3, which='both')
         # one tick per commanded rate, not matplotlib's rounded grid
         a3.set_xticks(ur)
         a3.set_xticklabels([f'{r:g}' for r in ur])
-        fig.suptitle(f'Hardware ramp execution quality ({len(rows)} runs)',
-                     y=0.995)
         fig.tight_layout()
-        fp = out / 'ramp_quality_vs_rate.png'
-        fig.savefig(fp, dpi=300, bbox_inches='tight')
-        print(f"Figure → {fp}")
+        for ext, kw in (('png', dict(dpi=300)), ('pdf', {})):
+            fp = out / f'ramp_quality_vs_rate.{ext}'
+            fig.savefig(fp, bbox_inches='tight', **kw)
+            print(f"Figure → {fp}")
 
 
 if __name__ == '__main__':
