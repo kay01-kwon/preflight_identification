@@ -13,24 +13,30 @@ find rather than avoid. From the critical moments,
     M_y,+ = (W-f) l_f - W p_x        M_y,- = -(W-f) l_b - W p_x
 
 the negative-direction moment vanishes at p = (1 - f/W) l, which is
-33 mm on roll and 42 mm on pitch: past that the corresponding contact
-is already unloaded at rest, that direction has no critical moment, and
-the direction pairing has nothing to pair. The allocator saturates only
-later, at 46 and 49 mm, so it is the balance and not the actuation that
-bounds the procedure. A sweep that stops at 11 mm cannot show any of
-this.
+33 mm on roll and 42 mm on pitch at the f/W = 0.70 used here. Past that
+the corresponding contact carries no load once the excitation
+collective is applied, that direction has no critical moment, and the
+pairing has nothing to pair. The bound belongs to the excitation and
+not to the airframe: with no collective the vehicle is statically
+stable out to the landing-gear half-width itself, 110 and 140 mm. The
+allocator saturates only later, at 46 and 49 mm, so within this
+procedure it is the balance and not the actuation that binds.
+
+The validity region is therefore a rectangle in the offset plane, and
+a sweep that walks outward on more than one bearing crosses a
+different side of it each time -- which is why the failures below are
+placed on both axes rather than on one.
 
 THE DESIGN. Four groups, each answering a different question:
-  corner     the four corners of the declared design box, both axes at
-             their limit simultaneously -- the asymmetric load the
-             review asks for
-  reach      an asymmetric offset walked past the 33 mm roll boundary,
-             so the predicted failure is crossed rather than approached
-  bearing    a fixed magnitude taken round four bearings, because the
-             airframe is not axisymmetric: the roll arm is 110 mm and
-             the pitch arm 140
-  legacy     the three original cases, retained so the new sweep can be
-             compared against the published ones
+  small      the three published cases, retained so tables 13-14 stay
+             valid and the small-offset regime is still covered
+  corner     both axes at the limit of the declared box at once -- the
+             asymmetric load the review asks for
+  diagonal   both components grown together until the roll side of the
+             validity rectangle is crossed
+  shallow    grown on a shallow bearing so the pitch side is crossed
+             instead, so the failure is not an artefact of one axis
+  loaded     the same diagonal offset at the loaded mass
 
 Each case is emitted with the critical moments it should produce and a
 verdict --- ok, or the reason it is expected to fail --- so a run that
@@ -61,15 +67,21 @@ def bearing(mag, deg):
 
 
 CASES = (
-    [dict(group='legacy', x=x, y=y) for x, y in
+    # the published three, retained so tables 13-14 stay valid and the
+    # small-offset regime is still covered
+    [dict(group='small', x=x, y=y) for x, y in
      ((-6.0, 0.0), (0.0, 10.0), (10.0, -5.0))]
+    # both axes at the limit of the declared box, simultaneously
     + [dict(group='corner', x=x, y=y) for x, y in
-       ((20.0, 20.0), (20.0, -20.0), (-20.0, 20.0), (-20.0, -20.0))]
-    + [dict(group='reach', x=10.0, y=y) for y in (25.0, 30.0, 35.0, 40.0)]
-    + [dict(group='bearing', x=x, y=y) for x, y in
-       (bearing(15.0, d) for d in (0, 45, 90, 135))]
-    + [dict(group='mass', x=20.0, y=20.0, mass=M_LOADED),
-       dict(group='mass', x=10.0, y=30.0, mass=M_LOADED)]
+       ((20.0, 20.0), (20.0, -20.0))]
+    # walked outward at 45 deg: both components grow together until the
+    # roll side of the validity rectangle is crossed
+    + [dict(group='diagonal', x=v, y=v) for v in (25.0, 32.0, 38.0)]
+    # walked outward on a shallow bearing, so the pitch side is crossed
+    # instead -- the failure is not an artefact of one axis
+    + [dict(group='shallow', x=x, y=y) for x, y in
+       ((38.0, 14.0), (46.0, 17.0))]
+    + [dict(group='loaded', x=25.0, y=25.0, mass=M_LOADED)]
 )
 
 
@@ -88,7 +100,8 @@ def predict(c):
     for ax in ('roll', 'pitch'):
         # the pair only exists while the two directions keep their signs
         if M[f'{ax}_pos'] <= 0 or M[f'{ax}_neg'] >= 0:
-            why.append(f'{ax}: one contact already unloaded at rest')
+            why.append(f'{ax}: contact unloaded under the excitation '
+                       f'collective')
         elif max(abs(M[f'{ax}_pos']),
                  abs(M[f'{ax}_neg'])) > M_MAX[ax]:
             why.append(f'{ax}: excitation exceeds the allocator cap')

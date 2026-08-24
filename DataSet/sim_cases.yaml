@@ -4,7 +4,7 @@
 # verdict is whether the procedure is expected to apply.
 cases:
   - id: sim_01
-    group: legacy
+    group: small
     x_off_mm: -6.0
     y_off_mm: 0.0
     mass_kg: 3.066
@@ -14,7 +14,7 @@ cases:
       pitch: [-1.083, 1.444]
       verdict: "ok"
   - id: sim_02
-    group: legacy
+    group: small
     x_off_mm: 0.0
     y_off_mm: 10.0
     mass_kg: 3.066
@@ -24,7 +24,7 @@ cases:
       pitch: [-1.263, 1.263]
       verdict: "ok"
   - id: sim_03
-    group: legacy
+    group: small
     x_off_mm: 10.0
     y_off_mm: -5.0
     mass_kg: 3.066
@@ -54,122 +54,62 @@ cases:
       pitch: [-1.865, 0.662]
       verdict: "ok"
   - id: sim_06
-    group: corner
-    x_off_mm: -20.0
-    y_off_mm: 20.0
-    mass_kg: 3.066
-    z_com_m: 0.261
-    expect:
-      roll:  [-0.391, 1.594]
-      pitch: [-0.662, 1.865]
-      verdict: "ok"
-  - id: sim_07
-    group: corner
-    x_off_mm: -20.0
-    y_off_mm: -20.0
-    mass_kg: 3.066
-    z_com_m: 0.261
-    expect:
-      roll:  [-1.594, 0.391]
-      pitch: [-0.662, 1.865]
-      verdict: "ok"
-  - id: sim_08
-    group: reach
-    x_off_mm: 10.0
+    group: diagonal
+    x_off_mm: 25.0
     y_off_mm: 25.0
     mass_kg: 3.066
     z_com_m: 0.261
     expect:
       roll:  [-0.241, 1.744]
-      pitch: [-1.564, 0.962]
+      pitch: [-2.015, 0.511]
       verdict: "ok"
-  - id: sim_09
-    group: reach
-    x_off_mm: 10.0
-    y_off_mm: 30.0
+  - id: sim_07
+    group: diagonal
+    x_off_mm: 32.0
+    y_off_mm: 32.0
     mass_kg: 3.066
     z_com_m: 0.261
     expect:
-      roll:  [-0.09, 1.895]
-      pitch: [-1.564, 0.962]
+      roll:  [-0.03, 1.955]
+      pitch: [-2.226, 0.301]
+      verdict: "ok"
+  - id: sim_08
+    group: diagonal
+    x_off_mm: 38.0
+    y_off_mm: 38.0
+    mass_kg: 3.066
+    z_com_m: 0.261
+    expect:
+      roll:  [0.15, 2.135]
+      pitch: [-2.406, 0.12]
+      verdict: "roll: contact unloaded under the excitation collective"
+  - id: sim_09
+    group: shallow
+    x_off_mm: 38.0
+    y_off_mm: 14.0
+    mass_kg: 3.066
+    z_com_m: 0.261
+    expect:
+      roll:  [-0.571, 1.414]
+      pitch: [-2.406, 0.12]
       verdict: "ok"
   - id: sim_10
-    group: reach
-    x_off_mm: 10.0
-    y_off_mm: 35.0
+    group: shallow
+    x_off_mm: 46.0
+    y_off_mm: 17.0
     mass_kg: 3.066
     z_com_m: 0.261
     expect:
-      roll:  [0.06, 2.045]
-      pitch: [-1.564, 0.962]
-      verdict: "roll: one contact already unloaded at rest"
+      roll:  [-0.481, 1.504]
+      pitch: [-2.647, -0.12]
+      verdict: "pitch: contact unloaded under the excitation collective"
   - id: sim_11
-    group: reach
-    x_off_mm: 10.0
-    y_off_mm: 40.0
-    mass_kg: 3.066
-    z_com_m: 0.261
-    expect:
-      roll:  [0.211, 2.196]
-      pitch: [-1.564, 0.962]
-      verdict: "roll: one contact already unloaded at rest"
-  - id: sim_12
-    group: bearing
-    x_off_mm: 15.0
-    y_off_mm: 0.0
-    mass_kg: 3.066
-    z_com_m: 0.261
-    expect:
-      roll:  [-0.993, 0.993]
-      pitch: [-1.714, 0.812]
-      verdict: "ok"
-  - id: sim_13
-    group: bearing
-    x_off_mm: 10.6
-    y_off_mm: 10.6
-    mass_kg: 3.066
-    z_com_m: 0.261
-    expect:
-      roll:  [-0.674, 1.311]
-      pitch: [-1.582, 0.944]
-      verdict: "ok"
-  - id: sim_14
-    group: bearing
-    x_off_mm: 0.0
-    y_off_mm: 15.0
-    mass_kg: 3.066
-    z_com_m: 0.261
-    expect:
-      roll:  [-0.541, 1.444]
-      pitch: [-1.263, 1.263]
-      verdict: "ok"
-  - id: sim_15
-    group: bearing
-    x_off_mm: -10.6
-    y_off_mm: 10.6
-    mass_kg: 3.066
-    z_com_m: 0.261
-    expect:
-      roll:  [-0.674, 1.311]
-      pitch: [-0.944, 1.582]
-      verdict: "ok"
-  - id: sim_16
-    group: mass
-    x_off_mm: 20.0
-    y_off_mm: 20.0
+    group: loaded
+    x_off_mm: 25.0
+    y_off_mm: 25.0
     mass_kg: 3.22
     z_com_m: 0.261
     expect:
-      roll:  [-0.411, 1.674]
-      pitch: [-1.958, 0.695]
-      verdict: "ok"
-  - id: sim_17
-    group: mass
-    x_off_mm: 10.0
-    y_off_mm: 30.0
-    mass_kg: 3.22
-    z_com_m: 0.261
-    expect:
-      roll:  [-0.095, 1.99]
-      pitch: [-1.643, 1.011]
+      roll:  [-0.253, 1.832]
+      pitch: [-2.116, 0.537]
       verdict: "ok"
