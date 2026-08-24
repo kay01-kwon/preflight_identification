@@ -15,7 +15,7 @@ nothing else:
 
     odom : t, position, quaternion, linear_vel, angular_vel
     pose : t, position, quaternion        (mocap, for drift truth)
-    rpm  : t, rpm                         (thrust reconstruction)
+    rpm  : t, rpm, acc                    (thrust reconstruction)
     imu  : t, angular_vel, linear_acc     (optional, --imu)
 
 so that peak |phi|/|theta|, peak |w_x|/|w_y|, the drift components
@@ -23,8 +23,8 @@ d_x/d_y and the peak linear velocity all remain recomputable from the
 committed arrays.  Nothing here is a summary: the time series survive,
 only the container changes.
 
-WHAT IS DROPPED.  Message headers, frame ids, covariances, per-motor
-acceleration, and every topic not listed above.  float32 is used by
+WHAT IS DROPPED.  Message headers, frame ids, covariances, and every
+topic not listed above.  float32 is used by
 default -- the odometry is EKF2 output at ~1e-3 m and ~1e-3 rad, some
 four orders above float32 resolution, so the cast is lossless at the
 level anything is reported.  Pass --float64 to keep the exact bits.
@@ -75,7 +75,7 @@ from utils.extractor import (OdometryData, PoseData,  # noqa: E402
 FIELDS = {
     'odom': ('position', 'quaternion', 'linear_vel', 'angular_vel'),
     'pose': ('position', 'quaternion'),
-    'rpm':  ('rpm',),
+    'rpm':  ('rpm', 'acc'),
     'imu':  ('angular_vel', 'linear_acc'),
 }
 KIND = {OdometryData: 'odom', PoseData: 'pose',
