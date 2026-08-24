@@ -498,3 +498,52 @@ def load_excitation_dataset(
         ))
 
     return result
+
+# ═════════════════════════════════════════════════════════════
+#  Packed datasets  (analysis/freeflight_pack.py)
+# ═════════════════════════════════════════════════════════════
+
+def load_packed_bag(path: str | Path) -> BagData:
+    """Reconstruct a BagData from one packed .npz.
+
+    The packer keeps exactly the fields the identification reads, so a
+    packed run is interchangeable with the bag it came from. Absent
+    topics come back as None rather than as zeros, which is the same
+    contract the bag reader offers -- a simulation run has no motion
+    capture, and a run packed without --imu has no raw IMU.
+    """
+    d = np.load(Path(path))
+    have = set(d.files)
+
+    def col(k):
+        return np.asarray(d[k], dtype=np.float64)
+
+    odom = OdometryData(
+        t=col('odom/t'), position=col('odom/position'),
+        quaternion=col('odom/quaternion'), linear_vel=col('odom/linear_vel'),
+        angular_vel=col('odom/angular_vel'), frame_id='', child_frame_id='')
+    rpm = HexaRpmData(
+        t=col('rpm/t'), rpm=col('rpm/rpm'),
+        # older packs predate the acceleration column; NaN rather than
+        # zeros so a consumer that wants it fails visibly
+        acc=(col('rpm/acc') if 'rpm/acc' in have
+             else np.full_like(col('rpm/rpm'), np.nan)),
+        frame_id='')
+    pose = (PoseData(t=col('pose/t'), position=col('pose/position'),
+                     quaternion=col('pose/quaternion'), frame_id='')
+            if 'pose/t' in have else None)
+    imu = (ImuData(t=col('imu/t'), angular_vel=col('imu/angular_vel'),
+                   linear_acc=col('imu/linear_acc'),
+                   quaternion=np.zeros((len(d['imu/t']), 4)), frame_id='')
+           if 'imu/t' in have else None)
+    return BagData(name=Path(path).stem, odom=odom, rpm=rpm,
+                   pose=pose, imu=imu)
+
+
+def load_packed_dataset(dataset_dir: str | Path) -> list[BagData]:
+    """Every packed run under *dataset_dir*, sorted by name."""
+    dataset_dir = Path(dataset_dir)
+    files = sorted(dataset_dir.glob('*.npz'))
+    if not files:
+        raise FileNotFoundError(f'no .npz under {dataset_dir}')
+    return [load_packed_bag(f) for f in files]
