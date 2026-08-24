@@ -16,9 +16,9 @@ x_lim = 42.0000;      % mm, pitch bound  (1 - f/W) * l_p,theta
 y_lim = 33.0000;      % mm, roll  bound  (1 - f/W) * l_p,phi
 box_x = 20; box_y = 20;   % declared design box
 
-ok   = [-6 0 1; 0 10 2; 10 -5 3; 20 20 4; 20 -20 5; -20 20 6; -20 -20 7; 25 25 8; 32 32 9; 38 14 11];
-ld   = [25 25 13];
-fail = [38 38 10; 46 17 12];
+ok   = [-6 0 1 -4.2 1.8; 0 10 2 1.8 11.8; 10 -5 3 11.8 -3.2; 20 20 4 21.8 21.8; 20 -20 5 21.8 -18.2; -20 20 6 -18.2 21.8; -20 -20 7 -18.2 -18.2; 25 25 8 26.8 26.8; 32 32 9 29.5 36.2; 38 14 11 28.5 10.2];
+ld   = [25 25 13 27 20.2];
+fail = [38 38 10 39.8 39.8; 46 17 12 47.8 18.8];
 
 % closed polylines: plot objects are legendable, rectangle() is not
 rect = @(a,b) deal([-a a a -a -a], [-b -b b b -b]);
@@ -39,17 +39,15 @@ h4 = plot(ax, ld(:,1), ld(:,2), 's', 'MarkerSize',9, ...
 h5 = plot(ax, fail(:,1), fail(:,2), 'x', 'MarkerSize',11, ...
           'Color',[0.757 0.071 0.122], 'LineWidth',2.4);
 
-for k = 1:size(ok,1)
-    text(ax, ok(k,1)+1.6, ok(k,2)+1.8, sprintf('S%d',ok(k,3)), ...
-         'FontSize',8, 'Color',[.25 .25 .25]);
-end
-for k = 1:size(ld,1)
-    text(ax, ld(k,1)+1.8, ld(k,2)-3.2, sprintf('S%d',ld(k,3)), ...
-         'FontSize',8, 'Color',[.25 .25 .25]);
-end
-for k = 1:size(fail,1)
-    text(ax, fail(k,1)+1.8, fail(k,2)+1.8, sprintf('S%d',fail(k,3)), ...
-         'FontSize',8, 'Color',[.25 .25 .25]);
+% columns 4-5 carry the label position, nudged where a default would
+% land on the identifiable boundary or on a neighbouring marker
+for T = {ok, ld, fail}
+    P = T{1};
+    for k = 1:size(P,1)
+        text(ax, P(k,4), P(k,5), sprintf('S%d',P(k,3)), ...
+             'FontSize',8, 'Color',[.25 .25 .25], ...
+             'HorizontalAlignment','center', 'VerticalAlignment','middle');
+    end
 end
 
 axis(ax,'equal');  xlim(ax,[-58 58]);  ylim(ax,[-46 46])

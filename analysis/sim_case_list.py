@@ -108,6 +108,27 @@ def predict(c):
     return M, m, ('ok' if not why else '; '.join(why))
 
 
+# Label placement, in millimetres of the plot's own units so the Python
+# and MATLAB figures agree. The default sits up and to the right of its
+# marker; the overrides move the few that would otherwise sit on the
+# identifiable boundary or on a neighbouring marker.
+LABEL_NUDGE = {
+    (32.0, 32.0): (-2.5, 4.2),    # clears the roll bound drawn at y = 33
+    (38.0, 14.0): (-9.5, -3.8),   # clears the failure marker to its right
+    (25.0, 25.0): (2.0, -4.8),    # the loaded case, under the point it repeats
+}
+NUDGE_DEFAULT = (1.8, 1.8)
+
+
+def nudge(r):
+    d = LABEL_NUDGE.get((r['x_off_mm'], r['y_off_mm']), NUDGE_DEFAULT)
+    # the unloaded twin of a repeated offset keeps the default
+    if (r['x_off_mm'], r['y_off_mm']) == (25.0, 25.0) \
+            and r['group'] != 'loaded':
+        return NUDGE_DEFAULT
+    return d
+
+
 def figure(rows, outdir):
     """The sweep in the offset plane, which is where it reads at a glance.
 
@@ -154,10 +175,10 @@ def figure(rows, outdir):
     ax.plot(*zip(*no), 'X', ms=9.5, mfc='#C1121F', mec='0.2', mew=0.9,
             ls='', zorder=4, label='expected to fail')
     for k, r in enumerate(rows, 1):
-        dx, dy = (5, 4) if r['group'] != 'loaded' else (6, -11)
-        ax.annotate(f'S{k}', (r['x_off_mm'], r['y_off_mm']),
-                    xytext=(dx, dy), textcoords='offset points',
-                    fontsize=7.5, color='0.25', zorder=5)
+        dx, dy = nudge(r)
+        ax.annotate(f'S{k}', (r['x_off_mm'] + dx, r['y_off_mm'] + dy),
+                    fontsize=7.5, color='0.25', zorder=5,
+                    ha='center', va='center')
 
     ax.set_xlim(-58, 58)
     ax.set_ylim(-46, 46)
@@ -190,10 +211,15 @@ def matlab(rows, outdir):
     xl = (1 - f / W) * L_PITCH * 1e3
 
     def arr(sel):
-        pts = [(r['x_off_mm'], r['y_off_mm'], k)
-               for k, r in enumerate(rows, 1) if sel(r)]
-        return ('[' + '; '.join(f'{x:g} {y:g} {k}' for x, y, k in pts)
-                + ']')
+        pts = []
+        for k, r in enumerate(rows, 1):
+            if not sel(r):
+                continue
+            dx, dy = nudge(r)
+            pts.append((r['x_off_mm'], r['y_off_mm'], k,
+                        r['x_off_mm'] + dx, r['y_off_mm'] + dy))
+        return ('[' + '; '.join(f'{x:g} {y:g} {k} {lx:g} {ly:g}'
+                                for x, y, k, lx, ly in pts) + ']')
 
     ok = arr(lambda r: r['verdict'] == 'ok' and r['group'] != 'loaded')
     ld = arr(lambda r: r['group'] == 'loaded')
@@ -241,17 +267,15 @@ h4 = plot(ax, ld(:,1), ld(:,2), 's', 'MarkerSize',9, ...
 h5 = plot(ax, fail(:,1), fail(:,2), 'x', 'MarkerSize',11, ...
           'Color',[0.757 0.071 0.122], 'LineWidth',2.4);
 
-for k = 1:size(ok,1)
-    text(ax, ok(k,1)+1.6, ok(k,2)+1.8, sprintf('S%d',ok(k,3)), ...
-         'FontSize',8, 'Color',[.25 .25 .25]);
-end
-for k = 1:size(ld,1)
-    text(ax, ld(k,1)+1.8, ld(k,2)-3.2, sprintf('S%d',ld(k,3)), ...
-         'FontSize',8, 'Color',[.25 .25 .25]);
-end
-for k = 1:size(fail,1)
-    text(ax, fail(k,1)+1.8, fail(k,2)+1.8, sprintf('S%d',fail(k,3)), ...
-         'FontSize',8, 'Color',[.25 .25 .25]);
+% columns 4-5 carry the label position, nudged where a default would
+% land on the identifiable boundary or on a neighbouring marker
+for T = {{ok, ld, fail}}
+    P = T{{1}};
+    for k = 1:size(P,1)
+        text(ax, P(k,4), P(k,5), sprintf('S%d',P(k,3)), ...
+             'FontSize',8, 'Color',[.25 .25 .25], ...
+             'HorizontalAlignment','center', 'VerticalAlignment','middle');
+    end
 end
 
 axis(ax,'equal');  xlim(ax,[-58 58]);  ylim(ax,[-46 46])
