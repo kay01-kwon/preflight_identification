@@ -211,6 +211,10 @@ def main():
         a2.set_title('(b) Ramp linearity')
         a2.legend(fontsize=8)
         a2.grid(alpha=0.3)
+        for ax in (a1, a2):
+            # one tick per commanded rate, not matplotlib's rounded grid
+            ax.set_xticks(ur)
+            ax.set_xticklabels([f'{r:g}' for r in ur])
         fig.suptitle(f'Hardware ramp execution quality ({len(rows)} runs)',
                      y=1.02)
         fig.tight_layout()
