@@ -46,6 +46,9 @@ from analysis.pnls_constants import PNLS_CONSTANTS
 
 ROOT = Path(__file__).resolve().parents[1] / 'DataSet' / 'exp'
 OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('.')
+# created up front: the sweep takes the better part of an hour, and a
+# missing directory would otherwise discard all of it at the final write
+OUT.mkdir(parents=True, exist_ok=True)
 METHODS = ['cosh', 'cosh_wide', 'cosh_cad', 'nls'] + CLASSIC   # cosh = reported
 
 # CAD geometry (manuscript Table 5 and the landing-gear datum), used by the

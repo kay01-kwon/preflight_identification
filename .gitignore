@@ -35,6 +35,9 @@ nls_comparison_summary.csv
 tiltcap_mcrit.csv
 alpha_at_peak_runs.csv
 freeflight_metrics_runs.csv
+inflight_baselines.csv
+hover_trim_baseline.csv
+threshold_sensitivity.csv
 *.aux
 *.out
 *.toc
