@@ -29,70 +29,70 @@ Compare against the same cases in the main sweep, which uses the identified seco
 
 ## 2. Main sweep --- identified rotor (R3)
 
-### S1 --- small, (-6, 0) mm, 3.066 kg
+### S1 --- small offset, (-6, 0) mm, 3.066 kg
 predicted $M_{crit}$  roll -0.99 / +0.99   pitch -1.08 / +1.44
 
 - roll  [ ]0.10 [ ]0.20 [ ]0.30 [ ]0.45 [ ]0.65 [ ]0.90 [ ]1.20
 - pitch [ ]0.10 [ ]0.20 [ ]0.30 [ ]0.45 [ ]0.65 [ ]0.90 [ ]1.20
 - [ ] identified offset within 1 mm of truth
 
-### S2 --- small, (0, 10) mm, 3.066 kg
+### S2 --- small offset, (0, 10) mm, 3.066 kg
 predicted $M_{crit}$  roll -0.69 / +1.29   pitch -1.26 / +1.26
 
 - roll  [ ]0.10 [ ]0.20 [ ]0.30 [ ]0.45 [ ]0.65 [ ]0.90 [ ]1.20
 - pitch [ ]0.10 [ ]0.20 [ ]0.30 [ ]0.45 [ ]0.65 [ ]0.90 [ ]1.20
 - [ ] identified offset within 1 mm of truth
 
-### S3 --- small, (10, -5) mm, 3.066 kg
+### S3 --- small offset, (10, -5) mm, 3.066 kg
 predicted $M_{crit}$  roll -1.14 / +0.84   pitch -1.56 / +0.96
 
 - roll  [ ]0.10 [ ]0.20 [ ]0.30 [ ]0.45 [ ]0.65 [ ]0.90 [ ]1.20
 - pitch [ ]0.10 [ ]0.20 [ ]0.30 [ ]0.45 [ ]0.65 [ ]0.90 [ ]1.20
 - [ ] identified offset within 1 mm of truth
 
-### S4 --- corner, (20, 20) mm, 3.066 kg
+### S4 --- box corner, (20, 20) mm, 3.066 kg
 predicted $M_{crit}$  roll -0.39 / +1.59   pitch -1.86 / +0.66
 
 - roll  [ ]0.10 [ ]0.20 [ ]0.30 [ ]0.45 [ ]0.65 [ ]0.90 [ ]1.20
 - pitch [ ]0.10 [ ]0.20 [ ]0.30 [ ]0.45 [ ]0.65 [ ]0.90 [ ]1.20
 - [ ] identified offset within 1 mm of truth
 
-### S5 --- corner, (20, -20) mm, 3.066 kg
+### S5 --- box corner, (20, -20) mm, 3.066 kg
 predicted $M_{crit}$  roll -1.59 / +0.39   pitch -1.86 / +0.66
 
 - roll  [ ]0.10 [ ]0.20 [ ]0.30 [ ]0.45 [ ]0.65 [ ]0.90 [ ]1.20
 - pitch [ ]0.10 [ ]0.20 [ ]0.30 [ ]0.45 [ ]0.65 [ ]0.90 [ ]1.20
 - [ ] identified offset within 1 mm of truth
 
-### S6 --- corner, (-20, 20) mm, 3.066 kg
+### S6 --- box corner, (-20, 20) mm, 3.066 kg
 predicted $M_{crit}$  roll -0.39 / +1.59   pitch -0.66 / +1.86
 
 - roll  [ ]0.10 [ ]0.20 [ ]0.30 [ ]0.45 [ ]0.65 [ ]0.90 [ ]1.20
 - pitch [ ]0.10 [ ]0.20 [ ]0.30 [ ]0.45 [ ]0.65 [ ]0.90 [ ]1.20
 - [ ] identified offset within 1 mm of truth
 
-### S7 --- corner, (-20, -20) mm, 3.066 kg
+### S7 --- box corner, (-20, -20) mm, 3.066 kg
 predicted $M_{crit}$  roll -1.59 / +0.39   pitch -0.66 / +1.86
 
 - roll  [ ]0.10 [ ]0.20 [ ]0.30 [ ]0.45 [ ]0.65 [ ]0.90 [ ]1.20
 - pitch [ ]0.10 [ ]0.20 [ ]0.30 [ ]0.45 [ ]0.65 [ ]0.90 [ ]1.20
 - [ ] identified offset within 1 mm of truth
 
-### S8 --- diagonal, (25, 25) mm, 3.066 kg
+### S8 --- roll boundary, (25, 25) mm, 3.066 kg
 predicted $M_{crit}$  roll -0.24 / +1.74   pitch -2.02 / +0.51
 
 - roll  [ ]0.10 [ ]0.20 [ ]0.30 [ ]0.45 [ ]0.65 [ ]0.90 [ ]1.20
 - pitch [ ]0.10 [ ]0.20 [ ]0.30 [ ]0.45 [ ]0.65 [ ]0.90 [ ]1.20
 - [ ] identified offset within 1 mm of truth
 
-### S9 --- diagonal, (32, 32) mm, 3.066 kg
+### S9 --- roll boundary, (32, 32) mm, 3.066 kg
 predicted $M_{crit}$  roll -0.03 / +1.96   pitch -2.23 / +0.30
 
 - roll  [ ]0.10 [ ]0.20 [ ]0.30 [ ]0.45 [ ]0.65 [ ]0.90 [ ]1.20
 - pitch [ ]0.10 [ ]0.20 [ ]0.30 [ ]0.45 [ ]0.65 [ ]0.90 [ ]1.20
 - [ ] identified offset within 1 mm of truth
 
-### S10 --- diagonal, (38, 38) mm, 3.066 kg
+### S10 --- roll boundary, (38, 38) mm, 3.066 kg
 predicted $M_{crit}$  roll +0.15 / +2.13   pitch -2.41 / +0.12  
   **expected to fail** --- roll: contact unloaded under the excitation collective
 
@@ -100,14 +100,14 @@ predicted $M_{crit}$  roll +0.15 / +2.13   pitch -2.41 / +0.12
 - pitch [ ]0.30 [ ]0.90
 - [ ] the predicted contact does lift at zero applied moment, and the pairing has no second direction
 
-### S11 --- shallow, (38, 14) mm, 3.066 kg
+### S11 --- pitch boundary, (38, 14) mm, 3.066 kg
 predicted $M_{crit}$  roll -0.57 / +1.41   pitch -2.41 / +0.12
 
 - roll  [ ]0.10 [ ]0.20 [ ]0.30 [ ]0.45 [ ]0.65 [ ]0.90 [ ]1.20
 - pitch [ ]0.10 [ ]0.20 [ ]0.30 [ ]0.45 [ ]0.65 [ ]0.90 [ ]1.20
 - [ ] identified offset within 1 mm of truth
 
-### S12 --- shallow, (46, 17) mm, 3.066 kg
+### S12 --- pitch boundary, (46, 17) mm, 3.066 kg
 predicted $M_{crit}$  roll -0.48 / +1.50   pitch -2.65 / -0.12  
   **expected to fail** --- pitch: contact unloaded under the excitation collective
 
