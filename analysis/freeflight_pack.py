@@ -28,7 +28,9 @@ The raw command is kept even though no published metric reads it: the
 rotor-lag ablation compares the moment that was commanded against the
 moment the rotors delivered, and without cmd only one half of that pair
 survives packing.  It costs about 0.02 MB per excitation run, an order
-below the rotor speeds it is paired with.
+below the rotor speeds it is paired with.  The counts are 13-bit; see
+HexaCmdData.rpm for the conversion that puts them on the same scale as
+the measured speed.
 
 WHAT IS DROPPED.  Message headers, frame ids, covariances, and every
 topic not listed above.  float32 is used by

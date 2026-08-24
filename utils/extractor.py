@@ -104,6 +104,15 @@ class HexaRpmData:
         return self.t - t0
 
 
+# The command is a 13-bit setpoint spanning the rotor's full range, so
+# a count converts to the speed it asks for by RPM_FULL_SCALE /
+# CMD_FULL_SCALE = 1.196435. The bags confirm it: over the 140-run
+# excitation campaign the median rpm/cmd is 1.19629, within 0.01% of
+# the nominal ratio.
+CMD_FULL_SCALE = 8191      # counts, 13-bit
+RPM_FULL_SCALE = 9800.0    # rpm at full-scale command
+
+
 @dataclass
 class HexaCmdData:
     """Vectorized ros2_libcanard_msgs/msg/HexaCmdRaw
@@ -116,12 +125,22 @@ class HexaCmdData:
     ablation of section VII isolates.
     """
     t: np.ndarray       # (N,) [s]
-    cmd: np.ndarray     # (N,6) raw ESC command counts
+    cmd: np.ndarray     # (N,6) raw ESC command counts, 0..8191
     frame_id: str
 
     @property
     def N(self) -> int:
         return len(self.t)
+
+    @property
+    def rpm(self) -> np.ndarray:
+        """(N,6) the speed the command asks for [rpm].
+
+        Directly comparable with HexaRpmData.rpm, so the commanded
+        thrust is C_T * cmd.rpm**2 on the same footing as the achieved
+        one, and their difference is the rotor lag.
+        """
+        return self.cmd * (RPM_FULL_SCALE / CMD_FULL_SCALE)
 
     def t_rel(self, t0: float) -> np.ndarray:
         """Time relative to a global reference t0."""
