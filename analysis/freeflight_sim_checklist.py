@@ -9,8 +9,9 @@ procedure). Only the cases the identification succeeded on fly: S10
 and S12 sit outside the identifiable rectangle and tip over under the
 excitation collective, so there is no estimate to compensate with.
 
-Per case, the hardware protocol is mirrored: three take-offs without
-compensation, three with, same logging as the excitation runs. The
+Per case, the hardware protocol is mirrored: both controllers (HGDO
+and L1), three take-offs without compensation and three with under
+each, same logging as the excitation runs. The
 identified offsets entered as feedforward are frozen in this file so
 the checklist and the controller configuration cannot drift apart.
 
@@ -43,6 +44,7 @@ CASES = {
     'S13': (25.0,  25.0,  25.35,  25.23, 3.220),
 }
 VARIANTS = ('wo_ff', 'w_ff')
+CONTROLLERS = ('hgdo', 'L1')
 N_TRIAL = 3
 
 
@@ -66,22 +68,23 @@ def emit_md(out):
           'configure the feedforward from the IDENTIFIED offset below '
           '(w_ff runs only), arm, take off to the standard hover point, '
           'hold at least 5 s, stop the log. Same topics as the excitation '
-          'runs. Bag name: `<variant>_<trial>` under `S<k>/`.',
+          'runs. Bag name: `<variant>_<trial>` under `S<k>/<controller>/`.',
           '']
     n_tot = 0
     for c, (xt, yt, xh, yh, m) in CASES.items():
         mfx, mfy = m_ff(c)
         L += [f'### {c} --- truth ({xt:+.0f}, {yt:+.0f}) mm, '
               f'mass {m:.3f} kg']
-        L += [f'    identified ({xh:+.2f}, {yh:+.2f}) mm  ->  pivot-free '
-              f'M_ff: Mx {mfx:+.3f}, My {mfy:+.3f} N.m', '']
-        for v in VARIANTS:
-            row = '  '.join(f'[ ] {v}_{k+1}' for k in range(N_TRIAL))
-            L += [f'- {row}']
-            n_tot += N_TRIAL
+        L += [f'    pivot-free M_ff: Mx {mfx:+.3f}, My {mfy:+.3f} N.m', '']
+        for ctrl in CONTROLLERS:
+            for v in VARIANTS:
+                row = '  '.join(f'[ ] {v}_{k+1}' for k in range(N_TRIAL))
+                L += [f'- {ctrl:<5} {row}']
+                n_tot += N_TRIAL
         L += ['']
-    L += [f'**{n_tot} flights** = {len(CASES)} cases x {len(VARIANTS)} '
-          f'variants x {N_TRIAL} trials.', '',
+    L += [f'**{n_tot} flights** = {len(CASES)} cases x {len(CONTROLLERS)} '
+          f'controllers x {len(VARIANTS)} variants x {N_TRIAL} trials.',
+          '',
           'After the campaign, pack with:', '',
           '    python analysis/freeflight_pack.py <bag_root> '
           'SimDataSet/free_flight', '']
@@ -105,25 +108,28 @@ def emit_tex(out):
          r'feedforward from the \emph{identified} offset (w\_ff only), '
          r'arm, take off to the standard hover point, hold $\geq 5$\,s, '
          r'stop the log. Same topics as the excitation runs; bag name '
-         r'\texttt{<variant>\_<trial>} under \texttt{S<k>/}.',
+         r'\texttt{<variant>\_<trial>} under \texttt{S<k>/<controller>/}.',
          r'\medskip', '',
          r'\renewcommand{\arraystretch}{1.45}',
-         r'\begin{tabular}{l l r r r c c}',
+         r'\begin{tabular}{l l r r c c c c}',
          r'\toprule',
-         r'case & truth [mm] & identified [mm] & '
+         r' & & & & \multicolumn{2}{c}{HGDO} & \multicolumn{2}{c}{L1} \\',
+         r'\cmidrule(lr){5-6}\cmidrule(lr){7-8}',
+         r'case & truth [mm] & '
          r'$\bar M_{\!f\!f}$ $(M_x, M_y)$ [N$\cdot$m] & $m$ [kg] & '
-         r'wo\_ff $\times$3 & w\_ff $\times$3 \\',
+         r'wo\_ff & w\_ff & wo\_ff & w\_ff \\',
          r'\midrule']
     for c, (xt, yt, xh, yh, m) in CASES.items():
         mfx, mfy = m_ff(c)
         cbs = r'\cb\ \cb\ \cb'
         T += [f'{c} & $({xt:+.0f},\\,{yt:+.0f})$ & '
-              f'$({xh:+.2f},\\,{yh:+.2f})$ & '
-              f'$({mfx:+.3f},\\,{mfy:+.3f})$ & {m:.3f} & {cbs} & {cbs} \\\\']
+              f'$({mfx:+.3f},\\,{mfy:+.3f})$ & {m:.3f} & '
+              f'{cbs} & {cbs} & {cbs} & {cbs} \\\\']
     T += [r'\bottomrule', r'\end{tabular}', r'\medskip', '',
-          f'{len(CASES) * len(VARIANTS) * N_TRIAL} flights = '
-          f'{len(CASES)} cases $\\times$ {len(VARIANTS)} variants '
-          f'$\\times$ {N_TRIAL} trials. The identified offsets are the '
+          f'{len(CASES) * len(CONTROLLERS) * len(VARIANTS) * N_TRIAL} '
+          f'flights = {len(CASES)} cases $\\times$ {len(CONTROLLERS)} '
+          f'controllers $\\times$ {len(VARIANTS)} variants '
+          f'$\\times$ {N_TRIAL} trials. The underlying offsets are the '
           r'R3 excitation-campaign estimates, frozen in '
           r'\texttt{analysis/freeflight\_sim\_checklist.py}. '
           r'$\bar M_{\!f\!f}$ is the pivot-free direction-pair average '
