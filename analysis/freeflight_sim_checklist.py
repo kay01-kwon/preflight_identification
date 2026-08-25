@@ -47,11 +47,14 @@ N_TRIAL = 3
 
 
 def m_ff(case):
-    """Feedforward moments from the identified offset: the moment the
-    offset exerts, to be cancelled by the allocator."""
+    """The pivot-free averaged moments of the excitation campaign,
+    reconstructed from the frozen identified offsets: the half-sum on
+    the Mx runs reads W*y_hat, on the My runs -W*x_hat (the sim shares
+    the hardware sign convention). These are the moments the
+    feedforward must cancel."""
     _, _, xh, yh, m = CASES[case]
     W = m * G
-    return W * yh * 1e-3, W * xh * 1e-3          # (about x from y, about y from x)
+    return W * yh * 1e-3, -W * xh * 1e-3         # (Mx half-sum, My half-sum)
 
 
 def emit_md(out):
@@ -70,8 +73,8 @@ def emit_md(out):
         mfx, mfy = m_ff(c)
         L += [f'### {c} --- truth ({xt:+.0f}, {yt:+.0f}) mm, '
               f'mass {m:.3f} kg']
-        L += [f'    feedforward from identified ({xh:+.2f}, {yh:+.2f}) mm '
-              f'->  W*y = {mfx:+.3f} N.m, W*x = {mfy:+.3f} N.m', '']
+        L += [f'    identified ({xh:+.2f}, {yh:+.2f}) mm  ->  pivot-free '
+              f'M_ff: Mx {mfx:+.3f}, My {mfy:+.3f} N.m', '']
         for v in VARIANTS:
             row = '  '.join(f'[ ] {v}_{k+1}' for k in range(N_TRIAL))
             L += [f'- {row}']
@@ -88,7 +91,7 @@ def emit_md(out):
 def emit_tex(out):
     T = [r'\documentclass[10pt]{article}',
          r'\usepackage[margin=2.2cm]{geometry}',
-         r'\usepackage{amssymb,array,booktabs}',
+         r'\usepackage{amsmath,amssymb,array,booktabs}',
          r'\newcommand{\cb}{$\square$}',
          r'\setlength{\parindent}{0pt}',
          r'\begin{document}',
@@ -105,22 +108,29 @@ def emit_tex(out):
          r'\texttt{<variant>\_<trial>} under \texttt{S<k>/}.',
          r'\medskip', '',
          r'\renewcommand{\arraystretch}{1.45}',
-         r'\begin{tabular}{l l r r c c}',
+         r'\begin{tabular}{l l r r r c c}',
          r'\toprule',
-         r'case & truth [mm] & identified [mm] & $m$ [kg] & '
+         r'case & truth [mm] & identified [mm] & '
+         r'$\bar M_{\!f\!f}$ $(M_x, M_y)$ [N$\cdot$m] & $m$ [kg] & '
          r'wo\_ff $\times$3 & w\_ff $\times$3 \\',
          r'\midrule']
     for c, (xt, yt, xh, yh, m) in CASES.items():
+        mfx, mfy = m_ff(c)
         cbs = r'\cb\ \cb\ \cb'
         T += [f'{c} & $({xt:+.0f},\\,{yt:+.0f})$ & '
-              f'$({xh:+.2f},\\,{yh:+.2f})$ & {m:.3f} & {cbs} & {cbs} \\\\']
+              f'$({xh:+.2f},\\,{yh:+.2f})$ & '
+              f'$({mfx:+.3f},\\,{mfy:+.3f})$ & {m:.3f} & {cbs} & {cbs} \\\\']
     T += [r'\bottomrule', r'\end{tabular}', r'\medskip', '',
           f'{len(CASES) * len(VARIANTS) * N_TRIAL} flights = '
           f'{len(CASES)} cases $\\times$ {len(VARIANTS)} variants '
           f'$\\times$ {N_TRIAL} trials. The identified offsets are the '
           r'R3 excitation-campaign estimates, frozen in '
-          r'\texttt{analysis/freeflight\_sim\_checklist.py}; the '
-          r'feedforward moments follow as $W\hat{y}$ and $W\hat{x}$.',
+          r'\texttt{analysis/freeflight\_sim\_checklist.py}. '
+          r'$\bar M_{\!f\!f}$ is the pivot-free direction-pair average '
+          r'of that campaign, $\bar M_{\!f\!f} = '
+          r'\tfrac12(\bar M_{\mathrm{crit},+} + \bar M_{\mathrm{crit},-})'
+          r' = (W\hat{y},\,-W\hat{x})$ -- the moment the w\_ff '
+          r'feedforward must cancel.',
           r'\end{document}']
     (out / 'freeflight_sim_checklist.tex').write_text('\n'.join(T))
 
