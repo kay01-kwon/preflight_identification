@@ -1,0 +1,33 @@
+\documentclass[10pt]{article}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{amssymb,array,booktabs}
+\newcommand{\cb}{$\square$}
+\setlength{\parindent}{0pt}
+\begin{document}
+\begin{center}\Large\bfseries Simulated free-flight validation --- run checklist\end{center}
+\medskip
+Only the identifiable cases fly; S10 and S12 tip under the excitation collective and are excluded by construction. Per trial: set the case offset and mass, configure the feedforward from the \emph{identified} offset (w\_ff only), arm, take off to the standard hover point, hold $\geq 5$\,s, stop the log. Same topics as the excitation runs; bag name \texttt{<variant>\_<trial>} under \texttt{S<k>/}.
+\medskip
+
+\renewcommand{\arraystretch}{1.45}
+\begin{tabular}{l l r r c c}
+\toprule
+case & truth [mm] & identified [mm] & $m$ [kg] & wo\_ff $\times$3 & w\_ff $\times$3 \\
+\midrule
+S1 & $(-6,\,+0)$ & $(-6.01,\,-0.11)$ & 3.066 & \cb\ \cb\ \cb & \cb\ \cb\ \cb \\
+S2 & $(+0,\,+10)$ & $(-0.01,\,+10.00)$ & 3.066 & \cb\ \cb\ \cb & \cb\ \cb\ \cb \\
+S3 & $(+10,\,-5)$ & $(+10.02,\,-5.05)$ & 3.066 & \cb\ \cb\ \cb & \cb\ \cb\ \cb \\
+S4 & $(+20,\,+20)$ & $(+20.19,\,+20.19)$ & 3.066 & \cb\ \cb\ \cb & \cb\ \cb\ \cb \\
+S5 & $(+20,\,-20)$ & $(+20.22,\,-20.16)$ & 3.066 & \cb\ \cb\ \cb & \cb\ \cb\ \cb \\
+S6 & $(-20,\,+20)$ & $(-20.26,\,+20.09)$ & 3.066 & \cb\ \cb\ \cb & \cb\ \cb\ \cb \\
+S7 & $(-20,\,-20)$ & $(-20.21,\,-20.24)$ & 3.066 & \cb\ \cb\ \cb & \cb\ \cb\ \cb \\
+S8 & $(+25,\,+25)$ & $(+25.22,\,+25.20)$ & 3.066 & \cb\ \cb\ \cb & \cb\ \cb\ \cb \\
+S9 & $(+32,\,+32)$ & $(+32.37,\,+32.09)$ & 3.066 & \cb\ \cb\ \cb & \cb\ \cb\ \cb \\
+S11 & $(+38,\,+14)$ & $(+38.13,\,+14.22)$ & 3.066 & \cb\ \cb\ \cb & \cb\ \cb\ \cb \\
+S13 & $(+25,\,+25)$ & $(+25.35,\,+25.23)$ & 3.220 & \cb\ \cb\ \cb & \cb\ \cb\ \cb \\
+\bottomrule
+\end{tabular}
+\medskip
+
+66 flights = 11 cases $\times$ 2 variants $\times$ 3 trials. The identified offsets are the R3 excitation-campaign estimates, frozen in \texttt{analysis/freeflight\_sim\_checklist.py}; the feedforward moments follow as $W\hat{y}$ and $W\hat{x}$.
+\end{document}
