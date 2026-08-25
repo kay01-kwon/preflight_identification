@@ -86,11 +86,16 @@ def evaluate(runs, axis, c2, k, stride=2, known_mass=None):
     est = compute_mass_and_offset(crits, pivots, axis, known_mass=known_mass)
     m_neg = float(np.mean(groups['neg'])) if groups['neg'] else np.nan
     m_pos = float(np.mean(groups['pos'])) if groups['pos'] else np.nan
+    s_neg = float(np.std(groups['neg'])) if groups['neg'] else np.nan
+    s_pos = float(np.std(groups['pos'])) if groups['pos'] else np.nan
     return dict(
         c2=float(c2), k=float(k),
         M_neg=m_neg, M_pos=m_pos,
-        M_neg_std=float(np.std(groups['neg'])) if groups['neg'] else np.nan,
-        M_pos_std=float(np.std(groups['pos'])) if groups['pos'] else np.nan,
+        M_neg_std=s_neg, M_pos_std=s_pos,
+        # the stage-2 calibration objective, so the selection landscape
+        # can be mapped with the same grid sweep as the deliverables
+        score=(s_neg / abs(m_neg) if m_neg else np.nan)
+            + (s_pos / abs(m_pos) if m_pos else np.nan),
         M_ff=est['pair3_ff_mean'],
         com_mm=est['pair3_offset_mean'] * 1e3,
         mass=est['pair3_mass_mean'],
@@ -228,9 +233,15 @@ def main():
         import matplotlib
         matplotlib.use('Agg')
         import matplotlib.pyplot as plt
-        FF = ff.reshape(len(c2s), len(ks))
+        SC = np.array([r['score'] for r in grid_rows]).reshape(len(c2s),
+                                                              len(ks))
         CM = com.reshape(len(c2s), len(ks))
-        panels = [(FF, r'$M_{ff}$ [N·m]', 'viridis'),
+        # the calibration objective first, so the figure reads as an
+        # argument: the score is flat along a ridge (the constants are
+        # loosely determined), and the deliverable is flat there too
+        # (it does not matter)
+        panels = [(SC, r'score $s = \mathrm{CV}_- + \mathrm{CV}_+$',
+                   'magma_r'),
                   (CM, 'CoM offset [mm]', 'viridis')]
         if args.truth_com is not None:
             panels.append((np.abs(CM - args.truth_com),
@@ -238,14 +249,15 @@ def main():
                            'magma_r'))
         fig, axes = plt.subplots(1, len(panels), figsize=(6 * len(panels), 5))
         axes = np.atleast_1d(axes)
-        for ax, (Z, title, cmap) in zip(axes, panels):
+        for n, (ax, (Z, title, cmap)) in enumerate(zip(axes, panels)):
             im = ax.imshow(Z, origin='lower', aspect='auto', cmap=cmap,
                            extent=[ks[0], ks[-1], c2s[0], c2s[-1]])
-            ax.plot(k_ref, c2_ref, 'r*', ms=14, label='reference')
+            ax.plot(k_ref, c2_ref, 'r*', ms=14, label='selected')
             ax.set_xlabel('K'); ax.set_ylabel(r'$C_2$ [rad/s]')
-            ax.set_title(title); ax.legend(loc='upper right')
+            ax.set_title(f'({chr(97 + n)}) {title}')
+            ax.legend(loc='upper right')
             fig.colorbar(im, ax=ax)
-        fig.suptitle(f"Deliverable sensitivity to the rig constants "
+        fig.suptitle(f"Calibration landscape and deliverable sensitivity "
                      f"(axis {args.axis})")
         fig.tight_layout()
         fp = out / f"sensitivity_grid_{args.axis}.png"

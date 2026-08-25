@@ -184,10 +184,14 @@ def main():
         rates = np.array([r['cmd_rate'] for r in rows])
         eps = np.array([r['slope_error_pct'] for r in rows])
         lin = np.array([r['linearity_rmse'] for r in rows]) * 1e3
-        bad = np.abs(eps) > args.gate
+        nwin = np.array([r['n_win'] for r in rows])
+        # the full gate triple, so the figure and the tables agree even
+        # on a dataset where the other two gates do fire
+        bad = np.array([not ok(r) for r in rows])
         jit = rates + np.random.default_rng(0).uniform(-0.012, 0.012, len(rates))
         ur = sorted(set(rates))
-        fig, (a1, a2) = plt.subplots(1, 2, figsize=(12, 4.6))
+        fig, (a1, a2, a3) = plt.subplots(3, 1, figsize=(6.8, 10.2),
+                                         sharex=True)
         a1.axhspan(-args.gate, args.gate, color='tab:green', alpha=0.10,
                    label=f'gate ±{args.gate:.0f}%')
         a1.scatter(jit[~bad], eps[~bad], s=22, c='tab:blue', alpha=0.7,
@@ -197,7 +201,6 @@ def main():
         a1.plot(ur, [np.mean(np.abs(eps[(rates == r) & ~bad])) for r in ur],
                 'k.-', lw=1.5, ms=8, label='mean |ε| (after gate)')
         a1.axhline(0, color='gray', lw=0.6)
-        a1.set_xlabel(r'commanded ramp rate $\dot M$ [N·m/s]')
         a1.set_ylabel('full-window slope error ε [%]')
         a1.set_title('(a) Ramp-rate tracking error')
         a1.legend(fontsize=8)
@@ -206,17 +209,34 @@ def main():
         a2.scatter(jit[bad], lin[bad], s=40, c='tab:red', marker='x')
         a2.plot(ur, [np.mean(lin[(rates == r) & ~bad]) for r in ur],
                 'k.-', lw=1.5, ms=8, label='mean (after gate)')
-        a2.set_xlabel(r'commanded ramp rate $\dot M$ [N·m/s]')
+        a2.axhline(args.linmax * 1e3, color='tab:green', lw=1.2, ls='--',
+                   label=f'gate {args.linmax * 1e3:.0f} mN·m')
         a2.set_ylabel('linearity RMSE [mN·m]')
         a2.set_title('(b) Ramp linearity')
         a2.legend(fontsize=8)
         a2.grid(alpha=0.3)
-        fig.suptitle(f'Hardware ramp execution quality ({len(rows)} runs)',
-                     y=1.02)
+        a3.scatter(jit[~bad], nwin[~bad], s=22, c='tab:blue', alpha=0.7)
+        a3.scatter(jit[bad], nwin[bad], s=40, c='tab:red', marker='x')
+        a3.plot(ur, [np.mean(nwin[(rates == r) & ~bad]) for r in ur],
+                'k.-', lw=1.5, ms=8, label='mean (after gate)')
+        a3.axhline(args.nmin, color='tab:green', lw=1.2, ls='--',
+                   label=f'gate $N_{{full}} \\geq {args.nmin}$')
+        # a slow ramp holds an order of magnitude more samples than a
+        # fast one; on a log axis the gate margin stays readable at both
+        a3.set_yscale('log')
+        a3.set_ylabel(r'$N_{full}$')
+        a3.set_xlabel(r'commanded ramp rate $\dot M$ [N·m/s]')
+        a3.set_title('(c) Window sample count')
+        a3.legend(fontsize=8)
+        a3.grid(alpha=0.3, which='both')
+        # one tick per commanded rate, not matplotlib's rounded grid
+        a3.set_xticks(ur)
+        a3.set_xticklabels([f'{r:g}' for r in ur])
         fig.tight_layout()
-        fp = out / 'ramp_quality_vs_rate.png'
-        fig.savefig(fp, dpi=300, bbox_inches='tight')
-        print(f"Figure → {fp}")
+        for ext, kw in (('png', dict(dpi=300)), ('pdf', {})):
+            fp = out / f'ramp_quality_vs_rate.{ext}'
+            fig.savefig(fp, bbox_inches='tight', **kw)
+            print(f"Figure → {fp}")
 
 
 if __name__ == '__main__':
