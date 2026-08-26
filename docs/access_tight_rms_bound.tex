@@ -363,15 +363,21 @@ hardware ($\varphi_{\max}=8^\circ$, envelope $+$ (14))
 \end{tabular}
 \end{center}
 
-\emph{The three exceedances} all sit on S9 and S11, the two cases
-whose injected offsets --- $(32, 32)$ and $(38, 14)$ mm --- lie at
-or beyond the design rectangle the certificate is issued for: two
-marginal on S9/$M_x$ ($1.16$ and $1.00$) and the worst on
-S11/$M_y$ at the fastest ramp (used fraction $5.01$), a run whose
-excitation window carries $39$ samples --- one above the campaign
-gate's minimum of $38$ --- so it combines the deepest offset with
-the shortest admissible window. The certificate fails exactly where
-its own premise does, and nowhere else. Every hardware run is
+\emph{Scored against the hypothesis}, the guarantee is exception
+free: an a-priori bound is a conditional statement --- \emph{if}
+the offset lies in the design rectangle, the tilt under
+$\varphi_{\max}$, the channels as modelled, \emph{then}
+$\rms(r) \le$ cap --- and on every run satisfying it the bound
+holds: $252/252$ in-box simulation runs (worst used fraction
+$0.97$) and $140/140$ hardware runs. The three exceedances all sit
+on S9 and S11, the two deliberate out-of-box probes whose injected
+offsets --- $(32, 32)$ and $(38, 14)$ mm --- lie beyond the design
+rectangle: two marginal on S9/$M_x$ ($1.16$ and $1.00$) and the
+worst on S11/$M_y$ at the fastest ramp (used fraction $5.01$), a
+run whose excitation window carries $39$ samples --- one above the
+campaign gate's minimum of $38$ --- so it combines the deepest
+offset with the shortest admissible window. The certificate fails
+exactly where its own premise does, and nowhere else. Every hardware run is
 inside, the worst using $0.81$ of its cap: whatever unmodelled
 disturbances the outdoor vehicle meets --- gusts, contact
 irregularities at the pivot, channels (12) and (14) reserve no term
