@@ -535,11 +535,16 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
         # model alone, coarse first, then refine around the coarse
         # minimum at full resolution.  The cost is smooth in the onset
         # (near the optimum it is locally quadratic), so a coarse pass
-        # of ~40 candidates brackets the basin and the fine pass
+        # of ~60 candidates brackets the basin and the fine pass
         # recovers the seeded sweep's resolution -- with no quadratic
-        # (small-angle) model anywhere in the path.
-        lo, hi = 8, max(9, N - 8)
-        coarse = max(step, (hi - lo) // 40)
+        # (small-angle) model anywhere in the path.  The lower edge is
+        # 1, not 8: on short windows (boundary cases at fast ramps)
+        # the true onset sits within the first few samples, and a
+        # floor would push the family away from it.  Only the
+        # post-onset side keeps its 8-sample minimum, which a branch
+        # fit needs.
+        lo, hi = 1, max(2, N - 8)
+        coarse = max(step, (hi - lo) // 60)
         best = _sweep(range(lo, hi, coarse), best)
         j0 = best[1]
         best = _sweep(range(max(lo, j0 - coarse),
