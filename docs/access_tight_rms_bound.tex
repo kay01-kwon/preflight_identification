@@ -1,11 +1,17 @@
 % ---------------------------------------------------------------------
-% The RMS residual bound, written to follow the handwritten derivation
-% line by line.  One operation per step; every substitution displayed.
+% The residual RMS bound, revised: the envelope-witness chain.
+%
+% This document replaces the earlier step-by-step derivation built on
+% the shifted-branch witness and the Dirichlet bound of delta e_omega.
+% That construction survives as a remark (Sec. 8): measured directly,
+% its cap (manuscript (107)) does not cover the realised delta e_omega
+% on the simulation campaign, so the certificate the manuscript
+% actually validates is the simpler and stronger chain derived here.
 %
 % Numbers and figures come from (see the Reproduction section):
-%     python analysis/failing_runs.py       DataSet/exp
-%     python analysis/kernel_free_bound.py  docs/fig_kernel_free.png
-%     python analysis/design_range_chart.py docs/fig_design_range.png
+%     python analysis/sim_envelope_witness.py
+%     python analysis/hw_envelope_witness.py
+%     python analysis/bound_final_figs.py
 % ---------------------------------------------------------------------
 
 \documentclass[10pt]{article}
@@ -13,15 +19,13 @@
 \usepackage{amsmath,amssymb,booktabs,graphicx,array}
 \setlength{\parskip}{0.35em}\setlength{\parindent}{0pt}
 \newcommand{\Mdot}{\dot M}
-\newcommand{\xe}{x_{\mathrm{end}}}
 \newcommand{\rbar}{\bar\rho}
 \newcommand{\rms}{\mathrm{RMS}}
-\newcommand{\dtc}{\delta t_c}
-\newcommand{\de}{\delta e_\omega}
-\title{\vspace{-16mm}\textbf{The residual bound, step by step}\vspace{-3mm}}
-\date{\small figures \texttt{fig\_kernel\_free.png},
-\texttt{fig\_design\_range.png}; scripts listed in the Reproduction
-section}
+\newcommand{\Wz}{W\!z_{CoM}}
+\title{\vspace{-16mm}\textbf{The residual RMS bound, revised:\\
+the envelope-witness chain}\vspace{-3mm}}
+\date{\small figures \texttt{fig\_bound\_final\_sim},
+\texttt{fig\_bound\_final\_hw}; scripts in the Reproduction section}
 \begin{document}\maketitle
 
 \section*{Symbols}
@@ -30,1581 +34,393 @@ section}
 \begin{tabular}{@{}>{$}l<{$}l@{\qquad}>{$}l<{$}l@{}}
 \toprule
 \tau,\ \tau_{\rm end} & time since onset; window end &
-  \xe  & $= C_2\tau_{\rm end}$, dimensionless window\\
+  x & $= C_2\tau_{\rm end}$, dimensionless window\\
 y_i & measured rate at $\tau_i$ &
-  N & number of samples in the window\\
+  N_s & number of samples in the window\\
 C_1, C_2 & nominal amplitude $K\Mdot$ and exponent &
-  K,\ \Mdot & calibrated gain; ramp rate\\
+  K,\ \Mdot & gain $1/\Wz$; ramp rate\\
 W,\ z_{CoM},\ J_P & weight, CoM height, pivot inertia &
-  Wz_{CoM} & $= J_PC_2^2$ (the identity)\\
+  \Wz & $= J_PC_2^2$ (the identity)\\
+\omega_{\rm nom} & nominal rate $C_1(\cosh C_2\tau - 1)$ &
+  t_{\rm on} & realised onset time\\
 e_\omega(\tau) & true rate minus the nominal &
-  b,\ n & gyro bias; disturbance\\
-C & fitted baseline (pre-onset median) &
-  r_i & residual $y_i - \hat\omega_i$\\
-\dtc,\ \beta & onset shift of the witness branch; its &
-  \de & what the shift cannot absorb\\
- & \ sinh coefficient, $\tanh(C_2\dtc) = -\beta/C_1$ & & \\
+  b,\ n_i & gyro bias; noise sample\\
+\hat h(\cdot\,;\theta) & fitted family member &
+  \theta & $(C_1^*, C_2^*, t^*, C)$, all free\\
+r_i & residual $y_i - \hat h(\tau_i;\hat\theta)$ &
+  E(\tau) & envelope $\rbar K C_2\sinh(C_2\tau)$\\
 \rho(s) & deviation forcing (small-angle $+$ GE) &
-  \rbar & window average bound on $\rho$, eq.\ (91)\\
-\dot\rho & its time derivative &
-  \varphi_{\max} & $5^\circ$ excitation tilt cap\\
-\omega_{\max} & end-rate anchor, eq.\ (16) block &
-  l_{\rm arm},\ \beta_M & pivot arm; GE coefficient\\
-\Delta M_{\rm win} & in-window moment excursion &
-  E(\tau) & envelope $\rbar\sinh(C_2\tau)/(J_PC_2)$, eq.\ (90)\\
+  \rbar & window bound on $|\rho|$, eq.\ (12)\\
+B(x) & $\tfrac14\sinh 2x - \tfrac{x}{2}
+       \ \big(=\int_0^x\sinh^2 u\,du\big)$ &
+  \varphi_{\max} & design tilt cap ($5^\circ$ sim, $8^\circ$ hw)\\
+l_{\rm arm},\ \beta_M & pivot arm; GE coefficient &
+  \Delta M_{\rm win} & in-window moment sweep $\Mdot x/C_2$\\
 n_{\rm hi} & residual content above $5$ Hz &
-  \kappa_q,\ s_{\rm med} & quiet-window shape ratio; median\\
-\hat n & noise estimate, Sec.~6 & & \ in-window enhancement ($1.60$)\\
-N_n & noise constant $3N_{\rm med} = 2.31^\circ$/s &
-  N_{\rm med} & median SG anchor, eq.\ (19b)\\
+  \kappa_b & quiet-segment band ratio ($1.31$)\\
+\sigma_n & declared sim gyro std, $2.450\times10^{-4}$ rad/s & & \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-\section{The measurement and the fit}
+\section{The claim}
 
-The record in the window and the fitted model are
-\begin{align}
-  y_i &= C_1\big(\cosh(C_2\tau_i)-1\big) + e_\omega(\tau_i) + b + n_i,
-  \tag{1}\\
-  \hat\omega_i &= C_1^*\big(\cosh(C_2^*(\tau_i-\dtc^*))-1\big) + C,
-  \tag{2}
-\end{align}
-and on the pre-onset segment the baseline matches the bias,
-\begin{equation}
-  C \approx b.
-  \tag{3}
-\end{equation}
-
-\section{The residual, and what the shift absorbs}
-
-Subtracting (2) from (1) with (3),
-\begin{equation}
-  r_i \;=\; y_i - \hat\omega_i
-  \;=\; \underbrace{C_1\big(\cosh(C_2\tau_i)-1\big)
-        + e_\omega(\tau_i)}_{\text{to be absorbed}}
-  \;-\; C_1^*\big(\cosh(C_2^*(\tau_i-\dtc^*))-1\big) \;+\; n_i .
-  \tag{4}
-\end{equation}
-The question is how much of the braced part a member of the family
-can match. Why a $\sinh$ term, of all shapes? Two facts meet. First,
-$e_\omega$ \emph{grows} like $\sinh$: its envelope (90) is
-$E(\tau) \propto \sinh(C_2\tau)$, because the deviation rides the
-instability's own growing mode --- so peeling off a $\sinh$ multiple
-targets the dominant part of the error. Second, $\sinh$ is exactly
-what the family can absorb: it is the tangent direction of the onset
-shift, $\partial_{\dtc}\,C_1(\cosh(C_2(\tau-\dtc))-1)\big|_{0} =
--C_1C_2\sinh(C_2\tau)$, so adding $\beta\sinh$ lands inside the
-family (made exact in (6)--(7)). Had the envelope been, say,
-$\tau^2$-shaped, subtracting $\beta\tau^2$ would target the error
-just as well and help not at all --- the family could not represent
-it. The coincidence of the two --- the error's dominant shape
-\emph{is} the direction the fit can absorb --- is the entire reason
-the measured residuals sit flat. Add and subtract that one $\sinh$
-term --- this \emph{defines} $\de$, and the equality holds at every
-$\tau$, both window ends included:
-\begin{equation}
-  C_1\big(\cosh(C_2\tau)-1\big) + e_\omega(\tau)
-  \;=\;
-  \underbrace{C_1\big(\cosh(C_2\tau)-1\big)
-   + \beta\sinh(C_2\tau)}_{\hat h(\tau),\ \text{the witness}}
-  \;+\;\de(\tau).
-  \tag{5}
-\end{equation}
-The witness is a member of the family in disguise. With the addition
-identity
-\begin{equation}
-  \cosh\big(C_2(\tau-\dtc)\big)
-  = \cosh(C_2\dtc)\cosh(C_2\tau) - \sinh(C_2\dtc)\sinh(C_2\tau),
-  \tag{6}
-\end{equation}
-matching the $\cosh$ and $\sinh$ coefficients
-[$R\cosh(C_2\dtc) = C_1$, $-R\sinh(C_2\dtc) = \beta$] gives,
-\emph{exactly},
-\begin{equation}
-  \hat h(\tau)
-  = R\big(\cosh(C_2(\tau-\dtc))-1\big) + (R-C_1),
-  \qquad
-  R = \sqrt{C_1^2-\beta^2},
-  \quad
-  \tanh(C_2\dtc) = -\beta/C_1 ,
-  \tag{7}
-\end{equation}
-a branch with amplitude $R$, onset $\dtc$, and a baseline offset
-$R-C_1$ --- three numbers, all inside the family's freedoms in (2)
-(the offset is absorbed by $C$: the witness's baseline slot carries
-$b + (R-C_1)$, not $b$ alone, and the ``$\approx$'' of (3) is exactly
-this second-order constant; what it costs, and on which segment it
-lands, is settled in the remark closing the pre-onset section). On
-the campaign
-$\beta/C_1 \le 0.023$, so the amplitude and baseline adjustments are
-second order ($|R/C_1-1| \le 0.03\%$); the shift carries the
-first-order content. The remainder is
-\begin{equation}
-  \de(\tau) \;=\; e_\omega(\tau) - \beta\sinh(C_2\tau).
-  \tag{8}
-\end{equation}
-
-\section{Choosing the shift: match the true curve at the window end}
-
-One free number, $\dtc$ (equivalently $\beta$), and one choice: make
-the shifted branch meet the true curve at $\tau_{\rm end}$. Setting
-$\de(\tau_{\rm end}) = 0$ in (8),
-\begin{equation}
-  \beta \;=\; \frac{e_\omega(\tau_{\rm end})}{\sinh(C_2\tau_{\rm end})},
-  \qquad
-  \dtc \;=\; -\frac{1}{C_2}\,
-  \operatorname{artanh}\!\Big(\frac{\beta}{C_1}\Big)
-  \;\approx\; -\frac{e_\omega(\tau_{\rm end})}
-  {C_1C_2\sinh(C_2\tau_{\rm end})} .
-  \tag{9}
-\end{equation}
-Since $e_\omega > 0$ (the true curve rises faster than the nominal),
-$\dtc < 0$: the branch starts \emph{earlier} than the true onset. On
-the campaign $\beta/C_1 = 0.010$--$0.023$, i.e.\ $|\dtc| = 2$--$4$
-ms.
-
-\emph{Admissibility --- why $|\beta| < C_1$ is guaranteed.} (7)
-needs $R$ real, i.e.\ $|\beta| < C_1$; otherwise the witness is not
-a cosh branch at all. This is provable, not assumed: the envelope (90)
-gives $|e_\omega(\tau_{\rm end})| \le
-\rbar\sinh(C_2\tau_{\rm end})/(J_PC_2)$, so
-$|\beta| \le \rbar/(J_PC_2)$, and dividing by $C_1 = \Mdot/Wz_{CoM}$
-with the identity $J_PC_2^2 = Wz_{CoM}$,
-\begin{equation}
-  \frac{|\beta|}{C_1} \;\le\; \frac{\rbar\,C_2}{\Mdot}
-  \;\triangleq\; u .
-  \tag{9a}
-\end{equation}
-So $|\beta| < C_1$ holds whenever $\rbar < \Mdot/C_2$ ---
-\emph{the ramp must sweep more moment in one e-folding time $1/C_2$
-of the instability than the window-averaged remainder}. (An
-\emph{e-folding} is the natural unit of an exponential process: the
-interval over which $e^{C_2\tau}$ grows by a factor $e$, i.e.\
-$1/C_2 \approx 0.2$ s here --- the base-$e$ analogue of a half-life.
-$\xe  = C_2\tau_{\rm end}$ counts how many such units the window spans;
-this document measures time in $1/C_2$ throughout, because in that
-unit the same formulas give the same numbers for every vehicle and
-ramp rate.) A protocol
-that violated this would have its excitation comparable to the model
-error it is meant to dominate, so any meaningful design satisfies it
-with room: $u \le 0.16$ at the campaign's slowest ramp, $\le 0.14$
-at the worst design-box corner of Sec.~9. The deviation itself sits
-well inside: on the exact nonlinear solution
-$e_\omega(\tau_{\rm end}) \le 0.29\,E(\tau_{\rm end})$ at every rate.
-(The \emph{fitted} $\beta/C_1 = 0.010$--$0.023$ carries noise-driven
-scatter on top of the $e_\omega$ part, so it is not the quantity the
-envelope governs run by run --- but either number is two orders below
-the admissibility limit $1$.)
-The same $u$ is the argument of the artanh in (21)'s ceiling: one
-dimensionless number controls both the witness's admissibility and
-how far the shift ceiling sits above its small-$u$ limit $\rbar$.
-
-\emph{What if $u \ge 1$ --- ramps slower than $\rbar C_2$.} Three
-things, in decreasing order of certainty. (i) Only the \emph{a priori}
-guarantee is lost: (9a) is sufficient, not necessary, so the witness
-may well still be admissible --- the realised $\beta/C_1$ sits some
-thirty times below the envelope ceiling on the campaign --- but
-nothing proves it before the experiment any more. (ii) If
-$|\beta| \ge C_1$ did occur, the combination
-$C_1\cosh(C_2\tau) + \beta\sinh(C_2\tau)$ is no longer a cosh branch:
-it equals $\sqrt{\beta^2 - C_1^2}\,\sinh\!\big(C_2\tau + \varphi\big)$
-(a pure exponential at $|\beta| = C_1$), and no real time shift of the
-family (2) draws a sinh-type curve. Step (10) then has no admissible
-competitor to hand to the minimiser, and the cap loses its proof ---
-even though the Dirichlet bound (11)--(17) on
-$e_\omega - \beta\sinh(C_2\tau)$ itself survives, since it never used
-admissibility. Moving the matching point earlier does not rescue it:
-the envelope of $e_\omega$ and $\sinh(C_2\tau)$ grow in the same
-ratio, so the required $\beta$ ceiling is the same at every matching
-point. (iii) Physically, $\Mdot < \rbar C_2$ says the moment swept in
-one e-folding of the instability no longer dominates the model
-remainder --- the identification concept itself, not just its
-certificate, is degrading; the campaign's slowest ramp runs at
-$u \le 0.16$, comfortably inside. Numerically, $u = 1$ is reached at
-$\Mdot = \rbar C_2 \approx 0.016$ N\,m/s for the campaign vehicle and
-at $\Mdot = 0.015$ N\,m/s at the worst design-box corner of Sec.~9
-($m = 3.22$ kg, arm $0.160$ m); a hypothetical $\Mdot = 0.01$ N\,m/s
-ramp would have $u \approx 1.5$. So (9a) doubles as an analytical
-\emph{lower} rate limit for the protocol,
-$\Mdot > \rbar C_2 \approx 0.015$ N\,m/s --- a factor $\sim$$7$ below
-the slowest campaign rate --- complementing the allocator-saturation
-\emph{upper} limit on $\Mdot$. In practice the logic runs forward, and this is the
-intended reading: the guarantee fails \emph{only} there, and since
-$\rbar$ and $C_2$ need nothing but the coarse design-box ranges known
-before any experiment, one computes the box-worst
-$\rbar C_2 = 0.015$ N\,m/s in closed form first and then schedules
-the ramp rates above that floor with margin --- the campaign's
-$\Mdot \ge 0.10$ N\,m/s is a factor $\approx 6.6$ above it, giving
-$u \le 0.14$ everywhere in the box.
-
-\emph{Could the family be composed so the problem never arises?}
-Partly, and where it splits is instructive. Replace the shifted-cosh
-family (2) by its linear span, fitting
-$\hat\omega = A(\cosh C_2\tau - 1) + B\sinh C_2\tau + C$: the witness
-$\omega_{\rm nom} + \beta\sinh(C_2\tau)$ is then a member for
-\emph{every} $\beta$ (take $A = C_1$, $B = \beta$, $C = b$), so the
-argmin step (10) holds unconditionally and admissibility disappears
-from the residual cap altogether. The added column is no stranger:
-$\sinh$ is exactly the tangent direction of the time shift
-($\partial_{\dtc}$ of the branch at $\dtc = 0$ is $-C_1C_2\sinh$,
-Appendix~A.2), so this is the linearised version of the same
-estimator. The cost is one more degree of freedom in the noise term
-(minor) and a near-collinear pair of columns --- $\cosh-1$ and
-$\sinh$ agree to $O(e^{-2\xe})$ at the window end --- so the residual
-stays clean while the individual coefficients $A, B$ get noisy: the
-ridge of Sec.~4, resurfacing as conditioning. What \emph{cannot} be
-designed away is the readout. Converting $(A,B)$ back into an onset
-time needs $R = \sqrt{A^2 - B^2}$ real, i.e.\ $|B| < A$ --- the very
-same condition, now appearing where it belongs. $u < 1$ is not an
-artifact of the cosh parametrisation; it is the statement that the
-data actually describes a delayed cosh onset rather than a sinh-type
-curve, and no reparametrisation makes data interpretable that is not.
-The practical split: the linear family buys an \emph{unconditional}
-residual cap, and $u < 1$ then governs only whether the fitted curve
-has a physical onset to read off.
-
-Then, because the minimiser in (2) is at least as good as this one
-particular shifted branch,
+For every run of both campaigns, with every quantity on the right
+computable before the experiment except the hardware vibration
+amplitude $n_{\rm hi}$ (read from the run's own out-of-band content),
 \begin{equation}
   \boxed{\;
-  \sum_{i=1}^{N} r_i^2
-  \;\le\; \sum_{i=1}^{N}\big(\de(\tau_i) + n_i\big)^2
-  \quad\Longrightarrow\quad
-  \rms(r) \;\le\; \rms(\de) + \rms(n) . \;}
+  \rms(r)
+  \;\le\; \rms(e_\omega) + \rms(n)
+  \;\le\; \rbar K C_2\sqrt{\tfrac{B(x)}{x}} \;+\; N .
+  \;}
+  \tag{1}
+\end{equation}
+$\rms(r)$ is the full-window RMS of the deployed PNLS fit's residual
+--- the fit exactly as it runs in the pipeline, both shape constants
+and the onset free, no calibration anywhere. $N$ is the noise term of
+Sec.~6: negligible ($\sigma_n = 0.014^\circ$/s) in simulation, the
+measured vibration term $n_{\rm hi}\sqrt{1+\kappa_b^2}$ on hardware.
+The two inequalities have entirely different characters and are
+proved separately: the first is an optimisation triviality (Sec.~3),
+the second is the physics (Sec.~4). Validation: $301/308$ simulation
+runs and $134/140$ hardware runs inside, with every exceedance
+located and explained (Sec.~7).
+
+\section{The measurement and the family}
+
+In the excitation window the record is
+\begin{equation}
+  y_i \;=\; \omega_{\rm nom}(\tau_i) + e_\omega(\tau_i) + b + n_i,
+  \qquad
+  \omega_{\rm nom}(\tau) =
+  \begin{cases}
+    C_1\big(\cosh(C_2\tau) - 1\big), & \tau \ge 0,\\[1pt]
+    0, & \tau < 0,
+  \end{cases}
+  \tag{2}
+\end{equation}
+with $\tau$ counted from the \emph{realised} onset $t_{\rm on}$: the
+instant the restoring moment actually reverses at the vehicle,
+wherever the actuation chain put it relative to the commanded ramp
+clock. The deviation $e_\omega = y - b - n - \omega_{\rm nom}$
+collects everything the small-angle model omits --- trigonometric
+remainders, ground effect --- and vanishes identically before the
+onset.
+
+The estimator fits the four-parameter family
+\begin{equation}
+  \hat h(\tau;\theta)
+  \;=\; C_1^*\big(\cosh(C_2^*(\tau - t^*)) - 1\big)\,
+        \mathbf 1[\tau \ge t^*] \;+\; C,
+  \qquad
+  \theta = (C_1^*,\ C_2^*,\ t^*,\ C),
+  \tag{3}
+\end{equation}
+by least squares over the full window,
+$\hat\theta = \arg\min_\theta \sum_i \big(y_i -
+\hat h(\tau_i;\theta)\big)^2$, and
+$r_i = y_i - \hat h(\tau_i;\hat\theta)$.
+
+\section{The first inequality: why the bound lands on $e_\omega$}
+
+The point of this section is one sentence: \emph{the nominal solution
+is itself a member of the fitted family, so the fit cannot lose to
+it.} Take the particular parameter vector
+\begin{equation}
+  \theta_0 \;=\; (C_1,\ C_2,\ t_{\rm on},\ b)
+  \qquad\Longrightarrow\qquad
+  \hat h(\tau;\theta_0) \;=\; \omega_{\rm nom}(\tau) + b .
+  \tag{4}
+\end{equation}
+Nothing in (3) forbids this choice: the amplitude slot takes $C_1$,
+the exponent slot $C_2$, the onset slot the realised $t_{\rm on}$,
+the baseline slot the bias. $\theta_0$ is called the \emph{witness}:
+not the minimiser, not a good fit, merely one admissible competitor
+whose residual can be computed exactly. A minimum is bounded by the
+value at any feasible point, so
+\begin{equation}
+  \sum_i r_i^2
+  \;=\; \min_\theta \sum_i \big(y_i - \hat h(\tau_i;\theta)\big)^2
+  \;\le\; \sum_i \big(y_i - \hat h(\tau_i;\theta_0)\big)^2
+  \;=\; \sum_i \big(e_\omega(\tau_i) + n_i\big)^2 ,
+  \tag{5}
+\end{equation}
+where the last equality is (2) minus (4). Dividing by $N_s$ and
+taking the square root, then splitting by the triangle inequality in
+the sample $\ell^2$ norm,
+\begin{equation}
+  \rms(r) \;\le\; \rms(e_\omega + n)
+  \;\le\; \rms(e_\omega) + \rms(n) .
+  \tag{6}
+\end{equation}
+That is the whole proof. Four remarks fix its scope.
+
+\emph{(i) What is and is not claimed about the minimiser.} (5) does
+not say the fit finds the nominal, or anything close to it: the
+minimiser wanders wherever the data pulls it (the amplitude--onset
+ridge of the earlier analysis is real). The inequality runs one way
+only --- the fit does \emph{at least as well} as the nominal --- and
+one way is all a residual \emph{upper} bound needs. The measured
+residuals sitting far below the cap (median used fraction
+$0.47$--$0.48$ on both campaigns) is the minimiser exploiting
+freedoms the witness does not use. Geometrically: the measured curve
+lies between the nominal and the nominal-plus-envelope, and the
+fitted curve, free to move, lands at least as close to the
+measurement as the lower edge of that corridor --- so the fit's
+residual is capped by the corridor's width, which is exactly
+$\rms(E)$.
+
+\emph{(ii) No admissibility condition.} The earlier draft's witness
+was the nominal \emph{plus} a $\beta\sinh$ correction, folded back
+into the family through a time shift --- legitimate only while
+$|\beta| < C_1$, which dragged the dimensionless ratio
+$u = \rbar C_2/\Mdot$ and a lower ramp-rate limit into the
+certificate. The witness (4) is the nominal itself, a family member
+by construction, unconditionally. The $u < 1$ discussion survives
+only where it always belonged: whether a \emph{fitted} branch has a
+physical onset to read off, not whether the residual is capped.
+
+\emph{(iii) The onset freedom absorbs pure delay.} Every transport
+and actuation lag between the commanded ramp and the vehicle shifts
+$t_{\rm on}$, and nothing else: the tip-over dynamics start when the
+moment balance reverses at the vehicle, and carry no memory of the
+command clock. Because $t^*$ is free in (3), the witness uses the
+realised onset, and $e_\omega$ --- defined \emph{against the
+realised-onset nominal} --- obeys the deviation dynamics of Sec.~4
+regardless of the delay's size. This is why no latency channel
+appears anywhere in (1): a pure delay is invisible to the chain. (A
+delay that \emph{distorts} the ramp within the window is not pure
+and lands in $\rho$; the measured achieved-moment ramps are straight
+to $3\%$, and the antisymmetric part cancels in the direction-pair
+half-sum.)
+
+\emph{(iv) Full window against post-onset window.} $\rms(r)$ is
+reported over the full window (pre-onset segment included), while
+the envelope of Sec.~4 lives on the post-onset segment. The
+directions compose correctly: $e_\omega \equiv 0$ and
+$\hat h(\cdot;\theta_0) = b$ before the onset, so the pre-onset
+segment contributes only noise to the witness's residual, and
+\begin{equation}
+  \rms_{\rm full}(e_\omega)
+  = \sqrt{\tfrac{T_{\rm post}}{T_{\rm full}}}\;
+    \rms_{\rm post}(e_\omega)
+  \;\le\; \rms_{\rm post}(e_\omega) ,
+  \tag{7}
+\end{equation}
+so bounding the post-onset RMS bounds the reported quantity a
+fortiori.
+
+\section{The second inequality: the envelope and its window RMS}
+
+The deviation obeys the manuscript's forced tip-over equation
+((89) there): with $e_\varphi$ the tilt deviation,
+$e_\omega = \dot e_\varphi$,
+\begin{equation}
+  J_P\,\ddot e_\varphi \;=\; \Wz\, e_\varphi \;+\; \rho(\tau),
+  \qquad e_\varphi(0) = \dot e_\varphi(0) = 0,
+  \qquad |\rho(s)| \le \rbar \ \ \text{on } [0, \tau_{\rm end}].
+  \tag{8}
+\end{equation}
+Duhamel with the hyperbolic kernel and one differentiation gives
+\begin{equation}
+  e_\omega(\tau) \;=\; \frac{1}{J_P}\int_0^\tau
+  \cosh\big(C_2(\tau - s)\big)\,\rho(s)\,ds ;
+  \tag{9}
+\end{equation}
+bounding $\rho$ by $\rbar$ and integrating the kernel,
+\begin{equation}
+  |e_\omega(\tau)| \;\le\;
+  \frac{\rbar}{J_PC_2}\,\sinh(C_2\tau)
+  \;=\; \rbar K C_2 \sinh(C_2\tau)
+  \;\triangleq\; E(\tau),
   \tag{10}
 \end{equation}
-Everything now rests on one question: \textbf{how big is $\de$?}
-
-\section{In exactly what sense the true curve is a time-shifted
-nominal}
-
-The ansatz of (5) deserves a precise statement, because ``the true
-model is the nominal, time-shifted'' is true in one sense, exactly, and
-false in another, and the gap between the two \emph{is} $\de$.
-
-\emph{The local (osculating) sense --- exact at every instant.}
-Splitting the manuscript's Duhamel kernel (89) with the addition
-identity gives the deviation two running coefficients,
+the manuscript's envelope (90); the identity $KC_2 = 1/(J_PC_2)$
+follows from $K = 1/\Wz$ and $\Wz = J_PC_2^2$. A pointwise bound
+gives an RMS bound by integration: with $u = C_2\tau$ and
+$x = C_2\tau_{\rm end}$,
 \begin{equation}
-  e_\omega(\tau) = A(\tau)\cosh(C_2\tau) - B(\tau)\sinh(C_2\tau),
-  \quad
-  A = \frac1{J_P}\!\int_0^\tau\!\cosh(C_2 s)\rho\,ds,
-  \quad
-  B = \frac1{J_P}\!\int_0^\tau\!\sinh(C_2 s)\rho\,ds,
-  \tag{10a}
-\end{equation}
-so the true structural curve is
-$(C_1{+}A)\cosh(C_2\tau) - B\sinh(C_2\tau) - C_1$. Freezing the
-coefficients at an instant $\tau$ and applying the shift identity (6)
-backwards, the curve agrees there --- in value \emph{and} slope ---
-with exactly one branch, the \emph{osculating branch}, whose
-parameters are
-\begin{equation}
-  R(\tau) = \sqrt{\big(C_1{+}A(\tau)\big)^2 - B(\tau)^2},
+  \rms_{\rm post}(e_\omega)
+  \;\le\;
+  \rbar K C_2
+  \sqrt{\frac{1}{x}\int_0^{x}\sinh^2 u \, du}
+  \;=\;
+  \rbar K C_2\,\sqrt{\frac{B(x)}{x}},
   \qquad
-  \tanh\!\big(C_2\,\delta t_{\rm loc}(\tau)\big)
-  = \frac{B(\tau)}{C_1 + A(\tau)} .
-  \tag{10b}
-\end{equation}
-At the onset $A = B = 0$, so $R = C_1$ and $\delta t_{\rm loc} = 0$:
-\textbf{the true curve starts as the nominal, exactly.} As the window
-progresses the osculating parameters drift monotonically (measured on
-the exact tip-over: $\delta t_{\rm loc} = 0$ at the onset, still only
-$2.5$/$0.4$/$0.1$ ms at mid-window for $\Mdot = 0.10$/$0.45$/$1.20$,
-then $546$/$239$/$85$ ms at the window end, with
-$R(\tau_{\rm end})/C_1 = 13.0$/$3.1$/$1.5$). The late blow-up is
-structural: $e_\omega$'s tail grows like $e^{2C_2\tau}$, faster than
-any branch, so the branch that hugs it must run away in amplitude and
-shift together --- and those two parameters are ridge-degenerate,
-wildly different $(R, \delta t)$ pairs drawing nearly the same curve
-over the window. This is the same degeneracy that makes
-$(C_1^*, C_2^*, \dtc^*)$ unidentifiable from the residual.
-
-\emph{The window ($L^2$) sense --- the estimator's sense.} No single
-branch can follow the drifting profile (10b); a fit must pick one
-point of it. The least-squares stationarity
-$\langle r, \sinh\rangle = 0$ weights the choice by $\sinh^2(C_2\tau)$,
-which concentrates $63\%$ of its mass in the last e-folding
-$1/(2C_2) \approx 90$--$140$ ms of the window ($86\%$ in the last
-two), so the fitted single shift is essentially the end-matching one
-of (9) --- and it is \emph{small}: $\beta/C_1 = 1.0$--$2.3\%$, i.e.\
-$|\dtc| = 2$--$4$ ms on the campaign. In this sense the true curve
-\emph{is} a slightly-shifted nominal: one branch, shifted by
-milliseconds, matches it over the whole window up to exactly $\de$ ---
-which vanishes at both ends and sags mid-window where the drifting
-profile is farthest from its end value. That sag is what (11)--(17)
-bound.
-
-One sign remark connects the two senses. The osculating description
-carries a \emph{larger} amplitude with a \emph{later} onset
-($\delta t_{\rm loc} > 0$); the witness of (9) carries the nominal
-amplitude with an \emph{earlier} onset ($\dtc < 0$). Along the ridge
-these describe nearly the same curve --- larger-and-later
-$\approx$ same-and-earlier --- and the deployed estimator, whose
-amplitude is pinned to $K\Mdot$, realises the earlier-onset
-representative: the sign observed on the campaign, and the sign whose
-$M_{\rm crit}$ cost (21) charges.
-
-\emph{Remark --- a perfect fit at all $N$ samples is impossible, and
-that is not a defect of the fit.} Two reasons, one counting and one
-dynamical. Counting: a branch has four free numbers
-$(C_1^*, C_2^*, \dtc^*, C)$, so it can be made to pass through at most
-four chosen samples; the other $N-4$ dimensions of the sample space
-are out of its reach, and $e_\omega$ has components there. Dynamical,
-and stronger: if a branch agreed with the true curve on any
-subinterval, then $\de \equiv 0$ there, and (13) would force
-$\dot\rho \equiv 0$ on that subinterval --- the true curve solves the
-\emph{forced} equation, the branches solve the homogeneous one, and
-they can coincide on an interval only where the forcing vanishes.
-Exact agreement at $\tau_1, \dots, \tau_N$ is therefore not
-``difficult''; for $\dot\rho \not\equiv 0$ it is unattainable in
-principle.
-
-This is why the section's claim is framed as it is. ``The true curve
-is a time-shifted nominal'' cannot be asserted exactly; asserted with
-the remainder, it \emph{cannot be wrong}: eq.\ (5) is an identity ---
-$\de$ is defined as whatever the shifted branch misses --- and the
-entire scientific content lives in one place, the bound (17) on that
-remainder. The structure is that of Taylor's theorem: ``$f$ is
-approximately a polynomial'' is a hope, ``$f$ equals the polynomial
-plus a remainder obeying a stated bound'' is a theorem. Here the
-remainder is $0.16$--$0.17^\circ$/s realised, capped by (17) at
-$0.5$--$0.9^\circ$/s from pre-experiment constants, and located ---
-zero at both ends, sagging mid-window --- so the imperfection of the
-time-shift description is quantified in size, ceiling and shape.
-
-The same statement has a clean linear-algebra reading: the model
-family is a four-parameter manifold in the $N$-dimensional sample
-space, the true record carries a component transverse to it that no
-choice of parameters can reach, and $\de$ is exactly that transverse
-coordinate --- introduced so that the description becomes an identity
-rather than an approximation. The Appendix makes this picture precise
-and connects it to the manuscript's projector formalism.
-
-\section{How big is $\de$: two boundary zeros and one comparison}
-
-\emph{Step 1 --- $\de$ vanishes at both ends.} At $\tau = 0$:
-$e_\omega(0) = 0$ (the deviation starts at rest) and $\sinh(0) = 0$,
-so $\de(0) = 0$. At $\tau = \tau_{\rm end}$: zero by the choice (9).
-\begin{equation}
-  \de(0) \;=\; \de(\tau_{\rm end}) \;=\; 0 .
+  B(x) = \frac{\sinh 2x}{4} - \frac{x}{2},
   \tag{11}
 \end{equation}
+$B$ by the double-angle identity
+$\sinh^2 u = \tfrac12(\cosh 2u - 1)$. The factor $\sqrt{B(x)/x}$ is
+simply the window RMS of the shape $\sinh(C_2\tau)$:
+$\approx x/\sqrt3$ for small windows,
+$\approx e^{x}/(2\sqrt{2x})$ for long ones --- the price of the
+instability's growing mode, paid honestly rather than absorbed by a
+fitted term.
 
-\emph{Step 2 --- the equation $\de$ obeys.} The deviation dynamics of
-the manuscript are $J_P\ddot e_\varphi = Wz_{CoM}\,e_\varphi + \rho$
-with $e_\omega = \dot e_\varphi$. Differentiating once and using
-$Wz_{CoM} = J_PC_2^2$,
+\section{The forcing bound $\rbar$ and the design tilt cap}
+
+The channels are the manuscript's (91), window-averaged with its
+reduction factors $R_\varphi = 1/7$ and $R_{GE} = 1/5$:
 \begin{equation}
-  \ddot e_\omega \;=\; C_2^2\,e_\omega + \dot\rho/J_P .
+  \rbar \;=\;
+  R_\varphi\cdot\tfrac12\,W l_{\rm arm}\,\varphi_{\max}^2
+  \;+\;
+  R_{GE}\cdot|\beta_M|\,\Delta M_{\rm win}\,\varphi_{\max},
   \tag{12}
 \end{equation}
-$\sinh(C_2\tau)$ satisfies $(\sinh)'' = C_2^2\sinh$ --- it is a
-solution of the same equation with zero forcing --- so subtracting
-$\beta\sinh$ changes nothing on the right side:
+with the window quantities set a priori per ramp rate --- the nominal
+tilt reaches the cap when
 \begin{equation}
-  \ddot{\de} \;=\; C_2^2\,\de + \dot\rho/J_P ,
-  \qquad \de(0)=\de(\tau_{\rm end})=0 .
+  \sinh x - x \;=\; \frac{\varphi_{\max}\,\Wz\,C_2}{\Mdot},
+  \qquad
+  \Delta M_{\rm win} = \frac{\Mdot\,x}{C_2},
   \tag{13}
 \end{equation}
+solved once per rate before any run. The simulator models no ground
+effect, so its $\rbar$ carries the first term alone, with the
+per-case arm $l_{\rm arm} = l_p + p_{\rm off}$, $z_{CoM} = 0.272$ m,
+and $J_P = J^{\rm CAD} + m(z_{CoM}^2 + l_p^2)$; hardware uses the
+design box of Sec.~VI-D ($z_{CoM} = 0.30$ m, arms $0.160/0.130$ m,
+$|\beta_M| = 0.0345$).
 
-\emph{Step 3 --- comparison (this is the whole proof).} Let
-$\bar f(\tau) \ge |\dot\rho(\tau)|$ and let $w$ solve the same problem
-with forcing $-\bar f$:
+$\varphi_{\max}$ is not a tuning knob: (10) holds on the window only
+while the trajectory stays inside the box on which (12) bounds
+$\rho$, so \emph{the cap must dominate the realised in-window tilt},
+and its value is set by each campaign's own geometry. In simulation
+the gate stops the window near $4^\circ$ realised tilt:
+$\varphi_{\max} = 5^\circ$. On hardware the slightly uneven ground of
+the test site lets the in-window tilt rise reach $7.66^\circ$
+(median $4.82^\circ$, quaternion-measured across all $140$ runs):
+$\varphi_{\max} = 8^\circ$. Every appearance of $\varphi_{\max}$ in
+(12)--(13) is monotone, so a cap that dominates the realised tilt
+only over-covers.
+
+\section{The noise term $N$}
+
+$\rms(n)$ in (6) is whatever the sensor adds that the physics does
+not produce.
+
+\emph{Simulation.} The declared sensor model: additive Gaussian rate
+noise of standard deviation $\sigma_n = 2.450\times10^{-4}$ rad/s
+$= 0.014^\circ$/s. This sits an order of magnitude below the
+smallest envelope value on the campaign, so the validation figure
+carries the envelope alone; including $\sigma_n$ changes no count.
+
+\emph{Hardware.} The vehicle vibrates under its running rotors, and
+no pre-experiment model of that channel exists, so its amplitude is
+the one measured input of the chain: per run, $n_{\rm hi}$ is the
+RMS of the residual's content above $5$ Hz --- a band the family
+cannot occupy, since its fastest structural scale is
+$C_2/2\pi \approx 0.8$ Hz --- extended to the full band by the
+campaign constant $\kappa_b = 1.31$, the below-$5$-Hz to
+above-$5$-Hz vibration ratio measured on quiet segments outside
+every excitation window:
 \begin{equation}
-  \ddot w = C_2^2 w - \bar f/J_P,
-  \qquad w(0) = w(\tau_{\rm end}) = 0 .
+  N \;=\; n_{\rm hi}\sqrt{1 + \kappa_b^2}.
   \tag{14}
 \end{equation}
-Claim: $|\de(\tau)| \le w(\tau)$. Proof in two lines: the difference
-$u = w - \de$ satisfies $\ddot u - C_2^2 u = -(\bar f + \dot\rho)/J_P
-\le 0$ with $u = 0$ at both ends --- note the $\le 0$ belongs to this
-\emph{combination}, at every $\tau$, because $\bar f \ge |\dot\rho|$
-makes $\bar f + \dot\rho \ge 0$. If $u$ had a negative interior
-minimum, there $\ddot u \ge 0$ (the valley bottom bends upward:
-$\dot u = 0$ there, and $u(\tau^\ast{+}h) = u(\tau^\ast) +
-\tfrac12\ddot u(\tau^\ast)h^2 + o(h^2) \ge u(\tau^\ast)$ for both
-signs of $h$ forces $\ddot u \ge 0$) and $-C_2^2u > 0$ (strictly,
-because $u < 0$ there --- a minimum value $\ge 0$ would give
-$-C_2^2u \le 0$ and no contradiction), so
-$\ddot u - C_2^2u > 0$ --- contradicting the $\le 0$ that holds
-everywhere. Hence no negative interior minimum exists; with $u = 0$
-at both ends and $u$ continuous, $u \ge 0$, i.e.\
-$\de \le w$; the same argument with $u = w + \de$ gives $\de \ge -w$.
-$\square$ (The picture is the parabola: between two zero endpoints,
-a negative dip must open \emph{upward} at its bottom --- for
-$u = a\tau(\tau - \tau_{\rm end})$ that forces $a > 0$, $\ddot u > 0$
---- while the inequality, rewritten $\ddot u \le C_2^2 u$, makes $u$
-concave \emph{downward} wherever $u < 0$. The two demands cannot meet
-at the bottom of a dip, so no dip. The sign of $C_2^2$ is what makes
-this work: for an oscillator, $\ddot u + C_2^2u \le 0$, negative dips
-between zeros are allowed --- $\sin$ draws one --- and there is no
-maximum principle; the repelling, cosh-type sign of the tip-over
-instability is exactly what forbids them.)
 
-\emph{Step 4 --- solve (14) in closed form.} For constant
-$\bar f = \sup|\dot\rho|$, substitution verifies
-\begin{equation}
-  w(\tau) \;=\; \frac{\sup|\dot\rho|}{J_PC_2^2}
-  \left(1 - \frac{\cosh\!\big(C_2(\tau - \tfrac{\tau_{\rm end}}2)\big)}
-  {\cosh(\xe/2)}\right)
-  \;\le\; \frac{\sup|\dot\rho|}{Wz_{CoM}} .
-  \tag{15}
-\end{equation}
-(Here $\xe  = C_2\tau_{\rm end}$: at $\tau = 0$ and $\tau = \tau_{\rm end}$
-the numerator equals $\cosh(\xe/2)$, so the bracket vanishes at both ends;
-it peaks at mid-window, where the bound is
-$(1-\operatorname{sech}(\xe/2))\sup|\dot\rho|/Wz_{CoM}$.)
-\textbf{No exponential appears.} The envelope (90) grows like
-$\sinh(C_2\tau)$ because nothing stops the unstable mode of (12);
-here the two boundary zeros of (11) --- one free, one bought with
-$\dtc$ --- pin that mode down. This is what ``the fit absorbs the
-growing part'' means as an equation.
+\section{Validation, both campaigns}
 
-\emph{Step 5 --- the forcing rate, from the same channels as
-$\rbar$.} Differentiating the gravity remainder (84) in time gives
-$\dot\rho_{\rm grav} = \big[W l_{\rm arm}\sin\varphi
-+ Wz_{CoM}(\cos\varphi - 1)\big]\,\omega$, and the two bracket terms
-have \emph{opposite signs}: the height term is negative and cancels
-against the arm term instead of adding to it. The bracket stays
-inside $[0,\ W l_{\rm arm}\sin\varphi]$ as long as
-$l_{\rm arm} \ge z_{CoM}\tan(\varphi/2)$ --- held with a factor
-$3.4$ over the whole design box ($0.090$ m against at most
-$0.30\tan 5^\circ = 0.026$ m) --- so $Wz_{CoM}$ drops from the bound
-\emph{by sign, not by approximation}. This is the same cancellation
-$\rbar$ (91) already uses ($Wz_{CoM}(\sin\varphi-\varphi) \le 0$
-there), and it is exactly what the manuscript's (85) says at
-$\varphi^\ast = 0$: $G''(0) = W(l_p + p_{\rm off})$, the
-$Wz_{CoM}\sin\varphi^\ast$ term vanishing. Bounding on the
-$5^\circ$ box, with the \emph{true} end-rate anchor, a priori:
-\begin{equation*}
-  \omega_{\max} \;=\; K\Mdot(\cosh\xe - 1)
-  \;+\; \frac{\rbar\sinh\xe}{J_PC_2}
-  \;\ge\; \omega_{\rm nom}(\tau_{\rm end}) + e_\omega(\tau_{\rm end})
-\end{equation*}
-by the envelope (90) --- the nominal end rate alone would undercount
-the true rate by $\varepsilon(\tau_{\rm end})$, so the envelope of
-$e_\omega$ is added outright; the correction is
-$1 + u\coth(\xe/2)$, i.e.\ $+13\%$ at the slowest ramp and $+1.5\%$
-at the fastest with the $5^\circ$ box, and every term is a
-pre-experiment constant. (History: a first draft used
-$K\Mdot\sinh\xe$, an overbound by $\coth(\xe/2)$; a second used the
-nominal end rate alone, leaving its excess to the $1.05$ --- which
-now covers only the interior shape transfer.) Then:
-\begin{equation}
-  \sup|\dot\rho| \;\le\;
-  \underbrace{W l_{\rm arm}\varphi_{\max}\,
-  \omega_{\max}}_{\dot\rho_2,\ \text{decays like } e^{2C_2(s-\tau_{\rm end})}}
-  \;+\;
-  \underbrace{|\beta_M|\big(\Mdot\varphi_{\max}
-    + \Delta M_{\rm win}\,\omega_{\max}\big)}_{
-    \dot\rho_1,\ \text{decays like } e^{C_2(s-\tau_{\rm end})}} .
-  \tag{16}
-\end{equation}
-Every constant is available before the experiment: $W$, $z_{CoM}$ from
-the scale, $J_P$ from CAD, $l_{\rm arm}$ from geometry,
-$\varphi_{\max}$ the design box, $\beta_M$ from the GE model, $\Mdot$
-and the window from the protocol.
-
-\emph{Where $\varphi_{\max}$ enters, and why $5^\circ$.}
-$\varphi_{\max}$ is not a measurement --- it is the tilt box the
-protocol guarantees, and it enters the theory at exactly three
-points: the channel amplitudes above (every trigonometric remainder
-is monotone in $\varphi$ on $[0, \varphi_{\max}]$, so each sup is its
-value at the box edge --- the $\varphi^\ast = 0$ Taylor coefficients
-of (85) evaluated at $\varphi_{\max}$ powers); the tilt-limited
-window of the design sweep
-($\sinh\xe - \xe = \varphi_{\max}Wz_{CoM}C_2/\Mdot$; the campaign
-check uses the measured windows instead); and everything downstream
-of $\rbar \propto \varphi_{\max}^2$ --- $u$, $\dtc$,
-$\Delta_{\rm pre}$, the ceiling of (21). The value: the box is the excitation design's own commanded cap,
-$\varphi_{\max} = 5^\circ$. This is enough because every integral in
-the bound stops at $\tau_{\rm end}$: the channels, $\rbar$, and
-$\Delta_{\rm pre}$ live on the fit window alone, where the realised
-tilt stays at or below $\approx 4.8^\circ$ --- the $9.4^\circ$
-excursion of the whole contact phase happens \emph{beyond} the window
-end and never enters. (The envelope check on the exact nonlinear
-solution confirms the margin: $e_\omega(\tau_{\rm end}) \le
-0.29\,E(\tau_{\rm end})$ at every rate with the $5^\circ$ $\rbar$.)
-Every appearance is monotone in $\varphi$, so the box only
-over-covers. One consequence is structural: at this box the model
-term no longer subsidises the noise estimate --- with the old
-$10^\circ$ box its slack was absorbing the estimation error of
-$\hat n$ on the tail runs; that duty now sits explicitly with the
-noise constant (19b), and the model term's own slack over the realised
-$\de$ drops to $1.4$--$2.0\times$.
-
-\emph{What ``decays like'' means --- the bridge from (16) to (16a).}
-Nothing in the window decreases with time: $\varphi$ and $\omega$
-both grow. The decay is the same fact read \emph{backwards from the
-window end} --- the claim under each brace of (16) is
-\begin{equation*}
-  |\dot\rho_{\rm channel}(s)| \;\le\;
-  |\dot\rho_{\rm channel}(\tau_{\rm end})|\;
-  e^{kC_2(s-\tau_{\rm end})},
-  \qquad s \le \tau_{\rm end},\ \ k \in \{2, 1\},
-\end{equation*}
-where the exponential factor is $< 1$ because $s - \tau_{\rm end} <
-0$: at earlier times the forcing sits below its end value by at least
-that factor. This is the form the comparison problem of Step 6
-consumes --- a peak at the end with a known fall-off behind it.
-Divide both sides by $e^{kC_2 s}$ and the claim becomes
-$|\dot\rho(s)|/e^{kC_2 s} \le |\dot\rho(\tau_{\rm end})|/
-e^{kC_2\tau_{\rm end}}$ --- i.e.\ \emph{the ratio
-$|\dot\rho(s)|/e^{kC_2 s}$ is nondecreasing in $s$}. That is why
-(16a) is a statement about ratios. And because each channel is a
-\emph{product} of trajectory factors,
-$\dot\rho/e^{kC_2 s}$ factors as a product of single-factor ratios
-($\varphi\omega/e^{2C_2 s} = [\varphi e^{-C_2 s}][\omega e^{-C_2
-s}]$), a product of nonnegative nondecreasing functions is
-nondecreasing, and the exponent $k$ in (16) is literally a
-\emph{count of trajectory factors}: two in $\varphi\,\omega$
-($k = 2$), one in each ground-effect term ($k = 1$). Two sanity
-checks on the direction of the conservatism. The decaying half of
-$\cosh$ ($e^{-C_2\tau}$) is not neglected --- it sits inside the
-proven ratio $(1-e^{-C_2\tau})^2/2$ and only pushes the true curve
-\emph{further below} the end-anchored exponential. And at $\tau = 0$
-the true forcing vanishes ($\varphi = \omega = 0$) while the envelope
-starts at $\dot\rho_2 e^{-2\xe} > 0$: the envelope \emph{over-covers}
-near onset --- valid, equality touching only at the window end where
-it is anchored --- at a cost of $e^{-2\xe}$ ($2\%$ to $0.06\%$ of the
-peak on the campaign), in a region the pinned response barely feels.
-
-\emph{Why anchor at the end rather than the onset.} Four reasons,
-the last the deepest. A forward envelope $|\dot\rho(s)| \le
-|\dot\rho(0)|e^{kC_2 s}$ has nothing to hang on: the forcing
-\emph{vanishes} at onset ($\varphi = \omega = 0$), so its anchor
-amplitude is zero; the one usable anchor is the peak --- the end
-value, which any bound must pay anyway and which the channel sups
-bound a priori. Second, the tightness lives in ``how little forcing
-there is early'': the Dirichlet response has a boundary zero directly
-under the forcing peak, and exploiting that cancellation requires the
-envelope to encode the fall-off \emph{behind} the peak --- exactly
-what the backward rate is, and exactly what a constant
-(sup-only) envelope discards at a cost of $8$--$12\times$. Third,
-only the end-anchored coordinate $u = C_2(s - \tau_{\rm end}) \in
-[-\xe, 0]$ makes the comparison problem forget the window length: as
-$\xe  \to \infty$ the end neighbourhood is fixed and only the onset
-recedes, which is why the $\xe$-free constants $1/12$ and $1/(2e)$
-exist at all; in an onset-anchored coordinate the peak would move
-with $\xe$ and no such constants would emerge. Last, the instability
-has one clock, $1/C_2$, and everything that matters happens in the
-last few e-foldings before $\tau_{\rm end}$: \emph{measured from the
-end, all windows look alike}. That statement is the coordinate
-version of the rate-flatness of the residual --- the ramp rate only
-moves the onset distance $\xe$, and the end neighbourhood forgets
-$\xe$.
-
-\emph{Step 5$'$ --- the decays marked in (16) are theorems, not
-observations.} Along the nominal trajectory, write $a = C_2 s$. By
-the bridge above, it suffices that each factor's $e^{C_2 s}$-ratio is
-nondecreasing; the first ratio of (16a) certifies the factor
-$\omega e^{-C_2 s}$, the second certifies $\varphi e^{-C_2 s}$, and
-both facts are one line each:
-\begin{equation}
-  \frac{\omega_{\rm nom}(s)}{C_1\,e^{C_2 s}}
-  = \frac{\big(\cosh a - 1\big)}{e^{a}}
-  = \frac{\big(1-e^{-a}\big)^2}{2}\ \nearrow,
-  \qquad
-  \frac{d}{da}\!\left[\frac{\sinh a - a}{e^{a}}\right]
-  = e^{-a}\big(a - 1 + e^{-a}\big) \;\ge\; 0,
-  \tag{16a}
-\end{equation}
-the first read off directly, the second because $e^{-t}\ge 1-t$; the
-bracket in the second is $\varphi_{\rm nom}\,C_2 e^{-C_2 s}/C_1$, so
-$\varphi_{\rm nom}e^{-C_2 s}$ is nondecreasing too. Now every channel
-of $\dot\rho$ is a product of positive factors whose
-$e^{C_2 s}$-ratios are nondecreasing, and such a product obeys its
-decay exactly. Arm channel:
-\[
-  \sin\varphi\,\omega \;\le\; \varphi\,\omega
-  = \big[\varphi e^{-C_2 s}\big]\big[\omega e^{-C_2 s}\big]e^{2C_2 s}
-  \;\le\; \varphi(\tau_{\rm end})\,\omega(\tau_{\rm end})\,
-  e^{2C_2(s-\tau_{\rm end})} .
-\]
-(The height term, had it been kept, is
-$(1-\cos\varphi)\,\omega \le \tfrac12\varphi^2\omega$ --- \emph{three}
-such factors, decaying as $e^{3C_2(s-\tau_{\rm end})}$; it is absent
-from (16) by the sign cancellation of Step 5, so nothing needs
-charging.) Ground effect: $\Mdot\varphi$ carries one factor
-($e^{C_2}$ class), and $\Delta M(s)\,\omega = \Mdot s\,\omega$
-carries $s/\tau_{\rm end}\le1$ (also nondecreasing) times one, so it
-too is $e^{C_2}$ class. For the \emph{nominal} trajectory the lemma
-is therefore exact, with no safety factor.
-
-\emph{Nominal to true.} The true trajectory multiplies each factor by
-$1 + \varepsilon(s)$ with $\varepsilon = e_\omega/\omega_{\rm nom}$
-(and its integral analogue on the $\varphi$ factor). Two facts keep
-this cheap. First, a \emph{constant} multiplier cancels in a ratio
-test --- numerator and anchor scale together --- so the envelope is
-harmed only by the \emph{variation} of $\varepsilon$ across the
-window, not its size. Second, $\varepsilon$ has an a priori ceiling
-in the same dimensionless number as (9a): dividing the envelope (90)
-by $\omega_{\rm nom}$,
-\begin{equation*}
-  \varepsilon(\tau) \;=\; \frac{e_\omega}{\omega_{\rm nom}}
-  \;\le\; \frac{\rbar\sinh(C_2\tau)/(J_PC_2)}
-  {C_1\big(\cosh(C_2\tau)-1\big)}
-  \;=\; u\,\coth\!\Big(\frac{C_2\tau}{2}\Big),
-\end{equation*}
-$u = \rbar C_2/\Mdot$ appearing for the third time. At the window end
-$\coth(\xe/2) = 1.05$--$1.4$, and inserting the \emph{realised}
-$\beta/C_1 = 0.010$--$0.023$ in place of the envelope gives
-$\varepsilon(\tau_{\rm end}) = (\beta/C_1)\coth(\xe/2) =
-1.4$--$2.4\%$. Measured on the exact nonlinear tip-over across the
-seven rates, the worst excess of a true ratio over its nominal bound
-is $2.6\%$, at the slowest ramp near the window end --- the formula's
-prediction, not a coincidence --- and the $1.05$ carried on
-$\dot\rho_2$ in (16) covers it with double margin. (A fully
-pre-experiment allowance is $1 + u\coth(\xe/2)$ --- at most $1.17$ at
-the slowest ramp, $1.02$ at the fastest, the envelope $u \le 0.16$
-overstating the realised $\beta/C_1$ about seven-fold. The
-\emph{end-point amplitude} no longer needs any allowance at all:
-since the anchor correction, (16) charges
-$\omega_{\rm nom}(\tau_{\rm end}) + E(\tau_{\rm end})$ outright, so
-the $1.05$ covers only the interior variation.) One apparent irony resolves
-itself: $u\coth(C_2\tau/2)$ diverges as $\tau \to 0$, seemingly where
-$e_\omega$ is smallest. The divergence belongs to the envelope, not
-the physics: the true $\varepsilon$ \emph{vanishes} at onset like
-$\tau^4$ ($e_\omega$ starts at sixth order --- the leading forcing
-channel is fourth order and Duhamel integrates twice --- against
-$\omega_{\rm nom}$'s second), while (90) charges a first-order
-$\rbar\sinh(C_2\tau)$ from the start. And nothing is lost where the
-formula fails: the relative argument is only needed where the forcing
-lives, in the last e-foldings, where $\coth \approx 1$; near onset
-the envelope's absolute slack ($e^{-2\xe}$ of the peak against a true
-forcing of zero) does the covering --- which is why the measured
-worst excess sits near the window \emph{end}, not the onset. The
-safety factor thus covers only the nominal-to-true step --- the shape
-itself is proved.
-
-\emph{Step 6 (optional tightening, factor $8$) --- use the decay of
-$\dot\rho$.} The forcing is not constant: it peaks at the window end
-and decays backwards as marked in (16) and proved in Step 5$'$.
-So solve (14) once for each shape at unit peak --- the same two-line
-comparison applies, and the solutions are still elementary. In the
-scaled variable $u = C_2(\tau - \tau_{\rm end}) \in [-\xe, 0]$ ---
-a \emph{translation}, not a reflection: $du/d\tau = +C_2 > 0$, so
-$u$ runs forward with $\tau$ and only the origin has moved to the
-window end (a reflection would be $C_2(\tau_{\rm end}-\tau)$; the
-``backward'' of Step 5$'$ is how the envelope is \emph{described},
-not the orientation of the coordinate) --- for the forcing
-$e^{2C_2(\tau-\tau_{\rm end})} = e^{2u}$:
-\begin{equation}
-  w_2(\tau) \;=\; \frac{\dot\rho_2}{J_PC_2^2}\cdot\frac13
-  \left[\frac{\sinh(u+\xe)}{\sinh \xe}
-  + e^{-2\xe}\,\frac{\sinh(-u)}{\sinh \xe} - e^{2u}\right],
-  \qquad
-  M_2(\xe) \;\triangleq\; \max_{u\in[-\xe,0]}\frac13\big[\,\cdots\big] ,
-  \tag{17a}
-\end{equation}
-and for the forcing $e^{C_2(\tau-\tau_{\rm end})} = e^{u}$, which is
-\emph{resonant} --- it decays at the operator's own rate, so the
-particular solution carries a factor of $u$:
-\begin{equation}
-  w_1(\tau) \;=\; \frac{\dot\rho_1}{J_PC_2^2}
-  \left[\frac{\xe}{2}\,\frac{\sinh(u+\xe)}{\sinh \xe}
-  - \frac{(u+\xe)\,e^{u}}{2}\right],
-  \qquad
-  M_1(\xe) \;\triangleq\; \max_{u\in[-\xe,0]}\big[\,\cdots\big] .
-  \tag{17b}
-\end{equation}
-No time reversal hides in (17a): substituting $u = C_2\tau - \xe$
-back gives, in original time,
-\begin{equation*}
-  w_2(\tau) = \frac{\dot\rho_2}{J_PC_2^2}\cdot\frac13
-  \left[\frac{\sinh(C_2\tau)}{\sinh\xe}
-  + e^{-2\xe}\,\frac{\sinh(C_2(\tau_{\rm end}-\tau))}{\sinh\xe}
-  - e^{2C_2(\tau-\tau_{\rm end})}\right],
-\end{equation*}
-which vanishes at $\tau = 0$ ($0 + e^{-2\xe} - e^{-2\xe}$) and at
-$\tau = \tau_{\rm end}$ ($1 + 0 - 1$), with the forcing term growing
-forward in $\tau$ to its peak at the end --- exactly the orientation
-of the physical window. (Backward time $v = \tau_{\rm end}-\tau$
-would give the mirror parametrisation $w(\tau_{\rm end}-v)$ with
-forcing $e^{-2C_2v}$ --- the same function, described from the other
-end.)
-
-\emph{Where the two forms come from --- construction, not guess.} In
-the scaled variable the comparison problem reads $w'' - w =
--\kappa\,g(u)$, $w(-\xe) = w(0) = 0$, with $\kappa =
-\dot\rho_i/(J_PC_2^2)$, one shape $g$ at a time. (One label trap,
-worth naming: these are the \emph{same} two conditions as
-$w(\tau{=}0) = w(\tau_{\rm end}) = 0$, relabelled --- since the
-origin of $u$ sits at the window end, the token ``$0$'' names the
-\emph{onset} in $\tau$-labels but the \emph{window end} in
-$u$-labels: $u = -\xe$ is $\tau = 0$, and $u = 0$ is
-$\tau = \tau_{\rm end}$. Two physical pins, onset and end, in either
-language.) Three moves each.
-\emph{Particular solution:} for $g = e^{2u}$ try $Ae^{2u}$:
-$(2^2 - 1)A = -\kappa$, so $A = -\kappa/3$ --- the $1/3$ is the
-distance to resonance. For $g = e^{u}$ the same try fails,
-$(1^2 - 1)A = 0$: the forcing decays at the operator's own rate, so
-carry a factor $u$, $w_p = -(\kappa/2)\,u e^{u}$, since
-$(ue^u)'' - ue^u = 2e^u$ --- this extra $u$ is why $M_1 > M_2$.
-(Where the $u$ comes from: the non-resonant recipe gives
-$e^{\lambda u}/(\lambda^2 - 1)$, which blows up as $\lambda \to 1$;
-subtracting the homogeneous $e^{u}$ first,
-$(e^{\lambda u} - e^{u})/(\lambda - 1) \cdot 1/(\lambda + 1) \to
-\partial_\lambda e^{\lambda u}\big|_{\lambda=1}\cdot\tfrac12 =
-\tfrac12\,u e^{u}$ --- the $u$ is the derivative left behind when two
-merging exponentials collide, and the $\tfrac12$ is
-$1/(\lambda+1)$ at $\lambda = 1$: the secular term of a resonantly
-driven system, in hyperbolic dress.)
-\emph{Homogeneous corrections in the endpoint basis:} $\sinh(u+\xe)$
-vanishes at $u = -\xe$ and $\sinh(-u)$ vanishes at $u = 0$, so each
-boundary condition sets one coefficient without disturbing the other.
-(Both are legitimate homogeneous solutions --- the operator has
-constant coefficients, so translating a solution gives a solution,
-and $\sinh(u+\xe) = \cosh\xe\sinh u + \sinh\xe\cosh u$ is just a
-combination of the familiar pair; the two are independent since the
-coefficient determinant is $\sinh\xe \ne 0$. Solving in the
-$\{\sinh u, \cosh u\}$ basis instead gives a coupled $2\times2$
-system and the same answer with more algebra --- the endpoint basis
-is the choice that makes the boundary conditions decouple, the same
-pattern that builds Green's functions.) Then:
-$u = 0$ gives $a\sinh \xe  = \kappa/3$, $u = -\xe$ gives $b\sinh \xe  =
-(\kappa/3)e^{-2\xe}$ --- that is (17a). For $e^{u}$ one more
-coefficient asks to be determined: the resonant particular solution
-$-(\kappa/2)ue^{u}$ can carry any multiple of $e^{u}$ on top, since
-the operator annihilates it --- that \emph{is} the resonance --- so
-its coefficient is a homogeneous degree of freedom, fixed by the
-boundary, not the equation. The condition at $u = -\xe$ (where the
-$\sinh(u+\xe)$ term is blind) sets it to $-(\kappa/2)\xe$, bundling
-into $-(\kappa/2)(u+\xe)e^{u}$ with the onset zero visible in the
-factor; the second endpoint coefficient then comes out zero, because
-everything else already vanishes there (unlike the $e^{2u}$ case,
-whose particular solution does not). The remaining condition at
-$u = 0$ sets the $\sinh$ coefficient --- that is (17b). \emph{Verification by substitution:} the $\sinh$'s are
-annihilated by the operator, the exponentials return the forcing, and
-both brackets vanish at both ends --- the two boundary zeros of (14).
-Their maxima barely depend on $\xe$ and tend to simple constants,
-\begin{equation}
-  M_2(\xe)\to\tfrac1{12},
-  \qquad
-  M_1(\xe)\to\tfrac1{2e},
-  \qquad\text{so}\qquad
-  |\de| \;\le\; \frac{M_2\dot\rho_2 + M_1\dot\rho_1}{Wz_{CoM}} .
-  \tag{17}
-\end{equation}
-The limits are one-line maximisations: as $\xe  \to \infty$,
-$\sinh(u+\xe)/\sinh \xe  \to e^{u}$ and the $e^{-2\xe}$ term dies, so the
-bracket of (17a) tends to $(e^{u} - e^{2u})/3 = (v - v^2)/3$ with
-$v = e^{u} \in (0,1]$, maximised at $v = \tfrac12$ to $1/12$
-($\ln 2$ e-foldings before the window end); the bracket of (17b)
-tends to $-(u/2)e^{u}$, maximised at $u = -1$ to $1/(2e)$ (one
-e-folding before the end). The limits are moreover \emph{proven
-ceilings} for every finite $\xe$, in two lines. The addition theorem,
-divided through, gives the exact identity
-$\sinh(u+\xe)/\sinh\xe = e^{u} + e^{-\xe}\sinh(u)/\sinh\xe$;
-inserting it splits each finite-$\xe$ bracket into its limit form
-plus a correction,
-\begin{equation*}
-  B_2(u;\xe) = \big(e^{u} - e^{2u}\big)
-  + \frac{\sinh u}{\sinh\xe}\big(e^{-\xe} - e^{-2\xe}\big),
-  \qquad
-  B_1(u;\xe) = -\frac{u}{2}\,e^{u}
-  + \frac{\xe\,e^{-\xe}}{2\sinh\xe}\,\sinh u ,
-\end{equation*}
-and on $u \in [-\xe, 0]$ the correction is $\le 0$ in both cases ---
-a positive coefficient times $\sinh u \le 0$. Each bracket is
-nonnegative (the Dirichlet response to a nonnegative forcing, by
-(14) itself), so its maximum sits below the limit's maximum:
-$M_2(\xe) \le 1/12$ and $M_1(\xe) \le 1/(2e)$ for every window. The
-correction term is precisely the homogeneous piece that enforces the
-onset pin at $u = -\xe$, which the infinite-window problem lacks ---
-an extra pin on a positive response can only pull it down: a shorter
-window gives the forcing less room. (Over the campaign range
-$\xe = 1.9$--$3.7$: $M_2 = 0.074$--$0.083$, $M_1 = 0.141$--$0.181$;
-the script evaluates (17a)--(17b) exactly.)
-The interpretation is the same as the manuscript's reduction factors
-$1/7$ and $1/5$: the forcing is largest exactly where the pinned
-response is smallest --- at the window end the boundary zero sits
-right under the peak of the load.
-
-\emph{A one-line version, in the spirit of (85).} The limits are
-also \emph{ceilings}: $M_2(\xe) \le 1/12$ and $M_1(\xe) \le 1/(2e)$
-for every finite window --- proved after (17) by the exact bracket
-split, whose correction term is negative on the whole interval --- so
-(17) may be quoted $\xe$-free,
-\begin{equation*}
-  |\de| \;\le\;
-  \frac{\dot\rho_2/12 \;+\; \dot\rho_1/(2e)}{Wz_{CoM}} ,
-\end{equation*}
-with no $M$ curves, no window length, and no $C_2$ beyond what sits
-inside $\dot\rho_{1,2}$ --- exactly as (85) trades the exact
-remainder for $\tfrac12 G''(0)\varphi^2$. Rerun on the $140$ runs,
-the constant version costs at most $5\%$ on the worst run
-($0.1$--$2\%$ in the per-rate mean, largest at the fastest ramps
-where $\xe$ is smallest), keeps $140/140$ coverage, and the worst-run
-used fraction rises only to $0.67$. Note where the simplification is \emph{not}
-available: the channel amplitudes $\dot\rho_{1,2}$ are already the
-$\varphi^\ast = 0$ worst-case Taylor coefficients of (85) --- nothing
-further to drop there --- and the time \emph{shape} behind $M_2, M_1$
-(the forcing concentrated at the window end as $e^{2C_2(s-\tau_{\rm
-end})}$) cannot be dropped at all: against a constant-in-time forcing
-the comparison factor is $1 - \mathrm{sech}(\xe/2) = 0.4$--$0.9$, a
-factor $5$--$10$ above $1/12$, which is the loose bound this document
-exists to escape. The Taylor step simplifies the \emph{amplitude};
-the tightness lives in the \emph{shape}.
-
-\section{The pre-onset segment}
-
-\emph{Where the segment comes from.} By (9), $\dtc < 0$: the witness
-branch starts $|\dtc|$ \emph{before} the true onset. On the segment
-$\tau\in[\dtc,\,0]$ --- length $|\dtc|$ --- the record is still at its
-baseline, but the branch has already been running for
-$u = \tau - \dtc \in [0, |\dtc|]$ since its own onset, so the mismatch
-there is the branch itself:
-\begin{equation}
-  \text{mismatch}(u) \;=\; C_1\big(\cosh(C_2u)-1\big),
-  \qquad u \in [0,\,|\dtc|] .
-  \tag{18a}
-\end{equation}
-The residual sum runs over this segment too, so the witness's cost in
-(10) gains its square. Normalising by the main window length
-$\tau_{\rm end}$ (conservative: the extended window is longer, so
-dividing by the shorter $\tau_{\rm end}$ can only enlarge the term),
-\begin{equation}
-  \Delta_{\rm pre}^2 \;=\; \frac{1}{\tau_{\rm end}}
-  \int_0^{|\dtc|}\big[C_1\big(\cosh(C_2u)-1\big)\big]^2\,du .
-  \tag{18b}
-\end{equation}
-The segment's \emph{noise} adds no separate term: $\hat n$ is an RMS
-density, unchanged by a slightly longer window.
-
-\emph{The integral is elementary.} Expand the square with
-$\cosh^2 a = \tfrac12(1+\cosh 2a)$:
-\begin{equation}
-  \big(\cosh a - 1\big)^2
-  = \cosh^2 a - 2\cosh a + 1
-  = \tfrac32 + \tfrac12\cosh(2a) - 2\cosh a ,
-  \tag{18c}
-\end{equation}
-and integrate term by term with $a = C_2u$
-($\tfrac32 \to \tfrac{3u}2$;\ \
-$\tfrac12\cosh(2C_2u) \to \sinh(2C_2u)/(4C_2)$;\ \
-$-2\cosh(C_2u) \to -2\sinh(C_2u)/C_2$):
-\begin{equation}
-  \Delta_{\rm pre}^2 \;=\; \frac{C_1^2}{\tau_{\rm end}}
-  \left[\frac{3u}{2} + \frac{\sinh(2C_2u)}{4C_2}
-  - \frac{2\sinh(C_2u)}{C_2}\right]_{0}^{|\dtc|} .
-  \tag{18}
-\end{equation}
-
-\emph{Check, and why the term is small.} Expanding the bracket in
-powers of $u$, the $u$ and $u^3$ orders cancel identically and the
-first surviving order is
-\begin{equation*}
-  \int_0^{|\dtc|}\big(\cosh(C_2u)-1\big)^2 du
-  \;\approx\; \frac{C_2^4\,|\dtc|^5}{20} ,
-\end{equation*}
-fifth order in the shift, because the branch leaves the baseline only
-quadratically ($\cosh - 1 \approx C_2^2u^2/2$, squared $\to u^4$).
-Bounding instead by (segment sup)$\times$(length) would give
-$|\dtc|^5/4$ --- the exact integral is a factor $\sqrt5\approx2.2$
-tighter. (The branch amplitude is $R \le C_1$; using $C_1$ in (18)
-errs on the high side.) Evaluated with the a priori $|\dtc|$ from (9)
-and $e_\omega(\tau_{\rm end}) \le E(\tau_{\rm end})$:
-$\Delta_{\rm pre} = 0.001^\circ$/s at $\Mdot = 0.10$ and below
-$0.001$ beyond --- with the $5^\circ$ box the a priori shift is
-$23$--$28$ ms at the slowest ramp and the fifth-order integral makes
-the term vanish.
-
-\emph{The baseline constant $R-C_1$ --- both bookkeepings.} One
-witness must serve every sample the minimiser's cost touches, and its
-baseline slot holds a single number, so the constant $R-C_1$ of (7)
-must land somewhere. There are two consistent choices. \emph{(a)}
-Take (3) literally, $C = b$: the flat pre-onset samples then cost
-nothing beyond noise, (18a) holds as written (amplitude $R \le C_1$),
-and the post-onset residual gains the constant,
-$r = \de + n + (C_1 - R)$. \emph{(b)} Take $C = b + (R - C_1)$: the
-post-onset identity is exactly (5), $r = \de + n$, and the constant
-moves to the flat stretch, where the length fraction of that stretch
-in the window dilutes it further. Either way the price is the same
-number,
-\begin{equation*}
-  C_1 - R \;=\; C_1\Big(1 - \sqrt{1 - (\beta/C_1)^2}\Big)
-  \;\le\; \tfrac12\,C_1\,(\beta/C_1)^2 ,
-\end{equation*}
-second order in $\beta/C_1$. Realised ($\beta/C_1 \le 0.023$) it is
-below $0.004^\circ$/s on every run --- two orders under $\hat n$ and
-below even $\Delta_{\rm pre}$ --- which is why (10) and (20) carry it
-silently; the pre-onset median cannot even distinguish $b$ from
-$b + (R-C_1)$ at that size. Even at the a priori envelope ceiling it
-stays invisible: $u \le 0.16$ gives
-$C_1(1-\sqrt{1-u^2}) \le 0.014^\circ$/s at the slowest ramp ---
-below $\Delta_{\rm pre}$'s old level --- so the silent treatment
-needs no a posteriori excuse.
-
-\section{The noise term}
-
-Above $5$ Hz the model can produce nothing, so $n_{\rm hi}$ is
-measured from the record; the full band is estimated through the
-quiet-window shape ratio,
-\begin{equation}
-  \hat n \;=\; \rms(n_{\rm hi})\sqrt{1 + (s_{\rm med}\,\kappa_q)^2},
-  \tag{19}
-\end{equation}
-with $s_{\rm med} = 1.60$ the campaign-median in-window enhancement
-and $\kappa_q$ the run's own quiet ratio (campaign median $0.37$ where
-no quiet stretch exists).
-
-\emph{Reading (19) piece by piece.} The cap needs the \emph{total}
-in-window disturbance $\rms(n)$, and no part of the record hands it
-over directly: below $\sim$$1$ Hz the residual is model-contaminated,
-and the pre-onset floor underestimates the contact-borne in-window
-disturbance (next paragraph). So (19) assembles it in three steps.
-\emph{Anchor:} above $5$ Hz the branch has no spectral content, so
-the high-passed residual $n_{\rm hi}$ is pure disturbance, measured
-in the window itself --- $\rms(n_{\rm hi})$ is the one number taken
-from the run on trust. Note what is \emph{not} needed here: a
-ground-truth curve. The separation is by frequency, not by
-subtracting a truth --- every rigid-body term in the record
-($\omega_{\rm nom}$, $e_\omega$, $b$) is band-limited below a few
-hertz because the dynamics run at $C_2/2\pi < 1$ Hz, so in the high
-band $r_{\rm hi} = y_{\rm hi} - \hat\omega_{\rm hi} = n_{\rm hi}$
-identically: nothing else has a component left there. $n_{\rm hi}$ is
-\emph{defined} by the band, not reconstructed from a reference. \emph{Shape:} the disturbance's
-low-band-to-high-band ratio is measured where no model exists at all,
-on quiet stretches of the same record --- that is $\kappa_q$.
-\emph{Enhancement:} the in-window disturbance is redder than
-quiet-time noise (gear-edge pivoting pumps the low band), so the
-quiet ratio is scaled by the campaign-median in-window enhancement
-$s_{\rm med} = 1.60$, making the estimated in-window low/high ratio
-$s_{\rm med}\kappa_q$. The two bands are disjoint in frequency, hence
-orthogonal, so their RMS values add in quadrature:
-$\rms(n)^2 = \rms(n_{\rm hi})^2\big(1 + (s_{\rm med}\kappa_q)^2\big)$
---- which is (19).
-
-\emph{The constant the cap uses.} (19) is an \emph{estimate} ---
-$s_{\rm med}$ is a campaign median, so on roughly half the runs the
-true disturbance exceeds $\hat n$ --- and it is built from the
-minimiser residual, the very object the cap bounds. An estimate is
-the right tool for interpretation (Sec.~7) but not for a guarantee,
-so the cap (20) carries one campaign constant that never touches the
-fit:
-\begin{equation}
-  N_n \;=\; 3\,N_{\rm med} \;=\; 2.31^\circ/\text{s},
-  \qquad N_{\rm med} = 0.77^\circ/\text{s},
-  \tag{19b}
-\end{equation}
-where $N_{\rm med}$ is the campaign median of the
-\emph{Savitzky--Golay high-band anchor}: smooth the raw record with a
-cubic SG filter (window $\approx 2/(f_c\,T_s)$, matched to the split),
-subtract the smooth, and take the RMS above $f_c$ with the same
-brick-wall partition --- a generic detrend, no cosh curve, no
-minimiser, no PNLS anywhere in the noise side. The factor $3$ is
-\emph{declared}, and it decomposes into the two jobs the noise term
-must do: $1.5$ for the run-to-run \emph{level} spread of the anchor
-(campaign max/median $= 2.35$, between runs) times $1.96$ for the
-worst within-run spectral \emph{shape} --- the $\sqrt{1+\kappa^2}$
-extension of a high-band level to the full band at the largest
-measured low/high ratio ($1.69$; the largest \emph{quiet-stretch}
-route gives $2.09$, and a pooled mean$+3\sigma$ of the ratios would
-sit \emph{below} the observed maximum, the distribution reaching it
-at $3.3\sigma$) --- $1.5 \times 1.96 = 2.94$, rounded up. The bare
-minimum total factor for coverage on this campaign is $2.05$; the
-shape ceiling alone (total $1.96$, no level factor) leaves the two
-level-outlier runs outside. This is what frees the model term from
-double duty: with (19) in the cap, the model term's slack was
-absorbing the noise-estimation error of the tail runs; with (19b)
-each term guards exactly its own object --- the model term $\de$,
-the declared constant the disturbance --- and the noise term is
-falsifiable in advance: it fails only if a future run's disturbance
-exceeds three times the campaign-median anchor.
-
-\emph{Implementation, and the picture
-(Fig.~\ref{fig:spectrum}).} The split is a brick-wall FFT partition:
-remove the mean, zero the bins above $f_c$, invert --- so the two
-bands are \emph{exactly} orthogonal and the quadrature sum above is
-Parseval-clean. (Orthogonal in the plain vector sense:
-$\sum_i r_{{\rm lo},i}\,r_{{\rm hi},i} = 0$. The $N$ samples are a
-vector in $\mathbb R^N$, the FFT rewrites it in an orthogonal basis
-of sinusoids --- one basis direction per bin --- and the brick wall
-hands each direction \emph{wholly} to one band, so the two parts are
-built from disjoint coordinates and their dot product vanishes term
-by term; then $\|r\|^2 = \|r_{\rm lo}\|^2 + \|r_{\rm hi}\|^2$ with no
-cross term. Checked on all $140$ runs: the normalised inner product
-and the Pythagoras error are $6\times10^{-16}$, machine precision. A
-gradual filter would share the transition-band bins between the two
-parts: the same data under a Butterworth-like mask gives an inner
-product cosine of $0.47$ and a $19\%$ Pythagoras error --- the brick
-wall is what buys the equals sign.) $\kappa_q$ applies the same partition to a quiet
-stretch \emph{of the same length as the window}, taken from the same
-record before the excitation; $s_{\rm med}$ is the campaign median of
-$\kappa_{\rm imp}/\kappa_q$, where $\kappa_{\rm imp}$ is the low/high
-ratio the window itself implies --- and its definition is nothing but
-Pythagoras inverted. The partition is orthogonal, so
-$\rms(r)^2 = \rms(r_{\rm lo})^2 + \rms(r_{\rm hi})^2$ exactly; both
-$\rms(r)$ and $\rms(r_{\rm hi}) = \rms(n_{\rm hi})$ are already in
-hand, so no second measurement is needed:
-\begin{equation*}
-  \kappa_{\rm imp}
-  \;=\; \frac{\rms(r_{\rm lo})}{\rms(r_{\rm hi})}
-  \;=\; \frac{\sqrt{\rms(r)^2 - \rms(n_{\rm hi})^2}}
-             {\rms(n_{\rm hi})} .
-\end{equation*}
-One honest caveat, in the safe direction: $r_{\rm lo}$ contains the
-unabsorbed model remainder $\de$ as well as low-band disturbance, so
-$\kappa_{\rm imp}$ --- and with it $s_{\rm med}$ --- errs high: the
-enhancement conservatively charges any model leftover to the noise
-term's low band too, and the cap can only grow for it. Two clarifications that
-head off natural objections. \emph{No circularity --- but stated carefully:} $n_{\rm hi}$
-is computed from the minimiser residual, the same residual the cap
-bounds. It is not \emph{fit-free}: splitting the raw record fails
-(the finite window's truncated branch leaks into the high bins
-themselves, $4$--$14\times$ the disturbance, and only subtracting a
-curve that carries the same leakage cancels it). It is
-\emph{fit-robust}, which is what breaks the circle: the high-band RMS
-is insensitive to \emph{which} good smooth curve is subtracted ---
-swapping the $C_2$-pinned two-parameter refit for the fully free fit
-changes it by $1.4\%$ at the median ($16\%$ worst) --- so the anchor
-does not reward the minimiser for fitting well; any member of the
-family delivers the same number.
-
-\emph{Why not the textbook noise estimators.} The two standard
-fit-free estimators --- the second-difference formula
-$\sigma^2 = \sum(y_{i+1} - 2y_i + y_{i-1})^2/6N$ and the
-finest-scale wavelet MAD of Donoho--Johnstone --- run on the raw
-record without any fit, and both \emph{under}-read this disturbance:
-$0.47\times$ and $0.65\times$ of $\rms(n_{\rm hi})$ at the campaign
-median. The reasons are structural, not tuning. Both anchor at the
-very top of the band (the second difference weights the spectrum by
-$|2\sin(\pi f/f_s)|^4$, concentrated near Nyquist; the finest wavelet
-scale is the top octave), and the contact-borne disturbance is
-\emph{coloured} --- falling above a few hertz --- so the top of the
-band is its quietest part; and the MAD variant additionally discounts
-the bursts that carry much of a contact disturbance's energy. The
-under-read is systematic, not random: the ratios are nearly constant
-across the seven rates ($0.42$--$0.48$ and $0.57$--$0.71$). Swapped
-in as the per-run anchor under the shape envelope, the
-second-difference cap fails on $59$ of
-the $140$ runs (worst run at $2.16\times$ its cap) and the MAD cap on
-$13$ (worst $1.86\times$).
-(19)'s anchor is the same idea made band-honest: integrate the whole
-model-free band instead of sampling its quietest corner.
-
-\emph{The SG anchor is corroborated, and where it sits in the
-ladder.} The Savitzky--Golay anchor of (19b) is one of three generic
-estimators that handle the truncation leakage without ever seeing the
-cosh family (\texttt{analysis/neutral\_anchor.py}); the other two ---
-a degree-$4$ Legendre detrend before the split and a DCT brick-wall
-split (the even extension removes the periodicity jump that defeats
-the raw DFT split) --- read $1.00$ and $1.23$ times the SG anchor at
-the campaign median, and the fit-robust per-run anchor
-$\rms(n_{\rm hi})$ of (19) reads $1.03\times$: four independent
-routes to the same level, so the SG choice is not flattering the
-method. The alternatives to the adopted constant form a ladder, each
-step trading tightness for independence from declared judgment: the
-per-run envelope $\rms(n_{\rm hi})\sqrt{1+\kappa_{\sup}^2}$ (with
-$\kappa_{\sup} = 1.69$ the largest measured low/high ratio) is
-tighter (mean used $\approx0.50$) but takes its anchor from the
-minimiser residual; the declared-factor constant $N_n$ is the adopted
-form (mean used $0.36$--$0.41$); and the campaign-\emph{maximum} SG
-anchor with the shape ceiling, $3.6^\circ$/s, needs no declared
-factor at all --- every multiplier is an observed campaign extreme
---- at mean used $0.26$. The reader may stop wherever their
-scepticism is satisfied; the cap holds $140/140$ at every rung.
-Fig.~\ref{fig:sgbound} draws the adopted form against the campaign.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.92\linewidth]{fig_sg_bars.png}
-\caption{Equation (20) with the adopted noise constant (19b):
-$N_n = 3\,N_{\rm med} = 2.31^\circ$/s, three times the campaign
-median of the Savitzky--Golay high-band anchor
-($N_{\rm med} = 0.77^\circ$/s) --- one grey number for every run, no
-model curve, no minimiser, anywhere in the noise side; the factor is
-declared up front. Dark blue is the per-run model term, green the
-measured minimiser residual with $95\%$ intervals; all $140$ runs
-stay inside at used $0.36$--$0.41$, worst run $0.72$. For context:
-the bare minimum total factor for coverage is $2.05$; the shape
-ceiling alone (total $1.96$) leaves $2$ runs outside; picking a
-covering quantile would be in-sample calibration; and the campaign
-maximum with the shape ceiling ($3.6^\circ$/s) needs no declared
-factor at all but costs mean used $0.26$. The two halves of the
-factor do different jobs and neither can absorb the other's: $1.96$
-extends a high-band \emph{level} to the full band under the worst
-spectral \emph{shape} (within-run), while $1.5$ covers the
-run-to-run spread of the level itself (max/median $= 2.35$,
-between-run) --- which is why no shape factor, however large, could
-replace the level half.}
-\label{fig:sgbound}
-\end{figure} \emph{No quiet data in
-the amplitude:} the quiet stretch enters only through the
-dimensionless shape ratio $\kappa_q$, never through the level ---
-deliberately, since the in-window contact-borne disturbance runs $2$
-to $50$ times the quiet floor; amplitude from the window, shape from
-quiet, and $s_{\rm med}$ to correct the shape for the window.
-Fig.~\ref{fig:spectrum}(a)
-shows the raw material itself --- the discrete FFT bins of one run's
-residual and quiet stretch, $\Delta f = 1/T$ apart, split at $f_c$
-with no taper and no padding: these bins are the exact objects the
-numbers of (19) sum over. Fig.~\ref{fig:spectrum}(b) draws the same
-run's smoothed spectra: the fitted branch tracks the record up to a
-few hertz and then plunges --- above the split it can produce
-nothing, so there the residual coincides with the record and is
-disturbance by construction; the quiet stretch sits below it with its
-own shape. Fig.~\ref{fig:spectrum}(c) shows the $113$ pairs
-$(\kappa_q, \kappa_{\rm imp})$ behind $s_{\rm med}$.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\linewidth]{fig_noise_spectrum.png}
-\caption{The spectral construction of (19). \emph{(a)} The raw FFT
-bins of one run's residual and quiet stretch --- one bar per discrete
-frequency $f_k = k/T$, spacing $\Delta f = 1/T$, split at $f_c$ with
-no taper or padding: exactly the objects the numbers of (19) sum
-over, low band (dark) versus the anchor $n_{\rm hi}$ (light).
-\emph{(b)} The same run's smoothed amplitude spectra: the fitted
-branch (the model) collapses above a few hertz, so past the $5$ Hz
-split the residual coincides with the record --- pure disturbance;
-the quiet stretch of the same length gives the shape ratio
-$\kappa_q$. These display spectra are Hann-tapered and zero-padded
-\emph{for display only} --- the numbers in (19) use the raw bins of
-panel (a), where the branch has been subtracted and edge leakage
-cancels. \emph{(c)} The in-window implied ratio $\kappa_{\rm imp}$
-(Pythagoras inverted on the window's own residual) against the quiet
-ratio $\kappa_q$ over the $113$ runs with a usable quiet stretch; the
-in-window disturbance is redder, by the campaign-median factor
-$s_{\rm med} = 1.60$.}
-\label{fig:spectrum}
-\end{figure}
-
-\emph{The cutoff is not delicate, and $k\sigma$ is what (19) already
-is.} Structurally (19) reads $k\cdot\sigma$ with
-$\sigma = \rms(n_{\rm hi})$ --- measured \emph{in the window}, in a
-band the model cannot contaminate --- and
-$k = \sqrt{1+(s_{\rm med}\kappa_q)^2} \approx 1.6$--$1.9$. The split
-frequency only defines that band, and any choice works that sits well
-above the model's spectral content $C_2/2\pi = 0.6$--$0.9$ Hz and
-leaves spectral bins on both sides (a \emph{bin} is one discrete
-frequency of the window's FFT, $f_k = k/T$, spaced $1/T \approx
-1.4$--$2.5$ Hz apart here --- the shortest windows have only two or
-three below $5$ Hz, hence $f_c \gtrsim 2/(NT_s) \approx 3$
-Hz): recomputing the check with the estimate (19) in the cap's place
-at $f_c = 2$, $3$ and $5$ Hz gives identical results ($140/140$
-inside, mean used $0.57$--$0.58$), and only past $8$ Hz does the shrinking
-high band make the estimate noisy ($133/140$ at $8$, $129/140$ at
-$10$). The invariance is expected: $\hat n$ estimates the total
-$\rms(n)$, which does not depend on where the record is split. What
-does \emph{not} work is the simpler $k\sigma$ with $\sigma$ from the
-pre-onset segment: the in-window disturbance is contact-borne ---
-pivoting on one gear edge, not gyro noise --- and runs $2$ to $50$
-times the pre-onset floor with no usable floor at all on $25$ of the
-$140$ runs, so the one campaign constant that covers the spread,
-$k = 49$, collapses the used fraction from $0.58$ to $0.16$.
-
-\section{The check on all 140 runs}
-
-\begin{equation}
-  \boxed{\;\rms(r) \;\le\;
-  \underbrace{\frac{M_2\dot\rho_2 + M_1\dot\rho_1}{Wz_{CoM}}
-  + \Delta_{\rm pre}}_{\text{model, before the experiment}}
-  \;+\; N_n \;}
-  \tag{20}
-\end{equation}
-The three terms have three different statuses, worth naming. The
-first is a \emph{sup} bound standing in for an RMS: (17) caps
-$|\de(\tau)|$ at every point, and $\rms(\de) \le \sup|\de|$ always
---- a conservative substitution, not an approximation. The second is
-an RMS \emph{by definition}, (18b). The third caps $\rms(n)$ by the
-declared campaign constant (19b) --- the estimate (19) serves the
-interpretation, the constant serves the guarantee. They combine by the triangle inequality of the
-$L^2$ norm, $\rms(A+B) \le \rms(A) + \rms(B)$; the first two live on
-disjoint segments and are therefore orthogonal, so quadrature
-($\sqrt{\text{model}^2 + \Delta_{\rm pre}^2}$) would be admissible
-and slightly tighter --- linear addition is kept as the conservative,
-simpler form, and with $\Delta_{\rm pre} \le 0.036^\circ$/s the
-difference is invisible.
-
-\emph{The RMS-of-$w$ variant: how much the sup substitution costs.}
-The genuinely available tightening sits in the first term. Since
-(17) caps $|\de(\tau)|$ pointwise by the comparison solution
-$w(\tau)$, one may use $\rms(\de) \le \rms(w)$ instead of
-$\sup w$ --- and because $w$ is concentrated in the last e-foldings,
-its RMS over the window is genuinely smaller, with a $1/\sqrt{\xe}$
-dilution the sup ignores: asymptotically
-$\rms(B_2) \to \sqrt{1/(108\,\xe)}$ and
-$\rms(B_1) \to \sqrt{1/(16\,\xe)}$ (the integrals
-$\int_{-\infty}^{0} B_{2,\infty}^2\,du = 1/108$ and
-$\int u^2e^{2u}/4\,du = 1/16$). Evaluated exactly on the campaign
-(\texttt{analysis/rms\_w\_variant.py}): the model term tightens by
-$1.43\times$ at the fastest ramp to $1.69\times$ at the slowest
-(where $\xe$ is largest) --- but with the constant $N_n$ now
-dominating the cap, the total barely moves: mean used
-$0.36$--$0.41$ against $0.38$--$0.43$, coverage $140/140$ either
-way, worst run $0.72$ against $0.76$. With each term guarding its
-own object, the norm choice inside the sub-dominant model term is a
-matter of taste; the sup form is kept for its simpler statement.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.86\linewidth]{fig_kernel_free.png}
-\caption{Equation (20) against the campaign: means over the twenty
-runs at each rate, $95\%$ $t$ intervals. Purple is the model term of
-(17)$+$(18), grey the noise constant $N_n$ of (19b), green the
-measured residual. All $140$ runs are inside; the used fraction is
-$0.36$--$0.41$ and the cap is flat, like the residual.}
-\label{fig:check}
-\end{figure}
+Per run: the deployed free fit's full-window residual RMS against
+the cap of (1). No calibration enters on either side.
 
 \begin{center}\small
-\begin{tabular}{@{}rrrrrrr@{}}
+\begin{tabular}{@{}lccccc@{}}
 \toprule
-$\Mdot$ & model (17)+(18) & of it (18) & $N_n$ & cap (20) &
-measured & used\\
-N\,m/s & $^\circ$/s & $^\circ$/s & $^\circ$/s & $^\circ$/s &
-$^\circ$/s & \\
+campaign & runs & inside & worst used fraction & median & p90\\
 \midrule
-$0.10$ & $0.238$ & $0.001$ & $2.315$ & $2.55$ & $0.987$ & $0.39$\\
-$0.20$ & $0.243$ & $0.000$ & $2.315$ & $2.56$ & $0.964$ & $0.38$\\
-$0.30$ & $0.257$ & $0.000$ & $2.315$ & $2.57$ & $1.014$ & $0.39$\\
-$0.45$ & $0.289$ & $0.000$ & $2.315$ & $2.60$ & $0.947$ & $0.36$\\
-$0.65$ & $0.302$ & $0.000$ & $2.315$ & $2.62$ & $1.084$ & $0.41$\\
-$0.90$ & $0.308$ & $0.000$ & $2.315$ & $2.62$ & $1.023$ & $0.39$\\
-$1.20$ & $0.339$ & $0.000$ & $2.315$ & $2.65$ & $1.052$ & $0.40$\\
+simulation ($\varphi_{\max}=5^\circ$, envelope alone)
+  & 308 & 301 & 2.30 & 0.48 & 0.73\\
+hardware ($\varphi_{\max}=8^\circ$, envelope $+$ (14))
+  & 140 & 134 & 1.65 & 0.47 & 0.81\\
 \bottomrule
 \end{tabular}
 \end{center}
 
-Inside on $140/140$ runs; per-run used fraction p10 $0.24$, median
-$0.38$, worst $0.72$. (That the $N_n$ column exceeds the
-measured residual is by construction, twice over: $N_n$ is the
-declared \emph{bound} (19b), a cap on the disturbance rather than its
-level --- the level estimate (19) sits at the residual --- and even
-the true disturbance generically exceeds the residual slightly,
-because the fit absorbs the noise component parallel to the family:
-$\mathbb E[\rms(r)^2] = \sigma^2(1 - p/N)$, the projection
-$\|(I-P)n\| \le \|n\|$ of the appendix.)
+\emph{The simulation exceedances}, all seven at the two fastest
+ramps: three marginal ($1.04$--$1.07$: S1/$M_y$, S2/$M_x$, S9/$M_x$
+at $1.20$ N\,m/s) and four substantial ($1.23$--$2.30$), every one
+of the four on S9/$M_y$ or S11/$M_y$ --- the injected offsets
+$(32,32)$ and $(38,14)$ mm sit at or beyond the design rectangle
+whose arm the $\rbar$ of (12) assumes, so these runs operate outside
+the box the bound is issued for.
 
-\emph{The table's most striking feature --- measured $\approx$
-$\hat n$ --- and what it does and does not prove.} The measured
-residual sits at the noise estimate (campaign median of
-$\rms(r)/\hat n$: $0.976$, IQR $0.89$--$1.09$): the residual is
-statistically indistinguishable from the disturbance floor, i.e.\ the
-fit absorbed the model error --- the realised $\de$ of
-$0.16$--$0.17^\circ$/s is invisible under a $1^\circ$/s floor
-($\sqrt{1^2 + 0.17^2} = 1.014$). One part of this is by
-construction and must not be cited as evidence: on the $113$ runs
-with their own quiet stretch the median of $\rms(r)/\hat n$ is
-exactly $1.000$ with $50\%$ above --- $s_{\rm med}$ \emph{is} the
-median of $\kappa_{\rm imp}/\kappa_q$, so the median run's $\hat n$
-is calibrated to its own residual. What is \emph{not} by
-construction, and is the actual evidence: the spread stays narrow
-(the calibration pins the median, not the IQR), the ratio is flat in
-$\Mdot$, and the upper tail --- runs up to $1.76\,\hat n$ --- is
-covered by the declared constant $N_n$ of (19b), with the model term
-adding the guaranteed $\de$ headroom on top. The $140/140$ coverage
-therefore rests on the constant and the model term, not on the
-calibration.
+\emph{The hardware exceedances}, six runs between $0.65$ and $1.20$
+N\,m/s (worst used fraction $1.65$), carry disturbance content
+outside the modelled channels: (12) budgets the small-angle
+remainder and ground effect, and (14) the rotor-induced vibration,
+but an outdoor vehicle on real ground also meets unmodelled
+disturbances --- gusts, contact irregularities at the pivot --- that
+enter $\rho$ with no term reserved for them. Six runs in $140$
+carrying a visible dose of them, at the fast ramps where the window
+is shortest and a single transient weighs most in the RMS, is the
+expected signature; the remaining $134$ sit inside with the
+used-fraction distribution above.
 
-(What ``measured'' is, precisely: the onset is
-placed by the paper's PNLS estimator, and the residual is then the
-least-squares refit of amplitude and baseline on that window with
-$C_2$ pinned to the calibrated value. The full minimiser --- onset
-and exponent free, the family the proof actually covers --- fits at
-least as well, so its residual is $\le$ the number in the table:
-coverage is claimed against the harder residual.) On the exact nonlinear solution the realised
-$\de$ is $0.16$--$0.17^\circ$/s; the model term sits only
-$1.4\times$--$2.0\times$ above it --- with the box at the excitation
-cap and the anchor at the true rate, most of the old slack is gone,
-and what remains is the product-of-sups and the shape transfer.
+The two campaigns validate \emph{one} construction: the same chain
+(1), the same witness, the same envelope, the same design-box
+$\rbar$. The panels differ in exactly the channels the platforms
+differ in --- the simulator declares its noise and models no ground
+effect, so its cap is the envelope alone; the vehicle adds ground
+effect (inside $\rbar$), vibration (the term (14)), and, on the six
+runs above, disturbances no pre-experiment budget can name. Figures
+\texttt{fig\_bound\_final\_sim} and \texttt{fig\_bound\_final\_hw}
+show every run.
 
-\section{The two answers this gives}
+\section{What remains of the shaped decomposition}
 
-\emph{Why the residual is flat in $\Mdot$ --- and why the model term
-of the cap is not.} The table shows two different rate behaviours,
-and they must be kept apart. The \emph{residual} is flat because it
-is noise-floored: the realised unabsorbed remainder is
-$0.16$--$0.17^\circ$/s at \emph{every} rate, invisible under the
-$\approx 1^\circ$/s disturbance floor, so the theory's observable
-prediction is $\rms(r) \approx \hat n$, flat --- and the data agrees:
-$\rms(r) = 0.95$--$1.08^\circ$/s across a twelvefold change in
-$\Mdot$ (correlation $r = +0.09$, $p = 0.31$). The \emph{model term}
-of (20), by contrast, grows $\times1.4$ across the sweep, from one
-identifiable factor: the true end rate genuinely grows (faster ramps
-tip faster through the same tilt --- the nominal part alone grows
-$\times1.6$), and the bound charges the box tilt $\varphi_{\max}$
-\emph{at} that end rate --- a product of sups. The true
-trajectory never realises both extremes together and its remainder
-stays flat, so the bound's slack widens, from $\times1.4$ at the
-slowest ramp to $\times2.0$ at the fastest --- while the used
-fraction of the cap stays flat at $0.36$--$0.41$, the noise constant
-dominating. This is not a wrong
-rate law in the theory; it is the honest price of a product-of-sups
-over correlated quantities, and it is paid where the cap can afford
-it --- the model term stays sub-noise at every rate, so its growth
-never reaches the observable. The envelope (90), which grows like
-$\sinh \xe$, bounds $e_\omega$ --- not the residual --- and comparing
-the residual against it is what made the old cap look loose.
+The earlier draft of this document ran the bound through the
+decomposition $e_\omega = \beta\sinh(C_2\tau) + \delta e_\omega$
+with $\beta = e_\omega(\tau_{\rm end})/\sinh(x)$ (manuscript
+(95)--(97)), capping $\delta e_\omega$ by the Dirichlet comparison
+constants $1/12$ and $1/(2e)$ (manuscript (107)). Measured directly
+--- pinned-theory fit, $\beta$ from the definition,
+$\delta e_\omega$ pointwise --- that cap does not cover: on the
+simulation campaign $0$ of $301$ runs sit inside it (realised
+$\delta e_\omega$ RMS $2$--$3\times$ the cap), and on hardware only
+the below-$5$-Hz band clears it, marginally ($101/139$). The
+decomposition is an identity and survives as one; what fails is the
+premise that the remainder after the end-matched $\sinh$ subtraction
+is dominated by the in-family forcing response --- the subtraction
+is exact only at the two window ends, and the out-of-family content
+between them is amplified by the same $\sinh$ growth the envelope
+charges for.
 
-\emph{The trend is an anchor choice, and the theory contains the flat
-anchor too.} Why is the realised $\de$ flat while its bound grows?
-Because the Dirichlet boundary zero sits directly under the
-$\dot\rho$ peak, the true response is governed not by the peak of
-$\dot\rho$ (which rides $\omega_{\max}$ and doubles) but by the
-$\rho$ \emph{level}: $\int\dot\rho = \rho(\tau_{\rm end}) \propto
-\varphi_{\rm end}^2$, flat in rate since the realised end tilt is.
-A bound anchored on $\rho(\tau_{\rm end})$ exists --- the
-Green-kernel route of Remark (a), $|\de| \le
-(1/J_P)\int|K|\rho_{\rm env}$ --- and evaluated per run
-(\texttt{analysis/k\_route\_trend.py}) it inherits exactly that
-flatness: $0.29$--$0.32^\circ$/s across the sweep at the $5^\circ$ box, a
-trend of $\times1.08$ against the deployed route's $\times1.4$. The
-two routes now cross \emph{inside} the sweep: the $\rho$-anchored
-form starts winning on runs at the fastest ramps, and the per-run
-minimum of the two --- valid, since each is a valid bound --- runs
-$0.23$--$0.28$ with trend $\times1.24$, $140/140$, worst used
-$0.74$. The reviewer-facing statement: the full bound is
-$\min(\text{$\dot\rho$-anchored},\ \text{$\rho$-anchored})$; its
-growing arm happens to be the binding one on this sweep, and the flat
-arm --- matching the data's trend --- takes over beyond it. The
-growth is which arm binds, not a wrong law.
+Its residual role is therefore qualitative: it explains \emph{why
+the measured residuals are flat in the ramp rate} (the fit's onset
+freedom absorbs the growing mode's dominant multiple, which is the
+tangent direction of the time shift), while the quantitative
+certificate is (1). For the manuscript this means: state (1) as the
+headline bound with the two-line proof of Sec.~3; keep (95)--(97) as
+the flatness explanation, dropping the sample index $i$ from them
+(they are function-level identities; $i$ belongs only to (92) and
+the least-squares objective); and demote (98)--(107) to a remark
+scoped to what it is --- a bound on the forcing response, not on the
+measured remainder.
 
-\emph{How far the shift moves the critical moment.} The absorbed shift
-is (9), and the moment error it causes cancels $\Mdot$ exactly:
-\begin{equation}
-  \big|\Delta M_{\rm crit}\big| \;=\; \Mdot\,|\dtc|
-  \;=\; \frac{\Mdot}{C_2}\,
-  \operatorname{artanh}\!\Big(
-  \frac{e_\omega(\tau_{\rm end})}{C_1\sinh \xe}\Big)
-  \;\le\; \frac{\Mdot}{C_2}\,
-  \operatorname{artanh}\!\Big(\frac{\rbar\,C_2}{\Mdot}\Big),
-  \tag{21}
-\end{equation}
-exact at every step --- no first-order approximation of the artanh:
-the first equality is (9) as written, and the inequality is
-monotonicity of artanh after bounding $e_\omega(\tau_{\rm end}) \le
-E(\tau_{\rm end}) = \rbar\sinh \xe/(J_PC_2)$, which turns the
-argument into $E(\tau_{\rm end})/(C_1\sinh\xe) = \rbar C_2/\Mdot = u$
-(using $\Mdot/C_1 = Wz_{CoM}$ and $J_PC_2^2 = Wz_{CoM}$). The ceiling
-carries $\rbar$ \emph{inside} the artanh; since
-$\operatorname{artanh}(u) = u + u^3/3 + \cdots$, its small-$u$ limit
-is exactly $\rbar$, and at the $5^\circ$ box it sits within $0.9\%$
-above $\rbar$ on the campaign ($0.7\%$ over the design box) --- so
-$\rbar$, the window-averaged remainder the manuscript already
-budgets, remains the mnemonic, while the stated guarantee
-approximates nothing. At the $5^\circ$ box the
-per-run ceiling is $1.8$--$3.3$ mN\,m; the $e_\omega$-driven part of
-the shift is realised $\le 0.29$ of it
-(the exact-solution envelope ratio), the sign lowering $M_{\rm crit}$
-(earlier onset). The measured onset scatter, $\Mdot|\dtc| =
-0.36$--$1.85$ mN\,m from the fits, additionally contains noise-driven
-jitter --- comparable to the ceiling in size but governed by the noise
-term, not by (21).
-
-\section{The bound over the design box}
-
-Because every constant in (17), (18) and (21) is available before the
-experiment, both results can be swept over the vehicle's design box ---
-mass $3.00$--$3.22$ kg, $l_p = 0.110$--$0.140$ m, CoM offset
-$p_{\rm off} = \pm0.020$ m (arm $= l_p - p_{\rm off}$),
-$z_{CoM} = 0.20$--$0.30$ m, $J_{CoM} = 0.050$ kg\,m$^2$ with $J_P$ by
-the parallel-axis theorem, $600$ combinations at each of the seven
-rates, each with its own tilt-limited window
-($\sinh \xe- \xe  = \varphi_{\max}Wz_{CoM}C_2/\Mdot$).
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\linewidth]{fig_design_range.png}
-\caption{The design-box sweep. \emph{(a)} the bound on
-$\rms(\de)$, eq.\ (17)$+$(18): $0.07$--$0.25^\circ$/s over box and
-rates, median $0.11$--$0.16$. The band is set by the ratio
-$\mathrm{arm}/z_{CoM}$ --- worst at arm $0.160$ m with
-$z_{CoM} = 0.20$ m, best at arm $0.090$ m with $0.30$ m.
-\emph{(b)} the critical-moment shift ceiling of (21),
-$(\Mdot/C_2)\operatorname{artanh}(\rbar C_2/\Mdot)$ --- artanh
-exact, $\rbar$ inside: $1.5$--$3.1$ mN\,m, within $0.7\%$ of its
-small-$u$ limit $\rbar$ everywhere at the $5^\circ$ box --- and flat
-in $\Mdot$ by the cancellation. Its worst corner has the
-\emph{opposite} $z$ direction --- $m = 3.22$ kg, arm $0.160$ m,
-$z_{CoM} = 0.30$ m --- because $\rbar$ grows with the window that a
-higher CoM lengthens, while the residual bound worsens with
-$\mathrm{arm}/z_{CoM}$.}
-\label{fig:design}
-\end{figure}
-
-Two readings (Fig.~\ref{fig:design}). The residual bound stays within
-$0.07$--$0.25^\circ$/s everywhere in the box --- an order of magnitude below the measured disturbance floor of
-$\approx1^\circ$/s at every corner --- so
-the fit-quality gate can be set from the noise figure alone for any
-vehicle in this class. And the identification error from the absorbed
-onset shift never exceeds $3.2$ mN\,m anywhere in the box, at any
-rate --- the ceiling exact, $\rbar$ inside the artanh, within
-$0.7\%$ of $\rbar$ everywhere --- with the same flatness in $\Mdot$
-that the campaign shows.
-
-\section*{Reproduction}
-
-All numbers and figures in this document come from the scripts
-below, run from the repository root:
-\begin{verbatim}
-python analysis/failing_runs.py       DataSet/exp   # writes the cache
-python analysis/kernel_free_bound.py  docs/fig_kernel_free.png
-python analysis/design_range_chart.py docs/fig_design_range.png
-python analysis/noise_spectrum_figure.py docs/fig_noise_spectrum.png
-python analysis/sg_bound_bars.py      docs/fig_sg_bars.png
-\end{verbatim}
-\texttt{kernel\_free\_bound.py} evaluates (16)--(20) per run against
-the campaign cache and draws Fig.~\ref{fig:check}
-(\texttt{M2()}, \texttt{M1()} implement (17a)--(17b);
-\texttt{model\_term()} implements (16)--(18)).
-\texttt{design\_range\_chart.py} sweeps the design box of
-Sec.~9 with the same closed forms and draws
-Fig.~\ref{fig:design}; its box limits are constants at the top of the
-file. Neither script solves an ODE or builds a kernel matrix ---
-elementary functions and one scalar root-find (the window equation)
-per combination. \texttt{noise\_spectrum\_figure.py} draws
-Fig.~\ref{fig:spectrum}, and \texttt{sg\_bound\_bars.py} computes the
-SG anchor of (19b) and draws Fig.~\ref{fig:sgbound}; the variant
-checks of Sec.~7--8 are \texttt{rms\_w\_variant.py},
-\texttt{k\_route\_trend.py} and \texttt{neutral\_anchor.py}.
-
-\section*{Remarks}
-
-\emph{(a) Without the differential equation.} The same $\de$ can be
-written directly from the manuscript's Duhamel form (89), giving
-$\de = \tfrac1{J_P}\int_0^{\tau_{\rm end}}K(\tau,s)\rho(s)\,ds$ with a
-kernel that the addition identities collapse to
-$K = \sinh(C_2(\tau_{\rm end}-\tau))\cosh(C_2 s)/\sinh(C_2\tau_{\rm
-end})$ for $s\le\tau$ (minus its mirror for $s>\tau$), and
-$\max|K| = 1$ exactly --- the exponential cancels inside the kernel.
-It is an instructive identity, but as a bound it is weaker: $K$
-changes sign at $s=\tau$, so only $\int|K|$ can be used, and that
-costs a factor $\approx2.4$ over (17). The derivative bound in (16)
-is what forbids $\rho$ from flipping sign with $K$, and that
-smoothness is worth exactly that factor.
-
-\emph{(b) What is a priori and what is not.} The model term of (20)
-uses only pre-experiment constants (list under (16)). The noise
-constant $N_n$ is a campaign statistic --- one number measured once,
-then frozen. A fully pre-experiment cap replaces $N_n$ with a bench
-noise figure times the declared factor.
-
-\emph{(c) Exponent mismatch.} If the true exponent differs from the
-pinned $C_2$ by a relative $\varepsilon_2$, the mismatch joins
-$e_\omega$ by definition and its unabsorbed part costs
-$0.018$--$0.022^\circ$/s per $1\%$ of $\varepsilon_2$ --- $7$--$10\%$
-of the model term, and the calibration residuals limit
-$\varepsilon_2$ to a few percent.
-
-\emph{(d) Ground-effect model uncertainty.} The GE model enters the
-cap only through the $\beta_M$ channel of $\rbar$, whose weighted
-share is $2\%$ of $\rbar$ at the slowest ramp and $10\%$ at the
-fastest; inflating that channel \emph{sixfold} moves the cap by
-$+0.1\%$ (the noise constant dominates), and doubling it moves the
-shift ceiling of (21) by its share, $2$--$10\%$ --- worst case
-$3.3 \to 3.6$ mN\,m. So an explicit GE-uncertainty factor is
-essentially free, and no plausible error in $\beta_M$ reaches the
-observable. The converse question --- whether the
-$\sim$$100$ mN\,m spread of the \emph{dynamic GE inversion} should be
-charged to the cap as model uncertainty --- is answered by the check
-itself: a real unmodelled in-window moment of that size is $30$--$60$
-times the $\rbar$ budget and would blow the residual through the cap
-by several $^\circ$/s, whereas the measured residual sits at the
-noise floor with the realised $\de$ at $0.16$--$0.17^\circ$/s.
-The $140/140$ coverage is therefore the closed-loop evidence that the
-total unmodelled in-window forcing, ground effect included, stays
-within $\rbar$; the inversion's spread is the instrument's
-sensitivity floor (the balance differences N\,m-scale terms, leaving
-$\approx 88$ mN\,m of static-repeatability floor plus dataset
-systematics), not a force acting on the vehicle --- established with
-the analytic $\dot\omega$ of the fitted branch, so angular-rate
-differentiation noise is excluded as the cause.
-
-\section*{Appendix: the linear-algebra picture}
-
-Collect the $N$ samples of a signal into a vector in $\mathbb R^N$.
-The model family (2) is then a subset of that space,
-\begin{equation}
-  \mathcal M \;=\;
-  \Big\{\, a\big(\cosh(c(\tau_i - d)) - 1\big) + b
-  \;:\; a, c > 0,\ d, b \in \mathbb R \,\Big\}
-  \;\subset\; \mathbb R^N ,
-  \tag{A.1}
-\end{equation}
-a four-parameter curved manifold. Its tangent space at the nominal is
-spanned by the four derivative directions
-\begin{equation}
-  T \;=\; \operatorname{span}\big\{\,
-  \underbrace{\cosh(C_2\tau)-1}_{\partial/\partial C_1},\;
-  \underbrace{\sinh(C_2\tau)}_{\partial/\partial\dtc},\;
-  \underbrace{\tau\sinh(C_2\tau)}_{\partial/\partial C_2},\;
-  \underbrace{\mathbf 1}_{\partial/\partial C}
-  \,\big\},
-  \tag{A.2}
-\end{equation}
-so the family can move in at most four of the $N$ dimensions around
-any of its points.
-
-\emph{Why exact representation fails.} ``The true curve is a shifted
-nominal'' asserts membership: $y_{\rm struct}\in\mathcal M$. Two
-obstructions, matching the two in the Sec.~4 remark. Dimension: a
-four-dimensional manifold is a measure-zero sliver of $\mathbb R^N$;
-a vector off it stays off it. Dynamics, sharper: every element of
-$\mathcal M$ samples a homogeneous solution of
-$\ddot v = c^2 v$, while $y_{\rm struct}$ samples the forced equation
-(12); by the argument under (13), membership would force
-$\dot\rho\equiv0$. So $y_{\rm struct}$ has a component
-\emph{transverse} to $\mathcal M$ that no parameter choice reaches.
-
-\emph{What introducing $\de$ does.} It changes the assertion from
-membership to a coordinate statement:
-\begin{equation}
-  y_{\rm struct} \;=\; m \;+\; \de,
-  \qquad m \in \mathcal M ,
-  \tag{A.3}
-\end{equation}
-exact for \emph{every} choice of $m$ --- the freedom is in where to
-put the remainder, not whether there is one. Two canonical choices
-divide the labour:
+\section{Reproduction}
 
 \begin{center}\small
-\begin{tabular}{@{}lll@{}}
+\begin{tabular}{@{}ll@{}}
 \toprule
-choice of $m$ & property of $\de$ & what it buys\\
-\midrule
-orthogonal projection (LS) & $\de \perp T$, minimal norm &
-  the smallest remainder, no pointwise structure\\
-end-matched witness, (9) & $\de = 0$ at both window ends &
-  the Dirichlet problem (13)--(14), hence (17)\\
+\texttt{analysis/sim\_envelope\_witness.py} &
+  simulation sweep $\to$ \texttt{docs/sim\_env\_witness\_runs.csv}\\
+\texttt{analysis/hw\_envelope\_witness.py} &
+  hardware sweep $\to$ \texttt{docs/hw\_env\_noise\_runs.csv}\\
+\texttt{analysis/bound\_final\_figs.py} &
+  caps of (1), both figures, the counts of Sec.~7\\
+\texttt{analysis/de\_measure.py} &
+  the direct $\delta e_\omega$ measurement of Sec.~8\\
 \bottomrule
 \end{tabular}
 \end{center}
 
-The witness pays a factor $1.8$--$2.0$ in norm over the orthogonal
-choice and buys, in exchange, the two boundary zeros that make the
-maximum principle --- and with it the entire a priori bound ---
-available. Provability is purchased with norm.
-
-\emph{The projector sub-case, and the manuscript's Appendix C.} With
-$C_2$ pinned and the onset held, the family linearises to the subspace
-$\mathcal V = \operatorname{span}\{u, \mathbf 1\}$,
-$u_i = \cosh(C_2\tau_i)-1$, and the orthogonal choice becomes an
-explicit matrix: with $A = [\,u\ \ \mathbf 1\,]$,
-\begin{equation}
-  P = A(A^{\!\top}\!A)^{-1}A^{\!\top},
-  \qquad
-  P_{ij} = \frac1N + \frac{\tilde u_i\tilde u_j}{\sum_k \tilde u_k^2},
-  \qquad
-  r_\perp = (I-P)(e_\omega + n),
-  \tag{A.4}
-\end{equation}
-($\tilde u = u - \bar u$) --- the manuscript's Lemma~2, eq.~(C3). The
-$\de$ of this document is the same object one level up: the remainder
-transverse to the full nonlinear family rather than to its pinned
-linearisation.
-
-\emph{How much of $e_\omega$ lies along the family.} Measured on the
-exact tip-over, the fraction of $e_\omega$ (in RMS) absorbed by
-successively larger reachable sets: $61$--$67\%$ by
-$\operatorname{span}\{u,\mathbf 1\}$, $70$--$71\%$ adding the onset
-direction $\sinh$, $92.5\%$ by the full four-parameter family --- the
-last flat across all rates. The transverse component --- the $7.5\%$
-no parameters reach, $0.012$--$0.018^\circ$/s --- is the irreducible
-core of $\de$, and (17) is its a priori ceiling.
+The residual in every script is the pipeline's own stage-1 call,
+\texttt{extract\_piecewise(model='cosh', cosh\_c2=None,
+ramp\_gain=None)} --- both constants and the onset free, the full
+window, no calibration.
 
 \end{document}
