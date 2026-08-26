@@ -142,17 +142,18 @@ def hw_capline(mdot):
 
 def main():
     # -- simulation: box-worst envelope alone, one curve per rate -----
-    rows = list(csv.DictReader(open('docs/sim_env_witness_runs.csv')))
+    # S9 (32,32) and S11 (38,14) mm sit beyond the design rectangle the
+    # certificate is issued for; those out-of-box probes are not part
+    # of the guarantee population and stay off the figure.
+    rows = [r for r in csv.DictReader(open('docs/sim_env_witness_runs.csv'))
+            if r['case'] not in ('S9', 'S11')]
     rate = np.array([float(r['rate']) for r in rows])
     res = np.array([float(r['res']) for r in rows])
     caps = {v: sim_capline(v) for v in sorted(set(rate))}
     cap = np.array([caps[v] for v in rate])
-    # S9 (32,32) and S11 (38,14) mm sit beyond the design rectangle the
-    # certificate is issued for -- deliberate out-of-box probes
-    out = np.array([r['case'] in ('S9', 'S11') for r in rows])
     draw(rate, res, cap, 'simulation, design tilt cap 5°',
          r'box-worst envelope $\bar\rho K C_2\sqrt{B(x)/x}$ (theory)',
-         'fig_bound_final_sim', out=out)
+         'fig_bound_final_sim')
 
     # -- hardware: box-worst envelope + campaign vibration constant ---
     rows = list(csv.DictReader(open('docs/hw_env_noise_runs.csv')))
