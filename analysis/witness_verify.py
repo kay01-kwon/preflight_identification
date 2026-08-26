@@ -24,6 +24,11 @@ baseline included), and four claims are checked per ramp rate:
   4  pure delay           shifting the whole record's clock changes
                           the fitted residual not at all and moves
                           t* by exactly the shift
+  5  comparison system    delta_e = e_omega - beta*sinh(C2 tau) with
+                          the end-matched beta sits under the
+                          Dirichlet cap (manuscript (107)),
+                          (W*arm*phi*omega_max/12)*K -- measurable
+                          here because the constants are exact
 
 Usage
 -----
@@ -93,7 +98,7 @@ def main():
     print(f'C2 {C2:.3f} rad/s   J_P {J_P:.4f}   K {K:.5f}')
     hdr = ('rate  | RMS(r)   RMS(e+n)  ok | RMS(e)   cap      ok  '
            'ptwise | t*      ref(97b)  ceil(97a)  ok | '
-           'delay-res  d(t*)    ok')
+           'delay-res  d(t*)    ok | RMS(de) cap107  ok')
     print(hdr)
     print('-' * len(hdr))
     for mdot in (0.10, 0.45, 1.20):
@@ -130,6 +135,14 @@ def main():
         ok4 = (abs(rms_d - rms_fit) < 1e-9
                and abs((p_d[2] - ts) - 0.080) < 1e-4)
 
+        # -- check 5: the Dirichlet cap on delta_e ((107)) --------------
+        de = e_om - beta * np.sinh(C2 * tau)
+        rms_de = float(np.sqrt(np.mean(de ** 2)))
+        om_max = K * mdot * (np.cosh(x) - 1) \
+            + rho_bar * np.sinh(x) / (J_P * C2)
+        cap107 = (W * L_ARM * PHI_MAX * om_max / 12.0) * K
+        ok5 = rms_de <= cap107
+
         print(f'{mdot:4.2f}  | {np.degrees(rms_fit):7.4f} '
               f'{np.degrees(rms_wit):8.4f} {"Y" if ok1 else "N":>2} '
               f'| {np.degrees(rms_e):7.4f} {np.degrees(cap):7.4f} '
@@ -137,7 +150,9 @@ def main():
               f'| {1e3*ts:+7.2f} {1e3*dtc_pred:+8.2f} {1e3*dtc_cap:8.2f} ms '
               f'{"Y" if ok3 else "N"} '
               f'| {np.degrees(rms_d):8.4f} {1e3*(p_d[2]-ts):+7.2f} ms '
-              f'{"Y" if ok4 else "N"}')
+              f'{"Y" if ok4 else "N"} '
+              f'| {np.degrees(rms_de):7.4f} {np.degrees(cap107):7.4f} '
+              f'{"Y" if ok5 else "N"}')
 
 
 if __name__ == '__main__':

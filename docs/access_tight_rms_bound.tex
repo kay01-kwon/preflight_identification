@@ -3,10 +3,12 @@
 %
 % This document replaces the earlier step-by-step derivation built on
 % the shifted-branch witness and the Dirichlet bound of delta e_omega.
-% That construction survives as a remark (Sec. 8): measured directly,
-% its cap (manuscript (107)) does not cover the realised delta e_omega
-% on the simulation campaign, so the certificate the manuscript
-% actually validates is the simpler and stronger chain derived here.
+% That construction survives as a remark (Sec. 8): its cap holds on
+% the exact dynamics it models, but delta e_omega cannot be measured
+% separately on a platform (pinning errors inject in-family content),
+% so the certificate the manuscript validates is the simpler chain
+% derived here, whose measured side needs no knowledge of the true
+% constants.
 %
 % Numbers and figures come from (see the Reproduction section):
 %     python analysis/sim_envelope_witness.py
@@ -413,24 +415,37 @@ The earlier draft of this document ran the bound through the
 decomposition $e_\omega = \beta\sinh(C_2\tau) + \delta e_\omega$
 with $\beta = e_\omega(\tau_{\rm end})/\sinh(x)$ (manuscript
 (95)--(97)), capping $\delta e_\omega$ by the Dirichlet comparison
-constants $1/12$ and $1/(2e)$ (manuscript (107)). Measured directly
---- pinned-theory fit, $\beta$ from the definition,
-$\delta e_\omega$ pointwise --- that cap does not cover: on the
-simulation campaign $0$ of $301$ runs sit inside it (realised
-$\delta e_\omega$ RMS $2$--$3\times$ the cap), and on hardware only
-the below-$5$-Hz band clears it, marginally ($101/139$). The
-decomposition is an identity and survives as one; what fails is the
-premise that the remainder after the end-matched $\sinh$ subtraction
-is dominated by the in-family forcing response --- the subtraction
-is exact only at the two window ends, and the out-of-family content
-between them is amplified by the same $\sinh$ growth the envelope
-charges for.
+constants $1/12$ and $1/(2e)$ (manuscript (107)). Two facts, both
+established since, fix that construction's true status.
 
-Its residual role is therefore qualitative: it explains \emph{why
-the measured residuals are flat in the ramp rate} (the fit's onset
-freedom absorbs the growing mode's dominant multiple, which is the
-tangent direction of the time shift), while the quantitative
-certificate is (1). For the manuscript this means: state (1) as the
+\emph{On the dynamics it models, the cap holds.} Integrating the
+exact nonlinear tip-over (constants known exactly, no pinning
+error) and measuring $\delta e_\omega$ per its definition, (107)
+covers at every ramp rate with $2.5$--$3\times$ margin (used
+fraction $0.33$--$0.40$; \texttt{analysis/witness\_verify.py}
+environment). The comparison argument is correct mathematics.
+
+\emph{On a platform, $\delta e_\omega$ is not separately
+measurable.} It is defined against the \emph{true} nominal, so any
+error in the pinned constants or the onset injects in-family
+content into the measured difference --- and on the Gazebo campaign
+that contamination dominates: projecting the pinned deviation onto
+the family span $\{\cosh - 1, \sinh\}$ finds in-family coefficients
+up to the amplitude's own order, with the raw ``$\delta e_\omega$''
+reading $3$--$8\times$ the cap while the out-of-span remainder
+drops to the cap's order. An earlier verdict of this document
+(``$0/301$ inside'') treated that contaminated reading as a
+refutation; it is not --- it is the statement that the measurement
+cannot be made on a platform, which is precisely why the validated
+certificate is (1): the witness chain needs no knowledge of the
+true constants on the measured side.
+
+The decomposition's role is therefore: correct supporting theory,
+verified on its own model; the explanation of \emph{why the
+measured residuals are flat in the ramp rate} (the fit's onset
+freedom absorbs the growing mode's dominant multiple, the tangent
+direction of the time shift); and the a-priori $\delta t_c$ ceiling
+consumed by VI-F. The quantitative platform certificate is (1). For the manuscript this means: state (1) as the
 headline bound with the two-line proof of Sec.~3; keep (95)--(97) as
 the flatness explanation, dropping the sample index $i$ from them
 (they are function-level identities; $i$ belongs only to (92) and
