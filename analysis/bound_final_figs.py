@@ -7,7 +7,10 @@ every run against the small-angle envelope-witness cap
     RMS(e_omega) <= rho_bar * K * C2 * sqrt(B(x)/x),
     B(x) = sinh(2x)/4 - x/2,
 
-evaluated at the design tilt cap (5 deg on both campaigns).  The
+evaluated at the design tilt cap: 5 deg in simulation, 8 deg on
+hardware, each chosen to dominate the realized in-window tilt of its
+campaign (the gate stops the simulator near 4 deg; the slightly
+uneven ground of the test site lets the vehicle reach 7.7 deg).  The
 simulation panel carries the envelope alone -- no noise term of any
 kind.  Hardware adds the channel the vehicle contributes twice over:
 the ground-effect term inside rho_bar and the measured vibration term
@@ -31,7 +34,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt                       # noqa: E402
 
 G = 9.81
-PHI = np.deg2rad(5.0)                # design tilt cap, both campaigns
+PHI = np.deg2rad(8.0)                # hardware design tilt cap
 SIM_SIGMA = 2.45e-4                  # declared gyro noise std [rad/s]
 Z, BETA_M = 0.30, 0.0345             # hardware design box
 R_PHI, R_GE = 1 / 7, 1 / 5
@@ -88,7 +91,7 @@ def main():
          r'small-angle envelope $\bar\rho K C_2\sqrt{B(x)/x}$ (theory)',
          'fig_bound_final_sim', 'exceeds (S9/My, S11/My)')
 
-    # -- hardware: envelope (5 deg, GE incl.) + noise term ------------
+    # -- hardware: envelope (8 deg, GE incl.) + noise term ------------
     rows = list(csv.DictReader(open('docs/hw_env_noise_runs.csv')))
     out = []
     for r in rows:
@@ -111,7 +114,7 @@ def main():
     rate = np.array([o[0] for o in out])
     res = np.array([o[1] for o in out])
     cap = np.array([o[2] for o in out])
-    draw(rate, res, cap, 'hardware, design tilt cap 5°',
+    draw(rate, res, cap, 'hardware, design tilt cap 8°',
          r'envelope + $n_{hi}\sqrt{1+\kappa_b^2}$ (theory + measured noise)',
          'fig_bound_final_hw')
 
