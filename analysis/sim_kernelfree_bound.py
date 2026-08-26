@@ -64,6 +64,13 @@ for case, mass in CASES.items():
             g[md_c].append((np.degrees(meas),np.degrees(cap)))
     print('done',case,flush=True)
 
+import csv
+with open('docs/sim_kf_bound_runs.csv','w',newline='') as fh:
+    w=csv.writer(fh); w.writerow(['rate','res','cap'])
+    for rate in sorted(g):
+        for res,cap in g[rate]:
+            w.writerow([rate,f'{res:.4f}',f'{cap:.4f}'])
+
 print(f"\n{'rate':>6}{'n':>4}{'cap(107+108)':>13}{'free rmse':>10}"
       f"{'inside':>8}")
 ti=tt=0
