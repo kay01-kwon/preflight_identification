@@ -171,19 +171,24 @@ except the hardware $n_{\rm hi}$. Figs.~\figboundsim{} and
 \figboundhw{} test (99) on every run of both campaigns, the
 measured side being the deployed free fit exactly as it runs in the
 pipeline --- both shape constants and the onset free, full window,
-no calibration on either side. The bound is a conditional
-guarantee --- offset inside the design rectangle, tilt under
+no calibration on either side. The cap is evaluated once per ramp
+rate at the worst corner of the design box --- both leg arms, the
+far corner of the offset rectangle, both campaign masses --- so the
+theory enters each figure as a single curve, with no per-run
+knowledge on the theory side. The bound is a conditional guarantee
+--- offset inside the design rectangle, tilt under
 $\varphi_{\max}$, channels as modelled --- and on every run
-satisfying its hypothesis it holds without exception: in
-simulation ($\varphi_{\max} = 5^\circ$, envelope alone) $252/252$
-in-box runs sit inside (worst used fraction $0.97$; $305$ of all
-$308$), the three exceedances confined to S9 and S11, the
-deliberate out-of-box probes whose offsets $(32,32)$ and $(38,14)$
-mm lie beyond the rectangle --- the certificate fails exactly
-where its own premise does. On hardware ($\varphi_{\max} =
-8^\circ$, envelope plus (98)) all $140$ runs sit inside, the worst
-using $0.81$ of its cap. The median used fraction
-is $0.32$--$0.34$ on both campaigns: one construction, validated on
+satisfying its hypothesis it holds without exception: in simulation
+($\varphi_{\max} = 5^\circ$, envelope alone) $252/252$ in-box runs
+sit under the curve (worst used fraction $0.79$), the two
+exceedances confined to S9 and S11, the deliberate out-of-box
+probes whose offsets $(32,32)$ and $(38,14)$ mm lie beyond the
+rectangle --- the certificate fails exactly where its own premise
+does. On hardware ($\varphi_{\max} = 8^\circ$, envelope plus the
+campaign's largest vibration term $\max n_{\rm hi}\sqrt{1 +
+(s_{\rm med}\kappa_q)^2} = 2.47^\circ$/s in (98)) all $140$ runs
+sit under the curve, the worst using $0.55$ of its cap. The median used fraction
+is $0.20$--$0.28$ on both campaigns: one construction, validated on
 both platforms, the panels differing exactly in the channels the
 platforms differ in.
 
