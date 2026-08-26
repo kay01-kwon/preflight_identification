@@ -45,8 +45,15 @@ ARM = {'Mx': 0.160, 'My': 0.130}
 LP = {'Mx': 0.140, 'My': 0.110}
 
 
-def draw(rate, res, cap, title, cap_label, fname, exceed_label='exceeds'):
+def draw(rate, res, cap, title, cap_label, fname, exceed_label='exceeds',
+         out=None):
+    """out: optional boolean mask marking runs OUTSIDE the design box
+    (deliberate probes); they are drawn hollow grey and excluded from
+    the residual mean line, since the guarantee is issued for the
+    in-box population only."""
     bad = res > cap
+    if out is None:
+        out = np.zeros(len(res), dtype=bool)
     fig, ax = plt.subplots(figsize=(6.4, 4.1))
     rng = np.random.default_rng(0)
     ur = np.array(sorted(set(rate)))
@@ -55,14 +62,22 @@ def draw(rate, res, cap, title, cap_label, fname, exceed_label='exceeds'):
                                                        len(rate))
     ax.plot(xj, cap, 'o', ms=3.4, color='#D55E00', alpha=0.45,
             label=cap_label, zorder=2)
-    ax.plot(xj[~bad], res[~bad], 'o', ms=3.4, color='#0072B2', alpha=0.5,
-            label='PNLS residual RMS', zorder=3)
+    m_in = ~bad & ~out
+    ax.plot(xj[m_in], res[m_in], 'o', ms=3.4, color='#0072B2', alpha=0.5,
+            label='PNLS residual RMS (in-box)' if out.any()
+            else 'PNLS residual RMS', zorder=3)
+    if out.any():
+        ax.plot(xj[out & ~bad], res[out & ~bad], 'o', ms=4.2, mfc='none',
+                mew=1.2, color='0.45',
+                label='out-of-box probes (S9, S11)', zorder=3)
     if bad.any():
         ax.plot(xj[bad], res[bad], 'o', ms=5.0, mfc='none', mew=1.5,
                 color='#CC0000', label=exceed_label, zorder=5)
-    for arr, c in ((cap, '#D55E00'), (res, '#0072B2')):
-        ax.plot(range(len(ur)), [np.mean(arr[rate == v]) for v in ur],
-                '-', lw=1.9, color=c, zorder=4)
+    ax.plot(range(len(ur)), [np.mean(cap[rate == v]) for v in ur],
+            '-', lw=1.9, color='#D55E00', zorder=4)
+    ax.plot(range(len(ur)),
+            [np.mean(res[(rate == v) & ~out]) for v in ur],
+            '-', lw=1.9, color='#0072B2', zorder=4)
     ins = int(np.sum(~bad))
     ax.set_xticks(range(len(ur)))
     ax.set_xticklabels([f'{v:g}' for v in ur])
@@ -70,8 +85,13 @@ def draw(rate, res, cap, title, cap_label, fname, exceed_label='exceeds'):
     ax.set_ylabel('residual RMS [deg/s]', fontsize=9.5)
     ax.grid(alpha=0.4, lw=0.8, color='0.6')
     ax.set_axisbelow(True)
-    ax.set_title(f'{title}: {ins}/{len(res)} runs inside',
-                 fontsize=10, loc='left')
+    if out.any():
+        n_in, k_in = int((~out).sum()), int((~bad & ~out).sum())
+        head = (f'{title}: {k_in}/{n_in} in-box inside '
+                f'({ins}/{len(res)} overall)')
+    else:
+        head = f'{title}: {ins}/{len(res)} runs inside'
+    ax.set_title(head, fontsize=10, loc='left')
     ax.legend(fontsize=8.4, loc='upper right', framealpha=0.9)
     fig.tight_layout()
     for ext, kw in (('pdf', {}), ('png', dict(dpi=200))):
@@ -87,9 +107,12 @@ def main():
     res = np.array([float(r['res']) for r in rows])
     cap = (np.array([float(r['cap']) for r in rows])
            - np.degrees(SIM_SIGMA))                     # pure envelope
+    # S9 (32,32) and S11 (38,14) mm sit beyond the design rectangle the
+    # certificate is issued for -- deliberate out-of-box probes
+    out = np.array([r['case'] in ('S9', 'S11') for r in rows])
     draw(rate, res, cap, 'simulation, design tilt cap 5°',
          r'small-angle envelope $\bar\rho K C_2\sqrt{B(x)/x}$ (theory)',
-         'fig_bound_final_sim')
+         'fig_bound_final_sim', out=out)
 
     # -- hardware: envelope (8 deg, GE incl.) + noise term ------------
     rows = list(csv.DictReader(open('docs/hw_env_noise_runs.csv')))
