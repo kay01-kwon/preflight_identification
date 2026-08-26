@@ -89,7 +89,7 @@ def main():
            - np.degrees(SIM_SIGMA))                     # pure envelope
     draw(rate, res, cap, 'simulation, design tilt cap 5°',
          r'small-angle envelope $\bar\rho K C_2\sqrt{B(x)/x}$ (theory)',
-         'fig_bound_final_sim', 'exceeds (S9/My, S11/My)')
+         'fig_bound_final_sim')
 
     # -- hardware: envelope (8 deg, GE incl.) + noise term ------------
     rows = list(csv.DictReader(open('docs/hw_env_noise_runs.csv')))
