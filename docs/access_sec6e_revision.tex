@@ -56,12 +56,15 @@ the actuation chain places it relative to the commanded ramp clock.
 The PNLS stage fits the family
 $\hat h(\tau;\theta) = C_1^*\big(\cosh(C_2^*(\tau - t^*)) -
 1\big)\mathbf 1[\tau \ge t^*] + C$ with
-$\theta = (C_1^*, C_2^*, t^*, C)$ free, minimising the objective of
-(92). The nominal solution is itself a member of this family: the
-choice $\theta_0 = (C_1, C_2, t_{\rm on}, b)$ reproduces
-$\omega_{\rm nom} + b$ exactly. A minimum never exceeds the value at
-one feasible point, so the fit cannot lose to this \emph{witness},
-and
+$\theta = (C_1^*, C_2^*, t^*)$ free and the baseline $C$ pinned to
+the pre-onset segment median --- the convention of Algorithm~1, so
+the two stages share it --- minimising the objective of (92). The
+nominal solution is itself a member of this family: the choice
+$\theta_0 = (C_1, C_2, t_{\rm on})$ reproduces
+$\omega_{\rm nom} + C$ with $C$ estimating the bias $b$ to
+$O(\sigma_n/\sqrt{N_{\rm pre}})$, a discrepancy that rides in the
+noise term. A minimum never exceeds the value at one feasible
+point, so the fit cannot lose to this \emph{witness}, and
 \begin{equation}
   \rms(r) \;\le\; \rms(e_\omega + n)
   \;\le\; \rms(e_\omega) + \rms(n).
@@ -169,15 +172,17 @@ except the hardware $n_{\rm hi}$. Figs.~\figboundsim{} and
 measured side being the deployed free fit exactly as it runs in the
 pipeline --- both shape constants and the onset free, full window,
 no calibration on either side. In simulation ($\varphi_{\max} =
-5^\circ$, envelope alone) $307$ of $308$ runs sit inside; the
-single exceedance is the case whose injected offset $(38,14)$ mm
-lies beyond the design rectangle assumed by $\rbar$, at the fastest
-ramp --- the certificate fails exactly where its own premise does.
-On hardware ($\varphi_{\max} = 8^\circ$, envelope plus (98)) all
-$140$ runs sit inside, the worst using $0.83$ of its cap. The
-median used fraction is $0.32$--$0.33$ on both campaigns: one
-construction, validated on both platforms, the panels differing
-exactly in the channels the platforms differ in.
+5^\circ$, envelope alone) $305$ of $308$ runs sit inside; the three
+exceedances all lie on the two cases whose injected offsets ---
+$(32,32)$ and $(38,14)$ mm --- sit at or beyond the design
+rectangle assumed by $\rbar$, the worst of them at the fastest ramp
+on the shortest window the campaign gate admits --- the certificate
+fails exactly where its own premise does. On hardware
+($\varphi_{\max} = 8^\circ$, envelope plus (98)) all $140$ runs sit
+inside, the worst using $0.81$ of its cap. The median used fraction
+is $0.32$--$0.34$ on both campaigns: one construction, validated on
+both platforms, the panels differing exactly in the channels the
+platforms differ in.
 
 \paragraph*{Remark}
 An earlier version of this analysis bounded $\delta e_\omega$

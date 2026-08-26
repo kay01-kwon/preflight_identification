@@ -46,7 +46,7 @@ W,\ z_{CoM},\ J_P & weight, CoM height, pivot inertia &
 e_\omega(\tau) & true rate minus the nominal &
   b,\ n_i & gyro bias; noise sample\\
 \hat h(\cdot\,;\theta) & fitted family member &
-  \theta & $(C_1^*, C_2^*, t^*, C)$, all free\\
+  \theta & $(C_1^*, C_2^*, t^*)$; $C$ = pre median\\
 r_i & residual $y_i - \hat h(\tau_i;\hat\theta)$ &
   E(\tau) & envelope $\rbar K C_2\sinh(C_2\tau)$\\
 \rho(s) & deviation forcing (small-angle $+$ GE) &
@@ -83,9 +83,9 @@ Sec.~6: negligible ($\sigma_n = 0.014^\circ$/s) in simulation, the
 measured vibration term $n_{\rm hi}\sqrt{1+\kappa_b^2}$ on hardware.
 The two inequalities have entirely different characters and are
 proved separately: the first is an optimisation triviality (Sec.~3),
-the second is the physics (Sec.~4). Validation: $307/308$ simulation
-runs and $140/140$ hardware runs inside, the single exceedance
-located and explained (Sec.~7).
+the second is the physics (Sec.~4). Validation: $305/308$ simulation
+runs and $140/140$ hardware runs inside, every exceedance on the two
+cases beyond the design rectangle (Sec.~7).
 
 \section{The measurement and the family}
 
@@ -108,19 +108,23 @@ collects everything the small-angle model omits --- trigonometric
 remainders, ground effect --- and vanishes identically before the
 onset.
 
-The estimator fits the four-parameter family
+The estimator fits the family
 \begin{equation}
   \hat h(\tau;\theta)
   \;=\; C_1^*\big(\cosh(C_2^*(\tau - t^*)) - 1\big)\,
         \mathbf 1[\tau \ge t^*] \;+\; C,
   \qquad
-  \theta = (C_1^*,\ C_2^*,\ t^*,\ C),
+  \theta = (C_1^*,\ C_2^*,\ t^*),
   \tag{3}
 \end{equation}
 by least squares over the full window,
 $\hat\theta = \arg\min_\theta \sum_i \big(y_i -
 \hat h(\tau_i;\theta)\big)^2$, and
-$r_i = y_i - \hat h(\tau_i;\hat\theta)$.
+$r_i = y_i - \hat h(\tau_i;\hat\theta)$. The baseline $C$ is not a
+fitted parameter in any stage of the pipeline: at each candidate
+onset it is pinned to the median of the pre-onset segment --- the
+same convention as the constrained readout (Algorithm 1) --- so the
+free fit opens exactly the two shape constants and the onset.
 
 \section{The first inequality: why the bound lands on $e_\omega$}
 
@@ -128,14 +132,18 @@ The point of this section is one sentence: \emph{the nominal solution
 is itself a member of the fitted family, so the fit cannot lose to
 it.} Take the particular parameter vector
 \begin{equation}
-  \theta_0 \;=\; (C_1,\ C_2,\ t_{\rm on},\ b)
+  \theta_0 \;=\; (C_1,\ C_2,\ t_{\rm on})
   \qquad\Longrightarrow\qquad
-  \hat h(\tau;\theta_0) \;=\; \omega_{\rm nom}(\tau) + b .
+  \hat h(\tau;\theta_0) \;=\; \omega_{\rm nom}(\tau) + C_{\rm med} .
   \tag{4}
 \end{equation}
 Nothing in (3) forbids this choice: the amplitude slot takes $C_1$,
-the exponent slot $C_2$, the onset slot the realised $t_{\rm on}$,
-the baseline slot the bias. $\theta_0$ is called the \emph{witness}:
+the exponent slot $C_2$, the onset slot the realised $t_{\rm on}$;
+the baseline slot carries $C_{\rm med}$, the pre-segment median,
+which estimates the bias to $O(\sigma_n/\sqrt{N_{\rm pre}})$ --- the
+pre-onset record is $b + n$, so $C_{\rm med} - b$ is a median of
+noise, and the residual it leaves rides inside the noise term of
+(6). $\theta_0$ is called the \emph{witness}:
 not the minimiser, not a good fit, merely one admissible competitor
 whose residual can be computed exactly. A minimum is bounded by the
 value at any feasible point, so
@@ -163,7 +171,7 @@ ridge of the earlier analysis is real). The inequality runs one way
 only --- the fit does \emph{at least as well} as the nominal --- and
 one way is all a residual \emph{upper} bound needs. The measured
 residuals sitting far below the cap (median used fraction
-$0.32$--$0.33$ on both campaigns) is the minimiser exploiting
+$0.32$--$0.34$ on both campaigns) is the minimiser exploiting
 freedoms the witness does not use. Geometrically: the measured curve
 lies between the nominal and the nominal-plus-envelope, and the
 fitted curve, free to move, lands at least as close to the
@@ -348,23 +356,26 @@ the cap of (1). No calibration enters on either side.
 campaign & runs & inside & worst used fraction & median & p90\\
 \midrule
 simulation ($\varphi_{\max}=5^\circ$, envelope alone)
-  & 308 & 307 & 1.68 & 0.33 & 0.62\\
+  & 308 & 305 & 5.01 & 0.34 & 0.62\\
 hardware ($\varphi_{\max}=8^\circ$, envelope $+$ (14))
-  & 140 & 140 & 0.83 & 0.32 & 0.47\\
+  & 140 & 140 & 0.81 & 0.32 & 0.48\\
 \bottomrule
 \end{tabular}
 \end{center}
 
-\emph{The single exceedance} is S11/$M_y$ at the fastest ramp
-($1.20$ N\,m/s, used fraction $1.68$): the injected offset
-$(38, 14)$ mm sits beyond the design rectangle whose arm the
-$\rbar$ of (12) assumes, so this run operates outside the box the
-bound is issued for --- the certificate fails exactly where its own
-premise does, and nowhere else. Every hardware run is inside, the
-worst using $0.83$ of its cap: whatever unmodelled disturbances the
-outdoor vehicle meets --- gusts, contact irregularities at the
-pivot, channels (12) and (14) reserve no term for --- they stay
-within the margin the caps carry.
+\emph{The three exceedances} all sit on S9 and S11, the two cases
+whose injected offsets --- $(32, 32)$ and $(38, 14)$ mm --- lie at
+or beyond the design rectangle the certificate is issued for: two
+marginal on S9/$M_x$ ($1.16$ and $1.00$) and the worst on
+S11/$M_y$ at the fastest ramp (used fraction $5.01$), a run whose
+excitation window carries $39$ samples --- one above the campaign
+gate's minimum of $38$ --- so it combines the deepest offset with
+the shortest admissible window. The certificate fails exactly where
+its own premise does, and nowhere else. Every hardware run is
+inside, the worst using $0.81$ of its cap: whatever unmodelled
+disturbances the outdoor vehicle meets --- gusts, contact
+irregularities at the pivot, channels (12) and (14) reserve no term
+for --- they stay within the margin the caps carry.
 
 The two campaigns validate \emph{one} construction: the same chain
 (1), the same witness, the same envelope, the same design-box
