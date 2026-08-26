@@ -14,7 +14,8 @@ sys.path.insert(0, '.'); sys.path.insert(0, 'analysis')
 import critical_value_getter_piecewise as cvp
 from utils.extractor import load_packed_dataset
 
-G=9.81; Z=0.272; R_PHI=1/7; PHI=np.deg2rad(10.0)   # design tilt cap
+G=9.81; Z=0.272; R_PHI=1/7; PHI=np.deg2rad(5.0)    # design tilt cap (simulation)
+TAU_LAG=0.012
 J_CAD={'x':0.051085,'y':0.050564}
 CASES={'S1':3.066,'S2':3.066,'S3':3.066,'S4':3.066,'S5':3.066,'S6':3.066,
        'S7':3.066,'S8':3.066,'S9':3.066,'S11':3.066,'S13':3.220}
@@ -60,24 +61,28 @@ for case, mass in CASES.items():
             te=x/c2
             a=c2*dtc
             d2pre=(c1**2/te)*(1.5*dtc+np.sinh(2*a)/(2*c2)-2*np.sinh(a)/c2)
-            cap=b107+np.sqrt(max(d2pre,0.0))
-            g[md_c].append((np.degrees(meas),np.degrees(cap)))
+            cap_rho=b107+np.sqrt(max(d2pre,0.0))
+            B=0.25*np.sinh(2*x)-0.5*x
+            lag=TAU_LAG*k*md_c*c2*np.sqrt(B/x)
+            g[md_c].append((np.degrees(meas),np.degrees(cap_rho),
+                            np.degrees(cap_rho+lag)))
     print('done',case,flush=True)
 
 import csv
 with open('docs/sim_kf_bound_runs.csv','w',newline='') as fh:
-    w=csv.writer(fh); w.writerow(['rate','res','cap'])
+    w=csv.writer(fh); w.writerow(['rate','res','cap_rho','cap_full'])
     for rate in sorted(g):
-        for res,cap in g[rate]:
-            w.writerow([rate,f'{res:.4f}',f'{cap:.4f}'])
+        for res,cr,cf in g[rate]:
+            w.writerow([rate,f'{res:.4f}',f'{cr:.4f}',f'{cf:.4f}'])
 
-print(f"\n{'rate':>6}{'n':>4}{'cap(107+108)':>13}{'free rmse':>10}"
-      f"{'inside':>8}")
-ti=tt=0
+print(f"\n{'rate':>6}{'n':>4}{'cap_rho':>9}{'cap+lag':>9}{'rmse':>8}"
+      f"{'in(rho)':>9}{'in(full)':>9}")
+tr=tf=tt=0
 for rate in sorted(g):
     v=np.array(g[rate])
-    ins=int((v[:,0]<=v[:,1]).sum()); ti+=ins; tt+=len(v)
-    print(f"{rate:>6.2f}{len(v):>4}{v[:,1].mean():>13.3f}{v[:,0].mean():>10.3f}"
-          f"{ins:>5}/{len(v)}")
-print(f"\n{ti}/{tt} inside; worst usage "
-      f"{max(a/b for r in g.values() for a,b in r):.2f}")
+    ir=int((v[:,0]<=v[:,1]).sum()); io=int((v[:,0]<=v[:,2]).sum())
+    tr+=ir; tf+=io; tt+=len(v)
+    print(f"{rate:>6.2f}{len(v):>4}{v[:,1].mean():>9.3f}{v[:,2].mean():>9.3f}"
+          f"{v[:,0].mean():>8.3f}{ir:>6}/{len(v)}{io:>6}/{len(v)}")
+print(f"\nrho-only {tr}/{tt}; with latency channel {tf}/{tt}; "
+      f"worst usage (full) {max(a/c for r in g.values() for a,_,c in r):.2f}")
