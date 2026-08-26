@@ -556,7 +556,14 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
     params = expand(x_star)
     C1, C2, C = params
     tau = t[j_star:] - t[j_star]
-    omega_pred = np.full(N, float(C))
+    # The pre-onset prediction is the baseline the objective actually
+    # used (the segment median), not the branch offset C -- so the
+    # reported RMSE is exactly sqrt(cost/N), the quantity the sweep
+    # minimised.  With the two conflated, a fit whose branch rides an
+    # offset away from the pre baseline reported an RMSE dominated by
+    # a pre-segment mismatch its own objective never charged.
+    C0_star = _baseline_of(omega[:j_star]) if j_star > 0 else 0.0
+    omega_pred = np.full(N, float(C0_star))
     omega_pred[j_star:] = C1 * (np.cosh(np.clip(C2 * tau, 0, 30)) - 1) + C
     rmse = float(np.sqrt(np.mean((omega - omega_pred) ** 2)))
 
