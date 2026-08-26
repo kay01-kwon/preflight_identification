@@ -394,10 +394,25 @@ $5.22$), a run whose excitation window carries $39$ samples --- one
 above the campaign gate's minimum of $38$ --- so it combines the
 deepest offset with the shortest admissible window. The certificate
 fails exactly where its own premise does, and nowhere else. Every hardware run is
-inside, the worst using $0.81$ of its cap: whatever unmodelled
+inside, the worst using $0.55$ of its cap: whatever unmodelled
 disturbances the outdoor vehicle meets --- gusts, contact
 irregularities at the pivot, channels (12) and (14) reserve no term
 for --- they stay within the margin the caps carry.
+
+\emph{Where the conservatism sits.} The used fraction rises
+monotonically with the ramp rate --- mean $0.09$ to $0.55$ across
+the in-box simulation rates, $0.13$ to $0.30$ on hardware --- so
+the cap is loosest at the slow ramps. The asymmetry is structural,
+not accidental: the cap charges the envelope of $e_\omega$, whose
+window RMS $\sqrt{B(x)/x}$ grows with the design window
+$x(\Mdot)$, longest at the slow ramps; the measured residual is
+rate-flat, because the fit's onset freedom absorbs the growing
+mode whatever the window length. Tightening the slow-ramp side
+would mean charging the post-absorption remainder --- exactly the
+quantity Sec.~8 shows no platform measurement can isolate --- so
+the slack there is the price of a certificate whose measured side
+needs no true constants. The bound is tightest at the fast ramps,
+where the window is shortest and the identification hardest.
 
 The two campaigns validate \emph{one} construction: the same chain
 (1), the same witness, the same envelope, the same design-box

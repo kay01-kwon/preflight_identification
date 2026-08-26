@@ -190,7 +190,17 @@ campaign's largest vibration term $\max n_{\rm hi}\sqrt{1 +
 sit under the curve, the worst using $0.55$ of its cap. The median used fraction
 is $0.20$--$0.28$ on both campaigns: one construction, validated on
 both platforms, the panels differing exactly in the channels the
-platforms differ in.
+platforms differ in. The used fraction rises monotonically with the
+ramp rate (mean $0.09$ to $0.55$ in simulation, $0.13$ to $0.30$ on
+hardware): the cap charges the envelope of $e_\omega$, whose window
+RMS $\sqrt{B(x)/x}$ grows with the design window $x(\Mdot)$, while
+the measured residual is rate-flat --- the onset freedom absorbs
+the growing mode whatever the window length. The certificate is
+therefore deliberately conservative at slow ramps and tightest at
+the fast ramps, where the window is shortest and the identification
+hardest; tightening the slow-ramp side would require charging the
+post-absorption remainder, the quantity the Remark below shows no
+platform measurement can isolate.
 
 \paragraph*{Remark}
 An earlier version of this analysis bounded $\delta e_\omega$
