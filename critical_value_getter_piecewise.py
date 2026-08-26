@@ -515,17 +515,37 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
         bounds = ([-5.0, c2_bounds[0], -2.0], [5.0, c2_bounds[1], 2.0])
         expand = lambda x: (float(x[0]), float(x[1]), float(x[2]))
 
+    def _sweep(candidates, best):
+        for j in candidates:
+            tau = t[j:] - t[j]
+            y = omega[j:]
+            C0 = _baseline_of(omega[:j]) if j > 0 else 0.0
+            r = least_squares(lambda p: model(p, tau) - y,
+                              p0(C0), method='trf', bounds=bounds,
+                              max_nfev=300)
+            pre = np.sum((omega[:j] - C0) ** 2) if j > 0 else 0.0
+            cost = float(np.sum(r.fun ** 2) + pre)
+            if cost < best[0]:
+                best = (cost, j, r.x)
+        return best
+
     best = (np.inf, onset_guess, None)
-    for j in range(lo, max(lo + 1, hi), step):
-        tau = t[j:] - t[j]
-        y = omega[j:]
-        C0 = _baseline_of(omega[:j]) if j > 0 else 0.0
-        r = least_squares(lambda p: model(p, tau) - y,
-                          p0(C0), method='trf', bounds=bounds, max_nfev=300)
-        pre = np.sum((omega[:j] - C0) ** 2) if j > 0 else 0.0
-        cost = float(np.sum(r.fun ** 2) + pre)
-        if cost < best[0]:
-            best = (cost, j, r.x)
+    if full_sweep:
+        # No seed of any kind: sweep the whole window with the cosh
+        # model alone, coarse first, then refine around the coarse
+        # minimum at full resolution.  The cost is smooth in the onset
+        # (near the optimum it is locally quadratic), so a coarse pass
+        # of ~40 candidates brackets the basin and the fine pass
+        # recovers the seeded sweep's resolution -- with no quadratic
+        # (small-angle) model anywhere in the path.
+        lo, hi = 8, max(9, N - 8)
+        coarse = max(step, (hi - lo) // 40)
+        best = _sweep(range(lo, hi, coarse), best)
+        j0 = best[1]
+        best = _sweep(range(max(lo, j0 - coarse),
+                            min(hi, j0 + coarse + 1), step), best)
+    else:
+        best = _sweep(range(lo, max(lo + 1, hi), step), best)
 
     cost, j_star, x_star = best
     params = expand(x_star)
@@ -895,14 +915,11 @@ def extract_piecewise(
         # measured moment ramp rate Ṁ over the excitation window (linear ramp);
         # with the shared gain K it fixes the amplitude C₁ = K·Ṁ (no free param)
         m_dot = float(np.polyfit(t[win], moment[win], 1)[0])
-        # Fully constrained → no seed needed: the whole window is swept, so the
-        # quadratic (small-angle) model is not used anywhere in this path.
-        # Otherwise fall back to the quadratic seed for the free/bounded fit.
-        if ramp_gain is not None and cosh_c2 is not None:
-            guess = None
-        else:
-            guess = piecewise_onset_fit(t[win], omega[win])['onset_idx']
-        pw = cosh_onset_fit(t[win], omega[win], moment[win], onset_guess=guess,
+        # No seed in either mode: the whole window is swept (the free
+        # fit coarse-to-fine, the constrained fit exhaustively), so the
+        # quadratic (small-angle) model is not used anywhere in the
+        # cosh path.
+        pw = cosh_onset_fit(t[win], omega[win], moment[win], onset_guess=None,
                             c2_bounds=c2_bounds, c2_fixed=cosh_c2,
                             moment_floor=0.0, moment_floor_abs=moment_floor_abs,
                             ramp_gain=ramp_gain, ramp_rate=m_dot)
