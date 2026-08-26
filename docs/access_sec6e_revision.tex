@@ -1,0 +1,196 @@
+% ---------------------------------------------------------------------
+% Manuscript Sec. VI-E, revised around the envelope-witness chain.
+%
+% Numbering map against the current manuscript:
+%   (90) envelope, (91) rho_bar, (92) sampled record + LS objective
+%        -- kept as they stand; (92) is the only place the sample
+%        index i remains.
+%   (93)          -- NEW: the witness chain (replaces the old
+%                    intermediate steps).
+%   (94)          -- NEW: the window RMS of the envelope, B(x).
+%   (95)-(97c)    -- kept, with the index i dropped (function-level
+%                    identities); they feed VI-F unchanged.
+%   (98)-(108)    -- DELETED (the delta-e cap and Delta_pre; see the
+%                    closing remark).
+%   (98') = old (109) noise model, renumbered; (99') the headline
+%   bound, replacing old (110).  Downstream equations shift by -9.
+%
+% The text below is manuscript-ready two-column prose; this preview
+% wraps it in a standalone article for compilation.  Figure labels
+% \ref{fig:bound_sim}, \ref{fig:bound_hw} refer to
+% fig_bound_final_sim.pdf and fig_bound_final_hw.pdf.
+% ---------------------------------------------------------------------
+
+\documentclass[10pt]{article}
+\usepackage[a4paper,margin=22mm,twocolumn]{geometry}
+\usepackage{amsmath,amssymb,booktabs}
+\setlength{\parskip}{0pt}\setlength{\parindent}{1em}
+\newcommand{\Mdot}{\dot M}
+\newcommand{\rbar}{\bar\rho}
+\newcommand{\rms}{\mathrm{RMS}}
+\newcommand{\Wz}{W\!z_{CoM}}
+% preview stand-ins for the manuscript figure labels; in the
+% manuscript use \ref{fig:bound_sim} / \ref{fig:bound_hw} on the two
+% validation figures (fig_bound_final_sim.pdf, fig_bound_final_hw.pdf)
+\newcommand{\figboundsim}{15}
+\newcommand{\figboundhw}{16}
+\begin{document}
+\twocolumn[{\centering\Large\bfseries
+Sec.~VI-E, revised: RMS residual bound of the PNLS fit\\[2mm]
+\normalsize\normalfont preview build; see the header comment for the
+numbering map\\[6mm]}]
+
+\subsection*{E. RMS residual bound of the PNLS fit}
+
+The envelope (90) bounds the deviation $e_\omega$ pointwise; this
+subsection converts it into a certificate on the quantity the
+pipeline actually reports, the residual RMS of the deployed fit. The
+argument needs one observation and one integral.
+
+\paragraph*{The witness inequality}
+The record in the window is
+$y(\tau) = \omega_{\rm nom}(\tau) + e_\omega(\tau) + b + n(\tau)$,
+with $\tau$ counted from the \emph{realised} onset $t_{\rm on}$ ---
+the instant the restoring moment reverses at the vehicle, wherever
+the actuation chain places it relative to the commanded ramp clock.
+The PNLS stage fits the family
+$\hat h(\tau;\theta) = C_1^*\big(\cosh(C_2^*(\tau - t^*)) -
+1\big)\mathbf 1[\tau \ge t^*] + C$ with
+$\theta = (C_1^*, C_2^*, t^*, C)$ free, minimising the objective of
+(92). The nominal solution is itself a member of this family: the
+choice $\theta_0 = (C_1, C_2, t_{\rm on}, b)$ reproduces
+$\omega_{\rm nom} + b$ exactly. A minimum never exceeds the value at
+one feasible point, so the fit cannot lose to this \emph{witness},
+and
+\begin{equation}
+  \rms(r) \;\le\; \rms(e_\omega + n)
+  \;\le\; \rms(e_\omega) + \rms(n).
+  \tag{93}
+\end{equation}
+No property of the minimiser is used --- the fitted parameters may
+wander along the amplitude--onset ridge of Sec.~V --- and no
+admissibility condition arises, because the witness is the nominal
+itself rather than a shifted surrogate. Two consequences are worth
+stating. First, a pure actuation delay shifts $t_{\rm on}$ and
+nothing else; since $t^*$ is free, the witness adopts the realised
+onset and the delay never enters the bound --- no latency term is
+required. Second, before the onset both the witness and the record
+sit at the baseline, so the pre-onset segment contributes only
+noise: no pre-onset penalty of the form (108) appears, and
+extending the RMS to the full window only dilutes the left side of
+(93).
+
+\paragraph*{The window RMS of the envelope}
+Squaring the envelope (90) and integrating over the window, with
+$x = C_2\tau_{\rm end}$,
+\begin{equation}
+  \rms(e_\omega) \;\le\;
+  \rbar K C_2\sqrt{\frac{B(x)}{x}},
+  \qquad
+  B(x) = \frac{\sinh 2x}{4} - \frac{x}{2},
+  \tag{94}
+\end{equation}
+$B(x) = \int_0^x \sinh^2 u\,du$ by the double-angle identity;
+$\sqrt{B(x)/x}$ is the window RMS of the growing mode
+$\sinh(C_2\tau)$, and $x$ follows per ramp rate from the design
+sweep $\sinh x - x = \varphi_{\max}\Wz C_2/\Mdot$ of Sec.~VI-D. The
+tilt cap $\varphi_{\max}$ must dominate the tilt the windows
+actually reach, and is set per campaign: $5^\circ$ in simulation,
+where the gate stops the window near $4^\circ$, and $8^\circ$ on
+hardware, where the slightly uneven ground of the test site lets
+the in-window excursion reach $7.7^\circ$. Every appearance of
+$\varphi_{\max}$ is monotone, so a dominating cap only over-covers.
+
+\paragraph*{The measured decomposition and the onset shift}
+For the critical-moment readout of Sec.~VI-F the deviation is split
+against the growing mode,
+\begin{equation}
+  e_\omega(\tau) \;=\; \beta\sinh(C_2\tau) + \delta e_\omega(\tau),
+  \tag{95}
+\end{equation}
+with the end-matched coefficient
+\begin{equation}
+  \beta \;=\;
+  \frac{e_\omega(\tau_{\rm end})}{\sinh(C_2\tau_{\rm end})},
+  \tag{96}
+\end{equation}
+so that $\delta e_\omega$ vanishes at both window ends. [(95)--(97)
+are function-level identities in $\tau$; the sample index $i$
+belongs to (92) alone.] The envelope (90) caps the coefficient a
+priori,
+\begin{equation}
+  |\beta| \;\le\; \frac{\rbar}{J_PC_2},
+  \tag{97a}
+\end{equation}
+and the $\sinh$ multiple is exactly the tangent direction of the
+onset shift, so the fitted branch absorbs it as a critical-time
+offset
+\begin{equation}
+  \tanh(C_2\,\delta t_c) \;=\; -\frac{\beta}{C_1},
+  \qquad \delta t_c < 0,
+  \tag{97b}
+\end{equation}
+which Sec.~VI-F converts into the critical-moment error
+$|\Delta M_{\rm crit}| = \Mdot|\delta t_c|$. This absorption is also
+why the measured residuals stay flat as the ramp rate grows: the
+dominant, exponentially growing part of $e_\omega$ is precisely the
+component the family's onset freedom removes.
+
+\paragraph*{The noise term}
+What the family cannot represent and the dynamics do not produce
+remains in the residual as noise. On hardware the rotor-induced
+vibration has no pre-experiment model, so its amplitude is read
+from the run's own out-of-band content: with $n_{\rm hi}$ the
+residual RMS above $f_c = 5$ Hz --- a band the cosh family cannot
+occupy, its fastest scale being $C_2/2\pi \approx 0.8$ Hz --- the
+full-band estimate is
+\begin{equation}
+  \rms(n) \;=\; \rms(n_{\rm hi})
+  \sqrt{1 + \big(s_{\rm med}\,\kappa_q\big)^2},
+  \tag{98}
+\end{equation}
+with the quiet-segment band ratio and in-window enhancement of
+Sec.~VI-D ($s_{\rm med}\kappa_q = 1.31$ on the campaign). In
+simulation the sensor noise is declared, Gaussian with
+$\sigma_n = 2.450\times10^{-4}$ rad/s $= 0.014^\circ$/s --- an
+order below the smallest envelope --- so the noise term is dropped
+there.
+
+\paragraph*{The bound, and its validation}
+Combining (93), (94) and (98),
+\begin{equation}
+  \rms(r) \;\le\;
+  \rbar K C_2\sqrt{\frac{B(x)}{x}} \;+\; \rms(n),
+  \tag{99}
+\end{equation}
+with every quantity on the right a pre-experiment design constant
+except the hardware $n_{\rm hi}$. Figs.~\figboundsim{} and
+\figboundhw{} test (99) on every run of both campaigns, the
+measured side being the deployed free fit exactly as it runs in the
+pipeline --- both shape constants and the onset free, full window,
+no calibration on either side. In simulation ($\varphi_{\max} =
+5^\circ$, envelope alone) $301$ of $308$ runs sit inside, the
+seven exceedances all at the two fastest ramps: three marginal
+(within $7\%$) and four on the two cases whose injected offsets lie
+at or beyond the design rectangle assumed by $\rbar$. On hardware
+($\varphi_{\max} = 8^\circ$, envelope plus (98)) $134$ of $140$
+runs sit inside; the six exceedances carry disturbance content
+outside the modelled channels --- gusts and contact irregularities
+at the pivot for which no budget term is reserved. The median used
+fraction is $0.47$--$0.48$ on both campaigns: one construction,
+validated on both platforms, the panels differing exactly in the
+channels the platforms differ in.
+
+\paragraph*{Remark}
+An earlier version of this analysis bounded $\delta e_\omega$
+itself through the Dirichlet response of the forcing channels
+[the former (98)--(108)]. Measured directly, that cap bounds the
+in-family forcing response but not the realised remainder, whose
+out-of-family content is amplified by the same $\sinh$ growth the
+envelope charges for; it is therefore omitted, and the certificate
+on the residual is (99) alone. The decomposition (95)--(97b)
+retains its two roles: the a-priori ceiling on the onset shift
+consumed by Sec.~VI-F, and the explanation of the residual's
+rate-flatness.
+
+\end{document}
