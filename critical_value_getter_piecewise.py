@@ -492,44 +492,48 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
             model='cosh',
         )
 
+    # The baseline C is NEVER a fitted parameter, in any mode: it is the
+    # pre-segment median at each candidate onset, exactly as in the
+    # fully constrained sweep (Algorithm 1 of the manuscript).  The two
+    # stages therefore share one baseline convention and differ only in
+    # which shape constants are free.
     if c2_fixed is not None:
-        # C₂ pinned to the shared rig constant: fit only (C₁, C) per bag.
+        # C₂ pinned to the shared rig constant: fit only C₁ per bag.
         c2_val = float(c2_fixed)
 
-        def model(p, tau):
-            C1, C = p
-            return C1 * (np.cosh(np.clip(c2_val * tau, 0, 30)) - 1) + C
+        def model(p, tau, C0):
+            return p[0] * (np.cosh(np.clip(c2_val * tau, 0, 30)) - 1) + C0
 
-        p0 = lambda C0: [sgn * 1e-3, C0]
-        bounds = ([-5.0, -2.0], [5.0, 2.0])
-        expand = lambda x: (float(x[0]), c2_val, float(x[1]))
+        p0 = [sgn * 1e-3]
+        bounds = ([-5.0], [5.0])
+        expand = lambda x, C0: (float(x[0]), c2_val, float(C0))
     else:
         # C₂ fit per bag but tightly bounded to the physical band.
         c2_0 = float(np.clip(4.9, c2_bounds[0], c2_bounds[1]))
 
-        def model(p, tau):
-            C1, C2, C = p
-            return C1 * (np.cosh(np.clip(C2 * tau, 0, 30)) - 1) + C
+        def model(p, tau, C0):
+            C1, C2 = p
+            return C1 * (np.cosh(np.clip(C2 * tau, 0, 30)) - 1) + C0
 
-        p0 = lambda C0: [sgn * 1e-3, c2_0, C0]
-        bounds = ([-5.0, c2_bounds[0], -2.0], [5.0, c2_bounds[1], 2.0])
-        expand = lambda x: (float(x[0]), float(x[1]), float(x[2]))
+        p0 = [sgn * 1e-3, c2_0]
+        bounds = ([-5.0, c2_bounds[0]], [5.0, c2_bounds[1]])
+        expand = lambda x, C0: (float(x[0]), float(x[1]), float(C0))
 
     def _sweep(candidates, best):
         for j in candidates:
             tau = t[j:] - t[j]
             y = omega[j:]
             C0 = _baseline_of(omega[:j]) if j > 0 else 0.0
-            r = least_squares(lambda p: model(p, tau) - y,
-                              p0(C0), method='trf', bounds=bounds,
+            r = least_squares(lambda p: model(p, tau, C0) - y,
+                              p0, method='trf', bounds=bounds,
                               max_nfev=300)
             pre = np.sum((omega[:j] - C0) ** 2) if j > 0 else 0.0
             cost = float(np.sum(r.fun ** 2) + pre)
             if cost < best[0]:
-                best = (cost, j, r.x)
+                best = (cost, j, r.x, C0)
         return best
 
-    best = (np.inf, onset_guess, None)
+    best = (np.inf, onset_guess, None, 0.0)
     if full_sweep:
         # No seed of any kind: sweep the whole window with the cosh
         # model alone, coarse first, then refine around the coarse
@@ -552,17 +556,14 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
     else:
         best = _sweep(range(lo, max(lo + 1, hi), step), best)
 
-    cost, j_star, x_star = best
-    params = expand(x_star)
+    cost, j_star, x_star, C0_star = best
+    params = expand(x_star, C0_star)
     C1, C2, C = params
     tau = t[j_star:] - t[j_star]
-    # The pre-onset prediction is the baseline the objective actually
-    # used (the segment median), not the branch offset C -- so the
+    # With the baseline pinned to the pre-segment median in every mode,
+    # the prediction and the objective use one and the same C, and the
     # reported RMSE is exactly sqrt(cost/N), the quantity the sweep
-    # minimised.  With the two conflated, a fit whose branch rides an
-    # offset away from the pre baseline reported an RMSE dominated by
-    # a pre-segment mismatch its own objective never charged.
-    C0_star = _baseline_of(omega[:j_star]) if j_star > 0 else 0.0
+    # minimised.
     omega_pred = np.full(N, float(C0_star))
     omega_pred[j_star:] = C1 * (np.cosh(np.clip(C2 * tau, 0, 30)) - 1) + C
     rmse = float(np.sqrt(np.mean((omega - omega_pred) ** 2)))

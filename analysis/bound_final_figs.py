@@ -45,24 +45,40 @@ ARM = {'Mx': 0.160, 'My': 0.130}
 LP = {'Mx': 0.140, 'My': 0.110}
 
 
-def draw(rate, res, cap, title, cap_label, fname, exceed_label='exceeds'):
+def draw(rate, res, cap, title, cap_label, fname, exceed_label='exceeds',
+         out=None):
+    """cap is ONE value per ramp rate -- the worst case over the whole
+    design box -- so the theory enters the figure as a single curve,
+    not a per-run scatter. out: optional boolean mask marking runs
+    OUTSIDE the design box (deliberate probes); they are drawn hollow
+    grey and excluded from the residual mean line, since the guarantee
+    is issued for the in-box population only."""
     bad = res > cap
+    if out is None:
+        out = np.zeros(len(res), dtype=bool)
     fig, ax = plt.subplots(figsize=(6.4, 4.1))
     rng = np.random.default_rng(0)
     ur = np.array(sorted(set(rate)))
     ix = {v: i for i, v in enumerate(ur)}
     xj = np.array([ix[v] for v in rate]) + rng.uniform(-0.16, 0.16,
                                                        len(rate))
-    ax.plot(xj, cap, 'o', ms=3.4, color='#D55E00', alpha=0.45,
-            label=cap_label, zorder=2)
-    ax.plot(xj[~bad], res[~bad], 'o', ms=3.4, color='#0072B2', alpha=0.5,
-            label='PNLS residual RMS', zorder=3)
+    ax.plot(range(len(ur)), [cap[rate == v][0] for v in ur],
+            '-o', lw=2.0, ms=4.5, color='#D55E00',
+            label=cap_label, zorder=4)
+    m_in = ~bad & ~out
+    ax.plot(xj[m_in], res[m_in], 'o', ms=3.4, color='#0072B2', alpha=0.5,
+            label='PNLS residual RMS (in-box)' if out.any()
+            else 'PNLS residual RMS', zorder=3)
+    if out.any():
+        ax.plot(xj[out & ~bad], res[out & ~bad], 'o', ms=4.2, mfc='none',
+                mew=1.2, color='0.45',
+                label='out-of-box probes (S9, S11)', zorder=3)
     if bad.any():
         ax.plot(xj[bad], res[bad], 'o', ms=5.0, mfc='none', mew=1.5,
                 color='#CC0000', label=exceed_label, zorder=5)
-    for arr, c in ((cap, '#D55E00'), (res, '#0072B2')):
-        ax.plot(range(len(ur)), [np.mean(arr[rate == v]) for v in ur],
-                '-', lw=1.9, color=c, zorder=4)
+    ax.plot(range(len(ur)),
+            [np.mean(res[(rate == v) & ~out]) for v in ur],
+            '-', lw=1.9, color='#0072B2', zorder=4)
     ins = int(np.sum(~bad))
     ax.set_xticks(range(len(ur)))
     ax.set_xticklabels([f'{v:g}' for v in ur])
@@ -70,8 +86,13 @@ def draw(rate, res, cap, title, cap_label, fname, exceed_label='exceeds'):
     ax.set_ylabel('residual RMS [deg/s]', fontsize=9.5)
     ax.grid(alpha=0.4, lw=0.8, color='0.6')
     ax.set_axisbelow(True)
-    ax.set_title(f'{title}: {ins}/{len(res)} runs inside',
-                 fontsize=10, loc='left')
+    if out.any():
+        n_in, k_in = int((~out).sum()), int((~bad & ~out).sum())
+        head = (f'{title}: {k_in}/{n_in} in-box inside '
+                f'({ins}/{len(res)} overall)')
+    else:
+        head = f'{title}: {ins}/{len(res)} runs inside'
+    ax.set_title(head, fontsize=10, loc='left')
     ax.legend(fontsize=8.4, loc='upper right', framealpha=0.9)
     fig.tight_layout()
     for ext, kw in (('pdf', {}), ('png', dict(dpi=200))):
@@ -80,42 +101,73 @@ def draw(rate, res, cap, title, cap_label, fname, exceed_label='exceeds'):
           f'{np.max(res / cap):.2f}')
 
 
+# simulation design box: leg arms per excitation axis, CoM height, and
+# the +/-25 mm offset rectangle the identification is issued for
+J_CAD = {'x': 0.051085, 'y': 0.050564}
+SIM_L = {'Mx': (0.110, 'x'), 'My': (0.140, 'y')}
+SIM_Z, SIM_BOX = 0.272, 0.025
+SIM_PHI = np.deg2rad(5.0)
+MASSES = (3.066, 3.220)
+
+
+def _env(mdot, phi, W, z, jp, arm, ge):
+    """Window RMS of the envelope, rho_bar*K*C2*sqrt(B(x)/x) [deg/s]."""
+    c2 = np.sqrt(W * z / jp)
+    k = 1.0 / (W * z)
+    x = brentq(lambda v: np.sinh(v) - v - phi * W * z * c2 / mdot,
+               1e-6, 40)
+    B = 0.25 * np.sinh(2 * x) - 0.5 * x
+    rb = R_PHI * 0.5 * W * arm * phi ** 2
+    if ge:
+        rb += R_GE * BETA_M * (mdot * x / c2) * phi
+    return np.degrees(rb * k * c2 * np.sqrt(B / x))
+
+
+def sim_capline(mdot):
+    """Worst case over the whole design box: both leg arms, the offset
+    rectangle's far corner, both campaign masses. One number per rate."""
+    return max(_env(mdot, SIM_PHI, m * G, SIM_Z,
+                    J_CAD[axis] + m * (SIM_Z ** 2 + lp ** 2),
+                    lp + SIM_BOX, ge=False)
+               for (lp, axis) in SIM_L.values() for m in MASSES)
+
+
+def hw_capline(mdot):
+    """Box-worst hardware envelope (10/8-deg design tilt, GE channel
+    included), maximised over both axes and both masses."""
+    return max(_env(mdot, PHI, m * G, Z, J1 + m * (Z ** 2 + LP[ax] ** 2),
+                    ARM[ax], ge=True)
+               for ax in ARM for m in MASSES)
+
+
 def main():
-    # -- simulation: envelope only, no noise anywhere -----------------
-    rows = list(csv.DictReader(open('docs/sim_env_witness_runs.csv')))
+    # -- simulation: box-worst envelope alone, one curve per rate -----
+    # S9 (32,32) and S11 (38,14) mm sit beyond the design rectangle the
+    # certificate is issued for; those out-of-box probes are not part
+    # of the guarantee population and stay off the figure.
+    rows = [r for r in csv.DictReader(open('docs/sim_env_witness_runs.csv'))
+            if r['case'] not in ('S9', 'S11')]
     rate = np.array([float(r['rate']) for r in rows])
     res = np.array([float(r['res']) for r in rows])
-    cap = (np.array([float(r['cap']) for r in rows])
-           - np.degrees(SIM_SIGMA))                     # pure envelope
+    caps = {v: sim_capline(v) for v in sorted(set(rate))}
+    cap = np.array([caps[v] for v in rate])
     draw(rate, res, cap, 'simulation, design tilt cap 5°',
-         r'small-angle envelope $\bar\rho K C_2\sqrt{B(x)/x}$ (theory)',
+         r'box-worst envelope $\bar\rho K C_2\sqrt{B(x)/x}$ (theory)',
          'fig_bound_final_sim')
 
-    # -- hardware: envelope (8 deg, GE incl.) + noise term ------------
+    # -- hardware: box-worst envelope + campaign vibration constant ---
     rows = list(csv.DictReader(open('docs/hw_env_noise_runs.csv')))
-    out = []
-    for r in rows:
-        m = MASS[r['case']]
-        W = m * G
-        ax_ = r['ax']
-        md = float(r['rate'])
-        jp = J1 + m * (Z ** 2 + LP[ax_] ** 2)
-        c2 = np.sqrt(W * Z / jp)
-        k = 1.0 / (W * Z)
-        x = brentq(lambda v: np.sinh(v) - v - PHI * W * Z * c2 / md,
-                   1e-3, 40)
-        dmw = md * x / c2
-        rb = (R_PHI * 0.5 * W * ARM[ax_] * PHI ** 2
-              + R_GE * BETA_M * dmw * PHI)
-        B = 0.25 * np.sinh(2 * x) - 0.5 * x
-        env = np.degrees(rb * k * c2 * np.sqrt(B / x))
-        out.append((md, float(r['res']),
-                    env + float(r['nhi']) * np.sqrt(1 + KB ** 2)))
-    rate = np.array([o[0] for o in out])
-    res = np.array([o[1] for o in out])
-    cap = np.array([o[2] for o in out])
+    rate = np.array([float(r['rate']) for r in rows])
+    res = np.array([float(r['res']) for r in rows])
+    # the one measured input: the campaign's largest out-of-band
+    # amplitude, extended to the full band -- a single constant that
+    # dominates every run's vibration term by construction
+    n_camp = max(float(r['nhi']) for r in rows) * np.sqrt(1 + KB ** 2)
+    caps = {v: hw_capline(v) + n_camp for v in sorted(set(rate))}
+    cap = np.array([caps[v] for v in rate])
     draw(rate, res, cap, 'hardware, design tilt cap 8°',
-         r'envelope + $n_{hi}\sqrt{1+\kappa_b^2}$ (theory + measured noise)',
+         r'box-worst envelope + $\max n_{hi}\sqrt{1+\kappa_b^2}$'
+         ' (theory + measured noise)',
          'fig_bound_final_hw')
 
 

@@ -3,10 +3,12 @@
 %
 % This document replaces the earlier step-by-step derivation built on
 % the shifted-branch witness and the Dirichlet bound of delta e_omega.
-% That construction survives as a remark (Sec. 8): measured directly,
-% its cap (manuscript (107)) does not cover the realised delta e_omega
-% on the simulation campaign, so the certificate the manuscript
-% actually validates is the simpler and stronger chain derived here.
+% That construction survives as a remark (Sec. 8): its cap holds on
+% the exact dynamics it models, but delta e_omega cannot be measured
+% separately on a platform (pinning errors inject in-family content),
+% so the certificate the manuscript validates is the simpler chain
+% derived here, whose measured side needs no knowledge of the true
+% constants.
 %
 % Numbers and figures come from (see the Reproduction section):
 %     python analysis/sim_envelope_witness.py
@@ -46,7 +48,7 @@ W,\ z_{CoM},\ J_P & weight, CoM height, pivot inertia &
 e_\omega(\tau) & true rate minus the nominal &
   b,\ n_i & gyro bias; noise sample\\
 \hat h(\cdot\,;\theta) & fitted family member &
-  \theta & $(C_1^*, C_2^*, t^*, C)$, all free\\
+  \theta & $(C_1^*, C_2^*, t^*)$; $C$ = pre median\\
 r_i & residual $y_i - \hat h(\tau_i;\hat\theta)$ &
   E(\tau) & envelope $\rbar K C_2\sinh(C_2\tau)$\\
 \rho(s) & deviation forcing (small-angle $+$ GE) &
@@ -83,9 +85,12 @@ Sec.~6: negligible ($\sigma_n = 0.014^\circ$/s) in simulation, the
 measured vibration term $n_{\rm hi}\sqrt{1+\kappa_b^2}$ on hardware.
 The two inequalities have entirely different characters and are
 proved separately: the first is an optimisation triviality (Sec.~3),
-the second is the physics (Sec.~4). Validation: $307/308$ simulation
-runs and $140/140$ hardware runs inside, the single exceedance
-located and explained (Sec.~7).
+the second is the physics (Sec.~4). The cap is evaluated once per
+ramp rate at the worst corner of the design box, so the theory
+enters the validation as a single curve per rate, not a per-run
+quantity. Validation: $252/252$ in-box simulation runs and
+$140/140$ hardware runs sit under their curves; the only
+exceedances are deliberate out-of-box probes (Sec.~7).
 
 \section{The measurement and the family}
 
@@ -108,19 +113,23 @@ collects everything the small-angle model omits --- trigonometric
 remainders, ground effect --- and vanishes identically before the
 onset.
 
-The estimator fits the four-parameter family
+The estimator fits the family
 \begin{equation}
   \hat h(\tau;\theta)
   \;=\; C_1^*\big(\cosh(C_2^*(\tau - t^*)) - 1\big)\,
         \mathbf 1[\tau \ge t^*] \;+\; C,
   \qquad
-  \theta = (C_1^*,\ C_2^*,\ t^*,\ C),
+  \theta = (C_1^*,\ C_2^*,\ t^*),
   \tag{3}
 \end{equation}
 by least squares over the full window,
 $\hat\theta = \arg\min_\theta \sum_i \big(y_i -
 \hat h(\tau_i;\theta)\big)^2$, and
-$r_i = y_i - \hat h(\tau_i;\hat\theta)$.
+$r_i = y_i - \hat h(\tau_i;\hat\theta)$. The baseline $C$ is not a
+fitted parameter in any stage of the pipeline: at each candidate
+onset it is pinned to the median of the pre-onset segment --- the
+same convention as the constrained readout (Algorithm 1) --- so the
+free fit opens exactly the two shape constants and the onset.
 
 \section{The first inequality: why the bound lands on $e_\omega$}
 
@@ -128,14 +137,18 @@ The point of this section is one sentence: \emph{the nominal solution
 is itself a member of the fitted family, so the fit cannot lose to
 it.} Take the particular parameter vector
 \begin{equation}
-  \theta_0 \;=\; (C_1,\ C_2,\ t_{\rm on},\ b)
+  \theta_0 \;=\; (C_1,\ C_2,\ t_{\rm on})
   \qquad\Longrightarrow\qquad
-  \hat h(\tau;\theta_0) \;=\; \omega_{\rm nom}(\tau) + b .
+  \hat h(\tau;\theta_0) \;=\; \omega_{\rm nom}(\tau) + C_{\rm med} .
   \tag{4}
 \end{equation}
 Nothing in (3) forbids this choice: the amplitude slot takes $C_1$,
-the exponent slot $C_2$, the onset slot the realised $t_{\rm on}$,
-the baseline slot the bias. $\theta_0$ is called the \emph{witness}:
+the exponent slot $C_2$, the onset slot the realised $t_{\rm on}$;
+the baseline slot carries $C_{\rm med}$, the pre-segment median,
+which estimates the bias to $O(\sigma_n/\sqrt{N_{\rm pre}})$ --- the
+pre-onset record is $b + n$, so $C_{\rm med} - b$ is a median of
+noise, and the residual it leaves rides inside the noise term of
+(6). $\theta_0$ is called the \emph{witness}:
 not the minimiser, not a good fit, merely one admissible competitor
 whose residual can be computed exactly. A minimum is bounded by the
 value at any feasible point, so
@@ -163,7 +176,7 @@ ridge of the earlier analysis is real). The inequality runs one way
 only --- the fit does \emph{at least as well} as the nominal --- and
 one way is all a residual \emph{upper} bound needs. The measured
 residuals sitting far below the cap (median used fraction
-$0.32$--$0.33$ on both campaigns) is the minimiser exploiting
+$0.20$--$0.28$ on both campaigns) is the minimiser exploiting
 freedoms the witness does not use. Geometrically: the measured curve
 lies between the nominal and the nominal-plus-envelope, and the
 fitted curve, free to move, lands at least as close to the
@@ -300,6 +313,13 @@ and $J_P = J^{\rm CAD} + m(z_{CoM}^2 + l_p^2)$; hardware uses the
 design box of Sec.~VI-D ($z_{CoM} = 0.30$ m, arms $0.160/0.130$ m,
 $|\beta_M| = 0.0345$).
 
+The cap of (1) is evaluated at the \emph{worst corner of the design
+box} --- both leg arms, the far corner of the offset rectangle
+($25$ mm in simulation), both campaign masses --- and once per ramp
+rate: one theory curve, fixed before any run, that every in-box run
+must sit under. Per-run knowledge (the actual case's arm or mass)
+enters nowhere.
+
 $\varphi_{\max}$ is not a tuning knob: (10) holds on the window only
 while the trajectory stays inside the box on which (12) bounds
 $\rho$, so \emph{the cap must dominate the realised in-window tilt},
@@ -325,46 +345,74 @@ carries the envelope alone; including $\sigma_n$ changes no count.
 
 \emph{Hardware.} The vehicle vibrates under its running rotors, and
 no pre-experiment model of that channel exists, so its amplitude is
-the one measured input of the chain: per run, $n_{\rm hi}$ is the
-RMS of the residual's content above $5$ Hz --- a band the family
-cannot occupy, since its fastest structural scale is
+the one measured input of the chain: $n_{\rm hi}$ is the RMS of the
+residual's content above $5$ Hz --- a band the family cannot
+occupy, since its fastest structural scale is
 $C_2/2\pi \approx 0.8$ Hz --- extended to the full band by the
 campaign constant $\kappa_b = 1.31$, the below-$5$-Hz to
 above-$5$-Hz vibration ratio measured on quiet segments outside
-every excitation window:
+every excitation window. To keep the cap a single curve, it carries
+one campaign constant, the largest observed amplitude:
 \begin{equation}
-  N \;=\; n_{\rm hi}\sqrt{1 + \kappa_b^2}.
+  N \;=\; \Big(\max_{\rm runs} n_{\rm hi}\Big)
+  \sqrt{1 + \kappa_b^2} \;=\; 2.47^\circ/\mathrm{s},
   \tag{14}
 \end{equation}
+which dominates every run's vibration term by construction.
 
 \section{Validation, both campaigns}
 
 Per run: the deployed free fit's full-window residual RMS against
-the cap of (1). No calibration enters on either side.
+the box-worst cap curve of (1) --- one theory value per ramp rate.
+No calibration and no per-run knowledge enter the cap.
 
 \begin{center}\small
 \begin{tabular}{@{}lccccc@{}}
 \toprule
-campaign & runs & inside & worst used fraction & median & p90\\
+population & runs & inside & worst used fraction & median & p90\\
 \midrule
-simulation ($\varphi_{\max}=5^\circ$, envelope alone)
-  & 308 & 307 & 1.68 & 0.33 & 0.62\\
+simulation, in-box ($\varphi_{\max}=5^\circ$, envelope alone)
+  & 252 & 252 & 0.79 & 0.28 & 0.53\\
+simulation, out-of-box probes (S9, S11)
+  & 56 & 54 & 5.22 & --- & ---\\
 hardware ($\varphi_{\max}=8^\circ$, envelope $+$ (14))
-  & 140 & 140 & 0.83 & 0.32 & 0.47\\
+  & 140 & 140 & 0.55 & 0.20 & 0.33\\
 \bottomrule
 \end{tabular}
 \end{center}
 
-\emph{The single exceedance} is S11/$M_y$ at the fastest ramp
-($1.20$ N\,m/s, used fraction $1.68$): the injected offset
-$(38, 14)$ mm sits beyond the design rectangle whose arm the
-$\rbar$ of (12) assumes, so this run operates outside the box the
-bound is issued for --- the certificate fails exactly where its own
-premise does, and nowhere else. Every hardware run is inside, the
-worst using $0.83$ of its cap: whatever unmodelled disturbances the
-outdoor vehicle meets --- gusts, contact irregularities at the
-pivot, channels (12) and (14) reserve no term for --- they stay
-within the margin the caps carry.
+\emph{Scored against the hypothesis}, the guarantee is exception
+free: an a-priori bound is a conditional statement --- \emph{if}
+the offset lies in the design rectangle, the tilt under
+$\varphi_{\max}$, the channels as modelled, \emph{then}
+$\rms(r) \le$ cap --- and every run satisfying it sits under its
+curve. The two exceedances belong to the deliberate out-of-box
+probes, whose injected offsets --- $(32, 32)$ and $(38, 14)$ mm ---
+lie beyond the design rectangle: S9/$M_x$ at $0.65$ N\,m/s
+(marginal, $1.02$) and S11/$M_y$ at the fastest ramp (used fraction
+$5.22$), a run whose excitation window carries $39$ samples --- one
+above the campaign gate's minimum of $38$ --- so it combines the
+deepest offset with the shortest admissible window. The certificate
+fails exactly where its own premise does, and nowhere else. Every hardware run is
+inside, the worst using $0.55$ of its cap: whatever unmodelled
+disturbances the outdoor vehicle meets --- gusts, contact
+irregularities at the pivot, channels (12) and (14) reserve no term
+for --- they stay within the margin the caps carry.
+
+\emph{Where the conservatism sits.} The used fraction rises
+monotonically with the ramp rate --- mean $0.09$ to $0.55$ across
+the in-box simulation rates, $0.13$ to $0.30$ on hardware --- so
+the cap is loosest at the slow ramps. The asymmetry is structural,
+not accidental: the cap charges the envelope of $e_\omega$, whose
+window RMS $\sqrt{B(x)/x}$ grows with the design window
+$x(\Mdot)$, longest at the slow ramps; the measured residual is
+rate-flat, because the fit's onset freedom absorbs the growing
+mode whatever the window length. Tightening the slow-ramp side
+would mean charging the post-absorption remainder --- exactly the
+quantity Sec.~8 shows no platform measurement can isolate --- so
+the slack there is the price of a certificate whose measured side
+needs no true constants. The bound is tightest at the fast ramps,
+where the window is shortest and the identification hardest.
 
 The two campaigns validate \emph{one} construction: the same chain
 (1), the same witness, the same envelope, the same design-box
@@ -373,7 +421,8 @@ differ in --- the simulator declares its noise and models no ground
 effect, so its cap is the envelope alone; the vehicle adds ground
 effect (inside $\rbar$) and vibration (the term (14)). Figures
 \texttt{fig\_bound\_final\_sim} and \texttt{fig\_bound\_final\_hw}
-show every run.
+show the guarantee populations; the out-of-box probes are tabulated
+above and stay off the figures.
 
 \section{What remains of the shaped decomposition}
 
@@ -381,24 +430,37 @@ The earlier draft of this document ran the bound through the
 decomposition $e_\omega = \beta\sinh(C_2\tau) + \delta e_\omega$
 with $\beta = e_\omega(\tau_{\rm end})/\sinh(x)$ (manuscript
 (95)--(97)), capping $\delta e_\omega$ by the Dirichlet comparison
-constants $1/12$ and $1/(2e)$ (manuscript (107)). Measured directly
---- pinned-theory fit, $\beta$ from the definition,
-$\delta e_\omega$ pointwise --- that cap does not cover: on the
-simulation campaign $0$ of $301$ runs sit inside it (realised
-$\delta e_\omega$ RMS $2$--$3\times$ the cap), and on hardware only
-the below-$5$-Hz band clears it, marginally ($101/139$). The
-decomposition is an identity and survives as one; what fails is the
-premise that the remainder after the end-matched $\sinh$ subtraction
-is dominated by the in-family forcing response --- the subtraction
-is exact only at the two window ends, and the out-of-family content
-between them is amplified by the same $\sinh$ growth the envelope
-charges for.
+constants $1/12$ and $1/(2e)$ (manuscript (107)). Two facts, both
+established since, fix that construction's true status.
 
-Its residual role is therefore qualitative: it explains \emph{why
-the measured residuals are flat in the ramp rate} (the fit's onset
-freedom absorbs the growing mode's dominant multiple, which is the
-tangent direction of the time shift), while the quantitative
-certificate is (1). For the manuscript this means: state (1) as the
+\emph{On the dynamics it models, the cap holds.} Integrating the
+exact nonlinear tip-over (constants known exactly, no pinning
+error) and measuring $\delta e_\omega$ per its definition, (107)
+covers at every ramp rate with $2.5$--$3\times$ margin (used
+fraction $0.33$--$0.40$; \texttt{analysis/witness\_verify.py}
+environment). The comparison argument is correct mathematics.
+
+\emph{On a platform, $\delta e_\omega$ is not separately
+measurable.} It is defined against the \emph{true} nominal, so any
+error in the pinned constants or the onset injects in-family
+content into the measured difference --- and on the Gazebo campaign
+that contamination dominates: projecting the pinned deviation onto
+the family span $\{\cosh - 1, \sinh\}$ finds in-family coefficients
+up to the amplitude's own order, with the raw ``$\delta e_\omega$''
+reading $3$--$8\times$ the cap while the out-of-span remainder
+drops to the cap's order. An earlier verdict of this document
+(``$0/301$ inside'') treated that contaminated reading as a
+refutation; it is not --- it is the statement that the measurement
+cannot be made on a platform, which is precisely why the validated
+certificate is (1): the witness chain needs no knowledge of the
+true constants on the measured side.
+
+The decomposition's role is therefore: correct supporting theory,
+verified on its own model; the explanation of \emph{why the
+measured residuals are flat in the ramp rate} (the fit's onset
+freedom absorbs the growing mode's dominant multiple, the tangent
+direction of the time shift); and the a-priori $\delta t_c$ ceiling
+consumed by VI-F. The quantitative platform certificate is (1). For the manuscript this means: state (1) as the
 headline bound with the two-line proof of Sec.~3; keep (95)--(97) as
 the flatness explanation, dropping the sample index $i$ from them
 (they are function-level identities; $i$ belongs only to (92) and

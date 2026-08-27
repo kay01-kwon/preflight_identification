@@ -56,12 +56,15 @@ the actuation chain places it relative to the commanded ramp clock.
 The PNLS stage fits the family
 $\hat h(\tau;\theta) = C_1^*\big(\cosh(C_2^*(\tau - t^*)) -
 1\big)\mathbf 1[\tau \ge t^*] + C$ with
-$\theta = (C_1^*, C_2^*, t^*, C)$ free, minimising the objective of
-(92). The nominal solution is itself a member of this family: the
-choice $\theta_0 = (C_1, C_2, t_{\rm on}, b)$ reproduces
-$\omega_{\rm nom} + b$ exactly. A minimum never exceeds the value at
-one feasible point, so the fit cannot lose to this \emph{witness},
-and
+$\theta = (C_1^*, C_2^*, t^*)$ free and the baseline $C$ pinned to
+the pre-onset segment median --- the convention of Algorithm~1, so
+the two stages share it --- minimising the objective of (92). The
+nominal solution is itself a member of this family: the choice
+$\theta_0 = (C_1, C_2, t_{\rm on})$ reproduces
+$\omega_{\rm nom} + C$ with $C$ estimating the bias $b$ to
+$O(\sigma_n/\sqrt{N_{\rm pre}})$, a discrepancy that rides in the
+noise term. A minimum never exceeds the value at one feasible
+point, so the fit cannot lose to this \emph{witness}, and
 \begin{equation}
   \rms(r) \;\le\; \rms(e_\omega + n)
   \;\le\; \rms(e_\omega) + \rms(n).
@@ -168,27 +171,52 @@ except the hardware $n_{\rm hi}$. Figs.~\figboundsim{} and
 \figboundhw{} test (99) on every run of both campaigns, the
 measured side being the deployed free fit exactly as it runs in the
 pipeline --- both shape constants and the onset free, full window,
-no calibration on either side. In simulation ($\varphi_{\max} =
-5^\circ$, envelope alone) $307$ of $308$ runs sit inside; the
-single exceedance is the case whose injected offset $(38,14)$ mm
-lies beyond the design rectangle assumed by $\rbar$, at the fastest
-ramp --- the certificate fails exactly where its own premise does.
-On hardware ($\varphi_{\max} = 8^\circ$, envelope plus (98)) all
-$140$ runs sit inside, the worst using $0.83$ of its cap. The
-median used fraction is $0.32$--$0.33$ on both campaigns: one
-construction, validated on both platforms, the panels differing
-exactly in the channels the platforms differ in.
+no calibration on either side. The cap is evaluated once per ramp
+rate at the worst corner of the design box --- both leg arms, the
+far corner of the offset rectangle, both campaign masses --- so the
+theory enters each figure as a single curve, with no per-run
+knowledge on the theory side. The bound is a conditional guarantee
+--- offset inside the design rectangle, tilt under
+$\varphi_{\max}$, channels as modelled --- and on every run
+satisfying its hypothesis it holds without exception: in simulation
+($\varphi_{\max} = 5^\circ$, envelope alone) $252/252$ in-box runs
+sit under the curve (worst used fraction $0.79$), the two
+exceedances confined to S9 and S11, the deliberate out-of-box
+probes whose offsets $(32,32)$ and $(38,14)$ mm lie beyond the
+rectangle --- the certificate fails exactly where its own premise
+does. On hardware ($\varphi_{\max} = 8^\circ$, envelope plus the
+campaign's largest vibration term $\max n_{\rm hi}\sqrt{1 +
+(s_{\rm med}\kappa_q)^2} = 2.47^\circ$/s in (98)) all $140$ runs
+sit under the curve, the worst using $0.55$ of its cap. The median used fraction
+is $0.20$--$0.28$ on both campaigns: one construction, validated on
+both platforms, the panels differing exactly in the channels the
+platforms differ in. The used fraction rises monotonically with the
+ramp rate (mean $0.09$ to $0.55$ in simulation, $0.13$ to $0.30$ on
+hardware): the cap charges the envelope of $e_\omega$, whose window
+RMS $\sqrt{B(x)/x}$ grows with the design window $x(\Mdot)$, while
+the measured residual is rate-flat --- the onset freedom absorbs
+the growing mode whatever the window length. The certificate is
+therefore deliberately conservative at slow ramps and tightest at
+the fast ramps, where the window is shortest and the identification
+hardest; tightening the slow-ramp side would require charging the
+post-absorption remainder, the quantity the Remark below shows no
+platform measurement can isolate.
 
 \paragraph*{Remark}
 An earlier version of this analysis bounded $\delta e_\omega$
 itself through the Dirichlet response of the forcing channels
-[the former (98)--(108)]. Measured directly, that cap bounds the
-in-family forcing response but not the realised remainder, whose
-out-of-family content is amplified by the same $\sinh$ growth the
-envelope charges for; it is therefore omitted, and the certificate
-on the residual is (99) alone. The decomposition (95)--(97b)
-retains its two roles: the a-priori ceiling on the onset shift
-consumed by Sec.~VI-F, and the explanation of the residual's
-rate-flatness.
+[the former (98)--(108)]. That cap is exact on the dynamics it
+models --- on the exactly integrated tip-over it covers
+$\delta e_\omega$ at every ramp rate with $2.5$--$3\times$ margin
+--- but $\delta e_\omega$ is defined against the true nominal and
+therefore cannot be measured separately on a platform: any error
+in the pinned constants or onset injects in-family content into
+the measured difference, which dominates it in practice. A
+platform-validated certificate must not depend on knowing the true
+constants on the measured side, which is exactly what (93)--(99)
+provide; the Dirichlet machinery is therefore omitted from the
+validation. The decomposition (95)--(97b) retains its two roles:
+the a-priori ceiling on the onset shift consumed by Sec.~VI-F, and
+the explanation of the residual's rate-flatness.
 
 \end{document}
