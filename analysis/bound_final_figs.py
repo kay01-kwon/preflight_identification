@@ -135,7 +135,7 @@ def main():
     caps = {v: sim_capline(v) for v in sorted(set(rate))}
     cap = np.array([caps[v] for v in rate])
     draw(rate, res, cap, 'simulation, design tilt cap 5°',
-         r'small-angle envelope $\bar\rho K C_2\sqrt{B(x)/x}$ (theory)',
+         'small-angle envelope (theory)',
          'fig_bound_final_sim')
 
     # -- hardware: box-worst envelope + campaign vibration constant ---
@@ -149,7 +149,7 @@ def main():
     caps = {v: hw_capline(v) + n_camp for v in sorted(set(rate))}
     cap = np.array([caps[v] for v in rate])
     draw(rate, res, cap, 'hardware, design tilt cap 8°',
-         r'envelope + $\max n_{hi}\sqrt{1+\kappa_b^2}$ (theory + measured noise)',
+         'envelope + vibration term (theory + measured noise)',
          'fig_bound_final_hw')
 
 
