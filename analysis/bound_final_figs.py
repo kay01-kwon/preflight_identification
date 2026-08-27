@@ -45,54 +45,37 @@ ARM = {'Mx': 0.160, 'My': 0.130}
 LP = {'Mx': 0.140, 'My': 0.110}
 
 
-def draw(rate, res, cap, title, cap_label, fname, exceed_label='exceeds',
-         out=None):
+def draw(rate, res, cap, title, cap_label, fname):
     """cap is ONE value per ramp rate -- the worst case over the whole
-    design box -- so the theory enters the figure as a single curve,
-    not a per-run scatter. out: optional boolean mask marking runs
-    OUTSIDE the design box (deliberate probes); they are drawn hollow
-    grey and excluded from the residual mean line, since the guarantee
-    is issued for the in-box population only."""
+    design box -- so the theory enters the figure as a single curve.
+    The measured side is summarised statistically per rate: the mean
+    full-window residual RMSE with the empirical 95% interval
+    (2.5th to 97.5th percentile) across that rate's runs -- the
+    interval of the population, not of the mean, since the claim is
+    that the cap covers the runs themselves."""
     bad = res > cap
-    if out is None:
-        out = np.zeros(len(res), dtype=bool)
     fig, ax = plt.subplots(figsize=(6.4, 4.1))
-    rng = np.random.default_rng(0)
     ur = np.array(sorted(set(rate)))
-    ix = {v: i for i, v in enumerate(ur)}
-    xj = np.array([ix[v] for v in rate]) + rng.uniform(-0.16, 0.16,
-                                                       len(rate))
     ax.plot(range(len(ur)), [cap[rate == v][0] for v in ur],
             '-o', lw=2.0, ms=4.5, color='#D55E00',
             label=cap_label, zorder=4)
-    m_in = ~bad & ~out
-    ax.plot(xj[m_in], res[m_in], 'o', ms=3.4, color='#0072B2', alpha=0.5,
-            label='PNLS residual RMS (in-box)' if out.any()
-            else 'PNLS residual RMS', zorder=3)
-    if out.any():
-        ax.plot(xj[out & ~bad], res[out & ~bad], 'o', ms=4.2, mfc='none',
-                mew=1.2, color='0.45',
-                label='out-of-box probes (S9, S11)', zorder=3)
-    if bad.any():
-        ax.plot(xj[bad], res[bad], 'o', ms=5.0, mfc='none', mew=1.5,
-                color='#CC0000', label=exceed_label, zorder=5)
-    ax.plot(range(len(ur)),
-            [np.mean(res[(rate == v) & ~out]) for v in ur],
-            '-', lw=1.9, color='#0072B2', zorder=4)
+    mean = np.array([np.mean(res[rate == v]) for v in ur])
+    lo = np.array([np.percentile(res[rate == v], 2.5) for v in ur])
+    hi = np.array([np.percentile(res[rate == v], 97.5) for v in ur])
+    ax.errorbar(range(len(ur)), mean, yerr=[mean - lo, hi - mean],
+                fmt='o-', lw=1.9, ms=5.0, color='#0072B2',
+                ecolor='#0072B2', elinewidth=1.4, capsize=4.5,
+                capthick=1.4, zorder=3,
+                label='full-window residual RMSE (mean, 95% interval)')
     ins = int(np.sum(~bad))
     ax.set_xticks(range(len(ur)))
     ax.set_xticklabels([f'{v:g}' for v in ur])
     ax.set_xlabel(r'ramp rate $\dot M$ [N·m/s]', fontsize=9.5)
-    ax.set_ylabel('residual RMS [deg/s]', fontsize=9.5)
+    ax.set_ylabel('residual RMSE [deg/s]', fontsize=9.5)
     ax.grid(alpha=0.4, lw=0.8, color='0.6')
     ax.set_axisbelow(True)
-    if out.any():
-        n_in, k_in = int((~out).sum()), int((~bad & ~out).sum())
-        head = (f'{title}: {k_in}/{n_in} in-box inside '
-                f'({ins}/{len(res)} overall)')
-    else:
-        head = f'{title}: {ins}/{len(res)} runs inside'
-    ax.set_title(head, fontsize=10, loc='left')
+    ax.set_title(f'{title}: {ins}/{len(res)} runs inside',
+                 fontsize=10, loc='left')
     ax.legend(fontsize=8.4, loc='upper right', framealpha=0.9)
     fig.tight_layout()
     for ext, kw in (('pdf', {}), ('png', dict(dpi=200))):
