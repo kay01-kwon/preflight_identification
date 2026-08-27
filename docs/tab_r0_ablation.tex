@@ -1,0 +1,20 @@
+% Actuator-dynamics ablation: identified CoM offsets with the full
+% rotor model (R3) and with the rotor dynamics removed (R0), the
+% ~83 ms effective command-to-thrust lag eliminated.
+% Numbers reproduced by rerunning extract_piecewise_batch on
+% SimDataSet/R0 and comparing with the frozen R3 estimates.
+\begin{table}[t]
+\caption{Actuator-dynamics ablation: identified CoM offsets with the
+full rotor model (R3) and with the rotor dynamics removed (R0).}
+\label{tab:r0_ablation}
+\centering
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Case & R3 $(\hat x, \hat y)$ [mm] & R0 $(\hat x, \hat y)$ [mm]
+ & $|\Delta|$ [mm]\\
+\midrule
+S2 & $(-0.01,\ +10.00)$ & $(+0.02,\ +10.06)$ & $0.03,\ 0.06$\\
+S8 & $(+25.22,\ +25.20)$ & $(+25.20,\ +25.17)$ & $0.02,\ 0.03$\\
+\bottomrule
+\end{tabular}
+\end{table}

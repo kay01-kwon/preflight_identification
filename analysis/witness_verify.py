@@ -29,6 +29,10 @@ baseline included), and four claims are checked per ramp rate:
                           Dirichlet cap (manuscript (107)),
                           (W*arm*phi*omega_max/12)*K -- measurable
                           here because the constants are exact
+  6  realised shift       the deployed constrained readout's
+                          critical-moment shift Mdot*|t* - t_on|
+                          sits under the ceiling of (104),
+                          (Mdot/C2)*artanh(rho_bar*C2/Mdot)
 
 Usage
 -----
@@ -98,7 +102,8 @@ def main():
     print(f'C2 {C2:.3f} rad/s   J_P {J_P:.4f}   K {K:.5f}')
     hdr = ('rate  | RMS(r)   RMS(e+n)  ok | RMS(e)   cap      ok  '
            'ptwise | t*      ref(97b)  ceil(97a)  ok | '
-           'delay-res  d(t*)    ok | RMS(de) cap107  ok')
+           'delay-res  d(t*)    ok | RMS(de) cap107  ok | '
+           'dM      ceil104  ok')
     print(hdr)
     print('-' * len(hdr))
     for mdot in (0.10, 0.45, 1.20):
@@ -143,6 +148,22 @@ def main():
         cap107 = (W * L_ARM * PHI_MAX * om_max / 12.0) * K
         ok5 = rms_de <= cap107
 
+        # -- check 6: realised critical-moment shift vs (104) -----------
+        # the deployed constrained readout (sub-sample refined), on a
+        # record whose true onset is exactly t = 0
+        import sys
+        from pathlib import Path
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        import critical_value_getter_piecewise as cvp
+        pw6 = cvp.cosh_onset_fit(t, y, np.zeros_like(t),
+                                 onset_guess=None, c2_fixed=C2,
+                                 moment_floor=0.0, ramp_gain=K,
+                                 ramp_rate=mdot)
+        dm = mdot * abs(pw6['onset_t'])
+        u6 = rho_bar * C2 / mdot
+        ceil104 = (mdot / C2) * np.arctanh(min(u6, 0.999))
+        ok6 = dm <= ceil104
+
         print(f'{mdot:4.2f}  | {np.degrees(rms_fit):7.4f} '
               f'{np.degrees(rms_wit):8.4f} {"Y" if ok1 else "N":>2} '
               f'| {np.degrees(rms_e):7.4f} {np.degrees(cap):7.4f} '
@@ -152,7 +173,9 @@ def main():
               f'| {np.degrees(rms_d):8.4f} {1e3*(p_d[2]-ts):+7.2f} ms '
               f'{"Y" if ok4 else "N"} '
               f'| {np.degrees(rms_de):7.4f} {np.degrees(cap107):7.4f} '
-              f'{"Y" if ok5 else "N"}')
+              f'{"Y" if ok5 else "N"} '
+              f'| {1e3*dm:6.3f} {1e3*ceil104:7.3f} mN·m '
+              f'{"Y" if ok6 else "N"}')
 
 
 if __name__ == '__main__':
