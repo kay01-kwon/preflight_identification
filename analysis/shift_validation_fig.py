@@ -91,7 +91,7 @@ def main():
     ax.set_ylabel(r'$\dot M\,|\delta t_c|$ [mN·m]', fontsize=9.5)
     ax.grid(alpha=0.4, lw=0.8, color='0.6')
     ax.set_axisbelow(True)
-    ax.legend(fontsize=8.2, loc='center right', framealpha=0.9)
+    ax.legend(fontsize=8.2, loc='upper left', framealpha=0.9)
     fig.tight_layout()
     fig.savefig(args.outdir / 'fig_shift_validation.png',
                 bbox_inches='tight', dpi=600)
