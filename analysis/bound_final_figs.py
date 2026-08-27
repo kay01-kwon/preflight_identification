@@ -66,12 +66,12 @@ def draw(rate, res, cap, title, cap_label, fname):
                 fmt='o-', lw=1.9, ms=5.0, color='#0072B2',
                 ecolor='#0072B2', elinewidth=1.4, capsize=4.5,
                 capthick=1.4, zorder=3,
-                label='full-window residual RMSE (mean, 95% interval)')
+                label='full-window RMSE (mean, 95% interval)')
     ins = int(np.sum(~bad))
     ax.set_xticks(range(len(ur)))
     ax.set_xticklabels([f'{v:g}' for v in ur])
     ax.set_xlabel(r'ramp rate $\dot M$ [N·m/s]', fontsize=9.5)
-    ax.set_ylabel('residual RMSE [deg/s]', fontsize=9.5)
+    ax.set_ylabel('RMSE [deg/s]', fontsize=9.5)
     ax.grid(alpha=0.4, lw=0.8, color='0.6')
     ax.set_axisbelow(True)
     ax.set_title(f'{title}: {ins}/{len(res)} runs inside',
