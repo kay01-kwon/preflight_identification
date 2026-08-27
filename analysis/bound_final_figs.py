@@ -23,9 +23,12 @@ Inputs are the per-run sweeps already on disk:
 
 Usage
 -----
-  python analysis/bound_final_figs.py
+  python analysis/bound_final_figs.py [--outdir DIR]
+                                      [--sim-csv PATH] [--hw-csv PATH]
 """
+import argparse
 import csv
+from pathlib import Path
 
 import numpy as np
 from scipy.optimize import brentq
@@ -45,7 +48,7 @@ ARM = {'Mx': 0.160, 'My': 0.130}
 LP = {'Mx': 0.140, 'My': 0.110}
 
 
-def draw(rate, res, cap, title, cap_label, fname):
+def draw(rate, res, cap, title, cap_label, fname, outdir):
     """cap is ONE value per ramp rate -- the worst case over the whole
     design box -- so the theory enters the figure as a single curve.
     The measured side is summarised statistically per rate: the mean
@@ -79,7 +82,7 @@ def draw(rate, res, cap, title, cap_label, fname):
     ax.legend(fontsize=8.4, loc='upper right', framealpha=0.9)
     fig.tight_layout()
     for ext, kw in (('pdf', {}), ('png', dict(dpi=200))):
-        fig.savefig(f'docs/{fname}.{ext}', bbox_inches='tight', **kw)
+        fig.savefig(outdir / f'{fname}.{ext}', bbox_inches='tight', **kw)
     print(fname, f'{ins}/{len(res)} inside, worst usage '
           f'{np.max(res / cap):.2f}')
 
@@ -124,11 +127,21 @@ def hw_capline(mdot):
 
 
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--outdir', type=Path, default=Path('docs'),
+                    help='directory the figures are written to')
+    ap.add_argument('--sim-csv', type=Path,
+                    default=Path('docs/sim_env_witness_runs.csv'))
+    ap.add_argument('--hw-csv', type=Path,
+                    default=Path('docs/hw_env_noise_runs.csv'))
+    args = ap.parse_args()
+    args.outdir.mkdir(parents=True, exist_ok=True)
+
     # -- simulation: box-worst envelope alone, one curve per rate -----
     # S9 (32,32) and S11 (38,14) mm sit beyond the design rectangle the
     # certificate is issued for; those out-of-box probes are not part
     # of the guarantee population and stay off the figure.
-    rows = [r for r in csv.DictReader(open('docs/sim_env_witness_runs.csv'))
+    rows = [r for r in csv.DictReader(open(args.sim_csv))
             if r['case'] not in ('S9', 'S11')]
     rate = np.array([float(r['rate']) for r in rows])
     res = np.array([float(r['res']) for r in rows])
@@ -136,10 +149,10 @@ def main():
     cap = np.array([caps[v] for v in rate])
     draw(rate, res, cap, 'simulation, design tilt cap 5°',
          'small-angle envelope (theory)',
-         'fig_bound_final_sim')
+         'fig_bound_final_sim', args.outdir)
 
     # -- hardware: box-worst envelope + campaign vibration constant ---
-    rows = list(csv.DictReader(open('docs/hw_env_noise_runs.csv')))
+    rows = list(csv.DictReader(open(args.hw_csv)))
     rate = np.array([float(r['rate']) for r in rows])
     res = np.array([float(r['res']) for r in rows])
     # the one measured input: the campaign's largest out-of-band
@@ -150,7 +163,7 @@ def main():
     cap = np.array([caps[v] for v in rate])
     draw(rate, res, cap, 'hardware, design tilt cap 8°',
          'envelope + vibration term (theory + measured noise)',
-         'fig_bound_final_hw')
+         'fig_bound_final_hw', args.outdir)
 
 
 if __name__ == '__main__':
