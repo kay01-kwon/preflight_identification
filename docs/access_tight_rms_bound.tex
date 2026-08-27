@@ -367,33 +367,40 @@ the box-worst cap curve of (1) --- one theory value per ramp rate.
 No calibration and no per-run knowledge enter the cap.
 
 \begin{center}\small
-\begin{tabular}{@{}lccccc@{}}
+\begin{tabular}{@{}lcccc@{}}
 \toprule
-population & runs & inside & worst used fraction & median & p90\\
+population & runs & inside & \multicolumn{2}{c}{RMSE/bound}\\
+\cmidrule(lr){4-5}
+ & & & worst & median\\
 \midrule
-simulation, in-box ($\varphi_{\max}=5^\circ$, envelope alone)
-  & 252 & 252 & 0.79 & 0.28 & 0.53\\
-simulation, out-of-box probes (S9, S11)
-  & 56 & 54 & 5.22 & --- & ---\\
+simulation ($\varphi_{\max}=5^\circ$, envelope alone)
+  & 252 & 252 & 0.79 & 0.28\\
 hardware ($\varphi_{\max}=8^\circ$, envelope $+$ (14))
-  & 140 & 140 & 0.55 & 0.20 & 0.33\\
+  & 140 & 140 & 0.55 & 0.20\\
 \bottomrule
 \end{tabular}
 \end{center}
+
+The simulation row covers the cases inside the evaluation rectangle
+($|s_{\rm off}| \le 25$ mm). S9 and S11, injected at $(32,32)$ and
+$(38,14)$ mm, lie outside the bound's hypothesis; scored against the
+same curve regardless, $54$ of their $56$ runs still fall below it
+--- being outside the hypothesis removes the guarantee, it does not
+force a violation --- with the two exceptions at the fastest ramps
+(S9/$M_x$ at $0.65$ N\,m/s, ratio $1.02$; S11/$M_y$ at $1.20$
+N\,m/s, ratio $5.22$).
 
 \emph{Scored against the hypothesis}, the guarantee is exception
 free: an a-priori bound is a conditional statement --- \emph{if}
 the offset lies in the design rectangle, the tilt under
 $\varphi_{\max}$, the channels as modelled, \emph{then}
 $\rms(r) \le$ cap --- and every run satisfying it sits under its
-curve. The two exceedances belong to the deliberate out-of-box
-probes, whose injected offsets --- $(32, 32)$ and $(38, 14)$ mm ---
-lie beyond the design rectangle: S9/$M_x$ at $0.65$ N\,m/s
-(marginal, $1.02$) and S11/$M_y$ at the fastest ramp (used fraction
-$5.22$), a run whose excitation window carries $39$ samples --- one
-above the campaign gate's minimum of $38$ --- so it combines the
-deepest offset with the shortest admissible window. The certificate
-fails exactly where its own premise does, and nowhere else. Every hardware run is
+curve. Of the two probe exceptions, the worst (S11/$M_y$ at the
+fastest ramp) is the run whose excitation window carries $39$
+samples --- one above the campaign gate's minimum of $38$ --- so it
+combines the deepest offset with the shortest admissible window.
+The certificate fails exactly where its own premise does, and
+nowhere else. Every hardware run is
 inside, the worst using $0.55$ of its cap: whatever unmodelled
 disturbances the outdoor vehicle meets --- gusts, contact
 irregularities at the pivot, channels (12) and (14) reserve no term
