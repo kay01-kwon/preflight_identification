@@ -5,7 +5,7 @@ Exact nonlinear contact dynamics (true onset known) at each campaign
 ramp rate. Orange: the shifted-moment bound of (104). Blue: the
 detected-minus-theoretical critical moment through the deployed
 constrained readout (Algorithm 1, sub-sample refined), mean and 95%
-interval over noise realisations. Grey squares: the free fit, whose
+interval over noise realisations. Grey squares: the stage-1 PNLS fit, whose
 onset lives on the sample grid -- at the fast ramps its shift is
 exactly one grid step Mdot*Ts and exceeds the bound (red rings),
 a sampling artefact the constrained readout removes.
@@ -79,7 +79,7 @@ def main():
                 label='detected minus theoretical critical moment '
                       '(mean, 95% interval)')
     ax.plot(ix, free, 's', ms=6, mfc='none', mew=1.5, color='0.45',
-            label='free fit (grid-quantised)', zorder=3)
+            label='PNLS (onset on the sample grid)', zorder=3)
     bad = [i for i, (f, c) in enumerate(zip(free, ceil)) if f > c]
     if bad:
         ax.plot([list(ix)[i] for i in bad], [free[i] for i in bad],
