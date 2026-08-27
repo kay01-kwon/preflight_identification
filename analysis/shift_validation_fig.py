@@ -66,7 +66,7 @@ def main():
     ax.errorbar(ix, mean, yerr=[mean - lo, hi - mean], fmt='o-',
                 lw=1.8, ms=5, color='#0072B2', ecolor='#0072B2',
                 elinewidth=1.4, capsize=4.5, capthick=1.4, zorder=3,
-                label='shifted moment (measured; mean, 95% interval)')
+                label=r'critical-moment error $M_{\mathrm{crit,est}}-M_{\mathrm{crit,ideal}}$ (mean, 95% interval)')
     bad = [i for i, (h, c) in enumerate(zip(hi, ceil)) if h > c]
     if bad:
         ax.plot([list(ix)[i] for i in bad], [hi[i] for i in bad],
