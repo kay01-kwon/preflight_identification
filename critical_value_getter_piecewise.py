@@ -519,6 +519,8 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
         bounds = ([-5.0, c2_bounds[0]], [5.0, c2_bounds[1]])
         expand = lambda x, C0: (float(x[0]), float(x[1]), float(C0))
 
+    cost_of = {}
+
     def _sweep(candidates, best):
         for j in candidates:
             tau = t[j:] - t[j]
@@ -529,6 +531,7 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
                               max_nfev=300)
             pre = np.sum((omega[:j] - C0) ** 2) if j > 0 else 0.0
             cost = float(np.sum(r.fun ** 2) + pre)
+            cost_of[j] = cost
             if cost < best[0]:
                 best = (cost, j, r.x, C0)
         return best
@@ -560,6 +563,20 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
     params = expand(x_star, C0_star)
     C1, C2, C = params
     tau = t[j_star:] - t[j_star]
+    # Sub-sample refinement, exactly as in the constrained sweep: the
+    # profiled cost (parameters re-fitted at each candidate) is smooth
+    # and locally quadratic in the onset, so a parabola through the
+    # three profiled costs around j_star places its vertex at the
+    # sub-sample offset. Refines the onset READOUT only; the
+    # prediction and RMSE stay on the grid minimum.
+    dt = float(np.median(np.diff(t)))
+    frac = 0.0
+    a = cost_of.get(j_star - step)
+    c_ = cost_of.get(j_star + step)
+    if a is not None and c_ is not None:
+        den = a - 2.0 * cost + c_
+        if den > 0.0:
+            frac = float(np.clip(0.5 * (a - c_) / den, -0.5, 0.5)) * step
     # With the baseline pinned to the pre-segment median in every mode,
     # the prediction and the objective use one and the same C, and the
     # reported RMSE is exactly sqrt(cost/N), the quantity the sweep
@@ -570,6 +587,8 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
 
     return dict(
         onset_idx=j_star,
+        onset_frac=float(frac),
+        onset_t=float(t[j_star] + frac * dt),
         c=float(C), alpha=float(C2),
         total_residual=float(cost),
         omega_pred=omega_pred,

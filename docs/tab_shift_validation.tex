@@ -1,37 +1,30 @@
-% Realised critical-moment shift Mdot*|t* - t_on| on the exactly
-% integrated contact dynamics (true onset known), against the ceiling
-% of (104) evaluated with the same constants.  Two readouts: the
-% deployed constrained one (Algorithm 1, sub-sample refined) and the
-% free PNLS fit, whose onset lives on the sample grid.
-% Reproduced by analysis/witness_verify.py (check 6) and the
-% free-fit variant in the same script's environment.
+% Realised critical-moment shift Mdot*|delta t_c| on the exactly
+% integrated contact dynamics (true onset known), against the bound
+% of (104) evaluated with the same constants.  The estimator is the
+% calibration-free PNLS fit with the sub-sample-refined onset -- the
+% same fit the RMSE-bound validation uses -- over 30 noise
+% realisations per rate.  Reproduced by
+% analysis/shift_validation_fig.py.
 \begin{table}[t]
-\caption{Realised critical-moment shift against the bound of (104),
-on the exactly integrated contact dynamics.}
+\caption{Realised critical-moment shift of the calibration-free PNLS
+fit against the bound of (104), on the exactly integrated contact
+dynamics (30 noise realisations per rate).}
 \label{tab:shift_validation}
 \centering
-\begin{tabular}{@{}ccccc@{}}
+\begin{tabular}{@{}cccc@{}}
 \toprule
 $\dot M$ & Bound (104) &
-\multicolumn{2}{c}{Realised $\dot M\,|t^{*}-t_{\rm on}|$ [mN$\cdot$m]}\\
+\multicolumn{2}{c}{$\dot M\,|\delta t_c|$ [mN$\cdot$m]}\\
 \cmidrule(lr){3-4}
-[N$\cdot$m/s] & [mN$\cdot$m] & constrained (Alg.~1) & free fit$^{\rm a}$\\
+[N$\cdot$m/s] & [mN$\cdot$m] & mean & 95\% interval\\
 \midrule
-0.10 & 2.47 & 0.11 & 0.50\\
-0.20 & 2.46 & 0.16 & 0.00\\
-0.30 & 2.46 & 0.19 & 0.00\\
-0.45 & 2.46 & 0.22 & 0.00\\
-0.65 & 2.45 & 0.22 & 0.00\\
-0.90 & 2.45 & 0.21 & 4.50\\
-1.20 & 2.45 & 0.17 & 6.00\\
+0.10 & 2.47 & 0.46 & $[0.24,\ 0.71]$\\
+0.20 & 2.46 & 0.56 & $[0.34,\ 0.80]$\\
+0.30 & 2.46 & 0.64 & $[0.43,\ 0.90]$\\
+0.45 & 2.45 & 0.71 & $[0.36,\ 1.00]$\\
+0.65 & 2.45 & 0.80 & $[0.42,\ 1.19]$\\
+0.90 & 2.45 & 0.79 & $[0.28,\ 1.28]$\\
+1.20 & 2.45 & 0.86 & $[0.36,\ 1.37]$\\
 \bottomrule
-\end{tabular}\\[2pt]
-\raggedright\footnotesize $^{\rm a}$ The free fit's onset lives on
-the sample grid (no sub-sample refinement), so its shift is
-quantised to multiples of $\dot M T_s$ ($T_s = 5$\,ms): the entries
-at $0.90$ and $1.20$\,N$\cdot$m/s are exactly one grid step and
-exceed the bound of (104), which budgets the onset-absorption
-channel alone, not sampling. The deployed readout removes this
-channel by its parabolic sub-sample refinement and stays at
-$4$--$9\%$ of the bound at every rate.
+\end{tabular}
 \end{table}
