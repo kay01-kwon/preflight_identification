@@ -1,30 +1,34 @@
-% Realised critical-moment shift Mdot*|delta t_c| on the exactly
-% integrated contact dynamics (true onset known), against the bound
-% of (104) evaluated with the same constants.  The estimator is the
-% calibration-free PNLS fit with the sub-sample-refined onset -- the
-% same fit the RMSE-bound validation uses -- over 30 noise
-% realisations per rate.  Reproduced by
-% analysis/shift_validation_fig.py.
+% Critical-moment error of the calibration-free PNLS fit against the
+% shifted-moment bound of (104), on the directly integrated nonlinear
+% contact dynamics (true onset known exactly, declared gyro noise),
+% at the box-worst rho_bar configuration: pitch axis, the offset
+% rectangle's +25 mm corner, loaded mass (rho_bar = 2.84 mN.m).
+% 30 Monte-Carlo noise realisations per rate; the signed error is
+% negative in all 210 realisations (early detection, as (97c)
+% predicts) -- the table reports magnitudes.
+% Reproduced by analysis/shift_validation_fig.py.
 \begin{table}[t]
-\caption{Realised critical-moment shift of the calibration-free PNLS
-fit against the bound of (104), on the exactly integrated contact
-dynamics (30 noise realisations per rate).}
+\caption{Critical-moment error of the calibration-free PNLS fit
+against the shifted-moment bound of (104), on the directly
+integrated contact dynamics at the box-worst $\bar\rho$
+configuration (30 noise realisations per rate).}
 \label{tab:shift_validation}
 \centering
 \begin{tabular}{@{}cccc@{}}
 \toprule
 $\dot M$ & Bound (104) &
-\multicolumn{2}{c}{$\dot M\,|\delta t_c|$ [mN$\cdot$m]}\\
+\multicolumn{2}{c}{$|M_{\mathrm{crit,est}} - M_{\mathrm{crit,ideal}}|$
+ [mN$\cdot$m]}\\
 \cmidrule(lr){3-4}
 [N$\cdot$m/s] & [mN$\cdot$m] & mean & 95\% interval\\
 \midrule
-0.10 & 2.47 & 0.46 & $[0.24,\ 0.71]$\\
-0.20 & 2.46 & 0.56 & $[0.34,\ 0.80]$\\
-0.30 & 2.46 & 0.64 & $[0.43,\ 0.90]$\\
-0.45 & 2.45 & 0.71 & $[0.36,\ 1.00]$\\
-0.65 & 2.45 & 0.80 & $[0.42,\ 1.19]$\\
-0.90 & 2.45 & 0.79 & $[0.28,\ 1.28]$\\
-1.20 & 2.45 & 0.86 & $[0.36,\ 1.37]$\\
+0.10 & 2.85 & 0.52 & $[0.27,\ 0.78]$\\
+0.20 & 2.84 & 0.62 & $[0.40,\ 0.87]$\\
+0.30 & 2.84 & 0.71 & $[0.49,\ 0.99]$\\
+0.45 & 2.84 & 0.79 & $[0.40,\ 1.06]$\\
+0.65 & 2.84 & 0.91 & $[0.48,\ 1.33]$\\
+0.90 & 2.84 & 0.89 & $[0.35,\ 1.41]$\\
+1.20 & 2.84 & 0.97 & $[0.48,\ 1.49]$\\
 \bottomrule
 \end{tabular}
 \end{table}

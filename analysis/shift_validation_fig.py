@@ -2,7 +2,8 @@
 """Critical-moment shift validation figure.
 
 Exact nonlinear contact dynamics (true onset known) at each campaign
-ramp rate. Orange: the shifted-moment bound of (104). Blue: the
+ramp rate, at the box-worst rho_bar configuration (pitch axis, the
+offset rectangle's far corner, loaded mass). Orange: the shifted-moment bound of (104). Blue: the
 detected-minus-theoretical critical moment through the calibration-free
 PNLS fit (sub-sample refined onset), mean and 95% interval over noise
 realisations -- the same estimator the RMSE-bound validation uses, so
@@ -28,6 +29,17 @@ import critical_value_getter_piecewise as cvp         # noqa: E402
 
 RATES = (0.10, 0.20, 0.30, 0.45, 0.65, 0.90, 1.20)
 SIG, BIA, NSEED = 2.45e-4, 2e-3, 30
+
+# box-worst rho_bar configuration: pitch axis, the offset rectangle's
+# +25 mm corner, loaded mass -- the largest forcing bound the design
+# box admits, so the validation runs where the bound is most stressed
+LP = 0.140
+wv.M_KG, wv.L_ARM, wv.Z = 3.220, LP + 0.025, 0.272
+wv.J_CAD = 0.050564
+wv.W = wv.M_KG * 9.81
+wv.J_P = wv.J_CAD + wv.M_KG * (wv.Z ** 2 + LP ** 2)
+wv.C2 = float(np.sqrt(wv.W * wv.Z / wv.J_P))
+wv.K = 1.0 / (wv.W * wv.Z)
 
 
 def main():
