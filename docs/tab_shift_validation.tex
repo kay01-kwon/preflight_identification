@@ -1,20 +1,21 @@
-% Realised critical-moment shift Mdot*|delta t_c| on the exactly
-% integrated contact dynamics (true onset known), against the bound
-% of (104) evaluated with the same constants.  The estimator is the
-% calibration-free PNLS fit with the sub-sample-refined onset -- the
-% same fit the RMSE-bound validation uses -- over 30 noise
-% realisations per rate.  Reproduced by
-% analysis/shift_validation_fig.py.
+% Critical-moment error of the calibration-free PNLS fit against the
+% shifted-moment bound of (104), on the directly integrated nonlinear
+% contact dynamics (true onset known exactly, campaign constants,
+% declared gyro noise), 30 noise realisations per rate.  The signed
+% error is negative in all 210 realisations (early detection, as
+% (97c) predicts); the table reports magnitudes.
+% Reproduced by analysis/shift_validation_fig.py.
 \begin{table}[t]
-\caption{Realised critical-moment shift of the calibration-free PNLS
-fit against the bound of (104), on the exactly integrated contact
-dynamics (30 noise realisations per rate).}
+\caption{Critical-moment error of the calibration-free PNLS fit
+against the shifted-moment bound of (104), on the directly
+integrated contact dynamics (30 noise realisations per rate).}
 \label{tab:shift_validation}
 \centering
 \begin{tabular}{@{}cccc@{}}
 \toprule
 $\dot M$ & Bound (104) &
-\multicolumn{2}{c}{$\dot M\,|\delta t_c|$ [mN$\cdot$m]}\\
+\multicolumn{2}{c}{$|M_{\mathrm{crit,est}} - M_{\mathrm{crit,ideal}}|$
+ [mN$\cdot$m]}\\
 \cmidrule(lr){3-4}
 [N$\cdot$m/s] & [mN$\cdot$m] & mean & 95\% interval\\
 \midrule
