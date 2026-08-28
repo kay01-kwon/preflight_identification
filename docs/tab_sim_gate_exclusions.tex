@@ -1,0 +1,38 @@
+% The 30 of 308 simulated excitation runs excluded by the onset-free
+% run gates, grouped by cause.  Classification: full-window slope and
+% linearity recomputed per run; "developed portion" = samples above
+% the slope-gate moment floor.  Reproduced by the gate audit in the
+% analysis notes (extract_piecewise_batch gate criteria).
+\begin{table}[t]
+\caption{Simulated excitation runs excluded by the run gates
+($30$ of $308$; the identification uses the remaining $278$).}
+\label{tab:sim_gate_exclusions}
+\centering
+\begin{tabular}{@{}p{0.26\linewidth}cp{0.42\linewidth}@{}}
+\toprule
+Group & Runs & Signature \\
+\midrule
+Actuator transient at fast ramps
+($\dot M \ge 0.65$\,N$\cdot$m/s)
+ & 20
+ & Window shortens toward $\tau_{\rm eff} \approx 83$\,ms, so rotor
+   spin-up curvature enters it: linearity $57$--$221$\,mN$\cdot$m;
+   the developed portion still tracks the commanded rate within
+   $3\%$.\\[2pt]
+Slope-floor artifact on boundary cases
+ & 8
+ & Well-executed ramps (full-window slope within $1\%$, linearity
+   $\approx 8$\,mN$\cdot$m) whose window ends barely above the
+   slope-gate moment floor, leaving the masked estimator too few
+   samples --- conservative false rejections.\\[2pt]
+Threshold-marginal
+ & 2
+ & Ramp-rate error $3.2\%$ against the $3\%$ gate (S9/$M_x$ at
+   $0.20$ and $0.30$\,N$\cdot$m/s).\\
+\bottomrule
+\end{tabular}\\[2pt]
+\raggedright\footnotesize The residual bound of
+\cref{subsubsec:sim_rmse_bound} holds on the rejected runs as well:
+the gates protect the accuracy of the critical-moment readout, not
+the validity of the bound.
+\end{table}
