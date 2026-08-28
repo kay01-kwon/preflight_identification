@@ -157,9 +157,16 @@ def main():
                 got -= 360
             if want - got > 180:
                 got += 360
-            ax.plot(want, got, MRK[ctrl], ms=6, mfc='none', mew=1.5,
-                    color=COL[ctrl], zorder=3,
-                    label=ctrl if case == order[0] else None)
+            # the two controllers drift along nearly the same bearing,
+            # so concentric sizes keep both visible when they coincide
+            if ctrl == 'HGDO':
+                ax.plot(want, got, MRK[ctrl], ms=10, mfc='none',
+                        mew=1.6, color=COL[ctrl], zorder=3,
+                        label=ctrl if case == order[0] else None)
+            else:
+                ax.plot(want, got, MRK[ctrl], ms=4.2, mfc=COL[ctrl],
+                        mew=0.0, color=COL[ctrl], zorder=4,
+                        label=ctrl if case == order[0] else None)
     ax.set_xticks(np.arange(-135, 181, 45))
     ax.set_yticks(np.arange(-135, 181, 45))
     ax.set_xlabel('offset bearing [deg]', fontsize=9.5)
