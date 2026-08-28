@@ -207,8 +207,8 @@ def main():
                         ms=10, mew=2.2, color=col, ecolor=col,
                         elinewidth=1.3, capsize=3.0, capthick=1.3,
                         ls='', label=f'{ctrl}, {lab}', zorder=3)
-    ax.set_xlabel('offset magnitude [mm]', fontsize=9.5)
-    ax.set_ylabel('peak tilt during take-off [deg]', fontsize=9.5)
+    ax.set_xlabel(r'$\|p_{\mathrm{off}}\|$ [mm]', fontsize=9.5)
+    ax.set_ylabel(r'$\vartheta_{\mathrm{peak}}$ [deg]', fontsize=9.5)
     ax.grid(alpha=0.45, lw=0.8, color='0.6')
     ax.set_axisbelow(True)
     ax.legend(fontsize=8.5, framealpha=0.9)
