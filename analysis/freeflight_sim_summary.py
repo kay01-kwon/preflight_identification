@@ -19,7 +19,8 @@ horizontal rate, farthest horizontal excursion, peak horizontal speed.
 
 Usage
 -----
-  PYTHONPATH=<stubs> python analysis/freeflight_sim_summary.py [--outdir DIR]
+  PYTHONPATH=<stubs> python analysis/freeflight_sim_summary.py \
+      [--outdir DIR] [--dpi N]
 """
 import argparse
 import csv
@@ -83,6 +84,8 @@ def main():
     p.add_argument('--data', type=Path, default=Path('SimDataSet/free_flight'))
     p.add_argument('--outdir', type=Path,
                    default=Path(__file__).resolve().parents[1] / 'docs')
+    p.add_argument('--dpi', type=int, default=600,
+                   help='raster resolution of the PNG outputs')
     a = p.parse_args()
     a.outdir.mkdir(parents=True, exist_ok=True)
 
@@ -176,7 +179,7 @@ def main():
     ax.legend(fontsize=9, loc='upper left', framealpha=0.9)
     ax.set_aspect('equal')
     fig.tight_layout()
-    for ext, kw in (('pdf', {}), ('png', dict(dpi=200))):
+    for ext, kw in (('pdf', {}), ('png', dict(dpi=a.dpi))):
         fig.savefig(a.outdir / f'fig_ff_compass.{ext}',
                     bbox_inches='tight', **kw)
 
@@ -213,7 +216,7 @@ def main():
     ax.set_axisbelow(True)
     ax.legend(fontsize=8.5, framealpha=0.9)
     fig2.tight_layout()
-    for ext, kw in (('pdf', {}), ('png', dict(dpi=200))):
+    for ext, kw in (('pdf', {}), ('png', dict(dpi=a.dpi))):
         fig2.savefig(a.outdir / f'fig_ff_scaling.{ext}',
                      bbox_inches='tight', **kw)
 
