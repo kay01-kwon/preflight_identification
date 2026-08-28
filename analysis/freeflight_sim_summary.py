@@ -19,7 +19,8 @@ horizontal rate, farthest horizontal excursion, peak horizontal speed.
 
 Usage
 -----
-  PYTHONPATH=<stubs> python analysis/freeflight_sim_summary.py [--outdir DIR]
+  PYTHONPATH=<stubs> python analysis/freeflight_sim_summary.py \
+      [--outdir DIR] [--dpi N]
 """
 import argparse
 import csv
@@ -83,6 +84,8 @@ def main():
     p.add_argument('--data', type=Path, default=Path('SimDataSet/free_flight'))
     p.add_argument('--outdir', type=Path,
                    default=Path(__file__).resolve().parents[1] / 'docs')
+    p.add_argument('--dpi', type=int, default=600,
+                   help='raster resolution of the PNG outputs')
     a = p.parse_args()
     a.outdir.mkdir(parents=True, exist_ok=True)
 
@@ -176,28 +179,44 @@ def main():
     ax.legend(fontsize=9, loc='upper left', framealpha=0.9)
     ax.set_aspect('equal')
     fig.tight_layout()
-    for ext, kw in (('pdf', {}), ('png', dict(dpi=200))):
+    for ext, kw in (('pdf', {}), ('png', dict(dpi=a.dpi))):
         fig.savefig(a.outdir / f'fig_ff_compass.{ext}',
                     bbox_inches='tight', **kw)
 
     # ── (b) disturbance scaling ──────────────────────────────────────
+    # crossbar style: at each distinct offset magnitude the median as
+    # a short horizontal tick and the empirical 95% interval as a
+    # capped vertical bar; cases sharing one magnitude pool their
+    # flights (e.g. the four 28.3 mm cases contribute twelve flights)
     fig2, ax = plt.subplots(figsize=(5.4, 3.8))
+    LIGHT = {'HGDO': '#74B4DC', 'L1': '#F0A868'}
+    dodge = {'HGDO': -0.45, 'L1': +0.45}
     for ctrl in ctrls:
-        for var, filled, lab in (('wo_ff', False, 'uncompensated'),
-                                 ('w_ff', True, 'compensated')):
-            mags = [np.hypot(*CASES[c][:2]) for c in order]
-            tilts = [mean[(c, ctrl, var)]['tilt'] for c in order]
-            ax.plot(mags, tilts, MRK[ctrl], ms=6.5,
-                    mfc=COL[ctrl] if filled else 'none',
-                    mew=1.5, color=COL[ctrl], ls='',
-                    label=f'{ctrl}, {lab}', zorder=3)
-    ax.set_xlabel('offset magnitude [mm]', fontsize=9.5)
-    ax.set_ylabel('peak tilt during take-off [deg]', fontsize=9.5)
+        for var, lab in (('wo_ff', 'uncompensated'),
+                         ('w_ff', 'compensated')):
+            col = COL[ctrl] if var == 'wo_ff' else LIGHT[ctrl]
+            pool = defaultdict(list)
+            for c in order:
+                mag = round(float(np.hypot(*CASES[c][:2])), 2)
+                pool[mag].extend(x['tilt']
+                                 for x in cells[(c, ctrl, var)])
+            mags = np.array(sorted(pool)) + dodge[ctrl]
+            med = np.array([np.median(pool[m]) for m in sorted(pool)])
+            lo = np.array([np.percentile(pool[m], 2.5)
+                           for m in sorted(pool)])
+            hi = np.array([np.percentile(pool[m], 97.5)
+                           for m in sorted(pool)])
+            ax.errorbar(mags, med, yerr=[med - lo, hi - med], fmt='_',
+                        ms=10, mew=2.2, color=col, ecolor=col,
+                        elinewidth=1.3, capsize=3.0, capthick=1.3,
+                        ls='', label=f'{ctrl}, {lab}', zorder=3)
+    ax.set_xlabel(r'$\|p_{\mathrm{off}}\|$ [mm]', fontsize=9.5)
+    ax.set_ylabel(r'$\vartheta_{\mathrm{peak}}$ [deg]', fontsize=9.5)
     ax.grid(alpha=0.45, lw=0.8, color='0.6')
     ax.set_axisbelow(True)
     ax.legend(fontsize=8.5, framealpha=0.9)
     fig2.tight_layout()
-    for ext, kw in (('pdf', {}), ('png', dict(dpi=200))):
+    for ext, kw in (('pdf', {}), ('png', dict(dpi=a.dpi))):
         fig2.savefig(a.outdir / f'fig_ff_scaling.{ext}',
                      bbox_inches='tight', **kw)
 
