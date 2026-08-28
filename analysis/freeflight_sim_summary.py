@@ -181,25 +181,29 @@ def main():
                     bbox_inches='tight', **kw)
 
     # ── (b) disturbance scaling ──────────────────────────────────────
+    # median line with a shaded 95% band per controller and variant;
+    # cases sharing one offset magnitude pool their flights (e.g. the
+    # four 28.3 mm cases contribute twelve flights to that abscissa)
     fig2, ax = plt.subplots(figsize=(5.4, 3.8))
-    # several cases share one offset magnitude, so nudge the two
-    # controllers apart horizontally to keep the error bars legible
-    dodge = {'HGDO': -0.45, 'L1': +0.45}
+    LS = {'wo_ff': '-', 'w_ff': '--'}
     for ctrl in ctrls:
-        for var, filled, lab in (('wo_ff', False, 'uncompensated'),
-                                 ('w_ff', True, 'compensated')):
-            mags = np.array([np.hypot(*CASES[c][:2]) for c in order])
-            per = [np.array([x['tilt'] for x in cells[(c, ctrl, var)]])
-                   for c in order]
-            y = np.array([v.mean() for v in per])
-            lo = np.array([np.percentile(v, 2.5) for v in per])
-            hi = np.array([np.percentile(v, 97.5) for v in per])
-            ax.errorbar(mags + dodge.get(ctrl, 0.0), y,
-                        yerr=[y - lo, hi - y], fmt=MRK[ctrl], ms=6.5,
-                        mfc=COL[ctrl] if filled else 'none',
-                        mew=1.5, color=COL[ctrl], ecolor=COL[ctrl],
-                        elinewidth=1.2, capsize=3.0, capthick=1.2,
-                        ls='', label=f'{ctrl}, {lab}', zorder=3)
+        for var, lab in (('wo_ff', 'uncompensated'),
+                         ('w_ff', 'compensated')):
+            pool = defaultdict(list)
+            for c in order:
+                mag = round(float(np.hypot(*CASES[c][:2])), 2)
+                pool[mag].extend(x['tilt']
+                                 for x in cells[(c, ctrl, var)])
+            mags = np.array(sorted(pool))
+            med = np.array([np.median(pool[m]) for m in mags])
+            lo = np.array([np.percentile(pool[m], 2.5) for m in mags])
+            hi = np.array([np.percentile(pool[m], 97.5) for m in mags])
+            ax.plot(mags, med, LS[var], color=COL[ctrl], lw=1.8,
+                    marker=MRK[ctrl], ms=4.0,
+                    mfc=COL[ctrl] if var == 'w_ff' else 'none',
+                    mew=1.2, label=f'{ctrl}, {lab}', zorder=3)
+            ax.fill_between(mags, lo, hi, color=COL[ctrl],
+                            alpha=0.15, lw=0, zorder=2)
     ax.set_xlabel('offset magnitude [mm]', fontsize=9.5)
     ax.set_ylabel('peak tilt during take-off [deg]', fontsize=9.5)
     ax.grid(alpha=0.45, lw=0.8, color='0.6')
