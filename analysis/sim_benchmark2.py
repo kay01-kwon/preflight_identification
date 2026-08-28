@@ -44,7 +44,6 @@ LABEL = {'cosh': 'COSH', 'cosh_cad': 'COSH (CAD)', 'nls': 'PNLS',
 def m_theory(simax, direc, W, f, s_off_m):
     """Signed (7)/(14) with the measured onset collective f."""
     l = L_ARM[simax]
-    off = W * s_off_m * SIGN[simax] * (+1 if simax == 'Mx' else +1)
     # (7):  Mx,+ = +(W-f) l + W y_off ; Mx,- = -(W-f) l + W y_off
     # (14): My,+ = +(W-f) l - W x_off ; My,- = -(W-f) l - W x_off
     core = (W - f) * l * (+1.0 if direc == 'pos' else -1.0)
