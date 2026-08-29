@@ -139,7 +139,7 @@ for ax, (col, ylab, gates, scale) in zip(axes, panels):
     ax.minorticks_off()
     ax.set_xlabel(r'ramp rate $\dot M$ [N$\cdot$m/s]')
     ax.set_ylabel(ylab)
-    ax.grid(alpha=0.25, lw=0.6)
+    ax.grid(alpha=0.4, lw=0.8, color='0.6')
     ax.set_axisbelow(True)
     for sp in ('top', 'right'):
         ax.spines[sp].set_visible(False)
