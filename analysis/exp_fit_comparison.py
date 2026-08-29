@@ -79,6 +79,12 @@ def main():
     sl = slice(i0, i1 + 1)
     ax.plot(t[sl], om[sl], color='0.55', lw=0.9,
             label=r'measured $\omega$')
+    # applied moment on a twin right axis
+    ax2 = ax.twinx()
+    ax2.plot(t[sl], M[sl], color='#7B4FA6', lw=1.4, alpha=0.85,
+             label=r'applied moment $M$')
+    ax2.set_ylabel(r'$M$ [N$\cdot$m]', fontsize=9.5, color='#7B4FA6')
+    ax2.tick_params(axis='y', colors='#7B4FA6')
     for pw, crit, col, lab in (
             (pw_c, crit_c, '#0072B2', 'COSH'),
             (pw_f, crit_f, '#D55E00', 'PNLS')):
@@ -97,7 +103,10 @@ def main():
     ax.set_ylabel(r'$\omega$ [deg/s]', fontsize=9.5)
     ax.grid(alpha=0.4, lw=0.8, color='0.6')
     ax.set_axisbelow(True)
-    ax.legend(fontsize=8.2, loc='upper left', framealpha=0.9)
+    h1, l1 = ax.get_legend_handles_labels()
+    h2, l2 = ax2.get_legend_handles_labels()
+    ax.legend(h1 + h2, l1 + l2, fontsize=8.2, loc='upper left',
+              framealpha=0.9)
     fig.tight_layout()
     fig.savefig(args.outdir / 'exp_fit_comparison.png',
                 bbox_inches='tight', dpi=args.dpi)
