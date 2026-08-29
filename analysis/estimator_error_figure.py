@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
-"""Per-case CoM-offset error, mean deliverable against individual runs.
+"""Per-case CoM-offset error figures.
 
-For every case, component and detector: the marker is the error of
-the delivered estimate (pair average of the two directional group
-means), and the whisker spans the empirical 95% interval
-(2.5th--97.5th percentiles) of the INDIVIDUAL estimates -- one
-offset per ramp rate, formed by pairing the positive and negative
-run of that rate. The gap between whisker and marker is what the
-group averaging removes.
+fig_estimator_err: the marker is the error of the delivered estimate
+(pair average of the two directional group means) and the whisker its
+Welch-t 95% confidence interval.
+
+fig_estimator_indiv: the same mean markers with the INDIVIDUAL
+estimates drawn behind them as small translucent dots -- one offset
+per ramp rate, formed by pairing the positive and negative run of
+that rate -- so the spread the group averaging removes is shown
+separately, point by point.
 
 Reads nls_comparison_runs.csv (analysis/nls_comparison.py output).
 
@@ -22,6 +24,7 @@ from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
+from scipy import stats
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt                        # noqa: E402
@@ -43,6 +46,71 @@ COL = {'cosh': '#0072B2', 'cosh_cad': '#56B4E9', 'nls': '#E69F00',
        'cusum': '#CC79A7'}
 MRK = {'cosh': 'o', 'cosh_cad': 'X', 'nls': 's', 'pelt_normal': '^',
        'pelt_rbf': 'v', 'cusum': 'D'}
+CASES = [f'case_0{i}' for i in range(1, 6)]
+SLOT, GAP = 1.0, 0.55
+
+
+def draw(est, mode, out, dpi):
+    """One slot-dodged panel; mode 'ci' or 'indiv'."""
+    fig, ax = plt.subplots(figsize=(12.5, 3.4))
+    pos, x = {}, 0.0
+    for case in CASES:
+        for axname in ('My', 'Mx'):     # x_off from pitch, y_off roll
+            pos[(case, axname)] = x
+            x += SLOT
+        x += GAP
+
+    ax.axhline(0, color='0.35', lw=0.9, zorder=1)
+    for case in CASES:
+        for axname in ('My', 'Mx'):
+            key = (case, axname)
+            xc = pos[key]
+            for k, m in enumerate(M):
+                me, half, indiv = est(key, m)
+                xm = xc + (k - 2.5) * 0.115
+                lab = LBL[m] if key == (CASES[0], 'My') else None
+                if mode == 'ci':
+                    ax.errorbar(xm, me, yerr=half, fmt=MRK[m],
+                                color=COL[m], ms=5.5, elinewidth=1.2,
+                                capsize=2.0, zorder=3, label=lab)
+                else:
+                    ax.plot([xm] * len(indiv), indiv, '.', ms=3.4,
+                            color=COL[m], alpha=0.45, mec='none',
+                            zorder=2)
+                    ax.plot(xm, me, MRK[m], color=COL[m], ms=5.5,
+                            zorder=3, label=lab)
+
+    ax.set_xticks([pos[(c, a)] for c in CASES for a in ('My', 'Mx')])
+    ax.set_xticklabels([r'$x_{\mathrm{off}}$', r'$y_{\mathrm{off}}$']
+                       * len(CASES), fontsize=9)
+    ax.set_xlim(pos[(CASES[0], 'My')] - 0.75,
+                pos[(CASES[-1], 'Mx')] + 0.75)
+    ax.set_ylabel('CoM offset error [mm]')
+    ax.grid(axis='y', alpha=0.55, lw=0.9, color='0.55')
+    ax.grid(axis='x', alpha=0.20, lw=0.6, color='0.6')
+    ax.set_axisbelow(True)
+    for sp in ('top', 'right'):
+        ax.spines[sp].set_visible(False)
+
+    ylim = ax.get_ylim()
+    span = ylim[1] - ylim[0]
+    ax.set_ylim(ylim[0], ylim[1] + 0.13 * span)
+    ytxt = ylim[1] + 0.045 * span
+    for ci_, case in enumerate(CASES):
+        xc = 0.5 * (pos[(case, 'My')] + pos[(case, 'Mx')])
+        ax.text(xc, ytxt, f'E{ci_ + 1}', ha='center', va='bottom',
+                fontsize=10)
+        if ci_:
+            ax.axvline(pos[(case, 'My')] - 0.5 * (SLOT + GAP),
+                       color='0.85', lw=0.8, zorder=0)
+
+    handles, labels = ax.get_legend_handles_labels()
+    fig.legend(handles, labels, loc='upper center', ncol=6, fontsize=8,
+               frameon=False, bbox_to_anchor=(0.5, 1.05))
+    fig.tight_layout(rect=(0, 0, 1, 0.96))
+    fig.savefig(out.with_suffix('.pdf'), bbox_inches='tight')
+    fig.savefig(out.with_suffix('.png'), dpi=dpi, bbox_inches='tight')
+    plt.close(fig)
 
 
 def main():
@@ -67,77 +135,30 @@ def main():
                     float(r['rate'])].append(float(r[f'mcrit_{m}']))
 
     def est(key, m):
-        """Mean-deliverable error and the individual-estimate errors."""
+        """Mean error, its Welch-t 95% half-width, and the
+        individual per-rate paired estimate errors."""
         g = agg[key][m]
         W = MASS[key[0]] * G
         s = SIGN[key[1]] * 1e3 / W
-        pool = lambda d: np.concatenate([np.array(v) for v in d.values()])
-        mean_err = s * 0.5 * (pool(g['pos']).mean()
-                              + pool(g['neg']).mean()) - TRUTH[key]
-        # one individual estimate per ramp rate present in both dirs
-        indiv = [s * 0.5 * (np.mean(g['pos'][rt]) + np.mean(g['neg'][rt]))
-                 - TRUTH[key]
-                 for rt in sorted(set(g['pos']) & set(g['neg']))]
-        return mean_err, np.array(indiv)
+        p = np.concatenate([np.array(v) for v in g['pos'].values()])
+        n = np.concatenate([np.array(v) for v in g['neg'].values()])
+        me = s * 0.5 * (p.mean() + n.mean()) - TRUTH[key]
+        var = .25 * (p.var(ddof=1) / len(p) + n.var(ddof=1) / len(n))
+        num = (p.var(ddof=1) / len(p) + n.var(ddof=1) / len(n)) ** 2
+        den = ((p.var(ddof=1) / len(p)) ** 2 / (len(p) - 1)
+               + (n.var(ddof=1) / len(n)) ** 2 / (len(n) - 1))
+        half = stats.t.ppf(.975, num / den) * abs(s) * W * np.sqrt(var) / W
+        indiv = np.array(
+            [s * 0.5 * (np.mean(g['pos'][rt]) + np.mean(g['neg'][rt]))
+             - TRUTH[key]
+             for rt in sorted(set(g['pos']) & set(g['neg']))])
+        return me, half, indiv
 
-    cases = [f'case_0{i}' for i in range(1, 6)]
-    fig, ax = plt.subplots(figsize=(12.5, 3.4))
-    SLOT, GAP = 1.0, 0.55
-    pos, x = {}, 0.0
-    for case in cases:
-        for axname in ('My', 'Mx'):     # x_off from pitch, y_off roll
-            pos[(case, axname)] = x
-            x += SLOT
-        x += GAP
-
-    ax.axhline(0, color='0.35', lw=0.9, zorder=1)
-    for case in cases:
-        for axname in ('My', 'Mx'):
-            key = (case, axname)
-            xc = pos[key]
-            for k, m in enumerate(M):
-                me, indiv = est(key, m)
-                lo, hi = np.percentile(indiv, [2.5, 97.5])
-                ax.errorbar(xc + (k - 2.5) * 0.115, me,
-                            yerr=[[max(me - lo, 0)], [max(hi - me, 0)]],
-                            fmt=MRK[m], color=COL[m], ms=5.5,
-                            elinewidth=1.2, capsize=2.0, zorder=3,
-                            label=LBL[m] if key == (cases[0], 'My')
-                            else None)
-
-    ax.set_xticks([pos[(c, a)] for c in cases for a in ('My', 'Mx')])
-    ax.set_xticklabels([r'$x_{\mathrm{off}}$', r'$y_{\mathrm{off}}$']
-                       * len(cases), fontsize=9)
-    ax.set_xlim(pos[(cases[0], 'My')] - 0.75,
-                pos[(cases[-1], 'Mx')] + 0.75)
-    ax.set_ylabel('CoM offset error [mm]')
-    ax.grid(axis='y', alpha=0.55, lw=0.9, color='0.55')
-    ax.grid(axis='x', alpha=0.20, lw=0.6, color='0.6')
-    ax.set_axisbelow(True)
-    for sp in ('top', 'right'):
-        ax.spines[sp].set_visible(False)
-
-    ylim = ax.get_ylim()
-    span = ylim[1] - ylim[0]
-    ax.set_ylim(ylim[0], ylim[1] + 0.13 * span)
-    ytxt = ylim[1] + 0.045 * span
-    for ci_, case in enumerate(cases):
-        xc = 0.5 * (pos[(case, 'My')] + pos[(case, 'Mx')])
-        ax.text(xc, ytxt, f'E{ci_ + 1}', ha='center', va='bottom',
-                fontsize=10)
-        if ci_:
-            ax.axvline(pos[(case, 'My')] - 0.5 * (SLOT + GAP),
-                       color='0.85', lw=0.8, zorder=0)
-
-    handles, labels = ax.get_legend_handles_labels()
-    fig.legend(handles, labels, loc='upper center', ncol=6, fontsize=8,
-               frameon=False, bbox_to_anchor=(0.5, 1.05))
-    fig.tight_layout(rect=(0, 0, 1, 0.96))
-    fig.savefig(args.outdir / 'fig_estimator_err.pdf',
-                bbox_inches='tight')
-    fig.savefig(args.outdir / 'fig_estimator_err.png', dpi=args.dpi,
-                bbox_inches='tight')
-    print(f'saved to {args.outdir}')
+    draw(est, 'ci', args.outdir / 'fig_estimator_err.png', args.dpi)
+    draw(est, 'indiv', args.outdir / 'fig_estimator_indiv.png',
+         args.dpi)
+    print(f'saved fig_estimator_err and fig_estimator_indiv '
+          f'to {args.outdir}')
 
 
 if __name__ == '__main__':
