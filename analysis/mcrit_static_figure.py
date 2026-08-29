@@ -153,7 +153,7 @@ for ax, axname in zip(axes, AXPANEL):
     for ci, case in enumerate(cases):
         xc = 0.5 * (pos[(case,) + SLOTS[axname][0]]
                     + pos[(case,) + SLOTS[axname][-1]])
-        ax.text(xc, ytxt, f'Case 0{ci + 1}', ha='center', va='bottom',
+        ax.text(xc, ytxt, f'E{ci + 1}', ha='center', va='bottom',
                 fontsize=10)
         if ci:
             ax.axvline(pos[(case,) + SLOTS[axname][0]]
