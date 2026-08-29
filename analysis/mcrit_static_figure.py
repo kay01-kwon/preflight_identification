@@ -33,12 +33,12 @@ ap.add_argument('--dpi', type=int, default=600,
 args = ap.parse_args()
 SC = args.scratch
 M = ['cosh', 'cosh_cad', 'nls', 'pelt_normal', 'pelt_rbf', 'cusum']
-LBL = {'cosh': 'COSH', 'cosh_cad': 'COSH-CAD', 'nls': 'NLS',
+LBL = {'cosh': 'COSH', 'cosh_cad': 'COSH-CAD', 'nls': 'PNLS',
        'pelt_normal': 'CPD-N', 'pelt_rbf': 'CPD-R', 'cusum': 'CUSUM'}
 COL = {'cosh': '#0072B2', 'cosh_cad': '#56B4E9', 'nls': '#E69F00',
        'pelt_normal': '#009E73', 'pelt_rbf': '#D55E00', 'cusum': '#CC79A7'}
-MRK = {'cosh': 'o', 'cosh_cad': 'X', 'nls': 's', 'pelt_normal': '^',
-       'pelt_rbf': 'v', 'cusum': 'D'}
+# all estimators as small dots, distinguished by color alone
+MRK = {m: 'o' for m in M}
 
 pred = {(r['case'], r['axis'], r['dir']): r
         for r in csv.DictReader(open(f'{SC}/mcrit_prediction.csv'))}
@@ -119,8 +119,15 @@ for ax, axname in zip(axes, AXPANEL):
                        else bmean[k].get(m))
                 if val is None:
                     continue
-                ax.plot(xc - 0.24 + mi * 0.12, val, MRK[m], color=COL[m],
-                        ms=5.5, zorder=3, label=LBL[m] if first else None)
+                xm = xc - 0.24 + mi * 0.12
+                if len(bench[k].get(m, [])) > 1:
+                    blo, bhi = np.percentile(bench[k][m], [2.5, 97.5])
+                    ax.errorbar(xm, val, yerr=[[val - blo], [bhi - val]],
+                                fmt='none', ecolor=COL[m],
+                                elinewidth=0.9, capsize=1.8,
+                                capthick=0.9, zorder=3)
+                ax.plot(xm, val, MRK[m], color=COL[m],
+                        ms=3.2, zorder=3, label=LBL[m] if first else None)
             # the interference prediction is the reported model; drawn
             # after the markers and above them so they cannot hide it
             ax.plot([xc - 0.36, xc + 0.36], [pI, pI], color='#009E73',
