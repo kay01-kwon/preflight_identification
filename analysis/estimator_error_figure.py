@@ -5,7 +5,7 @@ fig_estimator_err: the marker is the error of the delivered estimate
 (pair average of the two directional group means) and the whisker its
 Welch-t 95% confidence interval.
 
-fig_estimator_indiv: a parity view, estimated against true offset
+exp_estimator_indiv: a parity view, estimated against true offset
 with the y = x diagonal: the individual per-rate paired estimates as
 small translucent dots and the delivered mean estimate as the large
 marker, so the spread the group averaging removes is read directly
@@ -50,10 +50,10 @@ CASES = [f'case_0{i}' for i in range(1, 6)]
 SLOT, GAP = 1.0, 0.55
 
 
-# the parity view carries the individual-vs-mean message, which needs
-# only the deployed readout and the free fit it is contrasted with;
-# the six-method comparison lives in fig_estimator_err
-PARITY_M = ['cosh', 'nls']
+# the parity view carries the individual-vs-mean message for the
+# deployed readout alone; the six-method comparison lives in
+# fig_estimator_err
+PARITY_M = ['cosh']
 
 
 def draw_parity(est, out, dpi):
@@ -62,17 +62,18 @@ def draw_parity(est, out, dpi):
     lim = 20
     ax.plot([-lim, lim], [-lim, lim], color='0.55', lw=1.0, ls='--',
             zorder=1)
-    dodge = {m: (k - 0.5) * 0.5 for k, m in enumerate(PARITY_M)}
     for key in TRUTH:
         truth = TRUTH[key]
         for m in PARITY_M:
             me, half, indiv = est(key, m)
-            xv = truth + dodge[m]
             first = key == ('case_01', 'Mx')
-            ax.plot([xv] * len(indiv), indiv + truth, '.', ms=3.6,
-                    color=COL[m], alpha=0.45, mec='none', zorder=2)
-            ax.plot(xv, me + truth, MRK[m], color=COL[m], ms=5.5,
-                    zorder=3, label=LBL[m] if first else None)
+            ax.plot([truth] * len(indiv), indiv + truth, '.', ms=4.2,
+                    color=COL[m], alpha=0.45, mec='none', zorder=2,
+                    label='individual estimate (per ramp rate)'
+                    if first else None)
+            ax.plot(truth, me + truth, MRK[m], color=COL[m], ms=6.0,
+                    zorder=3, label='delivered estimate (group mean)'
+                    if first else None)
     ax.set_xlabel('true CoM offset [mm]', fontsize=10)
     ax.set_ylabel('estimated CoM offset [mm]', fontsize=10)
     ax.grid(alpha=0.4, lw=0.8, color='0.6')
@@ -192,9 +193,9 @@ def main():
         return me, half, indiv
 
     draw(est, 'ci', args.outdir / 'fig_estimator_err.png', args.dpi)
-    draw_parity(est, args.outdir / 'fig_estimator_indiv.png',
+    draw_parity(est, args.outdir / 'exp_estimator_indiv.png',
                 args.dpi)
-    print(f'saved fig_estimator_err and fig_estimator_indiv '
+    print(f'saved fig_estimator_err and exp_estimator_indiv '
           f'to {args.outdir}')
 
 
