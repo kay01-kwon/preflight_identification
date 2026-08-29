@@ -94,6 +94,16 @@ def main():
                 label=f'{lab}: $M_{{\\mathrm{{crit,est}}}}'
                       f' = {crit.onset_moment:+.3f}$ N·m')
         ax.axvline(crit.onset_time, color=col, lw=1.2, ls='--')
+        # the detected onset on the moment ramp: (t_on, M_crit,est)
+        ax2.plot(crit.onset_time, crit.onset_moment, 'o', color=col,
+                 ms=6.5, mec='white', mew=0.8, zorder=6)
+        dx, dy = ((18, -30) if lab == 'PNLS' else (-78, 14))
+        ax2.annotate(f'{lab} onset', xy=(crit.onset_time,
+                                         crit.onset_moment),
+                     xytext=(dx, dy), textcoords='offset points',
+                     fontsize=8.5, color=col,
+                     arrowprops=dict(arrowstyle='-', color=col,
+                                     lw=0.9, shrinkA=2, shrinkB=3))
     ax.axvline(t_th, color='#009E73', lw=1.6, ls=(0, (4.5, 1.8)),
                label=f'static threshold (GE-corrected): '
                      f'$M_{{\\mathrm{{crit,th}}}} = {m_th:+.3f}$ N·m')
