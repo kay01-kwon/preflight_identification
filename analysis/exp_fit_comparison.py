@@ -96,7 +96,7 @@ def main():
         ax2.plot(crit.onset_time, crit.onset_moment, 'o', color=col,
                  ms=6.5, mec='white', mew=0.8, zorder=6)
         dx, dy, ha = ((12, 22, 'left') if lab == 'PNLS'
-                      else (2, -52, 'left'))
+                      else (-14, -46, 'right'))
         ax2.annotate(f'{lab} onset\n$M_{{\\mathrm{{crit,est}}}}'
                      f' = {crit.onset_moment:+.3f}$ N·m',
                      xy=(crit.onset_time, crit.onset_moment),
@@ -109,9 +109,9 @@ def main():
     ax.axvline(t_th, color='#009E73', lw=1.6, ls=(0, (4.5, 1.8)),
                label='static threshold (GE-corrected)')
     ax2.annotate(f'$M_{{\\mathrm{{crit,th}}}} = {m_th:+.3f}$ N·m',
-                 xy=(t_th, m_th), xytext=(-14, 30),
+                 xy=(t_th, m_th), xytext=(16, -30),
                  textcoords='offset points', fontsize=8.5,
-                 color='#009E73', ha='right',
+                 color='#009E73', ha='left',
                  bbox=dict(facecolor='white', edgecolor='none',
                            alpha=0.75, pad=1.2),
                  arrowprops=dict(arrowstyle='-', color='#009E73',
