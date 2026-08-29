@@ -111,12 +111,12 @@ AXCOL = {'Mx': '#0072B2', 'My': '#E69F00'}
 AXMRK = {'Mx': 'o', 'My': 's'}
 rng = np.random.default_rng(0)
 fig, axes = plt.subplots(1, 3, figsize=(12.0, 3.1))
-panels = [('eps_pct', r'slope tracking error $\varepsilon$ [%]',
+panels = [('n_full', r'$N_{\mathrm{full}}$',
+           [(38.0, '38')], 'log'),
+          ('eps_pct', r'$\varepsilon$ [%]',
            [(3.0, '+3%'), (-3.0, '\u22123%')], 'lin'),
-          ('lin_mNm', r'ramp-linearity RMSE [mN$\cdot$m]',
-           [(30.0, '30 mN$\\cdot$m')], 'lin'),
-          ('n_full', r'window samples $N_{\mathrm{full}}$',
-           [(38.0, '38')], 'log')]
+          ('lin_mNm', r'linRMSE [mN$\cdot$m]',
+           [(30.0, '30 mN$\\cdot$m')], 'lin')]
 for ax, (col, ylab, gates, scale) in zip(axes, panels):
     for axname in ('Mx', 'My'):
         g = [r for r in rows if r['axis'] == axname]
@@ -137,7 +137,7 @@ for ax, (col, ylab, gates, scale) in zip(axes, panels):
     ax.set_xticks(RATES)
     ax.set_xticklabels([f"{r:g}" for r in RATES], fontsize=7)
     ax.minorticks_off()
-    ax.set_xlabel(r'commanded ramp rate [N$\cdot$m/s]')
+    ax.set_xlabel(r'$\dot M$ [N$\cdot$m/s]')
     ax.set_ylabel(ylab)
     ax.grid(alpha=0.25, lw=0.6)
     ax.set_axisbelow(True)
