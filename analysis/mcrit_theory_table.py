@@ -34,9 +34,12 @@ def main():
         c = case.replace('case_0', '')
         sgn = '$-$' if dirn == 'neg' else '$+$'
         return (f'{c}/{sgn} & ${float(r["M_ident"]):+.3f}$ & '
-                f'${float(r["M_pred"]):+.3f}$ & '
-                f'${float(r["M_pred_single"]):+.3f}$ & '
-                f'${float(r["M_pred_interf"]):+.3f}$')
+                f'${float(r["M_pred"]):+.3f}$ '
+                f'$({float(r["resid_mNm"]):+.0f})$ & '
+                f'${float(r["M_pred_single"]):+.3f}$ '
+                f'$({float(r["resid_single_mNm"]):+.0f})$ & '
+                f'${float(r["M_pred_interf"]):+.3f}$ '
+                f'$({float(r["resid_interf_mNm"]):+.0f})$')
 
     out = args.outdir / 'tab_mcrit_ge.tex'
     with open(out, 'w') as fh:
@@ -51,7 +54,10 @@ def main():
             '$M_{\\mathrm{crit,est}}$ (COSH group mean) against the '
             'theoretical thresholds [N$\\cdot$m] with and without the '
             'ground effect: none, the single-rotor model, and the '
-            'parameter-free rotor-interference model.}\n'
+            'parameter-free rotor-interference model. Parentheses: '
+            'deviation of the identified moment from that threshold, '
+            '$M_{\\mathrm{crit,est}} - M_{\\mathrm{crit,th}}$ '
+            '[mN$\\cdot$m].}\n'
             '\\label{tab:mcrit_ge}\n'
             '\\centering\\small\n'
             '\\begin{tabular}{@{}lcccc@{\\qquad}lcccc@{}}\n'
