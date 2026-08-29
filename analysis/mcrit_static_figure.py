@@ -78,82 +78,93 @@ for key, col in (('no GE', 'resid_mNm'), ('no interference',
     print(f"%   {key:16}: mean {d.mean():+7.1f}, "
           f"{int((d < 0).sum())}/{len(d)} over-predicted")
 
-SLOTS = [('Mx', 'neg'), ('Mx', 'pos'), ('My', 'neg'), ('My', 'pos')]
-XL = [r'$M_{x,-}$', r'$M_{x,+}$', r'$M_{y,-}$', r'$M_{y,+}$']
+AXPANEL = ('Mx', 'My')
+SLOTS = {'Mx': [('Mx', 'neg'), ('Mx', 'pos')],
+         'My': [('My', 'neg'), ('My', 'pos')]}
+XL = {'Mx': [r'$M_{x,-}$', r'$M_{x,+}$'],
+      'My': [r'$M_{y,-}$', r'$M_{y,+}$']}
 cases = [f'case_0{i}' for i in range(1, 6)]
 
-# One shared x axis: twenty case-slot positions at unit spacing, the six
-# estimators dodged inside each, the case names annotated above the panel
-# with light separators between cases.  Matches fig_estimator_err.
+# One panel per excitation axis, stacked 2x1 (Mx above, My below),
+# ten case-slot positions at unit spacing inside each, the six
+# estimators dodged inside each slot, the case names annotated above
+# the panels with light separators.
 SLOT, GAP = 1.0, 0.7
-pos, x = {}, 0.0
-for case in cases:
-    for sl in SLOTS:
-        pos[(case,) + sl] = x
-        x += SLOT
-    x += GAP
+fig, axes = plt.subplots(2, 1, figsize=(7.4, 6.9), sharey=True)
+positions = {}
+for ax, axname in zip(axes, AXPANEL):
+    pos, x = {}, 0.0
+    for case in cases:
+        for sl in SLOTS[axname]:
+            pos[(case,) + sl] = x
+            x += SLOT
+        x += GAP
+    positions[axname] = pos
+    ax.axhline(0, color='0.85', lw=0.7, zorder=0)
+    for case in cases:
+        for (an, dirn) in SLOTS[axname]:
+            k = (case, an, dirn)
+            xc = pos[k]
+            r = pred[k]
+            pA, pS, pI = (float(r['M_pred']), float(r['M_pred_single']),
+                          float(r['M_pred_interf']))
+            ax.plot([xc - 0.34, xc + 0.34], [pA, pA], color='k', lw=1.5,
+                    zorder=2)
+            ax.plot([xc - 0.34, xc + 0.34], [pS, pS], color='0.45',
+                    lw=1.2, ls=(0, (1.6, 1.6)), zorder=2)
+            first = (axname == AXPANEL[0]
+                     and k == (cases[0],) + SLOTS[axname][0])
+            for mi, m in enumerate(M):
+                val = (float(r['M_ident']) if m == 'cosh'
+                       else bmean[k].get(m))
+                if val is None:
+                    continue
+                ax.plot(xc - 0.24 + mi * 0.12, val, MRK[m], color=COL[m],
+                        ms=5.5, zorder=3, label=LBL[m] if first else None)
+            # the interference prediction is the reported model; drawn
+            # after the markers and above them so they cannot hide it
+            ax.plot([xc - 0.36, xc + 0.36], [pI, pI], color='#009E73',
+                    lw=2.0, ls=(0, (4.5, 1.8)), zorder=4)
+    ax.set_xticks([pos[(c,) + sl] for c in cases for sl in SLOTS[axname]])
+    ax.set_xticklabels(XL[axname] * len(cases), fontsize=8)
+    ax.set_xlim(-0.75, pos[(cases[-1],) + SLOTS[axname][-1]] + 0.75)
+    # the horizontal grid is what the thresholds are read against
+    ax.grid(axis='y', alpha=0.55, lw=0.9, color='0.55')
+    ax.grid(axis='x', alpha=0.20, lw=0.6, color='0.6')
+    ax.set_axisbelow(True)
+    for sp in ('top', 'right'):
+        ax.spines[sp].set_visible(False)
 
-fig, ax = plt.subplots(figsize=(13.6, 3.6))
-ax.axhline(0, color='0.85', lw=0.7, zorder=0)
-for case in cases:
-    for (axname, dirn) in SLOTS:
-        k = (case, axname, dirn)
-        xc = pos[k]
-        r = pred[k]
-        pA, pS, pI = (float(r['M_pred']), float(r['M_pred_single']),
-                      float(r['M_pred_interf']))
-        ax.plot([xc - 0.34, xc + 0.34], [pA, pA], color='k', lw=1.5,
-                zorder=2)
-        ax.plot([xc - 0.34, xc + 0.34], [pS, pS], color='0.45', lw=1.2,
-                ls=(0, (1.6, 1.6)), zorder=2)
-        ax.plot([xc - 0.36, xc + 0.36], [pI, pI], color='#009E73', lw=2.0,
-                ls=(0, (4.5, 1.8)), zorder=2)
-        first = (k == (cases[0],) + SLOTS[0])
-        for mi, m in enumerate(M):
-            val = (float(r['M_ident']) if m == 'cosh'
-                   else bmean[k].get(m))
-            if val is None:
-                continue
-            ax.plot(xc - 0.24 + mi * 0.12, val, MRK[m], color=COL[m],
-                    ms=5.5, zorder=3, label=LBL[m] if first else None)
-
-ax.set_xticks([pos[(c,) + sl] for c in cases for sl in SLOTS])
-ax.set_xticklabels(XL * len(cases), fontsize=8)
-ax.set_xlim(pos[(cases[0],) + SLOTS[0]] - 0.75,
-            pos[(cases[-1],) + SLOTS[-1]] + 0.75)
-ax.set_ylabel(r'$M_{\mathrm{crit}}$ [N$\cdot$m]')
-# the horizontal grid is what the thresholds are read against
-ax.grid(axis='y', alpha=0.55, lw=0.9, color='0.55')
-ax.grid(axis='x', alpha=0.20, lw=0.6, color='0.6')
-ax.set_axisbelow(True)
-for sp in ('top', 'right'):
-    ax.spines[sp].set_visible(False)
-
-ylim = ax.get_ylim()
+for ax in axes:
+    ax.set_ylabel(r'$M_{\mathrm{crit}}$ [N$\cdot$m]')
+ylim = axes[0].get_ylim()
 span = ylim[1] - ylim[0]
-ax.set_ylim(ylim[0], ylim[1] + 0.13 * span)
+axes[0].set_ylim(ylim[0], ylim[1] + 0.13 * span)
 ytxt = ylim[1] + 0.045 * span
-for ci, case in enumerate(cases):
-    xc = 0.5 * (pos[(case,) + SLOTS[0]] + pos[(case,) + SLOTS[-1]])
-    ax.text(xc, ytxt, f'Case 0{ci + 1}', ha='center', va='bottom',
-            fontsize=10)
-    if ci:
-        ax.axvline(pos[(case,) + SLOTS[0]] - 0.5 * (SLOT + GAP),
-                   color='0.85', lw=0.8, zorder=0)
+for ax, axname in zip(axes, AXPANEL):
+    pos = positions[axname]
+    for ci, case in enumerate(cases):
+        xc = 0.5 * (pos[(case,) + SLOTS[axname][0]]
+                    + pos[(case,) + SLOTS[axname][-1]])
+        ax.text(xc, ytxt, f'Case 0{ci + 1}', ha='center', va='bottom',
+                fontsize=10)
+        if ci:
+            ax.axvline(pos[(case,) + SLOTS[axname][0]]
+                       - 0.5 * (SLOT + GAP),
+                       color='0.85', lw=0.8, zorder=0)
 
-h, l = ax.get_legend_handles_labels()
+h, l = axes[0].get_legend_handles_labels()
 import matplotlib.lines as mlines
 
 h += [mlines.Line2D([], [], color='k', lw=1.5),
       mlines.Line2D([], [], color='0.45', lw=1.2, ls=(0, (1.6, 1.6))),
       mlines.Line2D([], [], color='#009E73', lw=2.0, ls=(0, (4.5, 1.8)))]
-l += ['no ground effect', 'GE without rotor interference',
-      'GE with rotor interference (parameter-free)']
-fig.legend(h, l, loc='upper center', ncol=5, fontsize=7.5,
-           frameon=False, bbox_to_anchor=(0.5, 1.10))
-fig.tight_layout(rect=(0, 0, 1, 0.94))
+l += ['no ground effect', 'Ground effect (Single rotor)',
+      'Ground effect (Rotor interference)']
+fig.legend(h, l, loc='upper center', ncol=3, fontsize=8,
+           frameon=False, bbox_to_anchor=(0.5, 1.06))
+fig.tight_layout(rect=(0, 0, 1, 0.97))
 args.outdir.mkdir(parents=True, exist_ok=True)
-fig.savefig(args.outdir / 'fig_mcrit_static.pdf', bbox_inches='tight')
 fig.savefig(args.outdir / 'fig_mcrit_static.png', dpi=args.dpi,
             bbox_inches='tight')
 print(f'figure saved to {args.outdir}')
