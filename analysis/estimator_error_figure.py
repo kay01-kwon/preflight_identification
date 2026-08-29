@@ -145,7 +145,6 @@ def draw(est, mode, out, dpi):
     fig.legend(handles, labels, loc='upper center', ncol=6, fontsize=8,
                frameon=False, bbox_to_anchor=(0.5, 1.05))
     fig.tight_layout(rect=(0, 0, 1, 0.96))
-    fig.savefig(out.with_suffix('.pdf'), bbox_inches='tight')
     fig.savefig(out.with_suffix('.png'), dpi=dpi, bbox_inches='tight')
     plt.close(fig)
 
