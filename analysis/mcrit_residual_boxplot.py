@@ -127,12 +127,10 @@ def iqr(v):
 
 def box(a_, v, at, col):
     bp = a_.boxplot([v], positions=[at], widths=0.31, patch_artist=True,
-                    showfliers=True, medianprops=dict(color=INK, lw=1.8),
+                    showfliers=False,
+                    medianprops=dict(color=INK, lw=1.8),
                     whiskerprops=dict(color=col, lw=1.1),
-                    capprops=dict(color=col, lw=1.1),
-                    flierprops=dict(marker='.', markersize=4,
-                                    markerfacecolor=col,
-                                    markeredgecolor='none', alpha=0.55))
+                    capprops=dict(color=col, lw=1.1))
     for b in bp['boxes']:
         b.set(facecolor=col, alpha=0.30, edgecolor=col, lw=1.2)
 
@@ -148,8 +146,8 @@ def dress(a_, ticks, labels, title, first, legend='lower right'):
         a_.spines[sp].set_visible(False)
     a_.set_title(title, fontsize=13, color=INK, loc='left', pad=6)
     if first:
-        a_.set_ylabel(r'$M_{\mathrm{onset}} - M_{\mathrm{crit}}$  [mNm]',
-                      color=INK2)
+        a_.set_ylabel(r'$M_{\mathrm{crit,est}} - M_{\mathrm{crit,th}}$'
+                      r' [mN$\cdot$m]', color=INK2)
         h = [plt.Line2D([], [], color=c, lw=7, alpha=0.45, label=t)
              for c, t in ((POS, 'positive tip'), (NEG, 'negative tip'))]
         a_.legend(handles=h, fontsize=10.5, frameon=False,
