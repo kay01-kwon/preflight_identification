@@ -70,10 +70,11 @@ def draw_parity(est, out, dpi):
                     label='individual estimate (per ramp rate)'
                     if first else None)
             ax.plot(truth, me, MRK[m], color=COL[m], ms=6.0,
-                    zorder=3, label='delivered estimate (group mean)'
+                    zorder=3, label='mean estimate'
                     if first else None)
-    ax.set_xlabel('true CoM offset [mm]', fontsize=10)
-    ax.set_ylabel(r'estimated $-$ true CoM offset [mm]', fontsize=10)
+    ax.set_xlabel(r'$p_{\mathrm{off,true}}$ [mm]', fontsize=10)
+    ax.set_ylabel(r'$p_{\mathrm{off,est}} - p_{\mathrm{off,true}}$'
+                  r' [mm]', fontsize=10)
     ax.grid(alpha=0.4, lw=0.8, color='0.6')
     ax.set_axisbelow(True)
     ax.legend(fontsize=8.5, loc='upper left', framealpha=0.9)
