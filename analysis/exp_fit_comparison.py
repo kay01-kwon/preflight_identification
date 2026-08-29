@@ -90,18 +90,20 @@ def main():
             (pw_f, crit_f, '#D55E00', 'PNLS')):
         prd = np.degrees(pw['omega_pred'])
         n = min(len(prd), i1 + 1 - i0)
-        ax.plot(t[i0:i0 + n], prd[:n], color=col, lw=1.9,
-                label=f'{lab}: $M_{{\\mathrm{{crit,est}}}}'
-                      f' = {crit.onset_moment:+.3f}$ N·m')
+        ax.plot(t[i0:i0 + n], prd[:n], color=col, lw=1.9, label=lab)
         ax.axvline(crit.onset_time, color=col, lw=1.2, ls='--')
         # the detected onset on the moment ramp: (t_on, M_crit,est)
         ax2.plot(crit.onset_time, crit.onset_moment, 'o', color=col,
                  ms=6.5, mec='white', mew=0.8, zorder=6)
-        dx, dy = ((18, -30) if lab == 'PNLS' else (-78, 14))
-        ax2.annotate(f'{lab} onset', xy=(crit.onset_time,
-                                         crit.onset_moment),
+        dx, dy, ha = ((-12, 22, 'right') if lab == 'PNLS'
+                      else (2, -52, 'left'))
+        ax2.annotate(f'{lab} onset\n$M_{{\\mathrm{{crit,est}}}}'
+                     f' = {crit.onset_moment:+.3f}$ N·m',
+                     xy=(crit.onset_time, crit.onset_moment),
                      xytext=(dx, dy), textcoords='offset points',
-                     fontsize=8.5, color=col,
+                     fontsize=8.5, color=col, ha=ha,
+                     bbox=dict(facecolor='white', edgecolor='none',
+                               alpha=0.75, pad=1.2),
                      arrowprops=dict(arrowstyle='-', color=col,
                                      lw=0.9, shrinkA=2, shrinkB=3))
     ax.axvline(t_th, color='#009E73', lw=1.6, ls=(0, (4.5, 1.8)),
