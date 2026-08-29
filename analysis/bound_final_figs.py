@@ -48,7 +48,7 @@ ARM = {'Mx': 0.160, 'My': 0.130}
 LP = {'Mx': 0.140, 'My': 0.110}
 
 
-def draw(rate, res, cap, title, cap_label, fname, outdir):
+def draw(rate, res, cap, title, cap_label, fname, outdir, dpi):
     """cap is ONE value per ramp rate -- the worst case over the whole
     design box -- so the theory enters the figure as a single curve.
     The measured side is summarised statistically per rate: the mean
@@ -81,7 +81,7 @@ def draw(rate, res, cap, title, cap_label, fname, outdir):
                  fontsize=10, loc='left')
     ax.legend(fontsize=8.4, loc='upper right', framealpha=0.9)
     fig.tight_layout()
-    for ext, kw in (('pdf', {}), ('png', dict(dpi=200))):
+    for ext, kw in (('pdf', {}), ('png', dict(dpi=dpi))):
         fig.savefig(outdir / f'{fname}.{ext}', bbox_inches='tight', **kw)
     print(fname, f'{ins}/{len(res)} inside, worst usage '
           f'{np.max(res / cap):.2f}')
@@ -134,6 +134,8 @@ def main():
                     default=Path('docs/sim_env_witness_runs.csv'))
     ap.add_argument('--hw-csv', type=Path,
                     default=Path('docs/hw_env_noise_runs.csv'))
+    ap.add_argument('--dpi', type=int, default=600,
+                    help='raster resolution of the PNG outputs')
     args = ap.parse_args()
     args.outdir.mkdir(parents=True, exist_ok=True)
 
@@ -149,7 +151,7 @@ def main():
     cap = np.array([caps[v] for v in rate])
     draw(rate, res, cap, 'simulation, design tilt cap 5°',
          'small-angle envelope (theory)',
-         'fig_bound_final_sim', args.outdir)
+         'fig_bound_final_sim', args.outdir, args.dpi)
 
     # -- hardware: box-worst envelope + campaign vibration constant ---
     rows = list(csv.DictReader(open(args.hw_csv)))
@@ -163,7 +165,7 @@ def main():
     cap = np.array([caps[v] for v in rate])
     draw(rate, res, cap, 'hardware, design tilt cap 8°',
          'envelope + vibration term (theory + measured noise)',
-         'fig_bound_final_hw', args.outdir)
+         'fig_bound_final_hw', args.outdir, args.dpi)
 
 
 if __name__ == '__main__':
