@@ -83,7 +83,6 @@ def draw_parity(est, out, dpi):
     ax.set_aspect('equal')
     ax.legend(fontsize=8.5, loc='upper left', framealpha=0.9)
     fig.tight_layout()
-    fig.savefig(out.with_suffix('.pdf'), bbox_inches='tight')
     fig.savefig(out.with_suffix('.png'), dpi=dpi, bbox_inches='tight')
     plt.close(fig)
 
