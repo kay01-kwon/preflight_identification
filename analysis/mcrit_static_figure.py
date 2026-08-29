@@ -30,14 +30,10 @@ ap.add_argument('--outdir', type=Path,
                 help='directory the figure is written to')
 ap.add_argument('--dpi', type=int, default=600,
                 help='raster resolution of the PNG output')
-ap.add_argument('--intervals', action='store_true',
-                help='draw the empirical 95%% interval (2.5th-97.5th '
-                     'percentile over the ~7 runs of each group) '
-                     'behind every estimator marker')
 args = ap.parse_args()
 SC = args.scratch
 M = ['cosh', 'cosh_cad', 'nls', 'pelt_normal', 'pelt_rbf', 'cusum']
-LBL = {'cosh': 'COSH', 'cosh_cad': 'COSH-CAD', 'nls': 'NLS',
+LBL = {'cosh': 'COSH', 'cosh_cad': 'COSH-CAD', 'nls': 'PNLS',
        'pelt_normal': 'CPD-N', 'pelt_rbf': 'CPD-R', 'cusum': 'CUSUM'}
 COL = {'cosh': '#0072B2', 'cosh_cad': '#56B4E9', 'nls': '#E69F00',
        'pelt_normal': '#009E73', 'pelt_rbf': '#D55E00', 'cusum': '#CC79A7'}
@@ -124,7 +120,7 @@ for ax, axname in zip(axes, AXPANEL):
                 if val is None:
                     continue
                 xm = xc - 0.24 + mi * 0.12
-                if args.intervals and len(bench[k].get(m, [])) > 1:
+                if len(bench[k].get(m, [])) > 1:
                     blo, bhi = np.percentile(bench[k][m], [2.5, 97.5])
                     ax.errorbar(xm, val, yerr=[[val - blo], [bhi - val]],
                                 fmt='none', ecolor=COL[m],
