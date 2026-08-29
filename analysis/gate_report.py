@@ -11,8 +11,10 @@ sample count N_full (with the floored count N_floor alongside).
 Writes gate_report.csv, docs/fig_gate_report.pdf (three panels vs ramp
 rate with the gate thresholds), and prints a per-rate LaTeX summary.
 
-Usage: PYTHONPATH=<stubs> python analysis/gate_report.py [outdir]
+Usage: PYTHONPATH=<stubs> python analysis/gate_report.py [SCRATCH]
+                                        [--outdir DIR] [--dpi N]
 """
+import argparse
 import contextlib
 import csv
 import io
@@ -31,7 +33,16 @@ import critical_value_getter_piecewise as cvp
 from utils.extractor import load_excitation_dataset
 
 ROOT = Path(__file__).resolve().parents[1] / 'DataSet' / 'exp'
-OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('.')
+ap = argparse.ArgumentParser()
+ap.add_argument('scratch', nargs='?', default='.',
+                help='directory for gate_report.csv (re-used if present)')
+ap.add_argument('--outdir', type=Path,
+                default=Path(__file__).resolve().parents[1] / 'docs',
+                help='directory the figure is written to')
+ap.add_argument('--dpi', type=int, default=600,
+                help='raster resolution of the PNG output')
+args = ap.parse_args()
+OUT = Path(args.scratch)
 RATES = [0.10, 0.20, 0.30, 0.45, 0.65, 0.90, 1.20]
 
 rows = []
@@ -134,6 +145,8 @@ for ax, (col, ylab, gates, scale) in zip(axes, panels):
         ax.spines[sp].set_visible(False)
 axes[0].legend(fontsize=8, frameon=False)
 fig.tight_layout()
-fig.savefig(Path(__file__).resolve().parents[1] / 'docs'
-            / 'fig_gate_report.pdf', bbox_inches='tight')
-print('figure saved')
+args.outdir.mkdir(parents=True, exist_ok=True)
+fig.savefig(args.outdir / 'fig_gate_report.pdf', bbox_inches='tight')
+fig.savefig(args.outdir / 'fig_gate_report.png', dpi=args.dpi,
+            bbox_inches='tight')
+print(f'figure saved to {args.outdir}')
