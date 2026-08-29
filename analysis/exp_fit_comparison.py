@@ -79,53 +79,25 @@ def main():
     sl = slice(i0, i1 + 1)
     ax.plot(t[sl], om[sl], color='0.55', lw=0.9,
             label=r'measured $\omega$')
-    # applied moment on a twin right axis
-    ax2 = ax.twinx()
-    ax2.plot(t[sl], M[sl], color='#7B4FA6', lw=1.4, alpha=0.85,
-             label=r'applied moment $M$')
-    ax2.set_ylabel(r'$M$ [N$\cdot$m]', fontsize=9.5, color='#7B4FA6')
-    ax2.tick_params(axis='y', colors='#7B4FA6')
     for pw, crit, col, lab in (
             (pw_c, crit_c, '#0072B2', 'COSH'),
             (pw_f, crit_f, '#D55E00', 'PNLS')):
         prd = np.degrees(pw['omega_pred'])
         n = min(len(prd), i1 + 1 - i0)
-        ax.plot(t[i0:i0 + n], prd[:n], color=col, lw=1.9, label=lab)
+        ax.plot(t[i0:i0 + n], prd[:n], color=col, lw=1.9,
+                label=f'{lab}: $M_{{\\mathrm{{crit,est}}}}'
+                      f' = {crit.onset_moment:+.3f}$ N·m')
         ax.axvline(crit.onset_time, color=col, lw=1.2, ls='--')
-        # the detected onset on the moment ramp: (t_on, M_crit,est)
-        ax2.plot(crit.onset_time, crit.onset_moment, 'o', color=col,
-                 ms=6.5, mec='white', mew=0.8, zorder=6)
-        dx, dy, ha = ((12, 22, 'left') if lab == 'PNLS'
-                      else (-14, -46, 'right'))
-        ax2.annotate(f'{lab} onset\n$M_{{\\mathrm{{crit,est}}}}'
-                     f' = {crit.onset_moment:+.3f}$ N·m',
-                     xy=(crit.onset_time, crit.onset_moment),
-                     xytext=(dx, dy), textcoords='offset points',
-                     fontsize=8.5, color=col, ha=ha,
-                     bbox=dict(facecolor='white', edgecolor='none',
-                               alpha=0.75, pad=1.2),
-                     arrowprops=dict(arrowstyle='-', color=col,
-                                     lw=0.9, shrinkA=2, shrinkB=3))
     ax.axvline(t_th, color='#009E73', lw=1.6, ls=(0, (4.5, 1.8)),
-               label='static threshold (GE-corrected)')
-    ax2.annotate(f'$M_{{\\mathrm{{crit,th}}}} = {m_th:+.3f}$ N·m',
-                 xy=(t_th, m_th), xytext=(16, -30),
-                 textcoords='offset points', fontsize=8.5,
-                 color='#009E73', ha='left',
-                 bbox=dict(facecolor='white', edgecolor='none',
-                           alpha=0.75, pad=1.2),
-                 arrowprops=dict(arrowstyle='-', color='#009E73',
-                                 lw=0.9, shrinkA=2, shrinkB=3))
+               label=f'static threshold (GE-corrected): '
+                     f'$M_{{\\mathrm{{crit,th}}}} = {m_th:+.3f}$ N·m')
     ax.set_title(r'E2/$M_{y,+}$, $\dot M = 1.2$ N·m/s', loc='left',
                  fontsize=10)
     ax.set_xlabel('t [s]', fontsize=9.5)
     ax.set_ylabel(r'$\omega$ [deg/s]', fontsize=9.5)
     ax.grid(alpha=0.4, lw=0.8, color='0.6')
     ax.set_axisbelow(True)
-    h1, l1 = ax.get_legend_handles_labels()
-    h2, l2 = ax2.get_legend_handles_labels()
-    ax.legend(h1 + h2, l1 + l2, fontsize=8.2, loc='upper left',
-              framealpha=0.9)
+    ax.legend(fontsize=8.2, loc='upper left', framealpha=0.9)
     fig.tight_layout()
     fig.savefig(args.outdir / 'exp_fit_comparison.png',
                 bbox_inches='tight', dpi=args.dpi)
