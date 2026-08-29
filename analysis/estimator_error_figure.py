@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Per-case CoM-offset error figures.
 
-fig_estimator_err: the marker is the error of the delivered estimate
+exp_estimator_err: the marker is the error of the delivered estimate
 (pair average of the two directional group means) and the whisker its
 Welch-t 95% confidence interval.
 
@@ -52,7 +52,7 @@ SLOT, GAP = 1.0, 0.55
 
 # the parity view carries the individual-vs-mean message for the
 # deployed readout alone; the six-method comparison lives in
-# fig_estimator_err
+# exp_estimator_err
 PARITY_M = ['cosh']
 
 
@@ -192,10 +192,10 @@ def main():
              for rt in sorted(set(g['pos']) & set(g['neg']))])
         return me, half, indiv
 
-    draw(est, 'ci', args.outdir / 'fig_estimator_err.png', args.dpi)
+    draw(est, 'ci', args.outdir / 'exp_estimator_err.png', args.dpi)
     draw_parity(est, args.outdir / 'exp_estimator_indiv.png',
                 args.dpi)
-    print(f'saved fig_estimator_err and exp_estimator_indiv '
+    print(f'saved exp_estimator_err and exp_estimator_indiv '
           f'to {args.outdir}')
 
 
