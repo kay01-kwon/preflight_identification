@@ -95,7 +95,7 @@ def main():
         # the detected onset on the moment ramp: (t_on, M_crit,est)
         ax2.plot(crit.onset_time, crit.onset_moment, 'o', color=col,
                  ms=6.5, mec='white', mew=0.8, zorder=6)
-        dx, dy, ha = ((-12, 22, 'right') if lab == 'PNLS'
+        dx, dy, ha = ((12, 22, 'left') if lab == 'PNLS'
                       else (2, -52, 'left'))
         ax2.annotate(f'{lab} onset\n$M_{{\\mathrm{{crit,est}}}}'
                      f' = {crit.onset_moment:+.3f}$ N·m',
@@ -107,8 +107,15 @@ def main():
                      arrowprops=dict(arrowstyle='-', color=col,
                                      lw=0.9, shrinkA=2, shrinkB=3))
     ax.axvline(t_th, color='#009E73', lw=1.6, ls=(0, (4.5, 1.8)),
-               label=f'static threshold (GE-corrected): '
-                     f'$M_{{\\mathrm{{crit,th}}}} = {m_th:+.3f}$ N·m')
+               label='static threshold (GE-corrected)')
+    ax2.annotate(f'$M_{{\\mathrm{{crit,th}}}} = {m_th:+.3f}$ N·m',
+                 xy=(t_th, m_th), xytext=(-14, 30),
+                 textcoords='offset points', fontsize=8.5,
+                 color='#009E73', ha='right',
+                 bbox=dict(facecolor='white', edgecolor='none',
+                           alpha=0.75, pad=1.2),
+                 arrowprops=dict(arrowstyle='-', color='#009E73',
+                                 lw=0.9, shrinkA=2, shrinkB=3))
     ax.set_title(r'E2/$M_{y,+}$, $\dot M = 1.2$ N·m/s', loc='left',
                  fontsize=10)
     ax.set_xlabel('t [s]', fontsize=9.5)
