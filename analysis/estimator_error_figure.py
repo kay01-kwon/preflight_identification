@@ -5,11 +5,11 @@ fig_estimator_err: the marker is the error of the delivered estimate
 (pair average of the two directional group means) and the whisker its
 Welch-t 95% confidence interval.
 
-fig_estimator_indiv: the same mean markers with the INDIVIDUAL
-estimates drawn behind them as small translucent dots -- one offset
-per ramp rate, formed by pairing the positive and negative run of
-that rate -- so the spread the group averaging removes is shown
-separately, point by point.
+fig_estimator_indiv: a parity view, estimated against true offset
+with the y = x diagonal: the individual per-rate paired estimates as
+small translucent dots and the delivered mean estimate as the large
+marker, so the spread the group averaging removes is read directly
+against the diagonal.
 
 Reads nls_comparison_runs.csv (analysis/nls_comparison.py output).
 
@@ -48,6 +48,37 @@ MRK = {'cosh': 'o', 'cosh_cad': 'X', 'nls': 's', 'pelt_normal': '^',
        'pelt_rbf': 'v', 'cusum': 'D'}
 CASES = [f'case_0{i}' for i in range(1, 6)]
 SLOT, GAP = 1.0, 0.55
+
+
+def draw_parity(est, out, dpi):
+    """Estimated against true offset, individuals and means."""
+    fig, ax = plt.subplots(figsize=(6.4, 6.4))
+    lim = 20
+    ax.plot([-lim, lim], [-lim, lim], color='0.55', lw=1.0, ls='--',
+            zorder=1)
+    dodge = {m: (k - 2.5) * 0.22 for k, m in enumerate(M)}
+    for key in TRUTH:
+        truth = TRUTH[key]
+        for m in M:
+            me, half, indiv = est(key, m)
+            xv = truth + dodge[m]
+            first = key == ('case_01', 'Mx')
+            ax.plot([xv] * len(indiv), indiv + truth, '.', ms=3.6,
+                    color=COL[m], alpha=0.45, mec='none', zorder=2)
+            ax.plot(xv, me + truth, MRK[m], color=COL[m], ms=5.5,
+                    zorder=3, label=LBL[m] if first else None)
+    ax.set_xlabel('true CoM offset [mm]', fontsize=10)
+    ax.set_ylabel('estimated CoM offset [mm]', fontsize=10)
+    ax.grid(alpha=0.4, lw=0.8, color='0.6')
+    ax.set_axisbelow(True)
+    ax.set_xlim(-lim, lim)
+    ax.set_ylim(-lim, lim)
+    ax.set_aspect('equal')
+    ax.legend(fontsize=8.5, loc='upper left', framealpha=0.9)
+    fig.tight_layout()
+    fig.savefig(out.with_suffix('.pdf'), bbox_inches='tight')
+    fig.savefig(out.with_suffix('.png'), dpi=dpi, bbox_inches='tight')
+    plt.close(fig)
 
 
 def draw(est, mode, out, dpi):
@@ -155,8 +186,8 @@ def main():
         return me, half, indiv
 
     draw(est, 'ci', args.outdir / 'fig_estimator_err.png', args.dpi)
-    draw(est, 'indiv', args.outdir / 'fig_estimator_indiv.png',
-         args.dpi)
+    draw_parity(est, args.outdir / 'fig_estimator_indiv.png',
+                args.dpi)
     print(f'saved fig_estimator_err and fig_estimator_indiv '
           f'to {args.outdir}')
 
