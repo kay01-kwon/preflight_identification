@@ -164,8 +164,7 @@ def dress(a_, ticks, labels, title, first, legend='lower right'):
 
 
 # ---- pooled over the cases, the three treatments, stacked 2x1 --------
-fig, axes = plt.subplots(2, 1, figsize=(6.8, 7.6), sharex=True,
-                         sharey=True)
+fig, axes = plt.subplots(2, 1, figsize=(6.8, 7.6), sharey=True)
 fig.subplots_adjust(left=0.145, right=0.97, bottom=0.075, top=0.955,
                     hspace=0.2)
 print("static critical-moment residual, run by run  [mN.m]\n")

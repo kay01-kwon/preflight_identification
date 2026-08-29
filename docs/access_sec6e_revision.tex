@@ -149,11 +149,17 @@ occupy, its fastest scale being $C_2/2\pi \approx 0.8$ Hz --- the
 full-band estimate is
 \begin{equation}
   \rms(n) \;=\; \rms(n_{\rm hi})
-  \sqrt{1 + \big(s_{\rm med}\,\kappa_q\big)^2},
+  \sqrt{1 + \kappa_b^2},
   \tag{98}
 \end{equation}
-with the quiet-segment band ratio and in-window enhancement of
-Sec.~VI-D ($s_{\rm med}\kappa_q = 1.31$ on the campaign). In
+with $\kappa_b$ the largest quiet-segment band ratio
+$\rms({<}f_c)/\rms({>}f_c)$ of the campaign
+($\kappa_b = 1.31$), measured on quiet stretches of the same
+records, entirely outside the windows being bounded. (Sec.~VI-D
+also measures the in-window enhancement $s_{\rm med} = 1.60$, the
+median excess of the in-window over the quiet band ratio; it is a
+diagnostic of where the low-frequency content comes from and does
+not enter the bound.) In
 simulation the sensor noise is declared, Gaussian with
 $\sigma_n = 2.450\times10^{-4}$ rad/s $= 0.014^\circ$/s --- an
 order below the smallest envelope --- so the noise term is dropped
@@ -186,7 +192,7 @@ probes whose offsets $(32,32)$ and $(38,14)$ mm lie beyond the
 rectangle --- the certificate fails exactly where its own premise
 does. On hardware ($\varphi_{\max} = 8^\circ$, envelope plus the
 campaign's largest vibration term $\max n_{\rm hi}\sqrt{1 +
-(s_{\rm med}\kappa_q)^2} = 2.47^\circ$/s in (98)) all $140$ runs
+\kappa_b^2} = 2.47^\circ$/s in (98)) all $140$ runs
 sit under the curve, the worst using $0.55$ of its cap. The median used fraction
 is $0.20$--$0.28$ on both campaigns: one construction, validated on
 both platforms, the panels differing exactly in the channels the
