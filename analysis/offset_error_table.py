@@ -102,13 +102,36 @@ def main():
             print(f'E{i + 1}: ' + '  '.join(
                 f'{lab} {radial[(c, m)]:.2f}+-{halves[(c, m)]:.2f}'
                 for m, lab in METHODS))
-        fh.write('\\midrule\nRMS & ' + ' & '.join(
-            f'${np.sqrt(np.mean([radial[(c, m)] ** 2 for c in CASES])):.2f}$'
-            for m, _ in METHODS) + '\\\\\n')
-        print('RMS: ' + '  '.join(
-            f'{lab} '
-            f'{np.sqrt(np.mean([radial[(c, m)] ** 2 for c in CASES])):.2f}'
-            for m, lab in METHODS))
+        comps = {m: np.array([comp_err(c, a, m)[0] for c in CASES
+                              for a in ('My', 'Mx')])
+                 for m, _ in METHODS}
+        fh.write('\\midrule\n')
+
+        def srow(name, fn, fmt='{:.2f}'):
+            cells, txt = [], []
+            for m, lab in METHODS:
+                v = fn(m)
+                cells.append(v if isinstance(v, str)
+                             else f'${fmt.format(v)}$')
+                txt.append(f'{lab} '
+                           + (v if isinstance(v, str)
+                              else fmt.format(v)))
+            fh.write(f'{name} & ' + ' & '.join(cells) + '\\\\\n')
+            print(f'{name}: ' + '  '.join(txt))
+
+        def rms_norm(m):
+            v = np.array([radial[(c, m)] for c in CASES])
+            lo, hi = np.percentile(v, [2.5, 97.5])
+            return (f'${np.sqrt(np.mean(v ** 2)):.2f}$ '
+                    f'$[{lo:.2f},\\,{hi:.2f}]$')
+
+        srow('RMS $\\|\\cdot\\|$ [95\\% int.]', rms_norm)
+        srow('RMS (comp.)',
+             lambda m: float(np.sqrt(np.mean(comps[m] ** 2))))
+        srow('max $|\\cdot|$ (comp.)',
+             lambda m: float(np.max(np.abs(comps[m]))))
+        srow('mean (comp.)', lambda m: float(np.mean(comps[m])),
+             fmt='{:+.2f}')
         fh.write('\\bottomrule\n\\end{tabular}\n\\end{table}\n')
     print(f'written to {out}')
 
