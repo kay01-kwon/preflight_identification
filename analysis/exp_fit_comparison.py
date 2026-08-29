@@ -80,8 +80,8 @@ def main():
     ax.plot(t[sl], om[sl], color='0.55', lw=0.9,
             label=r'measured $\omega$')
     for pw, crit, col, lab in (
-            (pw_c, crit_c, '#0072B2', 'COSH (constrained)'),
-            (pw_f, crit_f, '#D55E00', 'PNLS (free)')):
+            (pw_c, crit_c, '#0072B2', 'COSH'),
+            (pw_f, crit_f, '#D55E00', 'PNLS')):
         prd = np.degrees(pw['omega_pred'])
         n = min(len(prd), i1 + 1 - i0)
         ax.plot(t[i0:i0 + n], prd[:n], color=col, lw=1.9,
