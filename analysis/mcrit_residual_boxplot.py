@@ -97,7 +97,7 @@ OUT = Path(sys.argv[2]) if len(sys.argv) > 2 else Path('docs')
 
 POS, NEG = '#b4451f', '#2a78d6'
 INK, INK2, MUTED, SURF = '#0b0b0b', '#52514e', '#b8b7b2', '#fcfcfb'
-TREAT = (('resid_none_mNm', 'None'),
+TREAT = (('resid_none_mNm', 'No ground effect'),
          ('resid_single_mNm', 'Single rotor'),
          ('resid_interf_mNm', 'Rotor interference'))
 
