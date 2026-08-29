@@ -50,16 +50,22 @@ CASES = [f'case_0{i}' for i in range(1, 6)]
 SLOT, GAP = 1.0, 0.55
 
 
+# the parity view carries the individual-vs-mean message, which needs
+# only the deployed readout and the free fit it is contrasted with;
+# the six-method comparison lives in fig_estimator_err
+PARITY_M = ['cosh', 'nls']
+
+
 def draw_parity(est, out, dpi):
     """Estimated against true offset, individuals and means."""
     fig, ax = plt.subplots(figsize=(6.4, 6.4))
     lim = 20
     ax.plot([-lim, lim], [-lim, lim], color='0.55', lw=1.0, ls='--',
             zorder=1)
-    dodge = {m: (k - 2.5) * 0.22 for k, m in enumerate(M)}
+    dodge = {m: (k - 0.5) * 0.5 for k, m in enumerate(PARITY_M)}
     for key in TRUTH:
         truth = TRUTH[key]
-        for m in M:
+        for m in PARITY_M:
             me, half, indiv = est(key, m)
             xv = truth + dodge[m]
             first = key == ('case_01', 'Mx')
