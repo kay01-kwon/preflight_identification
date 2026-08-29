@@ -137,7 +137,7 @@ for ax, (col, ylab, gates, scale) in zip(axes, panels):
     ax.set_xticks(RATES)
     ax.set_xticklabels([f"{r:g}" for r in RATES], fontsize=7)
     ax.minorticks_off()
-    ax.set_xlabel(r'$\dot M$ [N$\cdot$m/s]')
+    ax.set_xlabel(r'ramp rate $\dot M$ [N$\cdot$m/s]')
     ax.set_ylabel(ylab)
     ax.grid(alpha=0.25, lw=0.6)
     ax.set_axisbelow(True)
