@@ -81,8 +81,10 @@ moves it -- the model choice acts on the antisymmetric part only.
 
 Usage:
   python analysis/mcrit_prediction.py <outdir>       # writes the CSV
-  python analysis/mcrit_residual_boxplot.py <outdir>/mcrit_per_run.csv [docs]
+  python analysis/mcrit_residual_boxplot.py <outdir>/mcrit_per_run.csv
+                                            [--outdir DIR] [--dpi N]
 """
+import argparse
 import csv
 import sys
 from pathlib import Path
@@ -92,8 +94,15 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 
-SRC = Path(sys.argv[1])
-OUT = Path(sys.argv[2]) if len(sys.argv) > 2 else Path('docs')
+ap = argparse.ArgumentParser()
+ap.add_argument('csv', type=Path, help='mcrit_per_run.csv written by '
+                                       'analysis/mcrit_prediction.py')
+ap.add_argument('--outdir', type=Path, default=Path('docs'),
+                help='directory the figures are written to')
+ap.add_argument('--dpi', type=int, default=600,
+                help='raster resolution of the PNG outputs')
+args = ap.parse_args()
+SRC, OUT = args.csv, args.outdir
 
 POS, NEG = '#b4451f', '#2a78d6'
 INK, INK2, MUTED, SURF = '#0b0b0b', '#52514e', '#b8b7b2', '#fcfcfb'
@@ -187,7 +196,8 @@ for k, axn in enumerate(('Mx', 'My')):
     print()
 OUT.mkdir(parents=True, exist_ok=True)
 fig.savefig(OUT / 'fig_mcrit_residual.pdf', bbox_inches='tight')
-fig.savefig(OUT / 'fig_mcrit_residual.png', bbox_inches='tight', dpi=600)
+fig.savefig(OUT / 'fig_mcrit_residual.png', bbox_inches='tight',
+            dpi=args.dpi)
 print(f"-> {OUT / 'fig_mcrit_residual.pdf'}\n")
 
 # ---- the reported model, case by case --------------------------------
@@ -226,5 +236,5 @@ for k, axn in enumerate(('Mx', 'My')):
     print()
 fig2.savefig(OUT / 'fig_mcrit_residual_case.pdf', bbox_inches='tight')
 fig2.savefig(OUT / 'fig_mcrit_residual_case.png', bbox_inches='tight',
-             dpi=600)
+             dpi=args.dpi)
 print(f"-> {OUT / 'fig_mcrit_residual_case.pdf'}")
