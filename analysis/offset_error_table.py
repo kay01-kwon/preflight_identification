@@ -130,8 +130,6 @@ def main():
              lambda m: float(np.sqrt(np.mean(comps[m] ** 2))))
         srow('max $|\\cdot|$ (comp.)',
              lambda m: float(np.max(np.abs(comps[m]))))
-        srow('mean (comp.)', lambda m: float(np.mean(comps[m])),
-             fmt='{:+.2f}')
         fh.write('\\bottomrule\n\\end{tabular}\n\\end{table}\n')
     print(f'written to {out}')
 
