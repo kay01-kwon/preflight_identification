@@ -17,6 +17,7 @@ from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
+from scipy import stats
 
 G = 9.81
 MASS = {'case_01': 3.066, 'case_02': 3.220, 'case_03': 3.220,
@@ -50,14 +51,28 @@ def main():
                     float(r[f'mcrit_{m}']))
 
     def comp_err(case, axname, m):
+        """Component error of the mean estimate and its Welch-t 95%
+        half-width, from the two directional run groups."""
         g = agg[(case, axname)][m]
         W = MASS[case] * G
-        mff = 0.5 * (np.mean(g['pos']) + np.mean(g['neg']))
-        return SIGN[axname] * 1e3 * mff / W - TRUTH[(case, axname)]
+        s = 1e3 / W
+        p, n = np.array(g['pos']), np.array(g['neg'])
+        err = SIGN[axname] * s * 0.5 * (p.mean() + n.mean()) \
+            - TRUTH[(case, axname)]
+        var = .25 * (p.var(ddof=1) / len(p) + n.var(ddof=1) / len(n))
+        num = (p.var(ddof=1) / len(p) + n.var(ddof=1) / len(n)) ** 2
+        den = ((p.var(ddof=1) / len(p)) ** 2 / (len(p) - 1)
+               + (n.var(ddof=1) / len(n)) ** 2 / (len(n) - 1))
+        half = stats.t.ppf(.975, num / den) * s * np.sqrt(var)
+        return err, half
 
-    radial = {(c, m): float(np.hypot(comp_err(c, 'My', m),
-                                     comp_err(c, 'Mx', m)))
-              for c in CASES for m, _ in METHODS}
+    radial, halves = {}, {}
+    for c in CASES:
+        for m, _ in METHODS:
+            ex, hx = comp_err(c, 'My', m)
+            ey, hy = comp_err(c, 'Mx', m)
+            radial[(c, m)] = float(np.hypot(ex, ey))
+            halves[(c, m)] = float(np.hypot(hx, hy))
 
     out = args.outdir / 'tab_offset_error.tex'
     with open(out, 'w') as fh:
@@ -69,8 +84,10 @@ def main():
             '\\caption{Radial CoM-offset error\n'
             '$\\|p_{\\mathrm{off,est}} - p_{\\mathrm{off,true}}\\|$\n'
             '[mm] of the delivered estimate per case and detector,\n'
-            'against the load-cell truth; the bottom row is the RMS\n'
-            'over the five cases.}\n'
+            'against the load-cell truth, with the 95\\% confidence\n'
+            'half-width of the mean estimate (Welch-t per component,\n'
+            'combined in quadrature); the bottom row is the RMS over\n'
+            'the five cases.}\n'
             '\\label{tab:offset_error}\n'
             '\\centering\\small\n'
             '\\begin{tabular}{@{}l' + 'c' * len(METHODS) + '@{}}\n'
@@ -78,11 +95,13 @@ def main():
             'Case & ' + ' & '.join(lab for _, lab in METHODS)
             + '\\\\\n\\midrule\n')
         for i, c in enumerate(CASES):
-            cells = ' & '.join(f'${radial[(c, m)]:.2f}$'
-                               for m, _ in METHODS)
+            cells = ' & '.join(
+                f'${radial[(c, m)]:.2f} \\pm {halves[(c, m)]:.2f}$'
+                for m, _ in METHODS)
             fh.write(f'E{i + 1} & {cells}\\\\\n')
             print(f'E{i + 1}: ' + '  '.join(
-                f'{lab} {radial[(c, m)]:.2f}' for m, lab in METHODS))
+                f'{lab} {radial[(c, m)]:.2f}+-{halves[(c, m)]:.2f}'
+                for m, lab in METHODS))
         fh.write('\\midrule\nRMS & ' + ' & '.join(
             f'${np.sqrt(np.mean([radial[(c, m)] ** 2 for c in CASES])):.2f}$'
             for m, _ in METHODS) + '\\\\\n')
