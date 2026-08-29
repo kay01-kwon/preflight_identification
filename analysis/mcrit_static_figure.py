@@ -30,6 +30,10 @@ ap.add_argument('--outdir', type=Path,
                 help='directory the figure is written to')
 ap.add_argument('--dpi', type=int, default=600,
                 help='raster resolution of the PNG output')
+ap.add_argument('--intervals', action='store_true',
+                help='draw the empirical 95%% interval (2.5th-97.5th '
+                     'percentile over the ~7 runs of each group) '
+                     'behind every estimator marker')
 args = ap.parse_args()
 SC = args.scratch
 M = ['cosh', 'cosh_cad', 'nls', 'pelt_normal', 'pelt_rbf', 'cusum']
@@ -119,7 +123,14 @@ for ax, axname in zip(axes, AXPANEL):
                        else bmean[k].get(m))
                 if val is None:
                     continue
-                ax.plot(xc - 0.24 + mi * 0.12, val, MRK[m], color=COL[m],
+                xm = xc - 0.24 + mi * 0.12
+                if args.intervals and len(bench[k].get(m, [])) > 1:
+                    blo, bhi = np.percentile(bench[k][m], [2.5, 97.5])
+                    ax.errorbar(xm, val, yerr=[[val - blo], [bhi - val]],
+                                fmt='none', ecolor=COL[m],
+                                elinewidth=0.9, capsize=1.8,
+                                capthick=0.9, zorder=3)
+                ax.plot(xm, val, MRK[m], color=COL[m],
                         ms=5.5, zorder=3, label=LBL[m] if first else None)
             # the interference prediction is the reported model; drawn
             # after the markers and above them so they cannot hide it
