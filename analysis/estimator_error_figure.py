@@ -65,7 +65,7 @@ def draw_parity(est, out, dpi):
         for m in PARITY_M:
             me, half, indiv = est(key, m)
             first = key == ('case_01', 'Mx')
-            ax.plot([truth] * len(indiv), indiv, '.', ms=6.5,
+            ax.plot([truth] * len(indiv), indiv, '.', ms=9.0,
                     color=COL[m], alpha=0.5, mec='none', zorder=2,
                     label='individual estimate (per ramp rate)'
                     if first else None)
