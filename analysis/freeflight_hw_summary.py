@@ -19,11 +19,13 @@ Artefacts
   tab_ff_hw.tex        the same numbers as a table: per-case mean of
                        the repeats, pooled median in the 'all' rows
 
-It also prints the in-flight toggle count per run: the flight logic
-declares in-flight when the reconstructed collective thrust
-f = C_T sum(rpm^2) exceeds the nominal 3.0 kg weight; the count is
-the number of indicator transitions from the start of the record to
-t_70, grouped by controller and variant (1 = one clean rising edge).
+It also prints the in-flight toggle count per run, per the
+ground-to-air switching logic of Algorithm 4: airborne when the
+reconstructed collective thrust f = C_T sum(rpm^2) exceeds the
+nominal 3.0 kg weight, held in flight while the latched flag and
+z > z_th = 0.010 m persist; the count is the number of in_flight
+transitions from the start of the record to t_70, grouped by
+controller and variant (1 = one clean rising edge).
 
 Usage
 -----
@@ -47,6 +49,7 @@ from analysis.freeflight_metrics import (             # noqa: E402
 
 G = 9.81
 W_NOM = 3.0 * G                     # in-flight threshold of the logic
+Z_TH = 0.010                        # m, altitude hold-in of Algorithm 4
 KEYS = ('tilt', 'rate', 'drift', 'speed')
 VARS = ('wo_ff', 'ff_pivot_free')   # pivot-based excluded throughout
 CTRLS = ('hgdo', 'l1')
@@ -56,13 +59,35 @@ COL = {'hgdo': '#0072B2', 'l1': '#D55E00'}
 LIGHT = {'hgdo': '#74B4DC', 'l1': '#F0A868'}
 
 
-def toggles(path, t_70):
-    """Transitions of the in-flight indicator up to t_70."""
+def toggles(path, t_70, source):
+    """Transitions of the in_flight flag of Algorithm 4 up to t_70.
+
+    Per tick: airborne = (f_act >= W_nom) latches was_airborne;
+    in_flight = airborne or (was_airborne and z > z_th); the latch
+    resets only when in_flight evaluates false.  A clean take-off
+    toggles exactly once (off -> on)."""
     d = np.load(path)
     tr = d['rpm/t']
     f = C_T * np.sum(d['rpm/rpm'].astype(np.float64) ** 2, axis=1)
-    ind = (f >= W_NOM)[tr <= t_70]
-    return int(np.sum(ind[1:] != ind[:-1]))
+    sel = tr <= t_70
+    tr, f = tr[sel], f[sel]
+    # altitude on the rpm timeline, relative to the pre-take-off level
+    tz = d['odom/t']
+    z = d[f'{source}/position'].astype(np.float64)[:, 2]
+    pre = z[tz <= tr[np.argmax(f >= W_NOM)]] if np.any(f >= W_NOM) \
+        else z[:10]
+    z0 = float(np.median(pre)) if pre.size else float(z[0])
+    zr = np.interp(tr, tz, z) - z0
+    was, n, prev = False, 0, False
+    for fi, zi in zip(f, zr):
+        airborne = fi >= W_NOM
+        was = was or airborne
+        in_flight = airborne or (was and zi > Z_TH)
+        if not in_flight:
+            was = False
+        n += in_flight != prev
+        prev = in_flight
+    return n
 
 
 def main():
@@ -87,12 +112,13 @@ def main():
             continue
         runs[(case, ctrl, var)].append(m)
         tog[(ctrl, var)].append((f'{case}/{ctrl}/{fn}',
-                                 toggles(f, m['t_70'])))
+                                 toggles(f, m['t_70'], a.source)))
 
     cases = sorted({k[0] for k in runs})
 
     # ── in-flight toggle count ───────────────────────────────────────
-    print('in-flight toggles to t_70 (f = C_T sum rpm^2 >= 3.0 kg):')
+    print('in_flight toggles to t_70 (Algorithm 4: f >= 3.0 kg '
+          'latched, held while z > 0.010 m):')
     for ctrl in CTRLS:
         for var in VARS:
             v = np.array([n for _, n in tog[(ctrl, var)]])
