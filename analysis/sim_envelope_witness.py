@@ -40,7 +40,8 @@ for case, mass in CASES.items():
                 with contextlib.redirect_stdout(io.StringIO()):
                     crit, pw = cvp.extract_piecewise(bag, axis, model='cosh',
                                                      cosh_c2=None,
-                                                     ramp_gain=None)
+                                                     ramp_gain=None,
+                                                     free_seed=False)
             except Exception:
                 continue
             x=brentq(lambda v: np.sinh(v)-v-PHI*W*Z*c2/md, 1e-3, 40)
