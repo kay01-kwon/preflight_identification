@@ -181,40 +181,34 @@ def main():
             'speed': (1.0, r'$\Vert v_{xy}\Vert_{\mathrm{peak}}$'
                            r' [m/s]', '{:.2f}')}
 
-    slots = cases + ['all']
-    fig, axes = plt.subplots(2, 2, figsize=(7.4, 6.2), sharex=True)
-    dodge = dict(hgdo={'wo_ff': -0.27, 'ff_pivot_free': -0.09},
-                 l1={'wo_ff': +0.09, 'ff_pivot_free': +0.27})
+    # one slot per observer/variant, the whole campaign pooled: the
+    # per-case detail lives in the table's aggregation and the runs
+    # CSV, the figure carries only the campaign-level contrast
+    series = [(ctrl, var) for ctrl in CTRLS for var in VARS]
+    ticklab = [f'{CLAB[c]}\n{"unc." if v == "wo_ff" else "comp."}'
+               for c, v in series]
+    fig, axes = plt.subplots(2, 2, figsize=(6.6, 5.6), sharex=True)
     for ax, key in zip(axes.flat, KEYS):
         sc, ylab, _ = UNIT[key]
-        for ctrl in CTRLS:
-            for var in VARS:
-                col = COL[ctrl] if var == 'wo_ff' else LIGHT[ctrl]
-                lab = (f'{CLAB[ctrl]} {VLAB[var]}'
-                       if ax is axes.flat[0] else None)
-                for i, slot in enumerate(slots):
-                    v = sc * pool(slot, ctrl, var, key)
-                    x = i + dodge[ctrl][var]
-                    lo, med, hi = np.percentile(v, [2.5, 50, 97.5])
-                    ax.errorbar(x, med, yerr=[[med - lo], [hi - med]],
-                                fmt='none', ecolor=col, elinewidth=1.3,
-                                capsize=2.4, capthick=1.3, zorder=3)
-                    ax.plot(x, med, '_', ms=9, mew=2.0, color=col,
-                            zorder=4, label=lab if i == 0 else None)
-        for i in range(1, len(slots)):
-            ax.axvline(i - 0.5, color='0.88', lw=0.8, zorder=0)
-        ax.set_xticks(range(len(slots)))
-        ax.set_xticklabels([f'E{int(c)}' for c in cases] + ['all'],
-                           fontsize=9)
+        for i, (ctrl, var) in enumerate(series):
+            col = COL[ctrl] if var == 'wo_ff' else LIGHT[ctrl]
+            v = sc * pool('all', ctrl, var, key)
+            lo, med, hi = np.percentile(v, [2.5, 50, 97.5])
+            ax.errorbar(i, med, yerr=[[med - lo], [hi - med]],
+                        fmt='none', ecolor=col, elinewidth=1.5,
+                        capsize=3.2, capthick=1.5, zorder=3)
+            ax.plot(i, med, '_', ms=13, mew=2.4, color=col, zorder=4)
+        ax.axvline(1.5, color='0.88', lw=0.8, zorder=0)
+        ax.set_xticks(range(len(series)))
+        ax.set_xticklabels(ticklab, fontsize=8.5)
+        ax.set_xlim(-0.6, len(series) - 0.4)
+        ax.set_ylim(bottom=0)
         ax.set_ylabel(ylab, fontsize=9.5)
         ax.grid(axis='y', alpha=0.4, lw=0.8, color='0.6')
         ax.set_axisbelow(True)
         for sp in ('top', 'right'):
             ax.spines[sp].set_visible(False)
-    handles, labels = axes.flat[0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc='upper center', ncol=4,
-               fontsize=8.2, frameon=False, bbox_to_anchor=(0.5, 1.02))
-    fig.tight_layout(rect=(0, 0, 1, 0.965))
+    fig.tight_layout()
     fig.savefig(a.outdir / 'exp_ff_peaks.png', dpi=a.dpi,
                 bbox_inches='tight')
     plt.close(fig)
