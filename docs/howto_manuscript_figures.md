@@ -72,6 +72,7 @@ python analysis/estimator_error_figure.py scratch --outdir docs --dpi 600
 | `exp_fit_comparison.png` | `analysis/exp_fit_comparison.py` | `mcrit_prediction.csv` |
 | `exp_estimator_err.png`, `exp_estimator_indiv.png` | `analysis/estimator_error_figure.py` | `nls_comparison_runs.csv` |
 | (참고) `exp_score_sensitivity.png`, `exp_score_heatmap.png` | `analysis/score_sensitivity.py` (`--outdir docs --dpi 600`) | 없음 — bag에서 직접 |
+| (참고) `exp_score_joint.png` | `analysis/score_sensitivity.py --joint` (데이터셋별 병렬, 4코어 ~25분) | 없음 — bag에서 직접 |
 
 모든 그림 스크립트는 `--outdir`(기본 `docs`)와 `--dpi`(기본 600)를 받는다.
 표 재생성은 `analysis/cv_case_table.py scratch/nls_comparison_runs.csv`,
