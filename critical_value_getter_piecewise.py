@@ -492,32 +492,35 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
             model='cosh',
         )
 
-    # The baseline C is NEVER a fitted parameter, in any mode: it is the
-    # pre-segment median at each candidate onset, exactly as in the
-    # fully constrained sweep (Algorithm 1 of the manuscript).  The two
-    # stages therefore share one baseline convention and differ only in
-    # which shape constants are free.
+    # Free / bounded modes (the calibration-time form): the baseline C
+    # is a FITTED parameter, initialised at the pre-segment median of
+    # each candidate onset (the pre-segment cost keeps that median as
+    # its reference).  This is the exact fit that produced the frozen
+    # stage-2 constants (analysis/pnls_constants.py), so re-running
+    # stage 1 of the two-stage calibration reproduces their stage-1
+    # centres.
     if c2_fixed is not None:
-        # C₂ pinned to the shared rig constant: fit only C₁ per bag.
+        # C₂ pinned to the shared rig constant: fit (C₁, C) per bag.
         c2_val = float(c2_fixed)
 
-        def model(p, tau, C0):
-            return p[0] * (np.cosh(np.clip(c2_val * tau, 0, 30)) - 1) + C0
+        def model(p, tau):
+            C1, C = p
+            return C1 * (np.cosh(np.clip(c2_val * tau, 0, 30)) - 1) + C
 
-        p0 = [sgn * 1e-3]
-        bounds = ([-5.0], [5.0])
-        expand = lambda x, C0: (float(x[0]), c2_val, float(C0))
+        p0 = lambda C0: [sgn * 1e-3, C0]
+        bounds = ([-5.0, -2.0], [5.0, 2.0])
+        expand = lambda x: (float(x[0]), c2_val, float(x[1]))
     else:
         # C₂ fit per bag but tightly bounded to the physical band.
         c2_0 = float(np.clip(4.9, c2_bounds[0], c2_bounds[1]))
 
-        def model(p, tau, C0):
-            C1, C2 = p
-            return C1 * (np.cosh(np.clip(C2 * tau, 0, 30)) - 1) + C0
+        def model(p, tau):
+            C1, C2, C = p
+            return C1 * (np.cosh(np.clip(C2 * tau, 0, 30)) - 1) + C
 
-        p0 = [sgn * 1e-3, c2_0]
-        bounds = ([-5.0, c2_bounds[0]], [5.0, c2_bounds[1]])
-        expand = lambda x, C0: (float(x[0]), float(x[1]), float(C0))
+        p0 = lambda C0: [sgn * 1e-3, c2_0, C0]
+        bounds = ([-5.0, c2_bounds[0], -2.0], [5.0, c2_bounds[1], 2.0])
+        expand = lambda x: (float(x[0]), float(x[1]), float(x[2]))
 
     cost_of = {}
 
@@ -526,17 +529,17 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
             tau = t[j:] - t[j]
             y = omega[j:]
             C0 = _baseline_of(omega[:j]) if j > 0 else 0.0
-            r = least_squares(lambda p: model(p, tau, C0) - y,
-                              p0, method='trf', bounds=bounds,
+            r = least_squares(lambda p: model(p, tau) - y,
+                              p0(C0), method='trf', bounds=bounds,
                               max_nfev=300)
             pre = np.sum((omega[:j] - C0) ** 2) if j > 0 else 0.0
             cost = float(np.sum(r.fun ** 2) + pre)
             cost_of[j] = cost
             if cost < best[0]:
-                best = (cost, j, r.x, C0)
+                best = (cost, j, r.x)
         return best
 
-    best = (np.inf, onset_guess, None, 0.0)
+    best = (np.inf, onset_guess, None)
     if full_sweep:
         # No seed of any kind: sweep the whole window with the cosh
         # model alone, coarse first, then refine around the coarse
@@ -559,8 +562,8 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
     else:
         best = _sweep(range(lo, max(lo + 1, hi), step), best)
 
-    cost, j_star, x_star, C0_star = best
-    params = expand(x_star, C0_star)
+    cost, j_star, x_star = best
+    params = expand(x_star)
     C1, C2, C = params
     tau = t[j_star:] - t[j_star]
     # Sub-sample refinement, exactly as in the constrained sweep: the
@@ -577,11 +580,7 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
         den = a - 2.0 * cost + c_
         if den > 0.0:
             frac = float(np.clip(0.5 * (a - c_) / den, -0.5, 0.5)) * step
-    # With the baseline pinned to the pre-segment median in every mode,
-    # the prediction and the objective use one and the same C, and the
-    # reported RMSE is exactly sqrt(cost/N), the quantity the sweep
-    # minimised.
-    omega_pred = np.full(N, float(C0_star))
+    omega_pred = np.full(N, float(C))
     omega_pred[j_star:] = C1 * (np.cosh(np.clip(C2 * tau, 0, 30)) - 1) + C
     rmse = float(np.sqrt(np.mean((omega - omega_pred) ** 2)))
 
@@ -947,11 +946,19 @@ def extract_piecewise(
         # measured moment ramp rate Ṁ over the excitation window (linear ramp);
         # with the shared gain K it fixes the amplitude C₁ = K·Ṁ (no free param)
         m_dot = float(np.polyfit(t[win], moment[win], 1)[0])
-        # No seed in either mode: the whole window is swept (the free
-        # fit coarse-to-fine, the constrained fit exhaustively), so the
-        # quadratic (small-angle) model is not used anywhere in the
-        # cosh path.
-        pw = cosh_onset_fit(t[win], omega[win], moment[win], onset_guess=None,
+        # Fully constrained → no seed: with no free shape parameter the
+        # whole window is swept exhaustively. The free/bounded fit is
+        # instead seeded by the time-quadratic onset and refined locally
+        # around it: its cost is near-degenerate along the C₁↔onset
+        # ridge (an onset earlier by Δ with C₁ shrunk by e^{C₂Δ} leaves
+        # the curve almost unchanged), so an unseeded global sweep
+        # drifts down that ridge to an unphysically early onset, while
+        # the seed anchors the fit in the physical basin.
+        if ramp_gain is not None and cosh_c2 is not None:
+            guess = None
+        else:
+            guess = piecewise_onset_fit(t[win], omega[win])['onset_idx']
+        pw = cosh_onset_fit(t[win], omega[win], moment[win], onset_guess=guess,
                             c2_bounds=c2_bounds, c2_fixed=cosh_c2,
                             moment_floor=0.0, moment_floor_abs=moment_floor_abs,
                             ramp_gain=ramp_gain, ramp_rate=m_dot)
