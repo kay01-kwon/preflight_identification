@@ -25,7 +25,8 @@ for d in sorted(Path('DataSet/exp').glob('case_*/M[xy]')):
         try:
             with contextlib.redirect_stdout(io.StringIO()):
                 crit, pw = cvp.extract_piecewise(bag, axis, model='cosh',
-                                                 cosh_c2=None, ramp_gain=None)
+                                                 cosh_c2=None, ramp_gain=None,
+                                                 free_seed=False)
                 sig = cvp.prepare_signals(bag, axis)
             i0,i1=cvp.detect_excitation_window(
                 sig['moment'], moment_cap=cvp.MOMENT_CAP.get(axis))

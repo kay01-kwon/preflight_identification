@@ -492,35 +492,62 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
             model='cosh',
         )
 
-    # Free / bounded modes (the calibration-time form): the baseline C
-    # is a FITTED parameter, initialised at the pre-segment median of
-    # each candidate onset (the pre-segment cost keeps that median as
-    # its reference).  This is the exact fit that produced the frozen
-    # stage-2 constants (analysis/pnls_constants.py), so re-running
-    # stage 1 of the two-stage calibration reproduces their stage-1
-    # centres.
+    # Free / bounded modes.  The baseline convention is tied to the
+    # sweep mode, so each mode byte-reproduces the numbers frozen from
+    # it:
+    #   * seeded (locator / PNLS benchmark, the calibration-time form):
+    #     the baseline C is a FITTED parameter, initialised at the
+    #     pre-segment median of each candidate onset (the pre-segment
+    #     cost keeps that median as its reference).  This is the exact
+    #     fit that produced the frozen stage-2 constants
+    #     (analysis/pnls_constants.py), so re-running stage 1 of the
+    #     two-stage calibration reproduces their stage-1 centres.
+    #   * seedless global sweep (the RMSE/shift bound witness): the
+    #     baseline is pinned to the pre-segment median in every term,
+    #     so the reported RMSE is exactly sqrt(cost/N), the quantity
+    #     the sweep minimised — the bound-validation convention.
     if c2_fixed is not None:
-        # C₂ pinned to the shared rig constant: fit (C₁, C) per bag.
         c2_val = float(c2_fixed)
+        if full_sweep:
+            # witness: fit only C₁ per bag, baseline pinned
+            def model(p, tau, C0):
+                return p[0] * (np.cosh(np.clip(c2_val * tau, 0, 30))
+                               - 1) + C0
 
-        def model(p, tau):
-            C1, C = p
-            return C1 * (np.cosh(np.clip(c2_val * tau, 0, 30)) - 1) + C
+            p0 = lambda C0: [sgn * 1e-3]
+            bounds = ([-5.0], [5.0])
+            expand = lambda x, C0: (float(x[0]), c2_val, float(C0))
+        else:
+            # locator: fit (C₁, C) per bag
+            def model(p, tau, C0):
+                C1, C = p
+                return C1 * (np.cosh(np.clip(c2_val * tau, 0, 30))
+                             - 1) + C
 
-        p0 = lambda C0: [sgn * 1e-3, C0]
-        bounds = ([-5.0, -2.0], [5.0, 2.0])
-        expand = lambda x: (float(x[0]), c2_val, float(x[1]))
+            p0 = lambda C0: [sgn * 1e-3, C0]
+            bounds = ([-5.0, -2.0], [5.0, 2.0])
+            expand = lambda x, C0: (float(x[0]), c2_val, float(x[1]))
     else:
         # C₂ fit per bag but tightly bounded to the physical band.
         c2_0 = float(np.clip(4.9, c2_bounds[0], c2_bounds[1]))
+        if full_sweep:
+            def model(p, tau, C0):
+                C1, C2 = p
+                return C1 * (np.cosh(np.clip(C2 * tau, 0, 30)) - 1) + C0
 
-        def model(p, tau):
-            C1, C2, C = p
-            return C1 * (np.cosh(np.clip(C2 * tau, 0, 30)) - 1) + C
+            p0 = lambda C0: [sgn * 1e-3, c2_0]
+            bounds = ([-5.0, c2_bounds[0]], [5.0, c2_bounds[1]])
+            expand = lambda x, C0: (float(x[0]), float(x[1]), float(C0))
+        else:
+            def model(p, tau, C0):
+                C1, C2, C = p
+                return C1 * (np.cosh(np.clip(C2 * tau, 0, 30)) - 1) + C
 
-        p0 = lambda C0: [sgn * 1e-3, c2_0, C0]
-        bounds = ([-5.0, c2_bounds[0], -2.0], [5.0, c2_bounds[1], 2.0])
-        expand = lambda x: (float(x[0]), float(x[1]), float(x[2]))
+            p0 = lambda C0: [sgn * 1e-3, c2_0, C0]
+            bounds = ([-5.0, c2_bounds[0], -2.0],
+                      [5.0, c2_bounds[1], 2.0])
+            expand = lambda x, C0: (float(x[0]), float(x[1]),
+                                    float(x[2]))
 
     cost_of = {}
 
@@ -529,17 +556,17 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
             tau = t[j:] - t[j]
             y = omega[j:]
             C0 = _baseline_of(omega[:j]) if j > 0 else 0.0
-            r = least_squares(lambda p: model(p, tau) - y,
+            r = least_squares(lambda p: model(p, tau, C0) - y,
                               p0(C0), method='trf', bounds=bounds,
                               max_nfev=300)
             pre = np.sum((omega[:j] - C0) ** 2) if j > 0 else 0.0
             cost = float(np.sum(r.fun ** 2) + pre)
             cost_of[j] = cost
             if cost < best[0]:
-                best = (cost, j, r.x)
+                best = (cost, j, r.x, C0)
         return best
 
-    best = (np.inf, onset_guess, None)
+    best = (np.inf, onset_guess, None, 0.0)
     if full_sweep:
         # No seed of any kind: sweep the whole window with the cosh
         # model alone, coarse first, then refine around the coarse
@@ -562,8 +589,8 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
     else:
         best = _sweep(range(lo, max(lo + 1, hi), step), best)
 
-    cost, j_star, x_star = best
-    params = expand(x_star)
+    cost, j_star, x_star, C0_star = best
+    params = expand(x_star, C0_star)
     C1, C2, C = params
     tau = t[j_star:] - t[j_star]
     # Sub-sample refinement, exactly as in the constrained sweep: the
@@ -888,6 +915,7 @@ def extract_piecewise(
     c2_bounds: tuple = (3.0, 8.0),
     moment_floor_abs: Optional[float] = None,
     ramp_gain: Optional[float] = None,
+    free_seed: bool = True,
 ) -> CriticalValueResult:
     """
     Extract critical values using onset detection.
@@ -954,7 +982,11 @@ def extract_piecewise(
         # the curve almost unchanged), so an unseeded global sweep
         # drifts down that ridge to an unphysically early onset, while
         # the seed anchors the fit in the physical basin.
-        if ramp_gain is not None and cosh_c2 is not None:
+        # free_seed=False requests the seedless coarse-to-fine global
+        # sweep instead: the witness the RMSE/shift bound checks need
+        # (they constrain the best-fitting member of the family, not
+        # the locator).
+        if (ramp_gain is not None and cosh_c2 is not None) or not free_seed:
             guess = None
         else:
             guess = piecewise_onset_fit(t[win], omega[win])['onset_idx']
