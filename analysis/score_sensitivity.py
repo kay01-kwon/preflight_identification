@@ -41,10 +41,6 @@ from analysis.pnls_constants import PNLS_CONSTANTS     # noqa: E402
 
 C2_FACT = np.linspace(0.75, 1.25, 11)
 K_FACT = np.linspace(0.60, 1.40, 11)
-COLC = {'case_01': '#0072B2', 'case_02': '#E69F00',
-        'case_03': '#009E73', 'case_04': '#D55E00',
-        'case_05': '#CC79A7'}
-LSA = {'Mx': '-', 'My': '--'}
 
 
 def score(bags, axis, c2, k):
@@ -115,8 +111,8 @@ def heatmap(root, ds, outdir, dpi, n=17):
     cb.set_label(r'score / score$^{\ast}$', fontsize=10)
     ax.plot(ks / k0, c2s / c20, '*', ms=14, color='white', mec='k',
             mew=0.8, label=r'calibrated $(C_2^{\ast}, K^{\ast})$')
-    ax.set_xlabel(r'$K / K_0$', fontsize=10)
-    ax.set_ylabel(r'$C_2 / C_{2,0}$', fontsize=10)
+    ax.set_xlabel(r'$K / K^{0}$', fontsize=10)
+    ax.set_ylabel(r'$C_2 / C_2^{0}$', fontsize=10)
     ax.set_title(f'{case.replace("case_0", "E")}/{simax}', loc='left',
                  fontsize=10)
     ax.legend(fontsize=8.5, loc='upper left', framealpha=0.9)
@@ -131,6 +127,57 @@ def heatmap(root, ds, outdir, dpi, n=17):
           flush=True)
 
 
+def _joint_worker(dstr):
+    """Score ratio of one dataset on the joint (C2, K) factor grid
+    around its deployed constants."""
+    d = Path(dstr)
+    axis = 'x' if d.name == 'Mx' else 'y'
+    with contextlib.redirect_stdout(io.StringIO()):
+        bags = load_excitation_dataset(d)
+    c2s, ks = PNLS_CONSTANTS[(d.parent.name, d.name)]
+    s0 = score(bags, axis, c2s, ks)
+    Z = np.array([[score(bags, axis, f2 * c2s, fk * ks)
+                   for fk in K_FACT] for f2 in C2_FACT]) / s0
+    return f'{d.parent.name}/{d.name}', Z
+
+
+def joint(root, outdir, dpi):
+    """All ten datasets in one map: the median over datasets of the
+    score ratio on the joint (C2, K) plane around the deployed
+    constants.  The two 1-D sweep panels are the axis sections of
+    this surface; the diagonal ridge of the C2-K degeneracy is read
+    directly."""
+    import multiprocessing as mp
+    ds = sorted(str(p) for p in root.glob('case_*/M[xy]'))
+    with mp.Pool(min(10, len(ds))) as pool:
+        out = pool.map(_joint_worker, ds)
+    stack = np.array([z for _, z in out])
+    for name, z in out:
+        print(f'{name}: joint min {z.min():.3f} max {z.max():.3f}',
+              flush=True)
+    Zmed = np.median(stack, axis=0)
+    fig, ax = plt.subplots(figsize=(6.6, 5.2))
+    im = ax.pcolormesh(K_FACT, C2_FACT, Zmed, shading='nearest',
+                       cmap='viridis')
+    cb = fig.colorbar(im, ax=ax)
+    cb.set_label(r'median score / score$^{\ast}$', fontsize=10)
+    cs = ax.contour(K_FACT, C2_FACT, Zmed, levels=[1.1, 1.25, 1.5],
+                    colors='white', linewidths=0.9)
+    ax.clabel(cs, fmt='%.2f', fontsize=8)
+    ax.plot(1.0, 1.0, '*', ms=14, color='white', mec='k', mew=0.8,
+            label=r'calibrated $(C_2^{\ast}, K^{\ast})$')
+    ax.set_xlabel(r'$K / K^{\ast}$', fontsize=10)
+    ax.set_ylabel(r'$C_2 / C_2^{\ast}$', fontsize=10)
+    ax.legend(fontsize=8.5, loc='upper left', framealpha=0.9)
+    fig.tight_layout()
+    fig.savefig(outdir / 'exp_score_joint.png', dpi=dpi,
+                bbox_inches='tight')
+    plt.close(fig)
+    print(f'joint: median map min {Zmed.min():.3f} max {Zmed.max():.3f}'
+          f'; worst dataset max {stack.max():.2f}', flush=True)
+    print(f'written to {outdir}/exp_score_joint.png')
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--outdir', type=Path, default=Path('docs'))
@@ -138,10 +185,16 @@ def main():
     ap.add_argument('--heatmap-dataset', default='case_02/My')
     ap.add_argument('--no-slices', action='store_true',
                     help='skip the per-dataset 1-D sweep figure')
+    ap.add_argument('--joint', action='store_true',
+                    help='produce only the joint (C2, K) median map '
+                         'over all datasets (exp_score_joint.png)')
     args = ap.parse_args()
     args.outdir.mkdir(parents=True, exist_ok=True)
 
     root = Path(__file__).resolve().parents[1] / 'DataSet' / 'exp'
+    if args.joint:
+        joint(root, args.outdir, args.dpi)
+        return
     heatmap(root, args.heatmap_dataset, args.outdir, args.dpi)
     if args.no_slices:
         return
@@ -164,19 +217,22 @@ def main():
     for ax, fact, idx, xlab in (
             (axes[0], C2_FACT, 0, r'$C_2 / C_2^{\ast}$'),
             (axes[1], K_FACT, 1, r'$K / K^{\ast}$')):
-        for (case, simax), tup in curves.items():
-            ax.plot(fact, tup[idx] / tup[2], LSA[simax], lw=1.4,
-                    color=COLC[case], alpha=0.85,
-                    label=(f'{case.replace("case_0", "E")}/{simax}'
-                           if True else None))
+        rel = np.array([tup[idx] / tup[2] for tup in curves.values()])
+        for k, r in enumerate(rel):
+            ax.plot(fact, r, '-', lw=0.9, color='0.72', alpha=0.9,
+                    zorder=2, label='per-dataset sweep' if k == 0
+                    else None)
+        ax.plot(fact, np.median(rel, axis=0), '-', lw=2.2,
+                color='#0072B2', zorder=4, label='median')
+        ax.plot(fact, rel.max(axis=0), '--', lw=1.6, color='#D55E00',
+                zorder=3, label='max')
         ax.axvline(1.0, color='0.35', lw=1.0, ls=':')
         ax.axhline(1.0, color='0.35', lw=1.0, ls=':')
         ax.set_xlabel(xlab, fontsize=10)
         ax.set_ylabel(r'score / score$^{\ast}$', fontsize=10)
         ax.grid(alpha=0.4, lw=0.8, color='0.6')
         ax.set_axisbelow(True)
-    axes[0].legend(fontsize=6.8, ncol=2, loc='upper center',
-                   framealpha=0.9)
+    axes[0].legend(fontsize=8.5, loc='upper center', framealpha=0.9)
     fig.tight_layout()
     fig.savefig(args.outdir / 'exp_score_sensitivity.png',
                 dpi=args.dpi, bbox_inches='tight')
