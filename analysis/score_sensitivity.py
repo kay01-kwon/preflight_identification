@@ -11,10 +11,16 @@ plots the score relative to its value at the calibrated point, one
 curve per dataset, so the depth and width of the calibration valley
 is read directly.
 
+In addition, a two-dimensional heatmap of the score over the full
+(C2, K) search rectangle is drawn for one representative dataset
+(default E2/My, the dataset the fit-comparison figure uses), with
+the calibrated point marked (exp_score_heatmap.png).
+
 Usage
 -----
   PYTHONPATH=<stubs> python analysis/score_sensitivity.py
-      [--outdir DIR] [--dpi N]
+      [--outdir DIR] [--dpi N] [--heatmap-dataset case_02/My]
+      [--no-slices]
 """
 import argparse
 import contextlib
@@ -62,14 +68,57 @@ def score(bags, axis, c2, k):
     return s
 
 
+def heatmap(root, ds, outdir, dpi, n=17):
+    """Score over the (C2, K) rectangle for one dataset."""
+    case, simax = ds.split('/')
+    axis = 'x' if simax == 'Mx' else 'y'
+    with contextlib.redirect_stdout(io.StringIO()):
+        bags = load_excitation_dataset(root / case / simax)
+    c2s, ks = PNLS_CONSTANTS[(case, simax)]
+    fc2 = np.linspace(0.75, 1.25, n)
+    fk = np.linspace(0.60, 1.40, n)
+    Z = np.array([[score(bags, axis, f2 * c2s, f1 * ks) for f1 in fk]
+                  for f2 in fc2])
+    s0 = score(bags, axis, c2s, ks)
+    fig, ax = plt.subplots(figsize=(6.6, 5.2))
+    im = ax.pcolormesh(fk, fc2, Z / s0, shading='nearest',
+                       cmap='viridis')
+    cb = fig.colorbar(im, ax=ax)
+    cb.set_label(r'score / score$^{\ast}$', fontsize=10)
+    ax.plot(1.0, 1.0, '*', ms=14, color='white', mec='k', mew=0.8,
+            label='calibrated point')
+    jmin = np.unravel_index(np.argmin(Z), Z.shape)
+    ax.plot(fk[jmin[1]], fc2[jmin[0]], 'o', ms=6, mfc='none',
+            mec='white', mew=1.4, label='grid minimum')
+    ax.set_xlabel(r'$K / K^{\ast}$', fontsize=10)
+    ax.set_ylabel(r'$C_2 / C_2^{\ast}$', fontsize=10)
+    ax.set_title(f'{case.replace("case_0", "E")}/{simax}', loc='left',
+                 fontsize=10)
+    ax.legend(fontsize=8.5, loc='upper left', framealpha=0.9)
+    fig.tight_layout()
+    fig.savefig(outdir / 'exp_score_heatmap.png', dpi=dpi,
+                bbox_inches='tight')
+    plt.close(fig)
+    print(f'heatmap: score* {s0:.4f}, grid min '
+          f'{Z.min():.4f} at C2 x{fc2[jmin[0]]:.2f}, '
+          f'K x{fk[jmin[1]]:.2f}; max/score* {Z.max() / s0:.2f}',
+          flush=True)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--outdir', type=Path, default=Path('docs'))
     ap.add_argument('--dpi', type=int, default=600)
+    ap.add_argument('--heatmap-dataset', default='case_02/My')
+    ap.add_argument('--no-slices', action='store_true',
+                    help='skip the per-dataset 1-D sweep figure')
     args = ap.parse_args()
     args.outdir.mkdir(parents=True, exist_ok=True)
 
     root = Path(__file__).resolve().parents[1] / 'DataSet' / 'exp'
+    heatmap(root, args.heatmap_dataset, args.outdir, args.dpi)
+    if args.no_slices:
+        return
     curves = {}                    # (case, simax) -> (sc2, sk, s0)
     for d in sorted(root.glob('case_*/M[xy]')):
         axis = 'x' if d.name == 'Mx' else 'y'
