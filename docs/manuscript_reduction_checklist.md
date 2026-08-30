@@ -28,27 +28,27 @@ yaw 마찰(Fig. 10, 식 (71)~(74))은 지적 사항에 대한 직접 답변이�
 - [ ] 결론의 pivot-based/pivot-free 취합 서술 → pivot-free 단독으로 정정
       (자율비행 결과에서 pivot-based 변형 제외하기로 결정)
 
-### 미대응 리뷰어 지적 — 추가 필요
+### 리뷰어 지적 대응 — 철회할 서술
 
-- [ ] **히스테리시스 임계값의 파라미터 민감도** (스위칭 로직 지적의 3번째 항목:
-      "hysteresis threshold design is chosen without parameter sensitivity
-      analysis to verify its anti-chattering performance")
-      → `analysis/switching_sensitivity.py` 로 생성한
-      **`docs/tab_switching_sensitivity.tex`** 를 **IV-B**에 삽입하고
-      아래 결과를 서술 (전 60회 이륙, pivot-based 제외):
+- [ ] **"z_th = 0.010 m를 채터링 방지를 위해 설정했다"는 서술 삭제.**
+      이륙 스위칭은 추력–하중 비교(f_act ≥ W_nom)와 was_airborne 래치만으로
+      결정되며 z_th는 이륙 분기에 들어가지 않는다. z_th는 **착륙 판정의
+      모호성** 때문에 둔 근접지면 게이트다. 원고의 채터링 방지 주장은
+      집필 중 착오이므로 **민감도 분석을 붙여 방어하지 말고 서술을 정정**할 것.
 
-      | 스윕 | 무결(1회 토글) | 최악 토글 |
-      |---|---|---|
-      | z_th = 0 ~ 0.050 m | 60/60 | 1 |
-      | z_th = 0.100 m | 50/60 | 5 |
-      | 임계 0.90 ~ 1.05 W_nom | 60/60 | 1 |
-      | 임계 1.10 W_nom | 47/60 | 3 |
+      리뷰어 지적(“hysteresis threshold design is chosen without parameter
+      sensitivity analysis to verify its anti-chattering performance”)은
+      이 잘못된 문장이 유발한 것이므로, 정정 자체가 답변이 된다.
 
-      배포값(z_th = 0.010 m, 임계 = W_nom)은 넓은 평탄부 한가운데 —
-      z_th는 5배까지, 추력 임계는 ±5%까지 무결. 실패 경계도 물리적으로
-      설명된다: z_th = 0.100 m는 t_70 시점 상승고(0.14 m)에 육박해 플래그가
-      유지될 구간이 없고, 임계 1.10 W_nom = 32.4 N은 실제 기체 중량
-      (30.1 / 31.6 N)을 넘어 도달 자체가 불가능하다.
+      뒷받침 사실(원고에 한 문장으로): 알고리듬 4를 그대로 구현해 전 60회
+      이륙에 적용하면 `in_flight` 플래그가 **정확히 1회만** 전이하며
+      재토글이 없다. 래치 후 추력이 임계 아래로 돌아오지 않기 때문이다
+      (통과 후 최대 추력 1.08–1.21 W_nom).
+
+      `docs/tab_switching_sensitivity.tex` 는 **원고에 넣지 않는다** —
+      리뷰어가 임계값 선택 근거를 재차 요구할 때만 예비로 사용
+      (0.90–1.05 W_nom에서 60/60 무결, 1.10에서 12런 미작동이며 이는 실측
+      피크 추력 하한 1.077과 일치).
 
 ---
 
