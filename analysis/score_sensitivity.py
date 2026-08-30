@@ -41,10 +41,6 @@ from analysis.pnls_constants import PNLS_CONSTANTS     # noqa: E402
 
 C2_FACT = np.linspace(0.75, 1.25, 11)
 K_FACT = np.linspace(0.60, 1.40, 11)
-COLC = {'case_01': '#0072B2', 'case_02': '#E69F00',
-        'case_03': '#009E73', 'case_04': '#D55E00',
-        'case_05': '#CC79A7'}
-LSA = {'Mx': '-', 'My': '--'}
 
 
 def score(bags, axis, c2, k):
@@ -115,8 +111,8 @@ def heatmap(root, ds, outdir, dpi, n=17):
     cb.set_label(r'score / score$^{\ast}$', fontsize=10)
     ax.plot(ks / k0, c2s / c20, '*', ms=14, color='white', mec='k',
             mew=0.8, label=r'calibrated $(C_2^{\ast}, K^{\ast})$')
-    ax.set_xlabel(r'$K / K_0$', fontsize=10)
-    ax.set_ylabel(r'$C_2 / C_{2,0}$', fontsize=10)
+    ax.set_xlabel(r'$K / K^{0}$', fontsize=10)
+    ax.set_ylabel(r'$C_2 / C_2^{0}$', fontsize=10)
     ax.set_title(f'{case.replace("case_0", "E")}/{simax}', loc='left',
                  fontsize=10)
     ax.legend(fontsize=8.5, loc='upper left', framealpha=0.9)
@@ -164,19 +160,22 @@ def main():
     for ax, fact, idx, xlab in (
             (axes[0], C2_FACT, 0, r'$C_2 / C_2^{\ast}$'),
             (axes[1], K_FACT, 1, r'$K / K^{\ast}$')):
-        for (case, simax), tup in curves.items():
-            ax.plot(fact, tup[idx] / tup[2], LSA[simax], lw=1.4,
-                    color=COLC[case], alpha=0.85,
-                    label=(f'{case.replace("case_0", "E")}/{simax}'
-                           if True else None))
+        rel = np.array([tup[idx] / tup[2] for tup in curves.values()])
+        for k, r in enumerate(rel):
+            ax.plot(fact, r, '-', lw=0.9, color='0.72', alpha=0.9,
+                    zorder=2, label='per-dataset sweep' if k == 0
+                    else None)
+        ax.plot(fact, np.median(rel, axis=0), '-', lw=2.2,
+                color='#0072B2', zorder=4, label='median')
+        ax.plot(fact, rel.max(axis=0), '--', lw=1.6, color='#D55E00',
+                zorder=3, label='max')
         ax.axvline(1.0, color='0.35', lw=1.0, ls=':')
         ax.axhline(1.0, color='0.35', lw=1.0, ls=':')
         ax.set_xlabel(xlab, fontsize=10)
         ax.set_ylabel(r'score / score$^{\ast}$', fontsize=10)
         ax.grid(alpha=0.4, lw=0.8, color='0.6')
         ax.set_axisbelow(True)
-    axes[0].legend(fontsize=6.8, ncol=2, loc='upper center',
-                   framealpha=0.9)
+    axes[0].legend(fontsize=8.5, loc='upper center', framealpha=0.9)
     fig.tight_layout()
     fig.savefig(args.outdir / 'exp_score_sensitivity.png',
                 dpi=args.dpi, bbox_inches='tight')
