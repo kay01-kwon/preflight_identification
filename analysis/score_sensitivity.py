@@ -68,16 +68,44 @@ def score(bags, axis, c2, k):
     return s
 
 
+def stage1_centre(bags, axis):
+    """Stage-1 medians (C2_0, K_0) from the free per-run fits."""
+    c2s, ks = [], []
+    for bag in bags:
+        mdot = cvp.commanded_ramp_rate(bag.name)
+        if mdot is None:
+            continue
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                crit, fit = cvp.extract_piecewise(bag, axis,
+                                                  model='cosh',
+                                                  cosh_c2=None,
+                                                  ramp_gain=None)
+            c1, c2, _ = fit['params']
+            if abs(mdot) > 1e-6 and np.isfinite(c1) and np.isfinite(c2):
+                c2s.append(abs(c2))
+                ks.append(abs(c1) / abs(mdot))
+        except Exception:
+            continue
+    return float(np.median(c2s)), float(np.median(ks))
+
+
 def heatmap(root, ds, outdir, dpi, n=17):
-    """Score over the (C2, K) rectangle for one dataset."""
+    """Score over the Alg.-3 search rectangle: the grid is laid on
+    the stage-1 centre (C2_0, K_0) exactly as Fig. 6, with the
+    deployed stage-2 constants (C2*, K*) marked inside it."""
     case, simax = ds.split('/')
     axis = 'x' if simax == 'Mx' else 'y'
     with contextlib.redirect_stdout(io.StringIO()):
         bags = load_excitation_dataset(root / case / simax)
+    c20, k0 = stage1_centre(bags, axis)
     c2s, ks = PNLS_CONSTANTS[(case, simax)]
+    print(f'stage-1 centre C2_0 {c20:.3f}, K_0 {k0:.4f}; deployed '
+          f'C2* {c2s:.3f} (x{c2s / c20:.3f}), K* {ks:.4f} '
+          f'(x{ks / k0:.3f})', flush=True)
     fc2 = np.linspace(0.75, 1.25, n)
     fk = np.linspace(0.60, 1.40, n)
-    Z = np.array([[score(bags, axis, f2 * c2s, f1 * ks) for f1 in fk]
+    Z = np.array([[score(bags, axis, f2 * c20, f1 * k0) for f1 in fk]
                   for f2 in fc2])
     s0 = score(bags, axis, c2s, ks)
     fig, ax = plt.subplots(figsize=(6.6, 5.2))
@@ -85,13 +113,10 @@ def heatmap(root, ds, outdir, dpi, n=17):
                        cmap='viridis')
     cb = fig.colorbar(im, ax=ax)
     cb.set_label(r'score / score$^{\ast}$', fontsize=10)
-    ax.plot(1.0, 1.0, '*', ms=14, color='white', mec='k', mew=0.8,
-            label='calibrated point')
-    jmin = np.unravel_index(np.argmin(Z), Z.shape)
-    ax.plot(fk[jmin[1]], fc2[jmin[0]], 'o', ms=6, mfc='none',
-            mec='white', mew=1.4, label='grid minimum')
-    ax.set_xlabel(r'$K / K^{\ast}$', fontsize=10)
-    ax.set_ylabel(r'$C_2 / C_2^{\ast}$', fontsize=10)
+    ax.plot(ks / k0, c2s / c20, '*', ms=14, color='white', mec='k',
+            mew=0.8, label=r'calibrated $(C_2^{\ast}, K^{\ast})$')
+    ax.set_xlabel(r'$K / K_0$', fontsize=10)
+    ax.set_ylabel(r'$C_2 / C_{2,0}$', fontsize=10)
     ax.set_title(f'{case.replace("case_0", "E")}/{simax}', loc='left',
                  fontsize=10)
     ax.legend(fontsize=8.5, loc='upper left', framealpha=0.9)
@@ -99,9 +124,10 @@ def heatmap(root, ds, outdir, dpi, n=17):
     fig.savefig(outdir / 'exp_score_heatmap.png', dpi=dpi,
                 bbox_inches='tight')
     plt.close(fig)
-    print(f'heatmap: score* {s0:.4f}, grid min '
-          f'{Z.min():.4f} at C2 x{fc2[jmin[0]]:.2f}, '
-          f'K x{fk[jmin[1]]:.2f}; max/score* {Z.max() / s0:.2f}',
+    jmin = np.unravel_index(np.argmin(Z), Z.shape)
+    print(f'heatmap: score* {s0:.4f}, sweep min {Z.min():.4f} at '
+          f'C2 x{fc2[jmin[0]]:.2f}, K x{fk[jmin[1]]:.2f} of the '
+          f'stage-1 centre; max/score* {Z.max() / s0:.2f}',
           flush=True)
 
 
