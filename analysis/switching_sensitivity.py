@@ -73,11 +73,19 @@ def load(data, source):
     return runs
 
 
-def toggles(run, w_thr, z_th):
-    """in_flight transitions of Algorithm 4 under (w_thr, z_th)."""
+def toggles(run, w_thr, z_th, latch=True):
+    """in_flight transitions under (w_thr, z_th).
+
+    latch=True is Algorithm 4; latch=False is the bare thrust
+    indicator (f_act >= w_thr) with no latch and no altitude hold-in,
+    i.e. the behaviour the hysteresis is there to prevent."""
     was, n, prev = False, 0, False
     for fi, zi in zip(run['f'], run['z']):
         airborne = fi >= w_thr
+        if not latch:
+            n += airborne != prev
+            prev = airborne
+            continue
         was = was or airborne
         in_flight = airborne or (was and zi > z_th)
         if not in_flight:
@@ -99,22 +107,23 @@ def main():
     runs = load(a.data, a.source)
     print(f'{len(runs)} runs (pivot-based excluded)\n')
 
-    def sweep(label, pairs):
+    def sweep(label, pairs, latch=True):
         rows = []
-        print(f'{label:>26}   clean/total   max toggles   per-group max')
+        print(f'{label:>26}   clean/total   max toggles   chattering runs')
         for tag, w_thr, z_th in pairs:
-            n = [toggles(r, w_thr, z_th) for r in runs]
-            grp = defaultdict(list)
-            for r, v in zip(runs, n):
-                grp[(r['ctrl'], r['var'])].append(v)
-            worst = max(max(v) for v in grp.values())
+            n = [toggles(r, w_thr, z_th, latch) for r in runs]
+            bad = sorted({r['case'] for r, v in zip(runs, n) if v > 1})
             clean = sum(1 for v in n if v == 1)
             rows.append((tag, clean, len(n), max(n)))
             print(f'{tag:>26}   {clean:3d}/{len(n):<3d}       '
-                  f'{max(n):3d}          {worst}')
+                  f'{max(n):3d}          '
+                  f'{len(n) - clean} ({",".join(bad) if bad else "-"})')
         print()
         return rows
 
+    # the baseline the hysteresis exists to prevent
+    brows = sweep('bare indicator (no latch)',
+                  [('f >= W_nom', W_NOM, 0.0)], latch=False)
     zrows = sweep('altitude hold-in z_th [m]',
                   [(f'{z:.3f}', W_NOM, z) for z in Z_SWEEP])
     frows = sweep('thrust threshold / W_nom',
@@ -131,16 +140,25 @@ def main():
             f'({len(runs)} take-offs). Entries count the runs whose '
             '\\texttt{in\\_flight} flag makes exactly one transition '
             '(a clean take-off) and the worst-case transition count '
-            'over all runs; the deployed setting is '
+            'over all runs. The first block is the bare thrust '
+            'indicator, which chatters; the latch of Algorithm~4 '
+            'removes it, and does so over a wide range of both design '
+            'constants. The deployed setting is '
             '$z_{\\mathrm{th}} = 0.010$~m with the threshold at '
             '$W_{\\mathrm{nom}}$.}\n'
             '\\label{tab:switching_sensitivity}\n'
             '\\centering\\small\n'
             '\\begin{tabular}{@{}lcc@{}}\n\\toprule\n'
             'setting & clean take-offs & worst count\\\\\n\\midrule\n'
-            f'\\multicolumn{{3}}{{@{{}}l}}{{altitude hold-in '
-            f'$z_{{\\mathrm{{th}}}}$ [m], threshold at '
-            f'$W_{{\\mathrm{{nom}}}}$}}\\\\\n')
+            '\\multicolumn{3}{@{}l}{bare thrust indicator '
+            '$f_{\\mathrm{act}} \\ge W_{\\mathrm{nom}}$ '
+            '(no latch, no hold-in)}\\\\\n')
+        for tag, clean, tot, mx in brows:
+            fh.write(f'\\quad {tag} & {clean}/{tot} & {mx}\\\\\n')
+        fh.write(
+            '\\addlinespace\n'
+            f'\\multicolumn{{3}}{{@{{}}l}}{{Algorithm~4, altitude '
+            f'hold-in $z_{{\\mathrm{{th}}}}$ [m]}}\\\\\n')
         for tag, clean, tot, mx in zrows:
             star = '$^{\\ast}$' if tag == '0.010' else ''
             fh.write(f'\\quad {tag}{star} & {clean}/{tot} & {mx}\\\\\n')
