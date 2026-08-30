@@ -84,63 +84,39 @@ def draw_parity(est, out, dpi):
 
 
 def draw(est, mode, out, dpi):
-    """One slot-dodged panel; mode 'ci' or 'indiv'."""
-    fig, ax = plt.subplots(figsize=(12.5, 3.4))
-    pos, x = {}, 0.0
-    for case in CASES:
-        for axname in ('My', 'Mx'):     # x_off from pitch, y_off roll
-            pos[(case, axname)] = x
-            x += SLOT
-        x += GAP
-
-    ax.axhline(0, color='0.35', lw=0.9, zorder=1)
-    for case in CASES:
-        for axname in ('My', 'Mx'):
+    """Stacked 2x1 panels, one per offset component; mode 'ci'."""
+    fig, axes = plt.subplots(2, 1, figsize=(7.0, 6.6), sharey=True)
+    for ax, axname, comp in zip(axes, ('My', 'Mx'),
+                                (r'$x_{\mathrm{off}}$',
+                                 r'$y_{\mathrm{off}}$')):
+        ax.axhline(0, color='0.35', lw=0.9, zorder=1)
+        for ci_, case in enumerate(CASES):
             key = (case, axname)
-            xc = pos[key]
             for k, m in enumerate(M):
                 me, half, indiv = est(key, m)
-                xm = xc + (k - 2.5) * 0.115
-                lab = LBL[m] if key == (CASES[0], 'My') else None
-                if mode == 'ci':
-                    ax.errorbar(xm, me, yerr=half, fmt=MRK[m],
-                                color=COL[m], ms=5.5, elinewidth=1.2,
-                                capsize=2.0, zorder=3, label=lab)
-                else:
-                    ax.plot([xm] * len(indiv), indiv, '.', ms=3.4,
-                            color=COL[m], alpha=0.45, mec='none',
-                            zorder=2)
-                    ax.plot(xm, me, MRK[m], color=COL[m], ms=5.5,
-                            zorder=3, label=lab)
+                xm = ci_ + (k - 2.5) * 0.115
+                lab = (LBL[m] if ax is axes[0] and ci_ == 0 else None)
+                ax.errorbar(xm, me, yerr=half, fmt=MRK[m],
+                            color=COL[m], ms=5.5, elinewidth=1.2,
+                            capsize=2.0, zorder=3, label=lab)
+            if ci_:
+                ax.axvline(ci_ - 0.5, color='0.85', lw=0.8, zorder=0)
+        ax.set_xticks(range(len(CASES)))
+        ax.set_xticklabels([f'E{i + 1}' for i in range(len(CASES))],
+                           fontsize=9.5)
+        ax.set_xlim(-0.55, len(CASES) - 0.45)
+        ax.set_title(comp, loc='left', fontsize=10)
+        ax.set_ylabel('CoM offset error [mm]')
+        ax.grid(axis='y', alpha=0.55, lw=0.9, color='0.55')
+        ax.grid(axis='x', alpha=0.20, lw=0.6, color='0.6')
+        ax.set_axisbelow(True)
+        for sp in ('top', 'right'):
+            ax.spines[sp].set_visible(False)
 
-    ax.set_xticks([pos[(c, a)] for c in CASES for a in ('My', 'Mx')])
-    ax.set_xticklabels([r'$x_{\mathrm{off}}$', r'$y_{\mathrm{off}}$']
-                       * len(CASES), fontsize=9)
-    ax.set_xlim(pos[(CASES[0], 'My')] - 0.75,
-                pos[(CASES[-1], 'Mx')] + 0.75)
-    ax.set_ylabel('CoM offset error [mm]')
-    ax.grid(axis='y', alpha=0.55, lw=0.9, color='0.55')
-    ax.grid(axis='x', alpha=0.20, lw=0.6, color='0.6')
-    ax.set_axisbelow(True)
-    for sp in ('top', 'right'):
-        ax.spines[sp].set_visible(False)
-
-    ylim = ax.get_ylim()
-    span = ylim[1] - ylim[0]
-    ax.set_ylim(ylim[0], ylim[1] + 0.13 * span)
-    ytxt = ylim[1] + 0.045 * span
-    for ci_, case in enumerate(CASES):
-        xc = 0.5 * (pos[(case, 'My')] + pos[(case, 'Mx')])
-        ax.text(xc, ytxt, f'E{ci_ + 1}', ha='center', va='bottom',
-                fontsize=10)
-        if ci_:
-            ax.axvline(pos[(case, 'My')] - 0.5 * (SLOT + GAP),
-                       color='0.85', lw=0.8, zorder=0)
-
-    handles, labels = ax.get_legend_handles_labels()
+    handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(handles, labels, loc='upper center', ncol=6, fontsize=8,
-               frameon=False, bbox_to_anchor=(0.5, 1.05))
-    fig.tight_layout(rect=(0, 0, 1, 0.96))
+               frameon=False, bbox_to_anchor=(0.5, 1.03))
+    fig.tight_layout(rect=(0, 0, 1, 0.97))
     fig.savefig(out.with_suffix('.png'), dpi=dpi, bbox_inches='tight')
     plt.close(fig)
 
