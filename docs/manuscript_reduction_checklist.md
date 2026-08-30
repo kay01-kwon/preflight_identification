@@ -1,8 +1,11 @@
 # 원고 감축 체크리스트
 
 현재 36페이지(그림 33개, 표 23개). IEEE Access 통상 분량의 두 배.
-아래 항목을 모두 적용하면 **그림 33→27, 표 23→19, 약 5~7페이지 감축**
-(빈 섹션 집필분 +2.5~3p를 더해도 최종 32~34p).
+아래 항목을 모두 적용하면 **그림 33→30, 표 23→20, 약 3.5~5페이지 감축**
+(빈 섹션 집필분 +2.5~3p를 더해도 최종 34~36p).
+
+리뷰어 대응분(§3)은 감축 대상에서 제외했다 — 할당기 포화(V-A, Fig. 11/12)와
+yaw 마찰(Fig. 10, 식 (71)~(74))은 지적 사항에 대한 직접 답변이므로 유지한다.
 
 감축 대상은 전부 II·III·IV·V·부록에 있고, 남은 집필은 VIII-C·IX에
 있으므로 **순서 의존성이 없다** — 집필 전에 먼저 잘라도 무방하다.
@@ -25,6 +28,28 @@
 - [ ] 결론의 pivot-based/pivot-free 취합 서술 → pivot-free 단독으로 정정
       (자율비행 결과에서 pivot-based 변형 제외하기로 결정)
 
+### 미대응 리뷰어 지적 — 추가 필요
+
+- [ ] **히스테리시스 임계값의 파라미터 민감도** (스위칭 로직 지적의 3번째 항목:
+      "hysteresis threshold design is chosen without parameter sensitivity
+      analysis to verify its anti-chattering performance")
+      → `analysis/switching_sensitivity.py` 로 생성한
+      **`docs/tab_switching_sensitivity.tex`** 를 **IV-B**에 삽입하고
+      아래 결과를 서술 (전 60회 이륙, pivot-based 제외):
+
+      | 스윕 | 무결(1회 토글) | 최악 토글 |
+      |---|---|---|
+      | z_th = 0 ~ 0.050 m | 60/60 | 1 |
+      | z_th = 0.100 m | 50/60 | 5 |
+      | 임계 0.90 ~ 1.05 W_nom | 60/60 | 1 |
+      | 임계 1.10 W_nom | 47/60 | 3 |
+
+      배포값(z_th = 0.010 m, 임계 = W_nom)은 넓은 평탄부 한가운데 —
+      z_th는 5배까지, 추력 임계는 ±5%까지 무결. 실패 경계도 물리적으로
+      설명된다: z_th = 0.100 m는 t_70 시점 상승고(0.14 m)에 육박해 플래그가
+      유지될 구간이 없고, 임계 1.10 W_nom = 32.4 N은 실제 기체 중량
+      (30.1 / 31.6 N)을 넘어 도달 자체가 불가능하다.
+
 ---
 
 ## 1. 감축 대상 (효과 큰 순)
@@ -42,17 +67,9 @@
 - [ ] 각 모듈을 핵심 식 2~3개 + 인용으로 축약
 - [ ] 고유 기여인 **tanh signum (45)** 는 유지
 
-### (c) Section V-A + Fig. 11, 12 — 그림 2개 + 반 컬럼
-"할당기 포화가 발생하지 않는다"는 null result에 절 하나와 그림 두 장.
-- [ ] Fig. 11, Fig. 12 삭제
-- [ ] 한 문장으로 대체: "Mx,max = 2.371 N·m, My,max = 2.737 N·m이며
-      모든 시험 진폭이 이 한계 아래"
-- [ ] (52)~(55) 도 함께 축약
-
-### (d) Fig. 10 + yaw 마찰 분석 — 그림 1개 + 1컬럼
-접지 중 z축 보상을 끄는 근거로 마찰 토크 모델 (71), 등차수열 논증 (72)(73),
-허용 모멘트 집합 (74)까지 전개. 기여와 무관한 곁가지.
-- [ ] **Fig. 10** 삭제, (71)~(74) 를 2~3문장으로 축약
+### (c), (d) — 취소됨: 리뷰어 대응분이므로 유지
+Section V-A + Fig. 11/12(할당기 포화)와 Fig. 10 + yaw 마찰 (71)~(74)는
+리뷰어 지적에 대한 직접 답변이므로 **삭제하지 말 것**. §3 참조.
 
 ### (e) Table 15 (제외 런 30개 개별 나열) — 반 페이지
 - [ ] 표 삭제 → "308런 중 30런 게이트 탈락(주로 |ε| 및 linRMSE 초과);
@@ -102,7 +119,30 @@ II-B1, IV-A, V-G, 결론에 같은 논지가 반복.
 
 Table 1(관련연구 비교), **Alg. 1**, **Alg. 4**, 식 (7)/(14)/(18),
 게이트 (19), 스코어 (23), V-E·V-F·V-G의 바운드 3종,
-Table 16/19/20/21/22, Fig. 20/21/24/26/27/28, fc 각주(리뷰어 대응분).
+Table 16/19/20/21/22, Fig. 20/21/24/26/27/28, fc 각주.
+
+### 리뷰어 대응분 — 특히 삭제 금지
+
+이 두 블록은 리뷰어 지적에 대한 직접 답변이므로 축약도 신중히 할 것.
+
+- **Section V-A + Fig. 11, 12** (할당기 포화)
+  > "actual rotor thrust allocation has saturation constraints, which
+  > distort the linear moment ramp profile during hardware testing.
+  > The theoretical model does not incorporate actuator saturation
+  > limits…"
+
+  → 이론과 실제 여기신호의 괴리를 메우는 부분. 포화가 일어나지
+  않는다는 결론 자체가 답변이므로 그림 2장 유지.
+
+- **Fig. 10 + yaw 마찰 (71)~(74)** (스위칭 로직)
+  > "The switching logic … contains ambiguous judgment conditions.
+  > The yaw-axis compensation zeroing rule lacks rigorous mathematical
+  > demonstration, and hysteresis threshold design is chosen without
+  > parameter sensitivity analysis to verify its anti-chattering
+  > performance."
+
+  → (71)~(74)가 "yaw zeroing의 수학적 논증", Fig. 10이 "yaw 요구가
+  roll/pitch 여유를 잠식한다"는 근거. 둘 다 유지.
 
 ---
 
