@@ -174,12 +174,9 @@ def main():
         return np.array([m[key] for m in runs[(case, ctrl, var)]])
 
     UNIT = {'tilt': (1.0, r'$\vartheta_{\mathrm{peak}}$ [deg]', '{:.1f}'),
-            'rate': (1.0, r'$\Vert\omega_{xy}\Vert_{\mathrm{peak}}$'
-                          r' [deg/s]', '{:.0f}'),
-            'drift': (100.0, r'$\Vert p_{xy}\Vert_{\mathrm{peak}}$'
-                             r' [cm]', '{:.1f}'),
-            'speed': (1.0, r'$\Vert v_{xy}\Vert_{\mathrm{peak}}$'
-                           r' [m/s]', '{:.2f}')}
+            'rate': (1.0, r'$\omega_{\mathrm{peak}}$ [deg/s]', '{:.0f}'),
+            'drift': (100.0, r'$p_{\mathrm{peak}}$ [cm]', '{:.1f}'),
+            'speed': (1.0, r'$v_{\mathrm{peak}}$ [m/s]', '{:.2f}')}
 
     # one slot per observer/variant, the whole campaign pooled: the
     # per-case detail lives in the table's aggregation and the runs
