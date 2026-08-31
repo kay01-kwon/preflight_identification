@@ -175,7 +175,7 @@ def main():
 
     UNIT = {'tilt': (1.0, r'$\vartheta_{\mathrm{peak}}$ [deg]', '{:.1f}'),
             'rate': (1.0, r'$\omega_{\mathrm{peak}}$ [deg/s]', '{:.0f}'),
-            'drift': (100.0, r'$p_{\mathrm{peak}}$ [cm]', '{:.1f}'),
+            'drift': (1.0, r'$p_{\mathrm{peak}}$ [m]', '{:.3f}'),
             'speed': (1.0, r'$v_{\mathrm{peak}}$ [m/s]', '{:.2f}')}
 
     # one slot per observer/variant, the whole campaign pooled: the
