@@ -26,13 +26,12 @@ regimes are present in every trial, which is why a filter run over the
 whole record can separate them.
 
 THE THREE ESTIMATORS, and where each comes from.
-  RLS  after Mellinger, Lindsey, Shomin and Kumar (2011), who estimate
-       the inertial parameters of the vehicle-plus-payload from the
-       rigid-body dynamics written linearly in those parameters. Here
-       that is Mgeom + gyro = [wdot, f] . [J, -/+ p], solved
-       recursively with a forgetting factor. It needs wdot, so the rate
-       is differentiated with the Savitzky-Golay setting used elsewhere
-       in this work (order 2, 5 Hz).
+  RLS  faithful to the cited formulation: the quasi-static
+       thrust-moment coupling Mgeom = -/+ p_off f, solved recursively
+       with a forgetting factor. No rotational-dynamics term and no
+       rate differentiation; the forgetting factor discounts the
+       take-off transient, where the quasi-static assumption is
+       violated, in favour of the hover that follows.
   EKF  after Wuest, Kumar and Loianno (2019), who carry the geometric
        and inertia parameters as filter states. Here the state is
        [w, a, p] with a = 1/J, propagated through
@@ -58,7 +57,6 @@ from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
-from scipy.signal import savgol_filter
 
 C_T = 1.3175e-7                  # N/rpm^2, table 9
 ARM = 0.265                      # m,       table 9
@@ -69,7 +67,6 @@ TRUTH = {'01': (-11.45, -2.90), '02': (-9.90, -14.29), '03': (3.14, -5.26),
 # CAD inertias of table 7, used only for the small gyroscopic correction
 J_CAD = dict(xx=0.051085, yy=0.050564, zz=0.073831)
 FS = 100.0                       # Hz, the logged rate
-SG_WIN, SG_ORD = 41, 2           # the setting used elsewhere in this work
 
 DATA = Path('DataSet/free_flight')
 OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path('.')
@@ -110,24 +107,23 @@ def signals(path, case):
 
 # ── RLS ──────────────────────────────────────────────────────────────
 def rls(w, Mg, f, gyro, lam=0.999):
-    """Mgeom + gyro = J wdot -/+ p f, solved recursively per axis."""
-    dt = 1.0 / FS
+    """Faithful to the cited formulation: the quasi-static
+    thrust--moment coupling Mgeom = -/+ p_off f, solved recursively
+    with a forgetting factor.  No rotational-dynamics term and no
+    rate differentiation -- in hover the moment balance degenerates
+    to the coupling alone, which is exactly what the recursion fits;
+    the forgetting factor discounts the take-off transient where the
+    quasi-static assumption is violated."""
     out = []
-    for ax, sgn in ((0, -1.0), (1, +1.0)):           # roll: -y, pitch: +x
-        wd = savgol_filter(w[:, ax], SG_WIN, SG_ORD, deriv=1, delta=dt)
-        # regressors [wdot, f] against [J, -sgn p]; the gyroscopic term
-        # is a known correction, not a parameter
-        Phi = np.column_stack([wd, f])
-        y = Mg[:, ax] + gyro[:, ax]
-        th = np.array([J_CAD['xx' if ax == 0 else 'yy'], 0.0])
-        P = np.diag([1e-2, 1e-4])
-        for k in range(len(y)):
-            phi = Phi[k]
-            g = P @ phi / (lam + phi @ P @ phi)
-            th = th + g * (y[k] - phi @ th)
-            P = (P - np.outer(g, phi) @ P) / lam
-        out.append(-sgn * th[1])                     # p_off in metres
-    return out[0], out[1]                            # (y_off, x_off)
+    for ax in (0, 1):                       # roll: +y_off, pitch: -x_off
+        th, P = 0.0, 1e-2
+        for k in range(len(f)):
+            phi = f[k]
+            g = P * phi / (lam + phi * P * phi)
+            th = th + g * (Mg[k, ax] - phi * th)
+            P = (P - g * phi * P) / lam
+        out.append(th)
+    return out[0], -out[1]                  # (y_off, x_off) in metres
 
 
 # ── shared nonlinear model for the filters ───────────────────────────
