@@ -1,17 +1,18 @@
-% Trial counts of every campaign, one row per condition structure.
+% Trial counts of every test series, one row per condition structure.
 % Counts verified against the shipped datasets: SimDataSet/R3 (308),
 % DataSet/exp (140), DataSet/loadcell (5 x 2 x 5), SimDataSet/
 % free_flight (132), DataSet/free_flight (90).
 \begin{table}[t]
-\caption{Trial counts per campaign and condition. Every reported
-statistic draws on the full set of its row; the excitation gates are
-the only exclusions and are listed exhaustively in
-Table~\ref{tab:sim_gate_exclusions}.}
+\caption{Trial counts per test series and condition. Every reported
+statistic draws on the full set of its row; the excitation run gates
+are the only exclusions (30 of the 308 simulated runs; none on
+hardware), and the free-flight evaluation compares the uncompensated
+and pivot-free configurations.}
 \label{tab:campaign_counts}
 \centering\small
 \begin{tabular}{@{}llc@{}}
 \toprule
-Campaign & Conditions & Trials\\
+Test series & Conditions & Trials\\
 \midrule
 Simulation excitation & 11 cases $\times$ 2 axes $\times$
  2 directions $\times$ 7 ramp rates & 308\\
@@ -24,6 +25,7 @@ Simulation free flight & 11 cases $\times$ 2 controllers $\times$
  2 variants $\times$ 3 flights & 132\\
 Hardware free flight & 5 cases $\times$ 2 controllers $\times$
  3 variants $\times$ 3 flights & 90\\
+ & \quad evaluated (pivot-based variant excluded) & 60\\
 Shifted-moment validation & 7 ramp rates $\times$ 30 noise
  realisations & 210\\
 \bottomrule
