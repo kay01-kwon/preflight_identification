@@ -47,6 +47,8 @@ COL = {'proposed': '#0072B2', 'EKF': '#D55E00', 'UKF': '#E69F00',
        'RLS': '#009E73', 'hover trim': '#CC79A7'}
 MRK = {'proposed': 'o', 'EKF': 's', 'UKF': 'D', 'RLS': '^',
        'hover trim': 'v'}
+LBL = {'proposed': 'COSH (pre-flight)', 'EKF': 'EKF', 'UKF': 'UKF',
+       'RLS': 'RLS', 'hover trim': 'hover trim'}
 
 
 def load(a):
@@ -99,6 +101,7 @@ def main():
     p.add_argument('--hover', type=Path, default=Path('/tmp/hover'))
     p.add_argument('--outdir', type=Path,
                    default=Path(__file__).resolve().parents[1] / 'docs')
+    p.add_argument('--dpi', type=int, default=600)
     a = p.parse_args()
     a.outdir.mkdir(parents=True, exist_ok=True)
 
@@ -125,7 +128,7 @@ def main():
         if m not in S:
             continue
         ax1.plot(S[m]['truth'], S[m]['est'], MRK[m], ms=5.5, mfc='none',
-                 mew=1.4, color=COL[m], ls='', label=m, zorder=3)
+                 mew=1.4, color=COL[m], ls='', label=LBL[m], zorder=3)
     ax1.set_xlim(-lim, lim)
     ax1.set_ylim(-lim, lim)
     ax1.set_aspect('equal')
@@ -145,7 +148,7 @@ def main():
                  mec='0.25', mew=1.0, zorder=3)
         if m == 'UKF':
             continue          # it lands on the EKF; one label serves both
-        lab = 'EKF / UKF' if m == 'EKF' else m
+        lab = 'EKF / UKF' if m == 'EKF' else LBL[m]
         ax2.annotate(lab, (AIRBORNE[m], S[m]['rms']), xytext=(0, 11),
                      textcoords='offset points', ha='center',
                      fontsize=8.5, color='0.2')
@@ -161,10 +164,9 @@ def main():
                   fontsize=9.5, loc='left')
 
     fig.tight_layout()
-    for ext, kw in (('pdf', {}), ('png', dict(dpi=200))):
-        fig.savefig(a.outdir / f'fig_baselines.{ext}',
-                    bbox_inches='tight', **kw)
-    print(f'\nwritten to {a.outdir / "fig_baselines.pdf"}')
+    fig.savefig(a.outdir / 'exp_baselines.png', bbox_inches='tight',
+                dpi=a.dpi)
+    print(f'\nwritten to {a.outdir / "exp_baselines.png"}')
 
     # ---- the distribution behind the RMS, as a box per method -------
     # Every method is aggregated to the same level first -- the mean
@@ -193,19 +195,16 @@ def main():
                     xytext=(0, -3), textcoords='offset points',
                     ha='center', va='top', fontsize=8.5, color='0.25')
     ax.set_xticks(np.arange(len(present)))
-    ax.set_xticklabels([('proposed\n(pre-flight)' if m == 'proposed'
-                         else m) for m in present], fontsize=9)
+    ax.set_xticklabels([('COSH\n(pre-flight)' if m == 'proposed'
+                         else LBL[m]) for m in present], fontsize=9)
     ax.set_ylabel('offset error [mm]', fontsize=9.5)
     ax.grid(axis='y', alpha=0.55, lw=0.9, color='0.55')
     ax.set_axisbelow(True)
     ax.axvline(0.5, color='0.6', lw=0.8, ls=':')
-    ax.set_title(f'RMS annotated; n = {len(data[0])} configurations each',
-                 fontsize=9, loc='right', color='0.35')
     fig2.tight_layout()
-    for ext, kw in (('pdf', {}), ('png', dict(dpi=200))):
-        fig2.savefig(a.outdir / f'fig_baselines_box.{ext}',
-                     bbox_inches='tight', **kw)
-    print(f'written to {a.outdir / "fig_baselines_box.pdf"}')
+    fig2.savefig(a.outdir / 'exp_baselines_box.png',
+                 bbox_inches='tight', dpi=a.dpi)
+    print(f'written to {a.outdir / "exp_baselines_box.png"}')
 
     # the same numbers as a LaTeX table body
     tex = a.outdir / 'tab_baselines.tex'
@@ -214,8 +213,7 @@ def main():
             if m not in S:
                 continue
             s = S[m]
-            name = ('proposed (pre-flight)' if m == 'proposed'
-                    else m)
+            name = LBL[m]
             need = ('none' if AIRBORNE[m] == 0
                     else f'${AIRBORNE[m]:.0f}$')
             fh.write(f'{name} & ${s["rms"]:.2f}$ & ${s["med"]:.2f}$ & '
