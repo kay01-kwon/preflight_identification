@@ -201,8 +201,6 @@ def main():
     ax.grid(axis='y', alpha=0.55, lw=0.9, color='0.55')
     ax.set_axisbelow(True)
     ax.axvline(0.5, color='0.6', lw=0.8, ls=':')
-    ax.set_title(f'RMS annotated; n = {len(data[0])} configurations each',
-                 fontsize=9, loc='right', color='0.35')
     fig2.tight_layout()
     fig2.savefig(a.outdir / 'exp_baselines_box.png',
                  bbox_inches='tight', dpi=a.dpi)
