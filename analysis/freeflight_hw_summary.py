@@ -210,42 +210,6 @@ def main():
                 bbox_inches='tight')
     plt.close(fig)
 
-    # ── the worst case alone: the largest true offset, as boxes ──────
-    # the stress case the compensation exists for; with three repeats
-    # per cell the individual flights are overlaid on the boxes
-    worst = max(OFFSET, key=lambda c: np.hypot(*OFFSET[c]))
-    fig, axes = plt.subplots(2, 2, figsize=(6.6, 5.6), sharex=True)
-    for ax, key in zip(axes.flat, KEYS):
-        sc, ylab, _ = UNIT[key]
-        for i, (ctrl, var) in enumerate(series):
-            col = COL[ctrl] if var == 'wo_ff' else LIGHT[ctrl]
-            v = sc * pool(worst, ctrl, var, key)
-            bp = ax.boxplot([v], positions=[i], widths=0.5,
-                            patch_artist=True, showfliers=False,
-                            medianprops=dict(color='0.15', lw=1.6),
-                            whiskerprops=dict(color=col, lw=1.2),
-                            capprops=dict(color=col, lw=1.2), zorder=2)
-            for b in bp['boxes']:
-                b.set(facecolor=col, alpha=0.30, edgecolor=col, lw=1.3)
-            ax.plot(np.full(len(v), i), v, 'o', ms=3.6, color=col,
-                    mec='0.25', mew=0.5, zorder=4)
-        ax.axvline(1.5, color='0.88', lw=0.8, zorder=0)
-        ax.set_xticks(range(len(series)))
-        ax.set_xticklabels(ticklab, fontsize=8.5)
-        ax.set_xlim(-0.6, len(series) - 0.4)
-        ax.set_ylim(bottom=0)
-        ax.set_ylabel(ylab, fontsize=9.5)
-        ax.grid(axis='y', alpha=0.4, lw=0.8, color='0.6')
-        ax.set_axisbelow(True)
-        for sp in ('top', 'right'):
-            ax.spines[sp].set_visible(False)
-    fig.tight_layout()
-    fig.savefig(a.outdir / 'exp_ff_worst.png', dpi=a.dpi,
-                bbox_inches='tight')
-    plt.close(fig)
-    print(f'worst case E{int(worst)}: ||p_off|| = '
-          f'{np.hypot(*OFFSET[worst]):.1f} mm')
-
     # ── table: campaign aggregate, the tab_ff_sim_agg layout ─────────
     # per-case means of the repeats first, then median and empirical
     # 95% interval over the five cases; improvement is the per-case
