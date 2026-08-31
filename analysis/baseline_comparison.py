@@ -99,6 +99,7 @@ def main():
     p.add_argument('--hover', type=Path, default=Path('/tmp/hover'))
     p.add_argument('--outdir', type=Path,
                    default=Path(__file__).resolve().parents[1] / 'docs')
+    p.add_argument('--dpi', type=int, default=600)
     a = p.parse_args()
     a.outdir.mkdir(parents=True, exist_ok=True)
 
@@ -161,10 +162,9 @@ def main():
                   fontsize=9.5, loc='left')
 
     fig.tight_layout()
-    for ext, kw in (('pdf', {}), ('png', dict(dpi=200))):
-        fig.savefig(a.outdir / f'fig_baselines.{ext}',
-                    bbox_inches='tight', **kw)
-    print(f'\nwritten to {a.outdir / "fig_baselines.pdf"}')
+    fig.savefig(a.outdir / 'exp_baselines.png', bbox_inches='tight',
+                dpi=a.dpi)
+    print(f'\nwritten to {a.outdir / "exp_baselines.png"}')
 
     # ---- the distribution behind the RMS, as a box per method -------
     # Every method is aggregated to the same level first -- the mean
@@ -202,10 +202,9 @@ def main():
     ax.set_title(f'RMS annotated; n = {len(data[0])} configurations each',
                  fontsize=9, loc='right', color='0.35')
     fig2.tight_layout()
-    for ext, kw in (('pdf', {}), ('png', dict(dpi=200))):
-        fig2.savefig(a.outdir / f'fig_baselines_box.{ext}',
-                     bbox_inches='tight', **kw)
-    print(f'written to {a.outdir / "fig_baselines_box.pdf"}')
+    fig2.savefig(a.outdir / 'exp_baselines_box.png',
+                 bbox_inches='tight', dpi=a.dpi)
+    print(f'written to {a.outdir / "exp_baselines_box.png"}')
 
     # the same numbers as a LaTeX table body
     tex = a.outdir / 'tab_baselines.tex'
