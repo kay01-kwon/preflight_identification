@@ -88,9 +88,11 @@ def stats(d):
     t = np.array([TRUTH[c][0 if k == 'x' else 1] for (c, k) in d])
     e = np.array([d[key] for key in d])
     err = np.abs(e - t)
+    lo, hi = np.percentile(e - t, [2.5, 97.5])
     sl, _ = np.polyfit(t, e, 1)
     return dict(rms=np.sqrt(np.mean(err ** 2)), med=np.median(err),
-                mx=err.max(), corr=np.corrcoef(t, e)[0, 1], slope=sl,
+                mx=err.max(), lo=lo, hi=hi,
+                corr=np.corrcoef(t, e)[0, 1], slope=sl,
                 truth=t, est=e)
 
 
@@ -216,8 +218,9 @@ def main():
             name = LBL[m]
             need = ('none' if AIRBORNE[m] == 0
                     else f'${AIRBORNE[m]:.0f}$')
-            fh.write(f'{name} & ${s["rms"]:.2f}$ & ${s["med"]:.2f}$ & '
-                     f'${s["mx"]:.2f}$ & ${s["corr"]:.2f}$ & '
+            fh.write(f'{name} & ${s["rms"]:.2f}$ & '
+                     f'$[{s["lo"]:+.2f},\\,{s["hi"]:+.2f}]$ & '
+                     f'${s["corr"]:.2f}$ & '
                      f'${s["slope"]:.2f}$ & {need} \\\\\n')
     print(f'table body -> {tex}')
 
