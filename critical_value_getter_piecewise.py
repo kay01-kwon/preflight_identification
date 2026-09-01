@@ -622,6 +622,12 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
         huber_delta=None,
         params=tuple(float(x) for x in params),
         model='cosh',
+        # provenance of the search, in window-local indices: the seed
+        # the sweep started from (None when seedless) and the bracket
+        # it was allowed to explore.  Used by the seed-displacement
+        # audit; carries no effect on the estimate.
+        seed_idx=(None if full_sweep else int(onset_guess)),
+        sweep_lo=int(lo), sweep_hi=int(hi),
     )
 
 
