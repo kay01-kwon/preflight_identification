@@ -88,7 +88,7 @@ def main():
             for v, ls, c, nm in zip(
                     th[key], ('-', ':', '--'),
                     ('0.15', '0.45', '#009E73'),
-                    ('no ground effect', 'Ground effect (Single rotor)',
+                    ('No ground effect', 'Ground effect (Single rotor)',
                      'Ground effect (Rotor interference)')):
                 ax.plot([i - 0.42, i + 0.42], [v, v], ls, color=c,
                         lw=2.0, zorder=2,
