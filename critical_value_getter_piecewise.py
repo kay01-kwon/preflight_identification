@@ -490,6 +490,10 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
             huber_delta=None,
             params=tuple(float(x) for x in params),
             model='cosh',
+            # the swept cost profile, window-local index -> cost. Carried
+            # out so the sweep can be drawn; the estimate does not use it.
+            cost_of=dict(cost_of),
+            sweep_lo=int(lo), sweep_hi=int(hi),
         )
 
     # Free / bounded modes.  The baseline convention is tied to the
@@ -628,6 +632,9 @@ def cosh_onset_fit(t, omega, moment, onset_guess,
         # audit; carries no effect on the estimate.
         seed_idx=(None if full_sweep else int(onset_guess)),
         sweep_lo=int(lo), sweep_hi=int(hi),
+        # the swept cost profile, window-local index -> cost. Carried out
+        # so the sweep can be drawn; the estimate does not use it.
+        cost_of=dict(cost_of),
     )
 
 
