@@ -83,9 +83,16 @@ def draw_parity(est, out, dpi):
     plt.close(fig)
 
 
-def draw(est, mode, out, dpi):
-    """Stacked 2x1 panels, one per offset component; mode 'ci'."""
-    fig, axes = plt.subplots(2, 1, figsize=(7.0, 6.6), sharey=True)
+def draw(est, mode, out, dpi, layout='2x1'):
+    """One panel per offset component; mode 'ci'.
+
+    layout '2x1' stacks them (the manuscript form), '1x2' sets them
+    side by side for a slide, sharing the error axis.
+    """
+    if layout == '1x2':
+        fig, axes = plt.subplots(1, 2, figsize=(11.0, 3.9), sharey=True)
+    else:
+        fig, axes = plt.subplots(2, 1, figsize=(7.0, 6.6), sharey=True)
     for ax, axname, comp in zip(axes, ('My', 'Mx'),
                                 (r'$x_{\mathrm{off}}$',
                                  r'$y_{\mathrm{off}}$')):
@@ -106,7 +113,8 @@ def draw(est, mode, out, dpi):
                            fontsize=9.5)
         ax.set_xlim(-0.55, len(CASES) - 0.45)
         ax.set_title(comp, loc='left', fontsize=10)
-        ax.set_ylabel('CoM offset error [mm]')
+        if layout != '1x2' or ax is axes[0]:
+            ax.set_ylabel('CoM offset error [mm]')
         ax.grid(axis='y', alpha=0.55, lw=0.9, color='0.55')
         ax.grid(axis='x', alpha=0.20, lw=0.6, color='0.6')
         ax.set_axisbelow(True)
@@ -114,9 +122,14 @@ def draw(est, mode, out, dpi):
             ax.spines[sp].set_visible(False)
 
     handles, labels = axes[0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc='upper center', ncol=6, fontsize=8,
-               frameon=False, bbox_to_anchor=(0.5, 1.03))
-    fig.tight_layout(rect=(0, 0, 1, 0.97))
+    if layout == '1x2':
+        fig.legend(handles, labels, loc='upper center', ncol=6,
+                   fontsize=9, frameon=False, bbox_to_anchor=(0.5, 1.04))
+        fig.tight_layout(rect=(0, 0, 1, 0.95))
+    else:
+        fig.legend(handles, labels, loc='upper center', ncol=6,
+                   fontsize=8, frameon=False, bbox_to_anchor=(0.5, 1.03))
+        fig.tight_layout(rect=(0, 0, 1, 0.97))
     fig.savefig(out.with_suffix('.png'), dpi=dpi, bbox_inches='tight')
     plt.close(fig)
 
@@ -128,6 +141,9 @@ def main():
     ap.add_argument('--outdir', type=Path,
                     default=Path(__file__).resolve().parents[1] / 'docs')
     ap.add_argument('--dpi', type=int, default=600)
+    ap.add_argument('--layout', choices=('2x1', '1x2'), default='2x1',
+                    help='panel arrangement of exp_estimator_err; 1x2 '
+                         'writes exp_estimator_err_wide instead')
     args = ap.parse_args()
     args.outdir.mkdir(parents=True, exist_ok=True)
 
@@ -162,6 +178,11 @@ def main():
              for rt in sorted(set(g['pos']) & set(g['neg']))])
         return me, half, indiv
 
+    if args.layout == '1x2':
+        draw(est, 'ci', args.outdir / 'exp_estimator_err_wide.png',
+             args.dpi, layout='1x2')
+        print(f'saved exp_estimator_err_wide to {args.outdir}')
+        return
     draw(est, 'ci', args.outdir / 'exp_estimator_err.png', args.dpi)
     draw_parity(est, args.outdir / 'exp_estimator_indiv.png',
                 args.dpi)
