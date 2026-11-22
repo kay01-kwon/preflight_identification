@@ -141,8 +141,7 @@ def main():
     ymin = ymax * 1e-3
     S.text(fm * 1.07, ymax * 0.55, r'$C_2^{*}/2\pi$ = %.2f Hz' % fm, fontsize=8.5, color=C_Y)
     S.text(FC * 0.94, ymax * 0.30, r'$f_c$ = 5 Hz', fontsize=8.5, ha='right')
-    S.text(0.985, 0.96, r'high band $f > f_c$: $r_{\rm hi} \to n_{\rm hi}$'
-           '\nno model content here; read from $r$ itself',
+    S.text(0.985, 0.96, r'high band $f > f_c$: $r_{\rm hi} \to n_{\rm hi}$  (no cosh content; read from $r$)',
            transform=S.transAxes, ha='right', va='top', fontsize=8.5, color='0.25')
     S.text(0.015, 0.96, 'low band $f < f_c$: model error + $n_{\\rm lo}$ mixed'
            '\n$\\to$ only the shape ratio $\\kappa_q$, taken from $q$',
