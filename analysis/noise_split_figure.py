@@ -201,7 +201,7 @@ def main():
            ha='left', va='bottom')
     C.text(0.98, 0.97,
            rf'$\mathrm{{RMS}}(n) = {nhi_all.max():.2f}\sqrt{{1+{kb:.2f}^2}} = {n_term:.2f}$ °/s'
-           '\none additive term for every run (96)',
+           '\none additive term for every run',
            transform=C.transAxes, fontsize=9, ha='right', va='top',
            bbox=dict(fc='white', ec='0.8', lw=0.6, pad=3))
     C.set_xlim(0, max(kb * 1.15, kq_all.max() * 1.05))
@@ -209,7 +209,7 @@ def main():
     C.set_xlabel(r'quiet shape ratio $\kappa_q = \mathrm{RMS}(q_{\rm lo})/\mathrm{RMS}(q_{\rm hi})$',
                  fontsize=10)
     C.set_ylabel(r'in-window $\mathrm{RMS}(n_{\rm hi})$ [$^\circ$/s]', fontsize=10)
-    C.set_title('(c) the two constants of (98)–(99), measured per run\n'
+    C.set_title('(c) the two constants of the noise term, measured per run\n'
                 'the maxima over the campaign fix a single noise term', fontsize=10)
     C.legend(fontsize=8, loc='lower left')
     C.grid(alpha=0.2, lw=0.4)
