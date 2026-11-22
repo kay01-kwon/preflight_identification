@@ -1,24 +1,29 @@
 #!/usr/bin/env python3
-"""The noise estimate of (98)-(99) on one run, drawn for a slide.
+"""The noise estimate of (98)-(99), drawn for a slide: one run and the
+campaign constants.
 
-  (a) time domain: the quiet stretch of the SAME length that ends where
-      the excitation window opens (grey) and the post-onset fit window
-      (blue), with the fit residual r and the quiet record q underneath
-  (b) frequency domain: amplitude spectra of r and q with the model's
-      spectral home C2/2pi and the brick-wall split f_c = 5 Hz; above
-      f_c the residual and the quiet record coincide (pure disturbance),
-      below f_c the residual carries model error as well, so the low
-      band is priced from q only, as the ratio kappa_q
+  (a) the raw FFT bins the numbers use: the fit residual r (dark red
+      below f_c, light red above = n_hi) and the quiet stretch q of the
+      same length (grey); no taper, no padding, Delta f = 1/T
+  (b) amplitude spectra of the same run for display: the windowed
+      record y, the fitted branch (the model), the residual r and the
+      quiet stretch q, with C2*/2pi and the 5 Hz brick wall
+  (c) the two campaign constants: per-run RMS(n_hi) against the quiet
+      shape ratio kappa_q over the runs with a quiet stretch; the
+      maxima give kappa_b and the single noise term of (96)
 
 The residual r and the split are the ones of analysis/failing_runs.py
-(amplitude channel at the calibrated C2*, rfft brick wall), so the
-numbers printed are the ones the campaign constants are built from.
+(amplitude channel at the calibrated C2*, rfft brick wall); the
+campaign values come from its cache through rms_check.measure and
+tight_rms_bound.enrich, so they are the numbers of the paper.
 
 Usage: python analysis/noise_split_figure.py [case] [axis] [run] [out.png]
 """
 import contextlib
+import csv
 import io
 import os
+import pickle
 import sys
 
 import matplotlib
@@ -26,21 +31,27 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if not hasattr(np, 'trapz'):                       # numpy >= 2
+    np.trapz = np.trapezoid
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.dirname(HERE))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import critical_value_getter_piecewise as cvp
 from constrained_calibration import ROOT
-from failing_runs import FC, amplitude_best, split
+from failing_runs import CACHE, FC, amplitude_best, split
 from pnls_constants import PNLS_CONSTANTS
+from rms_check import measure
+from tight_rms_bound import enrich
 from utils.extractor import load_excitation_dataset
 
-C_R, C_Q, C_Y = '#c0392b', '0.45', '#2874a6'
+C_R, C_RL, C_Q, C_Y, C_M = '#c0392b', '#e8a09a', '0.45', '#2874a6', '#e08214'
 
 
 def aspec(v, dt, npad=4096):
     """One-sided amplitude spectrum [deg/s], Hann-tapered and padded for
-    display; the numbers use the raw bins (split)."""
+    display only; the numbers use the raw bins."""
     vv = np.degrees(np.asarray(v, float))
     vv = vv - vv.mean()
     w = np.hanning(len(vv))
@@ -61,106 +72,149 @@ def main():
     deg = np.degrees
     rms = lambda v: float(np.sqrt(np.mean(np.asarray(v) ** 2)))
 
+    # ── one run, exactly as analysis/hw_envelope_witness.py does it:
+    #    free PNLS fit, residual over the WHOLE excitation window ───
     with contextlib.redirect_stdout(io.StringIO()):
         bags = load_excitation_dataset(ROOT / case / axis_dir)
         bag = next(b for b in bags if b.name == run)
+        crit, pw = cvp.extract_piecewise(bag, axis, model='cosh', cosh_c2=None,
+                                         ramp_gain=None, free_seed=False)
         sig = cvp.prepare_signals(bag, axis)
+    rate = cvp.commanded_ramp_rate(bag.name)
     i0, i1 = cvp.detect_excitation_window(
         sig['moment'], moment_cap=cvp.MOMENT_CAP.get(axis))
-    w = slice(i0, i1 + 1)
-    t, om, mom = sig['t'][w], sig['omega'][w], sig['moment'][w]
-    md = float(np.polyfit(t, mom, 1)[0])
-    pw = cvp.cosh_onset_fit(t, om, np.zeros_like(t), onset_guess=None,
-                            c2_fixed=c2, moment_floor=0.0, ramp_gain=k, ramp_rate=md)
-    j = pw['onset_idx']
-    tau = t[j:] - t[j]
-    dt = float(np.median(np.diff(tau)))
-    npost = len(tau)
-    _, r = amplitude_best(tau, om[j:], c2)           # fit residual, post-onset
-    q_all, tq_all = sig['omega'][:i0], sig['t'][:i0]
-    q, tq = q_all[-npost:], tq_all[-npost:]          # quiet stretch, same length
+    om_w, pred = sig['omega'][i0:i1 + 1], pw['omega_pred']
+    n = min(len(om_w), len(pred))
+    y_win, branch = om_w[:n], pred[:n]
+    r = y_win - branch
+    dt = float(np.median(np.diff(sig['t'][i0:i0 + n])))
+    q = sig['omega'][:i0][-n:]                       # quiet stretch before the window (<= same length)
     r_lo, r_hi = split(r, dt)
     q_lo, q_hi = split(q - q.mean(), dt)
-    kq = rms(q_lo) / rms(q_hi)
     n_hi = rms(r_hi)
-    n_run = n_hi * np.sqrt(1 + kq ** 2)
     fm = c2 / (2 * np.pi)
-    t0 = t[j]
+    md = float(np.polyfit(sig['t'][i0:i0 + n], sig['moment'][i0:i0 + n], 1)[0])
 
-    print(f'{case}/{axis_dir} {run}: onset t_c = {t0:.3f} s, window {tau[-1]:.2f} s, '
-          f'{npost} samples, dt = {dt * 1e3:.1f} ms, df = {1 / tau[-1]:.2f} Hz')
-    print(f'  C2*/2pi = {fm:.2f} Hz,  f_c = {FC:.0f} Hz')
+    # ── the campaign: kappa_q per run from the quiet stretches
+    #    (failing_runs cache, tight_rms_bound.enrich) and n_hi per run
+    #    from docs/hw_env_noise_runs.csv (hw_envelope_witness.py) ──
+    with open(CACHE, 'rb') as fh:
+        rows, kqmax, s_med, kb = enrich(measure(pickle.load(fh)))
+    with open(os.path.join(os.path.dirname(HERE), 'docs', 'hw_env_noise_runs.csv')) as fh:
+        csv_rows = list(csv.DictReader(fh))
+    # both files walk the datasets in the same (sorted) order; the rate
+    # alone is not a key because +/- runs share it, so pair by position
+    # and check the labels agree
+    assert len(csv_rows) == len(rows)
+    for c, d in zip(csv_rows, rows):
+        assert (c['case'], c['ax']) == (d['case'], d['axis']) and \
+            abs(float(c['rate']) - d['rate']) < 1e-9, (c, d['case'], d['axis'], d['rate'])
+    nhi_all = np.array([float(c['nhi']) for c in csv_rows])
+    kq_all = np.array([d['kq'] for d in rows if d['kq'] is not None])
+    nhi_q = np.array([float(c['nhi']) for c, d in zip(csv_rows, rows) if d['kq'] is not None])
+    me = next(i for i, b_ in enumerate(bags) if b_.name == run)
+    d_me = next(d for d, c in zip(rows, csv_rows)
+                if (d['case'], d['axis']) == (case, axis_dir)
+                and abs(d['rate'] - rate) < 1e-9 and d['sign'] == int(np.sign(md)))
+    kq = d_me['kq']
+    n_term = nhi_all.max() * np.sqrt(1 + kb ** 2)
+    n_run = deg(n_hi) * np.sqrt(1 + kq ** 2)
+
+    print(f'{case}/{axis_dir} {run}: full window {n} samples, dt = {dt * 1e3:.1f} ms, '
+          f'df = {1 / (n * dt):.2f} Hz, C2*/2pi = {fm:.2f} Hz, Mdot = {md:+.3f}')
     print(f'  residual r : RMS {deg(rms(r)):.3f}  lo {deg(rms(r_lo)):.3f}  hi {deg(n_hi):.3f} deg/s')
     print(f'  quiet q    : RMS {deg(rms(q - q.mean())):.3f}  lo {deg(rms(q_lo)):.3f}  '
-          f'hi {deg(rms(q_hi)):.3f} deg/s  ->  kappa_q = {kq:.2f}')
-    print(f'  this run   : RMS(n) = {deg(n_hi):.3f} * sqrt(1 + {kq:.2f}^2) = {deg(n_run):.3f} deg/s')
+          f'hi {deg(rms(q_hi)):.3f} deg/s;  kappa_q (cache) = {kq:.2f}')
+    print(f'  this run   : RMS(n) = {deg(n_hi):.2f} * sqrt(1 + {kq:.2f}^2) = {n_run:.2f} deg/s')
+    print(f'  campaign   : {len(csv_rows)} runs, {len(kq_all)} with a quiet stretch')
+    print(f'    RMS(n_hi): median {np.median(nhi_all):.2f}, 95% {np.percentile(nhi_all, 95):.2f}, '
+          f'max {nhi_all.max():.2f} deg/s;  kappa_b = max kappa_q = {kb:.2f}')
+    print(f'    noise term = {nhi_all.max():.2f} * sqrt(1 + {kb:.2f}^2) = {n_term:.2f} deg/s')
 
-    fig = plt.figure(figsize=(7.2, 4.9))
-    gs = fig.add_gridspec(2, 3, height_ratios=[1.0, 1.55], hspace=0.42, wspace=0.34)
-    A = fig.add_subplot(gs[0, 0])
-    B = fig.add_subplot(gs[0, 1])
-    Q = fig.add_subplot(gs[0, 2], sharey=B)
-    S = fig.add_subplot(gs[1, :])
+    fig, (A, B, C) = plt.subplots(1, 3, figsize=(13.2, 3.9))
+    fig.subplots_adjust(left=0.05, right=0.99, top=0.84, bottom=0.15, wspace=0.27)
 
-    # ── (a) the fit window: samples and the calibrated-family fit ──
-    A.plot(tau, deg(om[j:]), '.', ms=3, color='0.5', zorder=1, label=r'$y_i$')
-    A.plot(tau, deg(pw['omega_pred'][j:]), '-', lw=1.6, color=C_R, zorder=3, label=r'$\hat h$')
-    A.set_title('(a) fit window, %d samples' % npost, fontsize=8.5)
-    A.set_xlabel(r'$\tau$ [s]', fontsize=8.5)
-    A.set_ylabel(r'$\omega$ [deg/s]', fontsize=8.5)
-    A.legend(fontsize=7.5, loc='upper left', framealpha=0.9)
+    # (a) raw bins
+    vv, qq = deg(r - r.mean()), deg(q - q.mean())
+    fb = np.fft.rfftfreq(n, d=dt)
+    ab = np.abs(np.fft.rfft(vv)) * 2.0 / n
+    fbq = np.fft.rfftfreq(len(qq), d=dt)          # the quiet stretch can be shorter
+    aq = np.abs(np.fft.rfft(qq)) * 2.0 / len(qq)
+    df = fb[1] - fb[0]
+    lo = fb <= FC
+    A.bar(fb[lo & (fb > 0)] - 0.18 * df, ab[lo & (fb > 0)], 0.32 * df, color=C_R,
+          label='residual bins, low band')
+    A.bar(fb[~lo] - 0.18 * df, ab[~lo], 0.32 * df, color=C_RL,
+          label=r'residual bins, high band ($n_{\rm hi}$)')
+    A.bar(fbq[1:] + 0.18 * df, aq[1:], 0.32 * df, color=C_Q, alpha=0.75,
+          label=f'quiet-stretch bins ({len(qq)} samples)')
+    A.axvline(FC, color='k', lw=1.2, ls='-.')
+    A.set_yscale('log')
+    A.set_xlim(0, min(30.0, fb.max()))
+    A.text(FC + 0.4, ab.max() * 0.8, r'$f_c$', fontsize=9)
+    nlo = int(((fb > 0) & lo).sum())
+    A.set_title(f'(a) the raw FFT bins the numbers use\n'
+                rf'$\Delta f = 1/T = {df:.2f}$ Hz; {nlo} bins below $f_c$; no taper, no padding',
+                fontsize=10)
+    A.set_xlabel('frequency [Hz]', fontsize=10)
+    A.set_ylabel(r'bin amplitude [$^\circ$/s]', fontsize=10)
+    A.legend(fontsize=8, loc='upper right')
+    A.grid(alpha=0.2, lw=0.4, axis='y')
 
-    # ── (b) the residual, (c) the quiet stretch: same length, same scale ──
-    B.plot(tau, deg(r), '-', lw=1.0, color=C_R)
-    B.axhline(0, lw=0.5, color='0.6')
-    B.set_title(r'(b) residual $r = y - \hat h$', fontsize=8.5)
-    B.set_xlabel(r'$\tau$ [s]', fontsize=8.5)
-    B.set_ylabel('[deg/s]', fontsize=8.5)
-    B.text(0.97, 0.05, 'RMS %.2f' % deg(rms(r)), transform=B.transAxes, fontsize=7.5,
-           ha='right', va='bottom', color=C_R)
-    Q.plot(tq - tq[0], deg(q - q.mean()), '-', lw=1.0, color=C_Q)
-    Q.axhline(0, lw=0.5, color='0.6')
-    Q.set_title('(c) quiet stretch $q$, same length', fontsize=8.5)
-    Q.set_xlabel('[s]  (before the excitation window)', fontsize=8.5)
-    Q.text(0.97, 0.05, 'RMS %.2f' % deg(rms(q - q.mean())), transform=Q.transAxes, fontsize=7.5,
-           ha='right', va='bottom', color='0.3')
-    lim = 1.15 * deg(np.abs(r)).max()
-    B.set_ylim(-lim, lim)
-    Q.tick_params(labelleft=False)
-
-    # ── (d) spectra and the split ─────────────────────────────────
+    # (b) spectra
+    fy, ay = aspec(y_win, dt)
+    fmd, amd = aspec(branch, dt)
     fr, ar = aspec(r, dt)
-    fq, aq = aspec(q, dt)
-    S.loglog(fr, ar, color=C_R, lw=1.6, label='residual $r$ (fit window)')
-    S.loglog(fq, aq, color=C_Q, lw=1.4, ls='--', label='quiet stretch $q$')
-    fmax = fr.max()
-    S.axvspan(FC, fmax, color='0.92', lw=0, zorder=0)
-    S.axvline(fm, color=C_Y, lw=1.0, ls=':')
-    S.axvline(FC, color='k', lw=1.2, ls='-.')
-    ymax = max(ar.max(), aq.max()) * 3.2
-    ymin = ymax * 1e-3
-    S.text(fm * 1.07, ymax * 0.55, r'$C_2^{*}/2\pi$ = %.2f Hz' % fm, fontsize=8.5, color=C_Y)
-    S.text(FC * 0.94, ymax * 0.30, r'$f_c$ = 5 Hz', fontsize=8.5, ha='right')
-    S.text(0.985, 0.96, 'high band $f > f_c$:\n$r_{\\rm hi} \\to n_{\\rm hi}$ (no cosh content)\nread from $r$ itself',
-           transform=S.transAxes, ha='right', va='top', fontsize=8, color='0.25')
-    S.text(0.015, 0.96, 'low band $f < f_c$: model error + $n_{\\rm lo}$ mixed'
-           '\n$\\to$ only the shape ratio $\\kappa_q$, taken from $q$',
-           transform=S.transAxes, ha='left', va='top', fontsize=8.5, color=C_R)
-    S.set_xlim(fr.min(), fmax)
-    S.set_ylim(ymin, ymax)
-    S.set_xlabel('frequency [Hz]', fontsize=9)
-    S.set_ylabel('amplitude [deg/s]', fontsize=9)
-    S.set_title('(d) amplitude spectra and the brick-wall split', fontsize=8.5)
-    S.legend(fontsize=8, loc='lower left', framealpha=0.9)
-    S.text(0.985, 0.05,
-           '\n'.join((rf'$\mathrm{{RMS}}(r_{{\rm hi}}) = {deg(n_hi):.2f}$ °/s',
-                      rf'$\kappa_q = \mathrm{{RMS}}(q_{{\rm lo}})/\mathrm{{RMS}}(q_{{\rm hi}}) = {kq:.2f}$',
-                      rf'this run: $\mathrm{{RMS}}(n) = {deg(n_hi):.2f}\sqrt{{1+{kq:.2f}^2}} = {deg(n_run):.2f}$ °/s')),
-           transform=S.transAxes, fontsize=8, ha='right', va='bottom',
+    fq, aq2 = aspec(q, dt)
+    B.loglog(fy, ay, color=C_Y, lw=1.6, label='windowed record $y$')
+    B.loglog(fmd, amd, color=C_M, lw=1.6, label='free PNLS fit (the model)')
+    B.loglog(fr, ar, color=C_R, lw=1.6, label='fit residual $r$ (whole window)')
+    B.loglog(fq, aq2, color=C_Q, lw=1.4, ls='--', label='quiet stretch (before the window)')
+    B.axvline(fm, color=C_Y, lw=1.0, ls=':', alpha=0.9)
+    B.axvline(FC, color='k', lw=1.2, ls='-.')
+    ymax = max(ay.max(), ar.max()) * 1.8
+    B.axvspan(FC, fy.max(), color='0.9', alpha=0.5, zorder=0)
+    B.text(fm * 1.06, ymax * 0.5, r'$C_2^{*}/2\pi$', fontsize=9, color=C_Y)
+    B.text(FC * 1.06, ymax * 0.5, r'$f_c = 5$ Hz', fontsize=9)
+    B.text(np.sqrt(FC * fy.max()), ymax * 2e-5 * 2.5, r'$n_{\rm hi}$: model-free band',
+           ha='center', fontsize=9)
+    B.set_ylim(ymax * 2e-5, ymax)
+    B.set_xlabel('frequency [Hz]', fontsize=10)
+    B.set_ylabel(r'amplitude spectrum [$^\circ$/s]', fontsize=10)
+    B.set_title(f'(b) one run ({case}/{axis_dir}, {abs(md):.2f} N m/s): where everything lives\n'
+                rf'brick-wall split at {FC:.0f} Hz; model content at $C_2^{{*}}/2\pi$ = {fm:.2f} Hz',
+                fontsize=10)
+    B.legend(fontsize=8, loc='lower left')
+    B.grid(alpha=0.2, lw=0.4, which='both')
+
+    # (c) the constants
+    C.scatter(kq_all, nhi_q, s=22, c='#7b3294', alpha=0.6, lw=0,
+              label=f'{len(kq_all)} runs with a quiet stretch')
+    C.scatter([kq], [deg(n_hi)], s=70, marker='o', fc='none', ec=C_R, lw=1.6, zorder=5,
+              label='this run')
+    C.axvline(kb, color='k', lw=1.1, ls='--')
+    C.axhline(nhi_all.max(), color='k', lw=1.1, ls='--')
+    C.text(kb, 0.02, rf' $\kappa_b = \max\kappa_q = {kb:.2f}$', transform=C.get_xaxis_transform(),
+           fontsize=9, ha='left', va='bottom')
+    C.text(0.02, nhi_all.max(), rf'$\max\,\mathrm{{RMS}}(n_{{\rm hi}}) = {nhi_all.max():.2f}$ °/s '
+           f'(all {len(csv_rows)} runs) ', transform=C.get_yaxis_transform(), fontsize=9,
+           ha='left', va='bottom')
+    C.text(0.98, 0.97,
+           rf'$\mathrm{{RMS}}(n) = {nhi_all.max():.2f}\sqrt{{1+{kb:.2f}^2}} = {n_term:.2f}$ °/s'
+           '\none additive term for every run (96)',
+           transform=C.transAxes, fontsize=9, ha='right', va='top',
            bbox=dict(fc='white', ec='0.8', lw=0.6, pad=3))
-    for ax in (A, B, Q, S):
-        ax.tick_params(labelsize=7.5)
-        ax.grid(alpha=0.25, lw=0.4, which='both')
+    C.set_xlim(0, max(kb * 1.15, kq_all.max() * 1.05))
+    C.set_ylim(0, nhi_all.max() * 1.38)
+    C.set_xlabel(r'quiet shape ratio $\kappa_q = \mathrm{RMS}(q_{\rm lo})/\mathrm{RMS}(q_{\rm hi})$',
+                 fontsize=10)
+    C.set_ylabel(r'in-window $\mathrm{RMS}(n_{\rm hi})$ [$^\circ$/s]', fontsize=10)
+    C.set_title('(c) the two constants of (98)–(99), measured per run\n'
+                'the maxima over the campaign fix a single noise term', fontsize=10)
+    C.legend(fontsize=8, loc='lower left')
+    C.grid(alpha=0.2, lw=0.4)
+    for ax in (A, B, C):
+        ax.tick_params(labelsize=8.5)
     fig.savefig(out, dpi=600, bbox_inches='tight')
     print('written', out)
 
