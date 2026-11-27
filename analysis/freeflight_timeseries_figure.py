@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Take-off time histories of one hardware case: tilt and horizontal
 drift against time from lift-off, with and without the balanced-moment
-feed-forward.
+feed-forward (the reported, pivot-free M_bal of the paper).
 
 Same definitions as analysis/freeflight_metrics.py: t_lo is the instant
 the rotor-speed thrust first carries the weight, tilt is the angle
@@ -27,8 +27,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import freeflight_metrics as fm                       # noqa: E402
 
 STYLE = {'wo_ff': dict(color='#1f3b66', lw=1.5, label='no compensation'),
-         'ff_pivot_free': dict(color='#e8743b', lw=1.5, label=r'$M_{\mathrm{bal}}$ feed-forward (pivot-free, reported)'),
-         'ff_pivot_based': dict(color='#9fc5e8', lw=1.1, ls='--', label=r'$M_{\mathrm{bal}}$ feed-forward (pivot-based)')}
+         'ff_pivot_free': dict(color='#e8743b', lw=1.5, label=r'balanced-moment feed-forward $M_{\mathrm{bal}}$')}
+VARIANTS = ('ff_pivot_free', 'wo_ff')              # the reported feed-forward and the baseline
 T0, T1 = -0.3, 2.8                                     # s around lift-off
 
 
@@ -58,7 +58,7 @@ def main():
     fig, (A, B) = plt.subplots(1, 2, figsize=(10.0, 3.9))
     win = []
     peaks = {}
-    for var in ('ff_pivot_based', 'ff_pivot_free', 'wo_ff'):
+    for var in VARIANTS:
         files = sorted(glob.glob(f'DataSet/free_flight/{case}/{ctrl}/{var}*.npz'))
         st = dict(STYLE[var])
         lab = st.pop('label')
@@ -87,8 +87,8 @@ def main():
     A.set_title(f'(a) tilt — E{int(case)} ({x:+.1f}, {y:+.1f}) mm, {ctrl.upper()}, 3 repeats each', fontsize=10)
     B.set_title('(b) horizontal drift', fontsize=10)
     hdl, lab = A.get_legend_handles_labels()
-    order = [lab.index(STYLE[v]['label']) for v in ('wo_ff', 'ff_pivot_free', 'ff_pivot_based')]
-    fig.legend([hdl[i] for i in order], [lab[i] for i in order], loc='lower center', ncol=3,
+    order = [lab.index(STYLE[v]['label']) for v in ('wo_ff', 'ff_pivot_free')]
+    fig.legend([hdl[i] for i in order], [lab[i] for i in order], loc='lower center', ncol=2,
                fontsize=9, frameon=False, bbox_to_anchor=(0.5, 0.0))
     u, c = peaks['wo_ff'], peaks['ff_pivot_free']
     A.text(0.02, 0.97, f'median peak: {u[0]:.1f}° → {c[0]:.1f}°', transform=A.transAxes, fontsize=9,
