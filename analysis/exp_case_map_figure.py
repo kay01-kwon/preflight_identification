@@ -28,7 +28,7 @@ NUDGE = {'01': (-2.2, -2.6), '02': (-2.2, -2.8), '03': (2.0, -2.6), '04': (2.0, 
 
 def main():
     out = sys.argv[1] if len(sys.argv) > 1 else 'docs/exp_case_offsets.png'
-    fig, ax = plt.subplots(figsize=(5.4, 4.3))
+    fig, ax = plt.subplots(figsize=(5.4, 5.0))
 
     def box(bx, by, **kw):
         ax.plot([-bx, bx, bx, -bx, -bx], [-by, -by, by, by, -by], **kw)
@@ -56,7 +56,7 @@ def main():
     ax.set_xlabel(r'$x_{\mathrm{off}}$ [mm]  (identified by the pitch excitation $M_y$)', fontsize=9.5)
     ax.set_ylabel(r'$y_{\mathrm{off}}$ [mm]  (roll excitation $M_x$)', fontsize=9.5)
     ax.set_title('experimental cases: load-cell CoM offset (Table 10)', fontsize=10)
-    ax.legend(fontsize=7.6, loc='lower right', framealpha=0.95)
+    ax.legend(fontsize=8, loc='upper center', bbox_to_anchor=(0.5, -0.16), ncol=2, frameon=False)
     ax.grid(alpha=0.25, lw=0.4)
     ax.tick_params(labelsize=8.5)
     fig.tight_layout()

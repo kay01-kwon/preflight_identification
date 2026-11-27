@@ -55,7 +55,7 @@ def main():
     ctrl = sys.argv[2] if len(sys.argv) > 2 else 'hgdo'
     out = sys.argv[3] if len(sys.argv) > 3 else 'docs/exp_takeoff_timeseries.png'
     x, y = fm.OFFSET[case]
-    fig, (A, B) = plt.subplots(1, 2, figsize=(10.0, 3.6))
+    fig, (A, B) = plt.subplots(1, 2, figsize=(10.0, 3.9))
     win = []
     peaks = {}
     for var in ('ff_pivot_based', 'ff_pivot_free', 'wo_ff'):
@@ -86,13 +86,16 @@ def main():
     B.set_ylabel(r'horizontal drift $\|p_{xy}(t) - p_{xy}(t_{\mathrm{lo}})\|$ [m]', fontsize=9.5)
     A.set_title(f'(a) tilt — E{int(case)} ({x:+.1f}, {y:+.1f}) mm, {ctrl.upper()}, 3 repeats each', fontsize=10)
     B.set_title('(b) horizontal drift', fontsize=10)
-    A.legend(fontsize=8, loc='upper right', framealpha=0.95)
+    hdl, lab = A.get_legend_handles_labels()
+    order = [lab.index(STYLE[v]['label']) for v in ('wo_ff', 'ff_pivot_free', 'ff_pivot_based')]
+    fig.legend([hdl[i] for i in order], [lab[i] for i in order], loc='lower center', ncol=3,
+               fontsize=9, frameon=False, bbox_to_anchor=(0.5, 0.0))
     u, c = peaks['wo_ff'], peaks['ff_pivot_free']
     A.text(0.02, 0.97, f'median peak: {u[0]:.1f}° → {c[0]:.1f}°', transform=A.transAxes, fontsize=9,
            va='top', bbox=dict(fc='white', ec='0.8', lw=0.6, pad=3))
     B.text(0.02, 0.97, f'median peak: {u[1]:.2f} m → {c[1]:.2f} m', transform=B.transAxes, fontsize=9,
            va='top', bbox=dict(fc='white', ec='0.8', lw=0.6, pad=3))
-    fig.tight_layout()
+    fig.tight_layout(rect=[0, 0.08, 1, 1])
     fig.savefig(out, dpi=600)
     print('written', out)
 
